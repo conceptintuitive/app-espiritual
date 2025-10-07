@@ -143,7 +143,7 @@ export default function ResultadoPage() {
 
         <div className="text-center mt-8">
           <Link href="/" className="text-purple-300 hover:text-purple-200 underline">
-            ← Fazer nova análise
+            Fazer nova análise
           </Link>
         </div>
 
