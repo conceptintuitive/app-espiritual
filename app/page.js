@@ -37,16 +37,22 @@ export default function Home() {
       });
 
       const data = await response.json();
+      
+      // ✅ LOGS DE DEBUG
+      console.log('Status da resposta:', response.status);
+      console.log('Dados retornados:', data);
 
-      // ✅ CORRIGIDO: aceita tanto "ok" quanto "success"
       if (data.ok || data.success) {
         const id = data.id || data.analiseId;
+        console.log('ID encontrado:', id);
         router.push(`/resultado/${id}`);
       } else {
+        console.log('Caiu no else, mostrando erro');
         setErro(data.error || 'Erro ao gerar análise');
         setLoading(false);
       }
     } catch (error) {
+      console.error('Erro no catch:', error);
       setErro('Erro ao processar. Tente novamente.');
       setLoading(false);
     }
