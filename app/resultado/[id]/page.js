@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
@@ -139,12 +138,6 @@ export default function ResultadoPage() {
             </div>
 
           </div>
-        </div>
-
-        <div className="text-center mt-8">
-          <Link href="/" className="text-purple-300 hover:text-purple-200 underline">
-            Fazer nova análise
-          </Link>
         </div>
 
       </div>
