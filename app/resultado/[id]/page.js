@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import Link from 'next/link'; // ✅ use Link para navegação interna
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
@@ -56,6 +57,16 @@ export default function ResultadoPage() {
         <div className="text-center text-white">
           <h1 className="text-3xl font-bold mb-4">Ops!</h1>
           <p className="text-xl">{erro}</p>
+
+          {/* ✅ Exemplo de navegação interna com Link */}
+          <div className="mt-6">
+            <Link
+              href="/"
+              className="inline-block bg-white/10 hover:bg-white/20 border border-white/20 px-6 py-3 rounded-full"
+            >
+              Voltar para a Home
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -64,7 +75,17 @@ export default function ResultadoPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-900 to-black text-white">
       <div className="container mx-auto px-4 py-12">
-        
+
+        {/* ✅ Exemplo de navegação interna com Link (se quiser manter um "voltar") */}
+        <div className="mb-8">
+          <Link
+            href="/"
+            className="inline-block bg-white/10 hover:bg-white/20 border border-white/20 px-4 py-2 rounded-full text-sm"
+          >
+            ← Home
+          </Link>
+        </div>
+
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
             Sua Análise Espiritual, {analise.nome}
@@ -81,36 +102,41 @@ export default function ResultadoPage() {
 
         <div className="max-w-4xl mx-auto">
           <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 md:p-12 shadow-2xl border border-purple-500/20">
-            
+
             <div className="space-y-6">
-              {analise.analise_completa.split('##').filter(section => section.trim()).map((section, index) => {
-                const [title, ...content] = section.split('\n').filter(line => line.trim());
-                
-                return (
-                  <div key={index} className="mb-8">
-                    <h2 className="text-3xl font-bold mb-4 text-purple-300">
-                      {title.trim()}
-                    </h2>
-                    <div className="space-y-4 text-purple-100 leading-relaxed text-lg">
-                      {content.map((paragraph, pIndex) => {
-                        const trimmed = paragraph.trim();
-                        if (!trimmed) return null;
-                        
-                        if (trimmed.match(/^\d+\./)) {
-                          return (
-                            <div key={pIndex} className="flex gap-3 items-start">
-                              <span className="text-2xl">✨</span>
-                              <p className="flex-1">{trimmed}</p>
-                            </div>
-                          );
-                        }
-                        
-                        return <p key={pIndex} className="text-justify">{trimmed}</p>;
-                      })}
+              {analise.analise_completa
+                .split('##')
+                .filter(section => section.trim())
+                .map((section, index) => {
+                  const [title, ...content] = section
+                    .split('\n')
+                    .filter(line => line.trim());
+
+                  return (
+                    <div key={index} className="mb-8">
+                      <h2 className="text-3xl font-bold mb-4 text-purple-300">
+                        {title.trim()}
+                      </h2>
+                      <div className="space-y-4 text-purple-100 leading-relaxed text-lg">
+                        {content.map((paragraph, pIndex) => {
+                          const trimmed = paragraph.trim();
+                          if (!trimmed) return null;
+
+                          if (trimmed.match(/^\d+\./)) {
+                            return (
+                              <div key={pIndex} className="flex gap-3 items-start">
+                                <span className="text-2xl">✨</span>
+                                <p className="flex-1">{trimmed}</p>
+                              </div>
+                            );
+                          }
+
+                          return <p key={pIndex} className="text-justify">{trimmed}</p>;
+                        })}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
             </div>
 
             <div className="mt-16 p-8 bg-gradient-to-r from-purple-600/30 to-pink-600/30 rounded-2xl border-2 border-purple-400/30">
@@ -120,17 +146,23 @@ export default function ResultadoPage() {
               <p className="text-center text-purple-200 mb-6">
                 Esta análise revelou apenas a superfície do seu mapa espiritual.
               </p>
-              
+
               <div className="text-center">
                 <div className="mb-4">
                   <span className="text-gray-400 line-through text-xl">R$ 97,00</span>
                   <span className="text-4xl font-bold text-green-400 ml-4">R$ 47,00</span>
                 </div>
-                
+
+                {/* Se for levar a uma rota interna (ex.: /checkout), use Link */}
+                {/* <Link href="/checkout" className="inline-block bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-4 px-8 rounded-full text-xl transition-all transform hover:scale-105 shadow-lg">
+                  Desbloquear Manual Completo
+                </Link> */}
+
+                {/* Se ainda não tem rota, mantém como botão comum */}
                 <button className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-4 px-8 rounded-full text-xl transition-all transform hover:scale-105 shadow-lg">
                   Desbloquear Manual Completo
                 </button>
-                
+
                 <p className="text-sm text-purple-300 mt-4">
                   Pagamento 100% seguro • Garantia de 7 dias
                 </p>
