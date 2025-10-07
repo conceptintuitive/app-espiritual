@@ -38,8 +38,10 @@ export default function Home() {
 
       const data = await response.json();
 
-      if (data.success) {
-        router.push(`/resultado/${data.analiseId}`);
+      // ✅ CORRIGIDO: aceita tanto "ok" quanto "success"
+      if (data.ok || data.success) {
+        const id = data.id || data.analiseId;
+        router.push(`/resultado/${id}`);
       } else {
         setErro(data.error || 'Erro ao gerar análise');
         setLoading(false);
