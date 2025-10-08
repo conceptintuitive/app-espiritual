@@ -15,7 +15,6 @@ export async function POST(request) {
           product_data: {
             name: 'Manual Espiritual Completo',
             description: 'Seu guia personalizado de poderes ocultos com rituais, arquétipos e práticas exclusivas',
-            images: ['https://via.placeholder.com/400x300/6366f1/ffffff?text=Manual+Espiritual'],
           },
           unit_amount: 4700, // R$ 47,00 em centavos
         },
