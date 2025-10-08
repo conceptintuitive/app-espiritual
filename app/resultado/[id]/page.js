@@ -45,21 +45,33 @@ export default function ResultadoPage() {
     setProcessandoPagamento(true);
     
     try {
+      console.log('Iniciando checkout para análise:', params.id);
+      
       const response = await fetch('/api/criar-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ analiseId: params.id })
       });
 
+      console.log('Status da resposta:', response.status);
+      
+      if (!response.ok) {
+        throw new Error(`Erro HTTP: ${response.status}`);
+      }
+
       const { url, error } = await response.json();
+      console.log('Resposta da API:', { url, error });
       
       if (url) {
-        window.location.href = url; // Redireciona pro Stripe
+        console.log('Redirecionando para:', url);
+        window.location.href = url;
       } else {
+        console.error('Erro da API:', error);
         alert(error || 'Erro ao processar pagamento. Tente novamente.');
         setProcessandoPagamento(false);
       }
     } catch (error) {
+      console.error('Erro no fetch:', error);
       alert('Erro ao processar pagamento. Tente novamente.');
       setProcessandoPagamento(false);
     }
@@ -189,7 +201,7 @@ export default function ResultadoPage() {
                       Processando...
                     </span>
                   ) : (
-                    '🔓 Desbloquear Manual Completo'
+                    'Desbloquear Manual Completo'
                   )}
                 </button>
 
