@@ -21,7 +21,7 @@ export async function POST(request) {
         quantity: 1,
       }],
       mode: 'payment',
-      success_url: `${process.env.NEXT_PUBLIC_URL}/manual/${analiseId}?sucesso=true`,
+      success_url: `${process.env.NEXT_PUBLIC_URL}/resultado/${analiseId}?manual=true`,
       cancel_url: `${process.env.NEXT_PUBLIC_URL}/resultado/${analiseId}`,
       metadata: {
         analiseId: analiseId
