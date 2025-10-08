@@ -87,22 +87,29 @@ export default function ManualPage() {
   return (
     <div className="max-w-none">
       <div 
-        className="text-lg leading-relaxed"
-        style={{ lineHeight: '1.5' }}
+        style={{ 
+          fontSize: '18px',
+          lineHeight: '1.4',
+          color: '#e2e8f0'
+        }}
         dangerouslySetInnerHTML={{ 
           __html: secao.conteudo
-            .replace(/\*\*(.*?)\*\*/g, '<strong class="text-purple-300">$1</strong>')
-            .replace(/^### (.*$)/gim, '<h3 class="text-xl font-bold text-purple-300 mt-4 mb-2">$1</h3>')
-            .replace(/^## (.*$)/gim, '<h2 class="text-2xl font-bold text-purple-200 mt-6 mb-3">$1</h2>')
-            .replace(/^# (.*$)/gim, '<h1 class="text-3xl font-bold text-purple-100 mt-8 mb-4">$1</h1>')
-            .replace(/^- (.*$)/gim, '<div class="ml-4 mb-0.5">• $1</div>')
-            .replace(/^✅ (.*$)/gim, '<div class="flex items-start gap-1 mb-0.5"><span class="text-green-400 text-sm">✅</span><span>$1</span></div>')
-            .replace(/^❌ (.*$)/gim, '<div class="flex items-start gap-1 mb-0.5"><span class="text-red-400 text-sm">❌</span><span>$1</span></div>')
-            .replace(/^✨ (.*$)/gim, '<div class="flex items-start gap-1 mb-0.5"><span class="text-yellow-400 text-sm">✨</span><span>$1</span></div>')
-            .replace(/\n\n\n+/g, '<div class="h-3"></div>')
-            .replace(/\n\n/g, '<div class="h-1"></div>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong style="color: #d8b4fe;">$1</strong>')
+            .replace(/^### (.*$)/gim, '<h3 style="font-size: 22px; font-weight: bold; color: #d8b4fe; margin-top: 16px; margin-bottom: 8px;">$1</h3>')
+            .replace(/^## (.*$)/gim, '<h2 style="font-size: 26px; font-weight: bold; color: #e9d5ff; margin-top: 20px; margin-bottom: 12px;">$1</h2>')
+            .replace(/^# (.*$)/gim, '<h1 style="font-size: 30px; font-weight: bold; color: #f3e8ff; margin-top: 24px; margin-bottom: 16px;">$1</h1>')
+            .replace(/^- (.*$)/gim, '<div style="margin-left: 16px; margin-bottom: 2px;">• $1</div>')
+            .replace(/^✅ (.*$)/gim, '<div style="display: flex; align-items: flex-start; gap: 4px; margin-bottom: 2px;"><span style="color: #4ade80; font-size: 14px;">✅</span><span>$1</span></div>')
+            .replace(/^❌ (.*$)/gim, '<div style="display: flex; align-items: flex-start; gap: 4px; margin-bottom: 2px;"><span style="color: #f87171; font-size: 14px;">❌</span><span>$1</span></div>')
+            .replace(/^✨ (.*$)/gim, '<div style="display: flex; align-items: flex-start; gap: 4px; margin-bottom: 2px;"><span style="color: #facc15; font-size: 14px;">✨</span><span>$1</span></div>')
+            .replace(/\n\n\n+/g, '<div style="height: 12px;"></div>')
+            .replace(/\n\n/g, '<div style="height: 4px;"></div>')
             .replace(/\n/g, '<br>')
         }}
+      />
+    </div>
+  );
+};
       />
     </div>
   );
