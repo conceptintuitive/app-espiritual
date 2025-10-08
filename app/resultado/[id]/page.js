@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import Link from 'next/link'; // ✅ use Link para navegação interna
+import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
@@ -15,6 +15,7 @@ export default function ResultadoPage() {
   const [analise, setAnalise] = useState(null);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState('');
+  const [processandoPagamento, setProcessandoPagamento] = useState(false);
 
   useEffect(() => {
     async function buscarAnalise() {
@@ -40,6 +41,30 @@ export default function ResultadoPage() {
     buscarAnalise();
   }, [params.id]);
 
+  const handleComprarManual = async () => {
+    setProcessandoPagamento(true);
+    
+    try {
+      const response = await fetch('/api/criar-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ analiseId: params.id })
+      });
+
+      const { url, error } = await response.json();
+      
+      if (url) {
+        window.location.href = url; // Redireciona pro Stripe
+      } else {
+        alert(error || 'Erro ao processar pagamento. Tente novamente.');
+        setProcessandoPagamento(false);
+      }
+    } catch (error) {
+      alert('Erro ao processar pagamento. Tente novamente.');
+      setProcessandoPagamento(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-900 to-black flex items-center justify-center">
@@ -57,8 +82,6 @@ export default function ResultadoPage() {
         <div className="text-center text-white">
           <h1 className="text-3xl font-bold mb-4">Ops!</h1>
           <p className="text-xl">{erro}</p>
-
-          {/* ✅ Exemplo de navegação interna com Link */}
           <div className="mt-6">
             <Link
               href="/"
@@ -76,7 +99,6 @@ export default function ResultadoPage() {
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-900 to-black text-white">
       <div className="container mx-auto px-4 py-12">
 
-        {/* ✅ Exemplo de navegação interna com Link (se quiser manter um "voltar") */}
         <div className="mb-8">
           <Link
             href="/"
@@ -153,14 +175,22 @@ export default function ResultadoPage() {
                   <span className="text-4xl font-bold text-green-400 ml-4">R$ 47,00</span>
                 </div>
 
-                {/* Se for levar a uma rota interna (ex.: /checkout), use Link */}
-                {/* <Link href="/checkout" className="inline-block bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-4 px-8 rounded-full text-xl transition-all transform hover:scale-105 shadow-lg">
-                  Desbloquear Manual Completo
-                </Link> */}
-
-                {/* Se ainda não tem rota, mantém como botão comum */}
-                <button className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-4 px-8 rounded-full text-xl transition-all transform hover:scale-105 shadow-lg">
-                  Desbloquear Manual Completo
+                <button 
+                  onClick={handleComprarManual}
+                  disabled={processandoPagamento}
+                  className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-4 px-8 rounded-full text-xl transition-all transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                >
+                  {processandoPagamento ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Processando...
+                    </span>
+                  ) : (
+                    '🔓 Desbloquear Manual Completo'
+                  )}
                 </button>
 
                 <p className="text-sm text-purple-300 mt-4">
