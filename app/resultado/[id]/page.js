@@ -161,7 +161,13 @@ export default function ResultadoPage() {
       doc.setTextColor(0, 0, 0); // Voltar para preto
       addText(content, 9);
     };
-
+{/* Análise Numerológica */}
+<section className="bg-white/5 backdrop-blur-lg rounded-3xl p-8 md:p-12 border border-purple-500/20">
+  <h2 className="text-4xl font-bold mb-8 text-purple-300">
+    {manual.analise_numerologica.titulo}
+  </h2>
+  {renderSecao(manual.analise_numerologica)}
+</section>
     // Todas as seções com títulos
     addSection('INTRODUÇÃO', manual?.introducao?.conteudo);
     addSection('PODERES OCULTOS', manual?.poderes_ocultos?.conteudo);
