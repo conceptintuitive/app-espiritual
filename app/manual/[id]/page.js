@@ -105,10 +105,11 @@ export default function ManualPage() {
             .replace(/\n\n\n+/g, '<div style="height: 12px;"></div>')
             .replace(/\n\n/g, '<div style="height: 4px;"></div>')
             .replace(/\n/g, '<br>')
-        />
-      </div>
-    );
-  };
+        }}
+      />
+    </div>
+  );
+};
 const handleDownloadPDF = async () => {
   const { jsPDF } = await import('jspdf');
   const doc = new jsPDF();
