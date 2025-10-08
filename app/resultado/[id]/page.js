@@ -93,109 +93,105 @@ export default function ResultadoPage() {
   const pageH = doc.internal.pageSize.getHeight();
   let y = 20;
 
-  // Função para limpar e preparar texto
+  // Função melhorada para limpar texto SEM remover acentos
   const limparTexto = (texto) => {
     return String(texto ?? "")
-      .replace(/[^\x00-\x7F]/g, "") // Remove caracteres não-ASCII
+      .replace(/<[^>]*>/g, '') // Remove tags HTML
       .replace(/\*\*(.*?)\*\*/g, '$1') // Remove markdown bold
       .replace(/^#{1,6}\s/gm, '') // Remove headers markdown
-      .replace(/^[-•✨✅❌⚠️🔥💎🌟]/gm, '• ') // Substitui emojis por bullets
-      .replace(/\n\n+/g, '\n\n') // Remove linhas extras
-      .replace(/&[a-zA-Z]+;/g, '') // Remove entidades HTML
-      .replace(/<[^>]*>/g, '') // Remove tags HTML
+      .replace(/^[-•✨✅❌⚠️🔥💎🌟🌙]/gm, '• ') // Substitui emojis por bullets
+      .replace(/&nbsp;/g, ' ') // Replace non-breaking spaces
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/\n\n\n+/g, '\n\n') // Remove linhas extras
       .trim();
   };
 
   // Função para adicionar texto com quebra automática
-  const adicionarTexto = (texto, tamanho = 10, cor = [0, 0, 0]) => {
+  const adicionarTexto = (texto, tamanho = 10, cor = [0, 0, 0], isTitulo = false) => {
     doc.setFontSize(tamanho);
     doc.setTextColor(...cor);
 
     const textoLimpo = limparTexto(texto);
-    const linhas = doc.splitTextToSize(textoLimpo, larguraTexto);
-
-    linhas.forEach(linha => {
-      if (y > pageH - 30) { // Margem inferior
-        doc.addPage();
-        y = 20;
-      }
-      doc.text(linha, margemEsq, y);
-      y += tamanho * 0.6; // Espaçamento entre linhas
+    
+    // Quebrar em parágrafos primeiro
+    const paragrafos = textoLimpo.split('\n\n');
+    
+    paragrafos.forEach(paragrafo => {
+      if (!paragrafo.trim()) return;
+      
+      const linhas = doc.splitTextToSize(paragrafo.trim(), larguraTexto);
+      
+      linhas.forEach(linha => {
+        if (y > pageH - 30) {
+          doc.addPage();
+          y = 20;
+        }
+        doc.text(linha, margemEsq, y);
+        y += tamanho * 0.7;
+      });
+      
+      y += isTitulo ? 8 : 5; // Mais espaço após títulos
     });
 
-    y += 8; // Espaço após parágrafo
+    y += 8; // Espaço após seção
   };
 
-  // Cabeçalho do PDF
-  doc.setFontSize(20);
+  // Cabeçalho
+  doc.setFontSize(18);
   doc.setTextColor(147, 51, 234);
   doc.text('MANUAL DOS PODERES OCULTOS', larguraPagina / 2, y, { align: 'center' });
 
-  y += 15;
+  y += 12;
   doc.setFontSize(14);
   doc.setTextColor(0, 0, 0);
   doc.text(`Exclusivo para ${analise.nome}`, larguraPagina / 2, y, { align: 'center' });
 
-  y += 10;
+  y += 8;
   doc.setFontSize(12);
-  doc.setTextColor(100, 100, 100);
-  doc.text(`${analise.signo} | Numero ${analise.numero_vida}`, larguraPagina / 2, y, { align: 'center' });
+  doc.text(`${analise.signo} | Número ${analise.numero_vida}`, larguraPagina / 2, y, { align: 'center' });
 
   y += 20;
 
-  // Adicionar todas as seções completas
+  // Seções do manual
   const secoes = [
-    { titulo: 'INTRODUCAO PERSONALIZADA', secao: manual.introducao },
-    { titulo: 'O QUE SAO OS PODERES OCULTOS', secao: manual.poderes_ocultos },
-    { titulo: 'ARQUETIPOS DE PODER', secao: manual.arquetipos },
-    { titulo: 'LINGUAGEM COMO CODIGO VIBRACIONAL', secao: manual.linguagem },
+    { titulo: 'INTRODUÇÃO PERSONALIZADA', secao: manual.introducao },
+    { titulo: 'O QUE SÃO OS PODERES OCULTOS', secao: manual.poderes_ocultos },
+    { titulo: 'ARQUÉTIPOS DE PODER', secao: manual.arquetipos },
+    { titulo: 'LINGUAGEM COMO CÓDIGO VIBRACIONAL', secao: manual.linguagem },
     { titulo: 'RITUAIS SAGRADOS', secao: manual.rituais },
-    { titulo: 'BLOQUEIOS ENERGETICOS', secao: manual.bloqueios },
-    { titulo: 'LIMPEZA E PROTECAO ENERGETICA', secao: manual.limpeza },
+    { titulo: 'BLOQUEIOS ENERGÉTICOS', secao: manual.bloqueios },
+    { titulo: 'LIMPEZA E PROTEÇÃO ENERGÉTICA', secao: manual.limpeza },
     { titulo: 'SEXUALIDADE SAGRADA', secao: manual.sexualidade },
     { titulo: 'GEOMETRIA SAGRADA', secao: manual.geometria },
     { titulo: 'MAGNETISMO PESSOAL', secao: manual.magnetismo },
-    { titulo: 'CALENDARIO LUNAR 2025', secao: manual.calendario_lunar },
-    { titulo: 'PLANO DE TRANSFORMACAO 90 DIAS', secao: manual.plano_90_dias }
+    { titulo: 'CALENDÁRIO LUNAR 2025', secao: manual.calendario_lunar },
+    { titulo: 'PLANO DE 90 DIAS', secao: manual.plano_90_dias }
   ];
 
   secoes.forEach((item, index) => {
     if (!item.secao?.conteudo) return;
 
-    // Nova página para cada seção (exceto primeira)
-    if (index > 0) {
+    // Nova página para cada seção
+    if (y > pageH - 100 || index > 0) {
       doc.addPage();
       y = 20;
     }
 
     // Título da seção
-    doc.setFontSize(16);
+    doc.setFontSize(14);
     doc.setTextColor(147, 51, 234);
     doc.text(item.titulo, margemEsq, y);
     y += 15;
 
-    // Conteúdo completo da seção
-    adicionarTexto(item.secao.conteudo, 10, [30, 30, 30]);
-
-    y += 10; // Espaço extra entre seções
+    // Conteúdo da seção
+    adicionarTexto(item.secao.conteudo, 9, [30, 30, 30]);
   });
 
-  // Página final
-  doc.addPage();
-  y = 100;
-  doc.setFontSize(16);
-  doc.setTextColor(147, 51, 234);
-  doc.text('TRANSFORMACAO COMPLETA', larguraPagina / 2, y, { align: 'center' });
-  
-  y += 15;
-  doc.setFontSize(12);
-  doc.setTextColor(0, 0, 0);
-  doc.text(`Manual personalizado para ${analise.nome}`, larguraPagina / 2, y, { align: 'center' });
-  
-  y += 10;
-  doc.text(`Gerado em ${new Date().toLocaleDateString('pt-BR')}`, larguraPagina / 2, y, { align: 'center' });
-
-  // Salvar PDF
+  // Salvar
   doc.save(`Manual_Completo_${analise.nome.replace(/\s+/g, '_')}.pdf`);
 };
 
