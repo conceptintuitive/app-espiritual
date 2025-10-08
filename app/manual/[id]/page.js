@@ -30,7 +30,6 @@ export default function ManualPage() {
         setAcesso(true);
         setAnalise(data);
         
-        // Gerar manual completo
         const manualGerado = gerarManualCompleto(data);
         setManual(manualGerado);
       } else if (data) {
@@ -41,6 +40,120 @@ export default function ManualPage() {
 
     verificarAcesso();
   }, [params.id]);
+
+  const renderSecao = (secao) => {
+    if (!secao) return null;
+
+    return (
+      <div className="max-w-none">
+        <div 
+          style={{ 
+            fontSize: '18px',
+            lineHeight: '1.4',
+            color: '#e2e8f0'
+          }}
+          dangerouslySetInnerHTML={{ 
+            __html: secao.conteudo
+              .replace(/\*\*(.*?)\*\*/g, '<strong style="color: #d8b4fe;">$1</strong>')
+              .replace(/^### (.*$)/gim, '<h3 style="font-size: 22px; font-weight: bold; color: #d8b4fe; margin-top: 16px; margin-bottom: 8px;">$1</h3>')
+              .replace(/^## (.*$)/gim, '<h2 style="font-size: 26px; font-weight: bold; color: #e9d5ff; margin-top: 20px; margin-bottom: 12px;">$1</h2>')
+              .replace(/^# (.*$)/gim, '<h1 style="font-size: 30px; font-weight: bold; color: #f3e8ff; margin-top: 24px; margin-bottom: 16px;">$1</h1>')
+              .replace(/^- (.*$)/gim, '<div style="margin-left: 16px; margin-bottom: 2px;">• $1</div>')
+              .replace(/^✅ (.*$)/gim, '<div style="display: flex; align-items: flex-start; gap: 4px; margin-bottom: 2px;"><span style="color: #4ade80; font-size: 14px;">✅</span><span>$1</span></div>')
+              .replace(/^❌ (.*$)/gim, '<div style="display: flex; align-items: flex-start; gap: 4px; margin-bottom: 2px;"><span style="color: #f87171; font-size: 14px;">❌</span><span>$1</span></div>')
+              .replace(/^✨ (.*$)/gim, '<div style="display: flex; align-items: flex-start; gap: 4px; margin-bottom: 2px;"><span style="color: #facc15; font-size: 14px;">✨</span><span>$1</span></div>')
+              .replace(/\n\n\n+/g, '<div style="height: 12px;"></div>')
+              .replace(/\n\n/g, '<div style="height: 4px;"></div>')
+              .replace(/\n/g, '<br>')
+          }}
+        />
+      </div>
+    );
+  };
+
+  const handleDownloadPDF = async () => {
+    const { jsPDF } = await import('jspdf');
+    const doc = new jsPDF();
+
+    const margemEsq = 20;
+    const larguraPagina = 210;
+    const larguraTexto = larguraPagina - 40;
+    const pageH = doc.internal.pageSize.getHeight();
+    let y = 20;
+
+    const limparTexto = (texto) => {
+      return String(texto ?? "")
+        .replace(/[^\x00-\x7F]/g, "")
+        .replace(/\*\*(.*?)\*\*/g, '$1')
+        .replace(/^#{1,6}\s/gm, '')
+        .replace(/^[-•✨✅❌⚠️🔥💎🌟]/gm, '• ')
+        .replace(/\n\n+/g, '\n\n')
+        .replace(/&[a-zA-Z]+;/g, '')
+        .trim();
+    };
+
+    const adicionarTexto = (texto, tamanho = 11, cor = [0, 0, 0]) => {
+      doc.setFontSize(tamanho);
+      doc.setTextColor(...cor);
+
+      const textoLimpo = limparTexto(texto);
+      const linhas = doc.splitTextToSize(textoLimpo, larguraTexto);
+
+      linhas.forEach(linha => {
+        if (y > pageH - 20) {
+          doc.addPage();
+          y = 20;
+        }
+        doc.text(linha, margemEsq, y);
+        y += tamanho * 0.5;
+      });
+
+      y += 5;
+    };
+
+    doc.setFontSize(22);
+    doc.setTextColor(147, 51, 234);
+    doc.text('MANUAL DOS PODERES OCULTOS', larguraPagina / 2, y, { align: 'center' });
+
+    y += 10;
+    doc.setFontSize(16);
+    doc.text(`Exclusivo para ${analise.nome}`, larguraPagina / 2, y, { align: 'center' });
+
+    y += 20;
+
+    const secoes = [
+      { titulo: 'INTRODUCAO', conteudo: manual.introducao?.conteudo || '' },
+      { titulo: 'PODERES OCULTOS', conteudo: manual.poderes_ocultos?.conteudo || '' },
+      { titulo: 'ARQUETIPOS', conteudo: manual.arquetipos?.conteudo || '' },
+      { titulo: 'LINGUAGEM', conteudo: manual.linguagem?.conteudo || '' },
+      { titulo: 'RITUAIS', conteudo: manual.rituais?.conteudo || '' },
+      { titulo: 'BLOQUEIOS', conteudo: manual.bloqueios?.conteudo || '' },
+      { titulo: 'LIMPEZA', conteudo: manual.limpeza?.conteudo || '' },
+      { titulo: 'SEXUALIDADE', conteudo: manual.sexualidade?.conteudo || '' },
+      { titulo: 'GEOMETRIA', conteudo: manual.geometria?.conteudo || '' },
+      { titulo: 'MAGNETISMO', conteudo: manual.magnetismo?.conteudo || '' },
+      { titulo: 'CALENDARIO LUNAR', conteudo: manual.calendario_lunar?.conteudo || '' },
+      { titulo: 'PLANO 90 DIAS', conteudo: manual.plano_90_dias?.conteudo || '' }
+    ];
+
+    secoes.forEach((secao, index) => {
+      if (!secao.conteudo) return;
+
+      if (index > 0) {
+        doc.addPage();
+        y = 20;
+      }
+
+      doc.setFontSize(16);
+      doc.setTextColor(147, 51, 234);
+      doc.text(secao.titulo, margemEsq, y);
+      y += 15;
+
+      adicionarTexto(secao.conteudo, 10, [50, 50, 50]);
+    });
+
+    doc.save(`Manual_Espiritual_${analise.nome.replace(/\s+/g, '_')}.pdf`);
+  };
 
   if (loading) {
     return (
@@ -80,232 +193,11 @@ export default function ManualPage() {
       </div>
     );
   }
-const renderSecao = (secao) => {
-  if (!secao) return null;
-
-  return (
-    <div className="max-w-none">
-      <div 
-        style={{ 
-          fontSize: '18px',
-          lineHeight: '1.4',
-          color: '#e2e8f0'
-        }}
-        dangerouslySetInnerHTML={{ 
-          __html: secao.conteudo
-            .replace(/\*\*(.*?)\*\*/g, '<strong style="color: #d8b4fe;">$1</strong>')
-            .replace(/^### (.*$)/gim, '<h3 style="font-size: 22px; font-weight: bold; color: #d8b4fe; margin-top: 16px; margin-bottom: 8px;">$1</h3>')
-            .replace(/^## (.*$)/gim, '<h2 style="font-size: 26px; font-weight: bold; color: #e9d5ff; margin-top: 20px; margin-bottom: 12px;">$1</h2>')
-            .replace(/^# (.*$)/gim, '<h1 style="font-size: 30px; font-weight: bold; color: #f3e8ff; margin-top: 24px; margin-bottom: 16px;">$1</h1>')
-            .replace(/^- (.*$)/gim, '<div style="margin-left: 16px; margin-bottom: 2px;">• $1</div>')
-            .replace(/^✅ (.*$)/gim, '<div style="display: flex; align-items: flex-start; gap: 4px; margin-bottom: 2px;"><span style="color: #4ade80; font-size: 14px;">✅</span><span>$1</span></div>')
-            .replace(/^❌ (.*$)/gim, '<div style="display: flex; align-items: flex-start; gap: 4px; margin-bottom: 2px;"><span style="color: #f87171; font-size: 14px;">❌</span><span>$1</span></div>')
-            .replace(/^✨ (.*$)/gim, '<div style="display: flex; align-items: flex-start; gap: 4px; margin-bottom: 2px;"><span style="color: #facc15; font-size: 14px;">✨</span><span>$1</span></div>')
-            .replace(/\n\n\n+/g, '<div style="height: 12px;"></div>')
-            .replace(/\n\n/g, '<div style="height: 4px;"></div>')
-            .replace(/\n/g, '<br>')
-        }}
-      />
-    </div>
-  );
-};
-
-const handleDownloadPDF = async () => {
-  const { jsPDF } = await import('jspdf');
-  const doc = new jsPDF();
-
-  const margemEsq = 20;
-  const margemDir = 20;
-  const larguraPagina = 210;
-  const larguraTexto = larguraPagina - margemEsq - margemDir;
-  const pageH = doc.internal.pageSize.getHeight();
-  let y = 20;
-
-  const limparTexto = (texto) => {
-    return String(texto ?? "")
-      .replace(/[^\x00-\x7F]/g, "")
-      .replace(/\*\*(.*?)\*\*/g, '$1')
-      .replace(/^#{1,6}\s/gm, '')
-      .replace(/^[-•✨✅❌⚠️🔥💎🌟]/gm, '• ')
-      .replace(/\n\n+/g, '\n\n')
-      .replace(/&[a-zA-Z]+;/g, '')
-      .trim();
-  };
-
-  const adicionarTexto = (texto, tamanho = 11, cor = [0, 0, 0]) => {
-    doc.setFontSize(tamanho);
-    doc.setTextColor(...cor);
-
-    const textoLimpo = limparTexto(texto);
-    const linhas = doc.splitTextToSize(textoLimpo, larguraTexto);
-
-    linhas.forEach(linha => {
-      if (y > pageH - 20) {
-        doc.addPage();
-        y = 20;
-      }
-      doc.text(linha, margemEsq, y);
-      y += tamanho * 0.5;
-    });
-
-    y += 5;
-  };
-
-  // Título do PDF
-  doc.setFontSize(22);
-  doc.setTextColor(147, 51, 234);
-  doc.text('MANUAL DOS PODERES OCULTOS', larguraPagina / 2, y, { align: 'center' });
-
-  y += 10;
-  doc.setFontSize(16);
-  doc.text(`Exclusivo para ${analise.nome}`, larguraPagina / 2, y, { align: 'center' });
-
-  y += 8;
-  doc.setFontSize(12);
-  doc.setTextColor(100, 100, 100);
-  doc.text(`${analise.signo} | Numero ${analise.numero_vida}`, larguraPagina / 2, y, { align: 'center' });
-
-  y += 20;
-
-  // Adicionar cada seção do manual
-  const secoes = [
-    { titulo: 'INTRODUCAO', conteudo: manual.introducao?.conteudo || '' },
-    { titulo: 'PODERES OCULTOS', conteudo: manual.poderes_ocultos?.conteudo || '' },
-    { titulo: 'ARQUETIPOS DE PODER', conteudo: manual.arquetipos?.conteudo || '' },
-    { titulo: 'LINGUAGEM VIBRACIONAL', conteudo: manual.linguagem?.conteudo || '' },
-    { titulo: 'RITUAIS SAGRADOS', conteudo: manual.rituais?.conteudo || '' },
-    { titulo: 'BLOQUEIOS ENERGETICOS', conteudo: manual.bloqueios?.conteudo || '' },
-    { titulo: 'LIMPEZA ENERGETICA', conteudo: manual.limpeza?.conteudo || '' },
-    { titulo: 'SEXUALIDADE SAGRADA', conteudo: manual.sexualidade?.conteudo || '' },
-    { titulo: 'GEOMETRIA SAGRADA', conteudo: manual.geometria?.conteudo || '' },
-    { titulo: 'MAGNETISMO PESSOAL', conteudo: manual.magnetismo?.conteudo || '' },
-    { titulo: 'CALENDARIO LUNAR', conteudo: manual.calendario_lunar?.conteudo || '' },
-    { titulo: 'PLANO 90 DIAS', conteudo: manual.plano_90_dias?.conteudo || '' }
-  ];
-
-  secoes.forEach((secao, index) => {
-    if (!secao.conteudo) return;
-
-    if (index > 0) {
-      doc.addPage();
-      y = 20;
-    }
-
-    doc.setFontSize(16);
-    doc.setTextColor(147, 51, 234);
-    doc.text(secao.titulo, margemEsq, y);
-    y += 15;
-
-    adicionarTexto(secao.conteudo, 10, [50, 50, 50]);
-  });
-
-  doc.save(`Manual_Espiritual_${analise.nome.replace(/\s+/g, '_')}.pdf`);
-};
-
-  // Título
-  doc.setFontSize(22);
-  doc.setTextColor(147, 51, 234);
-  doc.text('MANUAL DOS PODERES OCULTOS', larguraPagina / 2, y, { align: 'center' });
-
-  y += 10;
-  doc.setFontSize(16);
-  doc.text(`Exclusivo para ${analise.nome}`, larguraPagina / 2, y, { align: 'center' });
-
-  y += 8;
-  doc.setFontSize(12);
-  doc.setTextColor(100, 100, 100);
-  doc.text(`${analise.signo} | Numero ${analise.numero_vida}`, larguraPagina / 2, y, { align: 'center' });
-
-  y += 20;
-
-  // Índice
-  doc.setFontSize(16);
-  doc.setTextColor(0, 0, 0);
-  doc.text('INDICE', margemEsq, y);
-  y += 10;
-
-  const indice = [
-    '1. Introducao Personalizada',
-    '2. O Que Sao os Poderes Ocultos',
-    '3. Arquetipos de Poder',
-    '4. Linguagem como Codigo Vibracional',
-    '5. Rituais Sagrados',
-    '6. Bloqueios Energeticos',
-    '7. Limpeza e Protecao',
-    '8. Sexualidade Sagrada',
-    '9. Geometria Sagrada',
-    '10. Magnetismo Pessoal',
-    '11. Calendario Lunar',
-    '12. Plano de 90 Dias'
-  ];
-
-  indice.forEach(item => {
-    if (y > pageH - 20) { doc.addPage(); y = 20; }
-    doc.setFontSize(11);
-    doc.text(item, margemEsq, y);
-    y += 6;
-  });
-
-  y += 10;
-
-  // Seções (dentro da função)
-  const secoes = [
-    { titulo: 'INTRODUCAO PERSONALIZADA', conteudo: manual.introducao?.conteudo || '' },
-    { titulo: 'O QUE SAO OS PODERES OCULTOS', conteudo: manual.poderes_ocultos?.conteudo || '' },
-    { titulo: 'ARQUETIPOS DE PODER', conteudo: manual.arquetipos?.conteudo || '' },
-    { titulo: 'LINGUAGEM COMO CODIGO VIBRACIONAL', conteudo: manual.linguagem?.conteudo || '' },
-    { titulo: 'RITUAIS SAGRADOS', conteudo: manual.rituais?.conteudo || '' },
-    { titulo: 'BLOQUEIOS ENERGETICOS', conteudo: manual.bloqueios?.conteudo || '' },
-    { titulo: 'LIMPEZA E PROTECAO', conteudo: manual.limpeza?.conteudo || '' },
-    { titulo: 'SEXUALIDADE SAGRADA', conteudo: manual.sexualidade?.conteudo || '' },
-    { titulo: 'GEOMETRIA SAGRADA', conteudo: manual.geometria?.conteudo || '' },
-    { titulo: 'MAGNETISMO PESSOAL', conteudo: manual.magnetismo?.conteudo || '' },
-    { titulo: 'CALENDARIO LUNAR', conteudo: manual.calendario_lunar?.conteudo || '' },
-    { titulo: 'PLANO DE 90 DIAS', conteudo: manual.plano_90_dias?.conteudo || '' }
-  ];
-
-  secoes.forEach((secao, index) => {
-    if (!secao.conteudo) return;
-
-    // nova página por seção (se quiser manter)
-    if (index > 0) {
-      doc.addPage();
-      y = 20;
-    }
-
-    doc.setFontSize(16);
-    doc.setTextColor(147, 51, 234);
-    doc.text(secao.titulo, margemEsq, y);
-    y += 15;
-
-    adicionarTexto(secao.conteudo, 10, [50, 50, 50]);
-
-    y += 10;
-  });
-
-  // Rodapé final
-  doc.addPage();
-  y = 100;
-  doc.setFontSize(16);
-  doc.setTextColor(147, 51, 234);
-  doc.text('TRANSFORMACAO COMPLETA', larguraPagina / 2, y, { align: 'center' });
-  y += 10;
-  doc.setFontSize(12);
-  doc.setTextColor(0, 0, 0);
-  doc.text(`Manual personalizado para ${analise.nome}`, larguraPagina / 2, y, { align: 'center' });
-  y += 8;
-  doc.text(`Gerado em ${new Date().toLocaleDateString('pt-BR')}`, larguraPagina / 2, y, { align: 'center' });
-
-  // Salvar
-  doc.save(`Manual_Espiritual_${analise.nome.replace(/\s+/g, '_')}.pdf`);
-}; 
-  
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-900 to-black text-white">
       <div className="container mx-auto px-4 py-12 max-w-5xl">
         
-        {/* Header */}
         <div className="text-center mb-16">
           <div className="mb-4">
             <Link href="/" className="text-purple-300 hover:text-purple-200 text-sm">
@@ -329,10 +221,8 @@ const handleDownloadPDF = async () => {
           </div>
         </div>
 
-        {/* Conteúdo */}
         <div className="space-y-16">
           
-          {/* Introdução */}
           <section className="bg-white/5 backdrop-blur-lg rounded-3xl p-8 md:p-12 border border-purple-500/20">
             <h2 className="text-4xl font-bold mb-8 text-purple-300">
               {manual.introducao.titulo}
@@ -340,7 +230,6 @@ const handleDownloadPDF = async () => {
             {renderSecao(manual.introducao)}
           </section>
 
-          {/* Poderes Ocultos */}
           <section className="bg-white/5 backdrop-blur-lg rounded-3xl p-8 md:p-12 border border-purple-500/20">
             <h2 className="text-4xl font-bold mb-8 text-purple-300">
               {manual.poderes_ocultos.titulo}
@@ -348,18 +237,13 @@ const handleDownloadPDF = async () => {
             {renderSecao(manual.poderes_ocultos)}
           </section>
 
-          {/* Arquétipos */}
           <section className="bg-gradient-to-r from-purple-900/40 to-pink-900/40 backdrop-blur-lg rounded-3xl p-8 md:p-12 border-2 border-purple-400/30">
             <h2 className="text-4xl font-bold mb-8 text-purple-200">
               {manual.arquetipos.titulo}
             </h2>
-            <h3 className="text-2xl font-bold mb-6 text-pink-300">
-              {manual.arquetipos.subtitulo}
-            </h3>
             {renderSecao(manual.arquetipos)}
           </section>
 
-          {/* Linguagem */}
           <section className="bg-white/5 backdrop-blur-lg rounded-3xl p-8 md:p-12 border border-purple-500/20">
             <h2 className="text-4xl font-bold mb-8 text-purple-300">
               {manual.linguagem.titulo}
@@ -367,7 +251,6 @@ const handleDownloadPDF = async () => {
             {renderSecao(manual.linguagem)}
           </section>
 
-          {/* Rituais */}
           <section className="bg-white/5 backdrop-blur-lg rounded-3xl p-8 md:p-12 border border-purple-500/20">
             <h2 className="text-4xl font-bold mb-8 text-purple-300">
               {manual.rituais.titulo}
@@ -375,7 +258,6 @@ const handleDownloadPDF = async () => {
             {renderSecao(manual.rituais)}
           </section>
 
-          {/* Bloqueios */}
           <section className="bg-white/5 backdrop-blur-lg rounded-3xl p-8 md:p-12 border border-purple-500/20">
             <h2 className="text-4xl font-bold mb-8 text-purple-300">
               {manual.bloqueios.titulo}
@@ -383,7 +265,6 @@ const handleDownloadPDF = async () => {
             {renderSecao(manual.bloqueios)}
           </section>
 
-          {/* Limpeza */}
           <section className="bg-white/5 backdrop-blur-lg rounded-3xl p-8 md:p-12 border border-purple-500/20">
             <h2 className="text-4xl font-bold mb-8 text-purple-300">
               {manual.limpeza.titulo}
@@ -391,7 +272,6 @@ const handleDownloadPDF = async () => {
             {renderSecao(manual.limpeza)}
           </section>
 
-          {/* Sexualidade */}
           <section className="bg-gradient-to-r from-red-900/20 to-pink-900/20 backdrop-blur-lg rounded-3xl p-8 md:p-12 border border-pink-500/20">
             <div className="bg-red-900/30 border border-red-500 text-red-200 px-6 py-4 rounded-lg mb-8">
               <strong>⚠️ CONTEÚDO ADULTO:</strong> Esta seção é para maiores de 18 anos.
@@ -402,7 +282,6 @@ const handleDownloadPDF = async () => {
             {renderSecao(manual.sexualidade)}
           </section>
 
-          {/* Geometria */}
           <section className="bg-white/5 backdrop-blur-lg rounded-3xl p-8 md:p-12 border border-purple-500/20">
             <h2 className="text-4xl font-bold mb-8 text-purple-300">
               {manual.geometria.titulo}
@@ -410,7 +289,6 @@ const handleDownloadPDF = async () => {
             {renderSecao(manual.geometria)}
           </section>
 
-          {/* Magnetismo */}
           <section className="bg-white/5 backdrop-blur-lg rounded-3xl p-8 md:p-12 border border-purple-500/20">
             <h2 className="text-4xl font-bold mb-8 text-purple-300">
               {manual.magnetismo.titulo}
@@ -418,7 +296,6 @@ const handleDownloadPDF = async () => {
             {renderSecao(manual.magnetismo)}
           </section>
 
-          {/* Calendário Lunar */}
           <section className="bg-white/5 backdrop-blur-lg rounded-3xl p-8 md:p-12 border border-purple-500/20">
             <h2 className="text-4xl font-bold mb-8 text-purple-300">
               {manual.calendario_lunar.titulo}
@@ -426,15 +303,13 @@ const handleDownloadPDF = async () => {
             {renderSecao(manual.calendario_lunar)}
           </section>
 
-          {/* Plano 90 Dias */}
           <section className="bg-gradient-to-r from-green-900/20 to-emerald-900/20 backdrop-blur-lg rounded-3xl p-8 md:p-12 border-2 border-green-400/30">
             <h2 className="text-4xl font-bold mb-8 text-green-300">
-              {manual.plano90dias}
+              {manual.plano_90_dias.titulo}
             </h2>
-            {renderSecao(manual.plano90dias)}
+            {renderSecao(manual.plano_90_dias)}
           </section>
 
-          {/* CTA Final */}
           <section className="text-center py-16 bg-gradient-to-r from-purple-600/30 to-pink-600/30 rounded-3xl border-2 border-purple-400/30">
             <h2 className="text-3xl font-bold mb-6">
               💎 Seu Manual Está Completo
@@ -445,12 +320,12 @@ const handleDownloadPDF = async () => {
             </p>
             
             <div className="space-y-4">
-             <button 
-  onClick={handleDownloadPDF}
-  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-4 px-8 rounded-full text-xl transition-all transform hover:scale-105 shadow-lg"
->
-  📥 Baixar PDF Completo
-</button>
+              <button 
+                onClick={handleDownloadPDF}
+                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-4 px-8 rounded-full text-xl transition-all transform hover:scale-105 shadow-lg"
+              >
+                📥 Baixar PDF Completo
+              </button>
               
               <p className="text-sm text-purple-300">
                 Salve para ler offline sempre que precisar
@@ -460,7 +335,6 @@ const handleDownloadPDF = async () => {
 
         </div>
 
-        {/* Footer */}
         <div className="text-center mt-16 pt-8 border-t border-purple-500/20">
           <p className="text-purple-300 mb-4">
             ✨ Que sua jornada seja iluminada, {analise.nome} ✨
