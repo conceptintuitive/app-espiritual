@@ -25,14 +25,12 @@ export async function POST(request) {
     return NextResponse.json({ error: err.message }, { status: 400 });
   }
 
-  // Quando o pagamento for confirmado
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
     const analiseId = session.metadata.analiseId;
 
-    console.log('💰 Pagamento confirmado para análise:', analiseId);
+    console.log('Pagamento confirmado para análise:', analiseId);
 
-    // Marcar no banco que a pessoa comprou
     const { error } = await supabase
       .from('analises')
       .update({ comprou_manual: true })
@@ -41,7 +39,7 @@ export async function POST(request) {
     if (error) {
       console.error('Erro ao atualizar banco:', error);
     } else {
-      console.log('✅ Banco atualizado! Manual desbloqueado.');
+      console.log('Manual desbloqueado automaticamente!');
     }
   }
 
