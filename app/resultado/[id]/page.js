@@ -82,109 +82,104 @@ export default function ResultadoPage() {
     );
   };
 
-  // ANTES da função handleDownloadPDF, adicione:
-console.log('Manual completo:', manual);
-console.log('Introdução length:', manual?.introducao?.conteudo?.length);
-console.log('Primeira seção conteúdo:', manual?.introducao?.conteudo?.substring(0, 500));
+  const handleDownloadPDF = async () => {
+    console.log('Iniciando download PDF...');
+    console.log('Manual object:', manual);
+    
+    const { jsPDF } = await import('jspdf');
+    const doc = new jsPDF();
 
-const handleDownloadPDF = async () => {
-  console.log('Iniciando download PDF...');
-  console.log('Manual object:', manual);
-  
-  const { jsPDF } = await import('jspdf');
-  const doc = new jsPDF();
+    let y = 20;
+    const pageHeight = 280;
+    const margin = 20;
+    const lineHeight = 4;
 
-  let y = 20;
-  const pageHeight = 280;
-  const margin = 20;
-  const lineHeight = 4;
-
-  // Função melhorada com quebras de parágrafo
-  const addText = (text, size = 9) => {
-    if (!text) return;
-    
-    console.log('Adicionando texto de tamanho:', text.length);
-    
-    doc.setFontSize(size);
-    
-    // Limpar e preservar quebras de parágrafo
-    const cleanText = text
-      .replace(/&[a-zA-Z0-9#]+;/g, '') // Remove entidades HTML
-      .replace(/<[^>]*>/g, '') // Remove HTML tags
-      .replace(/\*\*/g, '') // Remove markdown
-      .replace(/[^\x20-\x7E\u00C0-\u024F\u1E00-\u1EFF\n]/g, ''); // Manter caracteres legíveis + quebras de linha
-    
-    // Dividir em parágrafos primeiro
-    const paragrafos = cleanText.split(/\n\n+/); // Quebras duplas = parágrafos
-    
-    paragrafos.forEach(paragrafo => {
-      if (!paragrafo.trim()) return;
+    // Função melhorada com quebras de parágrafo
+    const addText = (text, size = 9) => {
+      if (!text) return;
       
-      // Quebrar cada parágrafo em linhas
-      const lines = doc.splitTextToSize(paragrafo.trim(), 170);
+      console.log('Adicionando texto de tamanho:', text.length);
       
-      for (let line of lines) {
-        if (y > pageHeight) {
-          doc.addPage();
-          y = 20;
+      doc.setFontSize(size);
+      
+      // Limpar e preservar quebras de parágrafo
+      const cleanText = text
+        .replace(/&[a-zA-Z0-9#]+;/g, '') // Remove entidades HTML
+        .replace(/<[^>]*>/g, '') // Remove HTML tags
+        .replace(/\*\*/g, '') // Remove markdown
+        .replace(/[^\x20-\x7E\u00C0-\u024F\u1E00-\u1EFF\n]/g, ''); // Manter caracteres legíveis + quebras de linha
+      
+      // Dividir em parágrafos primeiro
+      const paragrafos = cleanText.split(/\n\n+/); // Quebras duplas = parágrafos
+      
+      paragrafos.forEach(paragrafo => {
+        if (!paragrafo.trim()) return;
+        
+        // Quebrar cada parágrafo em linhas
+        const lines = doc.splitTextToSize(paragrafo.trim(), 170);
+        
+        for (let line of lines) {
+          if (y > pageHeight) {
+            doc.addPage();
+            y = 20;
+          }
+          
+          doc.text(line, margin, y);
+          y += lineHeight;
         }
         
-        doc.text(line, margin, y);
-        y += lineHeight;
-      }
+        y += 8; // Espaço entre parágrafos
+      });
       
-      y += 8; // Espaço entre parágrafos
-    });
-    
-    y += 12; // Espaço entre seções
-  };
+      y += 12; // Espaço entre seções
+    };
 
-  // Cabeçalho
-  doc.setFontSize(16);
-  doc.text('MANUAL DOS PODERES OCULTOS', 105, y, { align: 'center' });
-  y += 15;
-  
-  doc.setFontSize(12);
-  doc.text(`${analise.nome} - ${analise.signo} - Número ${analise.numero_vida}`, 105, y, { align: 'center' });
-  y += 20;
-
-  // Adicionar título para cada seção
-  const addSection = (title, content) => {
-    if (!content) return;
-    
-    // Adicionar título da seção
-    if (y > pageHeight - 30) {
-      doc.addPage();
-      y = 20;
-    }
+    // Cabeçalho
+    doc.setFontSize(16);
+    doc.text('MANUAL DOS PODERES OCULTOS', 105, y, { align: 'center' });
+    y += 15;
     
     doc.setFontSize(12);
-    doc.setTextColor(100, 50, 150); // Cor roxa para títulos
-    doc.text(title, margin, y);
-    y += 10;
+    doc.text(`${analise.nome} - ${analise.signo} - Número ${analise.numero_vida}`, 105, y, { align: 'center' });
+    y += 20;
+
+    // Adicionar título para cada seção
+    const addSection = (title, content) => {
+      if (!content) return;
+      
+      // Adicionar título da seção
+      if (y > pageHeight - 30) {
+        doc.addPage();
+        y = 20;
+      }
+      
+      doc.setFontSize(12);
+      doc.setTextColor(100, 50, 150); // Cor roxa para títulos
+      doc.text(title, margin, y);
+      y += 10;
+      
+      doc.setTextColor(0, 0, 0); // Voltar para preto
+      addText(content, 9);
+    };
+
+    // Todas as seções com títulos
+    addSection('INTRODUÇÃO', manual?.introducao?.conteudo);
+    addSection('PODERES OCULTOS', manual?.poderes_ocultos?.conteudo);
+    addSection('ARQUÉTIPOS DE PODER', manual?.arquetipos?.conteudo);
+    addSection('LINGUAGEM VIBRACIONAL', manual?.linguagem?.conteudo);
+    addSection('RITUAIS SAGRADOS', manual?.rituais?.conteudo);
+    addSection('BLOQUEIOS ENERGÉTICOS', manual?.bloqueios?.conteudo);
+    addSection('LIMPEZA ENERGÉTICA', manual?.limpeza?.conteudo);
+    addSection('SEXUALIDADE SAGRADA', manual?.sexualidade?.conteudo);
+    addSection('GEOMETRIA SAGRADA', manual?.geometria?.conteudo);
+    addSection('MAGNETISMO PESSOAL', manual?.magnetismo?.conteudo);
+    addSection('CALENDÁRIO LUNAR', manual?.calendario_lunar?.conteudo);
+    addSection('PLANO DE 90 DIAS', manual?.plano_90_dias?.conteudo);
+
+    console.log('PDF finalizado com', doc.internal.getNumberOfPages(), 'páginas');
     
-    doc.setTextColor(0, 0, 0); // Voltar para preto
-    addText(content, 9);
+    doc.save(`Manual_${analise.nome.replace(/\s+/g, '_')}.pdf`);
   };
-
-  // Todas as seções com títulos
-  addSection('INTRODUÇÃO', manual?.introducao?.conteudo);
-  addSection('PODERES OCULTOS', manual?.poderes_ocultos?.conteudo);
-  addSection('ARQUÉTIPOS DE PODER', manual?.arquetipos?.conteudo);
-  addSection('LINGUAGEM VIBRACIONAL', manual?.linguagem?.conteudo);
-  addSection('RITUAIS SAGRADOS', manual?.rituais?.conteudo);
-  addSection('BLOQUEIOS ENERGÉTICOS', manual?.bloqueios?.conteudo);
-  addSection('LIMPEZA ENERGÉTICA', manual?.limpeza?.conteudo);
-  addSection('SEXUALIDADE SAGRADA', manual?.sexualidade?.conteudo);
-  addSection('GEOMETRIA SAGRADA', manual?.geometria?.conteudo);
-  addSection('MAGNETISMO PESSOAL', manual?.magnetismo?.conteudo);
-  addSection('CALENDÁRIO LUNAR', manual?.calendario_lunar?.conteudo);
-  addSection('PLANO DE 90 DIAS', manual?.plano_90_dias?.conteudo);
-
-  console.log('PDF finalizado com', doc.internal.getNumberOfPages(), 'páginas');
-  
-  doc.save(`Manual_${analise.nome.replace(/\s+/g, '_')}.pdf`);
-};
 
   const handleComprarManual = async () => {
     setProcessandoPagamento(true);
@@ -326,11 +321,22 @@ const handleDownloadPDF = async () => {
                   </div>
 
                   <button 
-  onClick={handleDownloadPDF}
-  className="bg-gradient-to-r from-purple-600 to-pink-600..."
->
-  📥 Baixar PDF Completo
-</button>
+                    onClick={handleComprarManual}
+                    disabled={processandoPagamento}
+                    className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-4 px-8 rounded-full text-xl transition-all transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                  >
+                    {processandoPagamento ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Processando...
+                      </span>
+                    ) : (
+                      'Desbloquear Manual Completo'
+                    )}
+                  </button>
 
                   <p className="text-sm text-purple-300 mt-4">
                     Pagamento 100% seguro • Garantia de 7 dias
@@ -353,11 +359,11 @@ const handleDownloadPDF = async () => {
                   Seu Manual dos Poderes Ocultos foi desbloqueado com sucesso.
                 </p>
                 <button 
-  onClick={handleDownloadPDFComplete}
-  className="bg-gradient-to-r from-purple-600 to-pink-600..."
->
-  📥 Baixar PDF Completo
-</button>
+                  onClick={handleDownloadPDF}
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-3 px-6 rounded-full text-lg transition-all transform hover:scale-105 shadow-lg"
+                >
+                  📥 Baixar PDF Completo
+                </button>
               </div>
 
               {/* Seções do Manual */}
