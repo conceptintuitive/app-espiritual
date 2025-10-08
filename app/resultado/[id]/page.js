@@ -83,68 +83,121 @@ export default function ResultadoPage() {
   };
 
   const handleDownloadPDF = async () => {
-    const { jsPDF } = await import('jspdf');
-    const doc = new jsPDF();
+  const { jsPDF } = await import('jspdf');
+  const doc = new jsPDF();
 
-    doc.setFontSize(22);
-    doc.text('MANUAL DOS PODERES OCULTOS', 105, 30, { align: 'center' });
-    doc.setFontSize(16);
-    doc.text(`Exclusivo para ${analise.nome}`, 105, 50, { align: 'center' });
-    doc.setFontSize(12);
-    doc.text(`${analise.signo} | Numero ${analise.numero_vida}`, 105, 70, { align: 'center' });
+  const margemEsq = 20;
+  const margemDir = 20;
+  const larguraPagina = 210;
+  const larguraTexto = larguraPagina - margemEsq - margemDir;
+  const pageH = doc.internal.pageSize.getHeight();
+  let y = 20;
 
-    // Adicionar cada seção (versão simplificada)
-    let y = 90;
-    const secoes = [
-      manual.introducao,
-      manual.poderes_ocultos,
-      manual.arquetipos,
-      manual.linguagem,
-      manual.rituais,
-      manual.bloqueios,
-      manual.limpeza,
-      manual.sexualidade,
-      manual.geometria,
-      manual.magnetismo,
-      manual.calendario_lunar,
-      manual.plano_90_dias
-    ];
+  // Função para limpar e preparar texto
+  const limparTexto = (texto) => {
+    return String(texto ?? "")
+      .replace(/[^\x00-\x7F]/g, "") // Remove caracteres não-ASCII
+      .replace(/\*\*(.*?)\*\*/g, '$1') // Remove markdown bold
+      .replace(/^#{1,6}\s/gm, '') // Remove headers markdown
+      .replace(/^[-•✨✅❌⚠️🔥💎🌟]/gm, '• ') // Substitui emojis por bullets
+      .replace(/\n\n+/g, '\n\n') // Remove linhas extras
+      .replace(/&[a-zA-Z]+;/g, '') // Remove entidades HTML
+      .replace(/<[^>]*>/g, '') // Remove tags HTML
+      .trim();
+  };
 
-    secoes.forEach((secao, index) => {
-      if (!secao) return;
-      
-      if (y > 250) {
+  // Função para adicionar texto com quebra automática
+  const adicionarTexto = (texto, tamanho = 10, cor = [0, 0, 0]) => {
+    doc.setFontSize(tamanho);
+    doc.setTextColor(...cor);
+
+    const textoLimpo = limparTexto(texto);
+    const linhas = doc.splitTextToSize(textoLimpo, larguraTexto);
+
+    linhas.forEach(linha => {
+      if (y > pageH - 30) { // Margem inferior
         doc.addPage();
         y = 20;
       }
-      
-      doc.setFontSize(14);
-      doc.text(secao.titulo, 20, y);
-      y += 20;
-      
-      // Texto simples (sem formatação)
-      const texto = secao.conteudo
-        .replace(/[^\x00-\x7F]/g, "")
-        .replace(/\*\*(.*?)\*\*/g, '$1')
-        .replace(/^#{1,6}\s/gm, '')
-        .substring(0, 500) + '...';
-        
-      const lines = doc.splitTextToSize(texto, 170);
-      lines.slice(0, 8).forEach(line => {
-        if (y > 270) {
-          doc.addPage();
-          y = 20;
-        }
-        doc.setFontSize(10);
-        doc.text(line, 20, y);
-        y += 5;
-      });
-      
-      y += 10;
+      doc.text(linha, margemEsq, y);
+      y += tamanho * 0.6; // Espaçamento entre linhas
     });
 
-    doc.save(`Manual_Espiritual_${analise.nome.replace(/\s+/g, '_')}.pdf`);
+    y += 8; // Espaço após parágrafo
   };
+
+  // Cabeçalho do PDF
+  doc.setFontSize(20);
+  doc.setTextColor(147, 51, 234);
+  doc.text('MANUAL DOS PODERES OCULTOS', larguraPagina / 2, y, { align: 'center' });
+
+  y += 15;
+  doc.setFontSize(14);
+  doc.setTextColor(0, 0, 0);
+  doc.text(`Exclusivo para ${analise.nome}`, larguraPagina / 2, y, { align: 'center' });
+
+  y += 10;
+  doc.setFontSize(12);
+  doc.setTextColor(100, 100, 100);
+  doc.text(`${analise.signo} | Numero ${analise.numero_vida}`, larguraPagina / 2, y, { align: 'center' });
+
+  y += 20;
+
+  // Adicionar todas as seções completas
+  const secoes = [
+    { titulo: 'INTRODUCAO PERSONALIZADA', secao: manual.introducao },
+    { titulo: 'O QUE SAO OS PODERES OCULTOS', secao: manual.poderes_ocultos },
+    { titulo: 'ARQUETIPOS DE PODER', secao: manual.arquetipos },
+    { titulo: 'LINGUAGEM COMO CODIGO VIBRACIONAL', secao: manual.linguagem },
+    { titulo: 'RITUAIS SAGRADOS', secao: manual.rituais },
+    { titulo: 'BLOQUEIOS ENERGETICOS', secao: manual.bloqueios },
+    { titulo: 'LIMPEZA E PROTECAO ENERGETICA', secao: manual.limpeza },
+    { titulo: 'SEXUALIDADE SAGRADA', secao: manual.sexualidade },
+    { titulo: 'GEOMETRIA SAGRADA', secao: manual.geometria },
+    { titulo: 'MAGNETISMO PESSOAL', secao: manual.magnetismo },
+    { titulo: 'CALENDARIO LUNAR 2025', secao: manual.calendario_lunar },
+    { titulo: 'PLANO DE TRANSFORMACAO 90 DIAS', secao: manual.plano_90_dias }
+  ];
+
+  secoes.forEach((item, index) => {
+    if (!item.secao?.conteudo) return;
+
+    // Nova página para cada seção (exceto primeira)
+    if (index > 0) {
+      doc.addPage();
+      y = 20;
+    }
+
+    // Título da seção
+    doc.setFontSize(16);
+    doc.setTextColor(147, 51, 234);
+    doc.text(item.titulo, margemEsq, y);
+    y += 15;
+
+    // Conteúdo completo da seção
+    adicionarTexto(item.secao.conteudo, 10, [30, 30, 30]);
+
+    y += 10; // Espaço extra entre seções
+  });
+
+  // Página final
+  doc.addPage();
+  y = 100;
+  doc.setFontSize(16);
+  doc.setTextColor(147, 51, 234);
+  doc.text('TRANSFORMACAO COMPLETA', larguraPagina / 2, y, { align: 'center' });
+  
+  y += 15;
+  doc.setFontSize(12);
+  doc.setTextColor(0, 0, 0);
+  doc.text(`Manual personalizado para ${analise.nome}`, larguraPagina / 2, y, { align: 'center' });
+  
+  y += 10;
+  doc.text(`Gerado em ${new Date().toLocaleDateString('pt-BR')}`, larguraPagina / 2, y, { align: 'center' });
+
+  // Salvar PDF
+  doc.save(`Manual_Completo_${analise.nome.replace(/\s+/g, '_')}.pdf`);
+};
 
   const handleComprarManual = async () => {
     setProcessandoPagamento(true);
