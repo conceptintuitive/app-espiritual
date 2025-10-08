@@ -364,11 +364,11 @@ const handleDownloadPDF = async () => {
                   Seu Manual dos Poderes Ocultos foi desbloqueado com sucesso.
                 </p>
                 <button 
-                  onClick={handleDownloadPDF}
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-3 px-6 rounded-full text-lg transition-all transform hover:scale-105 shadow-lg"
-                >
-                  📥 Baixar PDF Completo
-                </button>
+  onClick={handleDownloadPDFComplete}
+  className="bg-gradient-to-r from-purple-600 to-pink-600..."
+>
+  📥 Baixar PDF Completo
+</button>
               </div>
 
               {/* Seções do Manual */}
