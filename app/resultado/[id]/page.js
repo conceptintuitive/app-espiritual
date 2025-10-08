@@ -81,7 +81,7 @@ export default function ResultadoPage() {
       </div>
     );
   };
-  
+
   // ANTES da função handleDownloadPDF, adicione:
 console.log('Manual completo:', manual);
 console.log('Introdução length:', manual?.introducao?.conteudo?.length);
@@ -92,97 +92,115 @@ console.log('Primeira seção conteúdo:', manual?.introducao?.conteudo?.substri
   const doc = new jsPDF();
 
   let y = 20;
-  const pageWidth = 210;
   const pageHeight = 297;
   const margin = 15;
-  const textWidth = pageWidth - (margin * 2);
+  const textWidth = 180;
 
-  // Função que adiciona texto forçando quebra de página
-  const addTextToPDF = (text, fontSize = 9, color = [0, 0, 0]) => {
-    doc.setFontSize(fontSize);
-    doc.setTextColor(...color);
+  // Função que força adicionar TUDO
+  const forceAddText = (text) => {
+    if (!text || text.length < 10) return;
     
-    // Limpar texto mantendo quebras de linha importantes
-    const cleanText = text
-      .replace(/<[^>]*>/g, '') // Remove HTML
-      .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold markdown
-      .replace(/#{1,6}\s/g, '') // Remove headers
-      .trim();
+    // Limpar apenas o essencial
+    const cleaned = text
+      .replace(/<[^>]*>/g, '')
+      .replace(/\*\*/g, '')
+      .replace(/#{1,6}\s*/g, '');
 
-    // Dividir em linhas que cabem na largura
-    const lines = doc.splitTextToSize(cleanText, textWidth);
+    doc.setFontSize(8);
+    doc.setTextColor(0, 0, 0);
     
-    // Adicionar cada linha, criando nova página quando necessário
-    for (let i = 0; i < lines.length; i++) {
-      if (y > pageHeight - 30) {
+    // Quebrar em linhas pequenas para forçar mais conteúdo
+    const words = cleaned.split(' ');
+    let currentLine = '';
+    
+    for (let word of words) {
+      const testLine = currentLine + word + ' ';
+      const lineWidth = doc.getTextWidth(testLine);
+      
+      if (lineWidth > textWidth && currentLine.length > 0) {
+        // Linha está cheia, adicionar à página
+        if (y > pageHeight - 20) {
+          doc.addPage();
+          y = 20;
+        }
+        
+        doc.text(currentLine.trim(), margin, y);
+        y += 3.5;
+        currentLine = word + ' ';
+      } else {
+        currentLine = testLine;
+      }
+    }
+    
+    // Adicionar última linha
+    if (currentLine.trim()) {
+      if (y > pageHeight - 20) {
         doc.addPage();
         y = 20;
       }
-      
-      doc.text(lines[i], margin, y);
-      y += fontSize * 0.6; // Espaçamento proporcional ao tamanho da fonte
+      doc.text(currentLine.trim(), margin, y);
+      y += 3.5;
     }
     
-    y += 5; // Espaço extra após cada bloco
+    y += 8; // Espaço entre seções
   };
 
   // Cabeçalho
-  doc.setFontSize(18);
-  doc.setTextColor(100, 50, 150);
-  doc.text('MANUAL DOS PODERES OCULTOS', pageWidth / 2, y, { align: 'center' });
+  doc.setFontSize(14);
+  doc.text('MANUAL DOS PODERES OCULTOS', 105, y, { align: 'center' });
+  y += 10;
+  doc.setFontSize(10);
+  doc.text(`${analise.nome} - ${analise.signo} - Número ${analise.numero_vida}`, 105, y, { align: 'center' });
   y += 15;
 
-  doc.setFontSize(14);
-  doc.setTextColor(0, 0, 0);
-  doc.text(`Para: ${analise.nome}`, pageWidth / 2, y, { align: 'center' });
-  y += 10;
-
-  doc.text(`${analise.signo} - Número ${analise.numero_vida}`, pageWidth / 2, y, { align: 'center' });
-  y += 20;
-
-  // FORÇAR captura de TODO o conteúdo das seções
-  const secaoCompleta = [
-    ['INTRODUÇÃO', manual?.introducao?.conteudo],
-    ['PODERES OCULTOS', manual?.poderes_ocultos?.conteudo], 
-    ['ARQUÉTIPOS', manual?.arquetipos?.conteudo],
-    ['LINGUAGEM VIBRACIONAL', manual?.linguagem?.conteudo],
-    ['RITUAIS SAGRADOS', manual?.rituais?.conteudo],
-    ['BLOQUEIOS', manual?.bloqueios?.conteudo],
-    ['LIMPEZA ENERGÉTICA', manual?.limpeza?.conteudo],
-    ['SEXUALIDADE SAGRADA', manual?.sexualidade?.conteudo],
-    ['GEOMETRIA SAGRADA', manual?.geometria?.conteudo],
-    ['MAGNETISMO', manual?.magnetismo?.conteudo],
-    ['CALENDÁRIO LUNAR', manual?.calendario_lunar?.conteudo],
-    ['PLANO 90 DIAS', manual?.plano_90_dias?.conteudo]
-  ];
-
-  // Adicionar cada seção COMPLETA
-  secaoCompleta.forEach(([titulo, conteudo]) => {
-    if (!conteudo) return;
-
-    // Título da seção
-    if (y > pageHeight - 50) {
-      doc.addPage();
-      y = 20;
-    }
-
-    doc.setFontSize(12);
-    doc.setTextColor(100, 50, 150);
-    doc.text(titulo, margin, y);
-    y += 12;
-
-    // TODO o conteúdo da seção
-    addTextToPDF(conteudo, 8, [30, 30, 30]);
+  // CAPTURAR TODO O CONTEÚDO DO DOM - estratégia alternativa
+  // Se o manual não tem conteúdo completo, vamos pegar direto do HTML renderizado
+  const sections = document.querySelectorAll('section');
+  let totalContent = '';
+  
+  sections.forEach(section => {
+    const heading = section.querySelector('h2');
+    const content = section.querySelector('.prose, div[style*="font-size"]');
     
-    // Espaço entre seções
-    y += 15;
+    if (heading && content) {
+      const title = heading.textContent || '';
+      const text = content.textContent || content.innerText || '';
+      
+      if (text.length > 50) { // Só incluir se tem conteúdo substancial
+        totalContent += `\n\n=== ${title.toUpperCase()} ===\n\n${text}\n\n`;
+      }
+    }
   });
 
-  // Se ainda está com poucas páginas, vamos debugar
-  console.log('Total de páginas geradas:', doc.internal.getNumberOfPages());
-  console.log('Conteúdo do manual:', manual);
-  
-  // Salvar
+  // Se capturou do DOM, usar isso
+  if (totalContent.length > 1000) {
+    console.log('Usando conteúdo do DOM, total:', totalContent.length);
+    forceAddText(totalContent);
+  } else {
+    // Fallback: usar o manual object
+    console.log('Usando manual object');
+    
+    const allSections = [
+      manual?.introducao?.conteudo,
+      manual?.poderes_ocultos?.conteudo,
+      manual?.arquetipos?.conteudo,
+      manual?.linguagem?.conteudo,
+      manual?.rituais?.conteudo,
+      manual?.bloqueios?.conteudo,
+      manual?.limpeza?.conteudo,
+      manual?.sexualidade?.conteudo,
+      manual?.geometria?.conteudo,
+      manual?.magnetismo?.conteudo,
+      manual?.calendario_lunar?.conteudo,
+      manual?.plano_90_dias?.conteudo
+    ].filter(Boolean);
+
+    allSections.forEach(content => {
+      forceAddText(content);
+    });
+  }
+
+  console.log('Páginas geradas:', doc.internal.getNumberOfPages());
   doc.save(`Manual_${analise.nome.replace(/\s+/g, '_')}.pdf`);
 };
 
