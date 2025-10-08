@@ -86,109 +86,146 @@ export default function ResultadoPage() {
   const { jsPDF } = await import('jspdf');
   const doc = new jsPDF();
 
-  const margemEsq = 20;
-  const margemDir = 20;
+  const margemEsq = 15;
+  const margemDir = 15;
   const larguraPagina = 210;
   const larguraTexto = larguraPagina - margemEsq - margemDir;
   const pageH = doc.internal.pageSize.getHeight();
   let y = 20;
 
-  // Função melhorada para limpar texto SEM remover acentos
+  // Função simplificada que mantém mais conteúdo
   const limparTexto = (texto) => {
-    return String(texto ?? "")
-      .replace(/<[^>]*>/g, '') // Remove tags HTML
-      .replace(/\*\*(.*?)\*\*/g, '$1') // Remove markdown bold
-      .replace(/^#{1,6}\s/gm, '') // Remove headers markdown
-      .replace(/^[-•✨✅❌⚠️🔥💎🌟🌙]/gm, '• ') // Substitui emojis por bullets
-      .replace(/&nbsp;/g, ' ') // Replace non-breaking spaces
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'")
-      .replace(/\n\n\n+/g, '\n\n') // Remove linhas extras
+    if (!texto) return '';
+    return String(texto)
+      .replace(/<[^>]*>/g, '') // Remove HTML tags
+      .replace(/\*\*(.*?)\*\*/g, '$1') // Remove **bold**
+      .replace(/^#{1,6}\s/gm, '') // Remove markdown headers
+      .replace(/\n{3,}/g, '\n\n') // Max 2 line breaks
       .trim();
   };
 
-  // Função para adicionar texto com quebra automática
-  const adicionarTexto = (texto, tamanho = 10, cor = [0, 0, 0], isTitulo = false) => {
+  // Função que adiciona texto SEM cortar
+  const adicionarTextoCompleto = (texto, tamanho = 9) => {
+    if (!texto) return;
+    
     doc.setFontSize(tamanho);
-    doc.setTextColor(...cor);
+    doc.setTextColor(30, 30, 30);
 
     const textoLimpo = limparTexto(texto);
     
-    // Quebrar em parágrafos primeiro
+    // Dividir em parágrafos
     const paragrafos = textoLimpo.split('\n\n');
     
     paragrafos.forEach(paragrafo => {
       if (!paragrafo.trim()) return;
       
+      // Quebrar cada parágrafo em linhas que cabem na página
       const linhas = doc.splitTextToSize(paragrafo.trim(), larguraTexto);
       
       linhas.forEach(linha => {
-        if (y > pageH - 30) {
+        // Se não cabe na página, criar nova
+        if (y > pageH - 25) {
           doc.addPage();
           y = 20;
         }
+        
         doc.text(linha, margemEsq, y);
-        y += tamanho * 0.7;
+        y += 4; // Espaçamento menor entre linhas
       });
       
-      y += isTitulo ? 8 : 5; // Mais espaço após títulos
+      y += 3; // Pequeno espaço entre parágrafos
     });
-
-    y += 8; // Espaço após seção
   };
 
   // Cabeçalho
-  doc.setFontSize(18);
+  doc.setFontSize(16);
   doc.setTextColor(147, 51, 234);
   doc.text('MANUAL DOS PODERES OCULTOS', larguraPagina / 2, y, { align: 'center' });
-
-  y += 12;
-  doc.setFontSize(14);
+  y += 10;
+  
+  doc.setFontSize(12);
   doc.setTextColor(0, 0, 0);
   doc.text(`Exclusivo para ${analise.nome}`, larguraPagina / 2, y, { align: 'center' });
-
   y += 8;
-  doc.setFontSize(12);
+  
   doc.text(`${analise.signo} | Número ${analise.numero_vida}`, larguraPagina / 2, y, { align: 'center' });
+  y += 15;
 
-  y += 20;
+  // Log para debug - ver o que está sendo capturado
+  console.log('Manual objeto:', manual);
+  console.log('Introdução conteúdo length:', manual?.introducao?.conteudo?.length);
 
-  // Seções do manual
-  const secoes = [
-    { titulo: 'INTRODUÇÃO PERSONALIZADA', secao: manual.introducao },
-    { titulo: 'O QUE SÃO OS PODERES OCULTOS', secao: manual.poderes_ocultos },
-    { titulo: 'ARQUÉTIPOS DE PODER', secao: manual.arquetipos },
-    { titulo: 'LINGUAGEM COMO CÓDIGO VIBRACIONAL', secao: manual.linguagem },
-    { titulo: 'RITUAIS SAGRADOS', secao: manual.rituais },
-    { titulo: 'BLOQUEIOS ENERGÉTICOS', secao: manual.bloqueios },
-    { titulo: 'LIMPEZA E PROTEÇÃO ENERGÉTICA', secao: manual.limpeza },
-    { titulo: 'SEXUALIDADE SAGRADA', secao: manual.sexualidade },
-    { titulo: 'GEOMETRIA SAGRADA', secao: manual.geometria },
-    { titulo: 'MAGNETISMO PESSOAL', secao: manual.magnetismo },
-    { titulo: 'CALENDÁRIO LUNAR 2025', secao: manual.calendario_lunar },
-    { titulo: 'PLANO DE 90 DIAS', secao: manual.plano_90_dias }
+  // Array com TODAS as seções e seus conteúdos completos
+  const todasSecoes = [
+    {
+      titulo: 'INTRODUÇÃO',
+      conteudo: manual?.introducao?.conteudo || 'Conteúdo não encontrado'
+    },
+    {
+      titulo: 'PODERES OCULTOS', 
+      conteudo: manual?.poderes_ocultos?.conteudo || 'Conteúdo não encontrado'
+    },
+    {
+      titulo: 'ARQUÉTIPOS DE PODER',
+      conteudo: manual?.arquetipos?.conteudo || 'Conteúdo não encontrado'
+    },
+    {
+      titulo: 'LINGUAGEM VIBRACIONAL',
+      conteudo: manual?.linguagem?.conteudo || 'Conteúdo não encontrado'
+    },
+    {
+      titulo: 'RITUAIS SAGRADOS',
+      conteudo: manual?.rituais?.conteudo || 'Conteúdo não encontrado'
+    },
+    {
+      titulo: 'BLOQUEIOS ENERGÉTICOS',
+      conteudo: manual?.bloqueios?.conteudo || 'Conteúdo não encontrado'
+    },
+    {
+      titulo: 'LIMPEZA ENERGÉTICA',
+      conteudo: manual?.limpeza?.conteudo || 'Conteúdo não encontrado'
+    },
+    {
+      titulo: 'SEXUALIDADE SAGRADA',
+      conteudo: manual?.sexualidade?.conteudo || 'Conteúdo não encontrado'
+    },
+    {
+      titulo: 'GEOMETRIA SAGRADA',
+      conteudo: manual?.geometria?.conteudo || 'Conteúdo não encontrado'
+    },
+    {
+      titulo: 'MAGNETISMO PESSOAL',
+      conteudo: manual?.magnetismo?.conteudo || 'Conteúdo não encontrado'
+    },
+    {
+      titulo: 'CALENDÁRIO LUNAR',
+      conteudo: manual?.calendario_lunar?.conteudo || 'Conteúdo não encontrado'
+    },
+    {
+      titulo: 'PLANO 90 DIAS',
+      conteudo: manual?.plano_90_dias?.conteudo || 'Conteúdo não encontrado'
+    }
   ];
 
-  secoes.forEach((item, index) => {
-    if (!item.secao?.conteudo) return;
-
-    // Nova página para cada seção
-    if (y > pageH - 100 || index > 0) {
+  // Adicionar cada seção COMPLETA
+  todasSecoes.forEach((secao, index) => {
+    console.log(`Seção ${secao.titulo} - Tamanho: ${secao.conteudo.length} caracteres`);
+    
+    // Título da seção
+    if (y > pageH - 40) {
       doc.addPage();
       y = 20;
     }
-
-    // Título da seção
-    doc.setFontSize(14);
+    
+    doc.setFontSize(12);
     doc.setTextColor(147, 51, 234);
-    doc.text(item.titulo, margemEsq, y);
-    y += 15;
+    doc.text(secao.titulo, margemEsq, y);
+    y += 8;
 
-    // Conteúdo da seção
-    adicionarTexto(item.secao.conteudo, 9, [30, 30, 30]);
+    // Conteúdo COMPLETO da seção
+    adicionarTextoCompleto(secao.conteudo, 8);
+    
+    y += 10; // Espaço entre seções
   });
 
   // Salvar
