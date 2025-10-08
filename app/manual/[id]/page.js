@@ -85,23 +85,32 @@ export default function ManualPage() {
   if (!secao) return null;
 
   return (
-    <div className="prose prose-invert prose-lg max-w-none">
+    <div className="max-w-none">
       <div 
-        className="whitespace-pre-wrap leading-relaxed"
+        className="text-lg leading-relaxed"
+        style={{ lineHeight: '1.5' }}
         dangerouslySetInnerHTML={{ 
           __html: secao.conteudo
             .replace(/\*\*(.*?)\*\*/g, '<strong class="text-purple-300">$1</strong>')
-            .replace(/^### (.*$)/gim, '<h3 class="text-2xl font-bold text-purple-300 mt-8 mb-4">$1</h3>')
-            .replace(/^## (.*$)/gim, '<h2 class="text-3xl font-bold text-purple-200 mt-12 mb-6">$1</h2>')
-            .replace(/^# (.*$)/gim, '<h1 class="text-4xl font-bold text-purple-100 mt-16 mb-8">$1</h1>')
-            .replace(/^- (.*$)/gim, '<li class="ml-6 my-1">$1</li>')
-            .replace(/^✅ (.*$)/gim, '<div class="flex items-start gap-2 my-1"><span class="text-green-400">✅</span><span>$1</span></div>')
-            .replace(/^❌ (.*$)/gim, '<div class="flex items-start gap-2 my-1"><span class="text-red-400">❌</span><span>$1</span></div>')
-            .replace(/^✨ (.*$)/gim, '<div class="flex items-start gap-2 my-1"><span class="text-yellow-400">✨</span><span>$1</span></div>')
-            .replace(/\n\n\n+/g, '</p><div class="my-6"></div><p class="my-2">')
-            .replace(/\n\n/g, '</p><p class="my-2">')
-            .replace(/^(?!<[^>]*>)(.+)$/gm, '<p class="my-2">$1</p>')
+            .replace(/^### (.*$)/gim, '<h3 class="text-xl font-bold text-purple-300 mt-4 mb-2">$1</h3>')
+            .replace(/^## (.*$)/gim, '<h2 class="text-2xl font-bold text-purple-200 mt-6 mb-3">$1</h2>')
+            .replace(/^# (.*$)/gim, '<h1 class="text-3xl font-bold text-purple-100 mt-8 mb-4">$1</h1>')
+            .replace(/^- (.*$)/gim, '<div class="ml-4 mb-0.5">• $1</div>')
+            .replace(/^✅ (.*$)/gim, '<div class="flex items-start gap-1 mb-0.5"><span class="text-green-400 text-sm">✅</span><span>$1</span></div>')
+            .replace(/^❌ (.*$)/gim, '<div class="flex items-start gap-1 mb-0.5"><span class="text-red-400 text-sm">❌</span><span>$1</span></div>')
+            .replace(/^✨ (.*$)/gim, '<div class="flex items-start gap-1 mb-0.5"><span class="text-yellow-400 text-sm">✨</span><span>$1</span></div>')
+            .replace(/\n\n\n+/g, '<div class="h-3"></div>')
+            .replace(/\n\n/g, '<div class="h-1"></div>')
+            .replace(/\n/g, '<br>')
         }}
+      />
+    </div>
+  );
+};
+      />
+    </div>
+  );
+};
       />
     </div>
   );
