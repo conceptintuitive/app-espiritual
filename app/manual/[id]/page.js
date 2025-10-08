@@ -80,8 +80,7 @@ export default function ManualPage() {
       </div>
     );
   }
-
-  const renderSecao = (secao) => {
+const renderSecao = (secao) => {
   if (!secao) return null;
 
   return (
@@ -110,31 +109,29 @@ export default function ManualPage() {
     </div>
   );
 };
+
 const handleDownloadPDF = async () => {
   const { jsPDF } = await import('jspdf');
   const doc = new jsPDF();
 
-  // Configurações
   const margemEsq = 20;
   const margemDir = 20;
   const larguraPagina = 210;
   const larguraTexto = larguraPagina - margemEsq - margemDir;
-  const pageH = doc.internal.pageSize.getHeight(); // ← usar altura real
+  const pageH = doc.internal.pageSize.getHeight();
   let y = 20;
 
-  // Função para limpar texto
   const limparTexto = (texto) => {
     return String(texto ?? "")
-      .replace(/[^\x00-\x7F]/g, "")      // remove não-ASCII
-      .replace(/\*\*(.*?)\*\*/g, '$1')   // remove **bold**
-      .replace(/^#{1,6}\s/gm, '')        // remove headers MD
+      .replace(/[^\x00-\x7F]/g, "")
+      .replace(/\*\*(.*?)\*\*/g, '$1')
+      .replace(/^#{1,6}\s/gm, '')
       .replace(/^[-•✨✅❌⚠️🔥💎🌟]/gm, '• ')
       .replace(/\n\n+/g, '\n\n')
       .replace(/&[a-zA-Z]+;/g, '')
       .trim();
   };
 
-  // Função para adicionar texto com quebra
   const adicionarTexto = (texto, tamanho = 11, cor = [0, 0, 0]) => {
     doc.setFontSize(tamanho);
     doc.setTextColor(...cor);
@@ -143,7 +140,7 @@ const handleDownloadPDF = async () => {
     const linhas = doc.splitTextToSize(textoLimpo, larguraTexto);
 
     linhas.forEach(linha => {
-      if (y > pageH - 20) { // ← em vez de 270
+      if (y > pageH - 20) {
         doc.addPage();
         y = 20;
       }
@@ -153,6 +150,57 @@ const handleDownloadPDF = async () => {
 
     y += 5;
   };
+
+  // Título do PDF
+  doc.setFontSize(22);
+  doc.setTextColor(147, 51, 234);
+  doc.text('MANUAL DOS PODERES OCULTOS', larguraPagina / 2, y, { align: 'center' });
+
+  y += 10;
+  doc.setFontSize(16);
+  doc.text(`Exclusivo para ${analise.nome}`, larguraPagina / 2, y, { align: 'center' });
+
+  y += 8;
+  doc.setFontSize(12);
+  doc.setTextColor(100, 100, 100);
+  doc.text(`${analise.signo} | Numero ${analise.numero_vida}`, larguraPagina / 2, y, { align: 'center' });
+
+  y += 20;
+
+  // Adicionar cada seção do manual
+  const secoes = [
+    { titulo: 'INTRODUCAO', conteudo: manual.introducao?.conteudo || '' },
+    { titulo: 'PODERES OCULTOS', conteudo: manual.poderes_ocultos?.conteudo || '' },
+    { titulo: 'ARQUETIPOS DE PODER', conteudo: manual.arquetipos?.conteudo || '' },
+    { titulo: 'LINGUAGEM VIBRACIONAL', conteudo: manual.linguagem?.conteudo || '' },
+    { titulo: 'RITUAIS SAGRADOS', conteudo: manual.rituais?.conteudo || '' },
+    { titulo: 'BLOQUEIOS ENERGETICOS', conteudo: manual.bloqueios?.conteudo || '' },
+    { titulo: 'LIMPEZA ENERGETICA', conteudo: manual.limpeza?.conteudo || '' },
+    { titulo: 'SEXUALIDADE SAGRADA', conteudo: manual.sexualidade?.conteudo || '' },
+    { titulo: 'GEOMETRIA SAGRADA', conteudo: manual.geometria?.conteudo || '' },
+    { titulo: 'MAGNETISMO PESSOAL', conteudo: manual.magnetismo?.conteudo || '' },
+    { titulo: 'CALENDARIO LUNAR', conteudo: manual.calendario_lunar?.conteudo || '' },
+    { titulo: 'PLANO 90 DIAS', conteudo: manual.plano_90_dias?.conteudo || '' }
+  ];
+
+  secoes.forEach((secao, index) => {
+    if (!secao.conteudo) return;
+
+    if (index > 0) {
+      doc.addPage();
+      y = 20;
+    }
+
+    doc.setFontSize(16);
+    doc.setTextColor(147, 51, 234);
+    doc.text(secao.titulo, margemEsq, y);
+    y += 15;
+
+    adicionarTexto(secao.conteudo, 10, [50, 50, 50]);
+  });
+
+  doc.save(`Manual_Espiritual_${analise.nome.replace(/\s+/g, '_')}.pdf`);
+};
 
   // Título
   doc.setFontSize(22);
