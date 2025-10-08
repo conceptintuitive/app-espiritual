@@ -82,25 +82,30 @@ export default function ManualPage() {
   }
 
   const renderSecao = (secao) => {
-    if (!secao) return null;
+  if (!secao) return null;
 
-    return (
-      <div className="prose prose-invert prose-lg max-w-none">
-        <div 
-          className="whitespace-pre-wrap leading-relaxed"
-          dangerouslySetInnerHTML={{ 
-            __html: secao.conteudo
-              .replace(/\*\*(.*?)\*\*/g, '<strong class="text-purple-300">$1</strong>')
-              .replace(/^### (.*$)/gim, '<h3 class="text-2xl font-bold text-purple-300 mt-8 mb-4">$1</h3>')
-              .replace(/^## (.*$)/gim, '<h2 class="text-3xl font-bold text-purple-200 mt-12 mb-6">$1</h2>')
-              .replace(/^# (.*$)/gim, '<h1 class="text-4xl font-bold text-purple-100 mt-16 mb-8">$1</h1>')
-              .replace(/^- (.*$)/gim, '<li class="ml-6 my-2">$1</li>')
-              .replace(/^✅ (.*$)/gim, '<div class="flex items-start gap-2 my-2"><span class="text-green-400">✅</span><span>$1</span></div>')
-              .replace(/^❌ (.*$)/gim, '<div class="flex items-start gap-2 my-2"><span class="text-red-400">❌</span><span>$1</span></div>')
-              .replace(/^✨ (.*$)/gim, '<div class="flex items-start gap-2 my-2"><span class="text-yellow-400">✨</span><span>$1</span></div>')
-              .replace(/\n\n/g, '</p><p class="my-4">')
-              .replace(/^(.+)$/gm, '<p class="my-4">$1</p>')
-          }}
+  return (
+    <div className="prose prose-invert prose-lg max-w-none">
+      <div 
+        className="whitespace-pre-wrap leading-relaxed"
+        dangerouslySetInnerHTML={{ 
+          __html: secao.conteudo
+            .replace(/\*\*(.*?)\*\*/g, '<strong class="text-purple-300">$1</strong>')
+            .replace(/^### (.*$)/gim, '<h3 class="text-2xl font-bold text-purple-300 mt-8 mb-4">$1</h3>')
+            .replace(/^## (.*$)/gim, '<h2 class="text-3xl font-bold text-purple-200 mt-12 mb-6">$1</h2>')
+            .replace(/^# (.*$)/gim, '<h1 class="text-4xl font-bold text-purple-100 mt-16 mb-8">$1</h1>')
+            .replace(/^- (.*$)/gim, '<li class="ml-6 my-1">$1</li>')
+            .replace(/^✅ (.*$)/gim, '<div class="flex items-start gap-2 my-1"><span class="text-green-400">✅</span><span>$1</span></div>')
+            .replace(/^❌ (.*$)/gim, '<div class="flex items-start gap-2 my-1"><span class="text-red-400">❌</span><span>$1</span></div>')
+            .replace(/^✨ (.*$)/gim, '<div class="flex items-start gap-2 my-1"><span class="text-yellow-400">✨</span><span>$1</span></div>')
+            .replace(/\n\n\n+/g, '</p><div class="my-6"></div><p class="my-2">')
+            .replace(/\n\n/g, '</p><p class="my-2">')
+            .replace(/^(?!<[^>]*>)(.+)$/gm, '<p class="my-2">$1</p>')
+        }}
+      />
+    </div>
+  );
+};
         />
       </div>
     );
