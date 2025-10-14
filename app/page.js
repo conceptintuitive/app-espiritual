@@ -63,10 +63,10 @@ export default function Home() {
       <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-12">
           <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-  ✨ Descubra Seu Mapa Espiritual v2
+  ✨ Descubra Seu Mapa Espiritual ✨
           </h1>
           <p className="text-xl text-purple-200">
-            Descubra os segredos da sua alma através da Numerologia e Astrologia
+            Descubra os segredos da sua alma através da Numerologia, Astrologia, e Neurociência
           </p>
         </div>
 
