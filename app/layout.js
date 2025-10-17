@@ -19,7 +19,6 @@ export const metadata = {
   creator: 'Manual dos Poderes Ocultos',
   publisher: 'Manual dos Poderes Ocultos',
   
-  // Open Graph (Facebook, WhatsApp, LinkedIn)
   openGraph: {
     title: 'Manual dos Poderes Ocultos | Descubra Seu Mapa Espiritual',
     description: 'Análise completa de Numerologia + Astrologia + Previsões personalizadas. Descubra os segredos da sua alma.',
@@ -37,7 +36,6 @@ export const metadata = {
     type: 'website',
   },
 
-  // Twitter
   twitter: {
     card: 'summary_large_image',
     title: 'Manual dos Poderes Ocultos',
@@ -45,13 +43,11 @@ export const metadata = {
     images: ['https://app-espiritual-psi.vercel.app/og-image.jpg'],
   },
 
-  // Ícones
   icons: {
     icon: '/favicon.ico',
     apple: '/apple-touch-icon.png',
   },
 
-  // Robots
   robots: {
     index: true,
     follow: true,
@@ -64,7 +60,6 @@ export const metadata = {
     },
   },
 
-  // Canonical
   alternates: {
     canonical: 'https://app-espiritual-psi.vercel.app',
   },
@@ -74,6 +69,22 @@ export default function RootLayout({ children }) {
   return (
     <html lang="pt-BR">
       <head>
+        {/* Google Analytics - Tag (gtag.js) */}
+        <script
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=G-4YT1QFSD1P"
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-4YT1QFSD1P');
+            `,
+          }}
+        />
+
         {/* Schema.org JSON-LD */}
         <script
           type="application/ld+json"
