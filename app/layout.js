@@ -69,7 +69,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="pt-BR">
       <head>
-        {/* Google Analytics - Tag (gtag.js) */}
+        {/* Google Analytics */}
         <script
           async
           src="https://www.googletagmanager.com/gtag/js?id=G-4YT1QFSD1P"
@@ -81,6 +81,22 @@ export default function RootLayout({ children }) {
               function gtag(){dataLayer.push(arguments);}
               gtag('js', new Date());
               gtag('config', 'G-4YT1QFSD1P');
+            `,
+          }}
+        />
+
+        {/* Google Ads Conversion Tracking */}
+        <script
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=AW-16938088515"
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'AW-16938088515');
             `,
           }}
         />
