@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /resultado/
+Disallow: /manual/
+
+Sitemap: https://app-espiritual-psi.vercel.app/sitemap.xml
