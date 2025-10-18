@@ -40,6 +40,16 @@ export default function Home() {
 
       if (data.ok || data.success) {
         const id = data.id || data.analiseId;
+        
+        // 🎯 EVENTO: Formulário preenchido
+        if (typeof window !== 'undefined' && window.gtag) {
+          window.gtag('event', 'formulario_preenchido', {
+            event_category: 'engagement',
+            event_label: 'Formulário Inicial',
+            value: 1
+          });
+        }
+        
         router.push(`/resultado/${id}`);
       } else {
         setErro(data.error || 'Erro ao gerar análise');
