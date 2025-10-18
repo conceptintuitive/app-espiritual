@@ -37,6 +37,15 @@ export default function ResultadoPage() {
         } else {
           setAnalise(data);
           
+          // 🎯 EVENTO: Visualizou resultado
+          if (typeof window !== 'undefined' && window.gtag) {
+            window.gtag('event', 'visualizou_resultado', {
+              event_category: 'engagement',
+              event_label: 'Página de Resultado',
+              value: 1
+            });
+          }
+          
           // Se voltou do pagamento, gerar manual completo
           if (mostrarManual) {
             const manualGerado = gerarManualCompleto(
@@ -73,6 +82,16 @@ export default function ResultadoPage() {
       const data = await response.json();
       
       if (data.url) {
+        // 🎯 EVENTO: Clicou para comprar manual
+        if (typeof window !== 'undefined' && window.gtag) {
+          window.gtag('event', 'iniciou_checkout', {
+            event_category: 'ecommerce',
+            event_label: 'Botão Comprar Manual',
+            value: 47.00,
+            currency: 'BRL'
+          });
+        }
+        
         window.location.href = data.url;
       } else {
         alert('Erro ao processar pagamento. Tente novamente.');

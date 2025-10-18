@@ -38,6 +38,25 @@ export default function ManualPage() {
         );
 
         setManual(manualGerado);
+
+        // 🎯 EVENTO: Comprou manual (CONVERSÃO FINAL)
+        if (typeof window !== 'undefined' && window.gtag) {
+          window.gtag('event', 'comprou_manual', {
+            event_category: 'conversion',
+            event_label: 'Manual Completo',
+            value: 47.00,
+            currency: 'BRL'
+          });
+
+          // Conversão do Google Ads
+          window.gtag('event', 'conversion', {
+            'send_to': 'AW-16938088515/XXXXX', // Substitua XXXXX pelo ID real
+            'value': 47.00,
+            'currency': 'BRL',
+            'transaction_id': params.id
+          });
+        }
+
       } catch (error) {
         console.error('Erro ao carregar manual:', error);
         alert('Erro ao carregar manual. Tente novamente.');
