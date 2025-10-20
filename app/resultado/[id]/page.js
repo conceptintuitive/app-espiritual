@@ -55,6 +55,7 @@ export default function ResultadoPage() {
           }
         }
       } catch (error) {
+        console.error('Erro:', error);
         setErro('Erro ao carregar análise');
       } finally {
         setLoading(false);
@@ -65,7 +66,6 @@ export default function ResultadoPage() {
       buscarAnalise();
     }
 
-    // Mostrar urgência após 30 segundos
     const timer = setTimeout(() => {
       setMostrarUrgencia(true);
     }, 30000);
@@ -100,6 +100,7 @@ export default function ResultadoPage() {
         alert('Erro ao processar pagamento. Tente novamente.');
       }
     } catch (error) {
+      console.error('Erro:', error);
       alert('Erro ao processar pagamento. Tente novamente.');
     } finally {
       setProcessandoPagamento(false);
@@ -131,12 +132,83 @@ export default function ResultadoPage() {
     );
   }
 
-  // RENDERIZAR MANUAL COMPLETO (mantém igual)
+  // RENDERIZAR MANUAL COMPLETO
   if (mostrarManual && manual) {
-    // ... código do manual permanece igual
+    const renderSecao = (secao) => {
+      if (!secao || !secao.conteudo) return null;
+      return (
+        <div className="mb-12" key={secao.titulo}>
+          <h2 className="text-3xl font-bold mb-6 text-purple-300 border-b-2 border-purple-500/30 pb-3">
+            {secao.titulo}
+          </h2>
+          <div 
+            className="prose prose-invert prose-lg max-w-none"
+            style={{ fontSize: '16px', lineHeight: '1.8' }}
+            dangerouslySetInnerHTML={{ 
+              __html: secao.conteudo
+                .replace(/\*\*(.*?)\*\*/g, '<strong class="text-purple-300">$1</strong>')
+                .replace(/\n\n/g, '<br><br>')
+                .replace(/\n/g, '<br>')
+            }}
+          />
+        </div>
+      );
+    };
+
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-900 to-black text-white">
+        <div className="container mx-auto px-4 py-12">
+          <div className="text-center mb-16">
+            <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+              🎉 Manual Completo Desbloqueado!
+            </h1>
+            <p className="text-2xl text-purple-200 mb-6">
+              {analise.nome}, seu guia espiritual completo
+            </p>
+            <div className="flex justify-center gap-6 text-lg">
+              <span className="bg-purple-500/20 px-6 py-3 rounded-full">
+                {analise.signo}
+              </span>
+              <span className="bg-pink-500/20 px-6 py-3 rounded-full">
+                Número {analise.numero_vida}
+              </span>
+            </div>
+          </div>
+
+          <div className="max-w-5xl mx-auto">
+            <div className="bg-white/5 backdrop-blur-lg rounded-3xl p-8 md:p-16 shadow-2xl border border-purple-500/20">
+              {Object.values(manual).map((secao, index) => {
+                if (secao && secao.titulo && secao.conteudo) {
+                  return renderSecao(secao);
+                }
+                return null;
+              })}
+
+              <div className="mt-16 pt-12 border-t border-purple-500/20 text-center">
+                <button
+                  onClick={() => window.print()}
+                  className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 px-8 rounded-xl mr-4"
+                >
+                  📄 Imprimir
+                </button>
+                <p className="text-purple-300 text-sm mt-6">
+                  ✨ Guarde este manual em um local sagrado
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="text-center mt-8">
+            <a href="/" className="text-purple-300 hover:text-purple-200 underline">
+              ← Fazer nova análise
+            </a>
+          </div>
+        </div>
+      </div>
+    );
   }
 
-  // RENDERIZAR ANÁLISE GRATUITA + OFERTA IRRESISTÍVEL
+  // RENDERIZAR ANÁLISE GRATUITA + OFERTA COMPLETA
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-900 to-black text-white">
       <div className="container mx-auto px-4 py-12">
@@ -172,8 +244,6 @@ export default function ResultadoPage() {
             </div>
           </div>
 
-          {/* SEÇÃO DE VENDAS REFORMULADA */}
-          
           {/* 1. PROVA SOCIAL */}
           <div className="bg-gradient-to-r from-green-900/30 to-emerald-900/30 rounded-2xl p-6 mb-8 border border-green-500/30">
             <div className="flex items-center gap-4 mb-4">
@@ -186,13 +256,13 @@ export default function ResultadoPage() {
             
             <div className="grid md:grid-cols-3 gap-4 mt-6">
               <div className="bg-white/5 p-4 rounded-lg">
-                <p className="text-sm italic">"Finalmente entendi meu propósito! Incrível!" - Maria S.</p>
+                <p className="text-sm italic">&quot;Finalmente entendi meu propósito! Incrível!&quot; - Maria S.</p>
               </div>
               <div className="bg-white/5 p-4 rounded-lg">
-                <p className="text-sm italic">"Mudou completamente minha visão sobre mim mesma" - Ana P.</p>
+                <p className="text-sm italic">&quot;Mudou completamente minha visão sobre mim mesma&quot; - Ana P.</p>
               </div>
               <div className="bg-white/5 p-4 rounded-lg">
-                <p className="text-sm italic">"Valeu MUITO mais que R$47. Sem palavras!" - João M.</p>
+                <p className="text-sm italic">&quot;Valeu MUITO mais que R$47. Sem palavras!&quot; - João M.</p>
               </div>
             </div>
           </div>
