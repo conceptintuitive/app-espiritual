@@ -40,16 +40,36 @@ export async function POST(request) {
 
     console.log('Gerando análise para:', nome, signo, numeroVida);
 
-    // Gerar análise com IA
-    const analiseCompleta = await gerarAnaliseEspiritual({
-      nome,
-      signo,
-      numeroVida,
-      significado,
-      perfilSigno
-    });
+// Gerar análise com IA (com fallback)
+let analiseCompleta;
+try {
+  analiseCompleta = await gerarAnaliseEspiritual({
+    nome,
+    signo,
+    numeroVida,
+    significado,
+    perfilSigno
+  });
+  console.log('Análise gerada com IA com sucesso!');
+} catch (error) {
+  console.error('Erro ao gerar análise com IA, usando fallback:', error);
+  // Fallback: análise simples sem IA
+  analiseCompleta = `🌟 **SEU PERFIL ENERGÉTICO**
 
-    console.log('Análise gerada com sucesso!');
+${nome}, você nasceu sob o signo de ${signo}, elemento ${perfilSigno.elemento}, regido por ${perfilSigno.regente}.
+
+Seu Número de Vida é ${numeroVida}: "${significado.titulo}"
+
+${significado.descricao}
+
+💫 **CARACTERÍSTICAS DO SEU SIGNO**
+
+${perfilSigno.caracteristicas}
+
+🔮 **PRÓXIMOS PASSOS**
+
+Esta é apenas uma prévia da sua análise. Para desbloquear insights mais profundos sobre seu mapa energético completo, incluindo desafios kármicos, potenciais ocultos e seu plano de 90 dias, continue para a análise completa.`;
+}
 
     // Salvar no banco
     const { data, error } = await supabase
