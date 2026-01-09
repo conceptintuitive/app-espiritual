@@ -69,6 +69,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="pt-BR">
       <head>
+        <meta name="google-site-verification" content="Dm-MjTPhbvz9q1IFUDc22sqm0DC2t5pbU4wtrkd5V3M" />
         {/* Google Analytics */}
         <script
           async
