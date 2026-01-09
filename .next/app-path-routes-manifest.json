@@ -1,0 +1,11 @@
+{
+  "/api/criar-checkout/route": "/api/criar-checkout",
+  "/sitemap.xml/route": "/sitemap.xml",
+  "/_not-found/page": "/_not-found",
+  "/favicon.ico/route": "/favicon.ico",
+  "/api/webhook/route": "/api/webhook",
+  "/api/gerar-analise/route": "/api/gerar-analise",
+  "/manual/[id]/page": "/manual/[id]",
+  "/page": "/",
+  "/resultado/[id]/page": "/resultado/[id]"
+}
