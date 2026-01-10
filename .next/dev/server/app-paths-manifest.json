@@ -1,0 +1,4 @@
+{
+  "/api/gerar-analise/route": "app/api/gerar-analise/route.js",
+  "/page": "app/page.js"
+}

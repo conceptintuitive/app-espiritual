@@ -168,7 +168,7 @@ const [timeLeft, setTimeLeft] = useState({
           </h2>
           <div 
             className="prose prose-invert prose-lg max-w-none"
-            style={{ fontSize: '22px', lineHeight: '1.8' }}
+            style={{ fontSize: '18px', lineHeight: '1.8' }}
             dangerouslySetInnerHTML={{ 
               __html: secao.conteudo
                 .replace(/\*\*(.*?)\*\*/g, '<strong class="text-purple-300">$1</strong>')
@@ -378,15 +378,14 @@ const [timeLeft, setTimeLeft] = useState({
   </h2>
   
   <div className="relative aspect-video rounded-2xl overflow-hidden shadow-2xl mb-6 bg-black">
-    <video 
+    <iframe 
       className="w-full h-full"
-      controls
-      playsInline
-      preload="metadata"
-    >
-      <source src="/video-vendas.mp4" type="video/mp4" />
-      Seu navegador não suporta vídeos.
-    </video>
+      src="https://www.youtube.com/embed/jttmA8e-Qv8"
+      title="Vídeo de Vendas"
+      frameBorder="0"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      allowFullScreen
+    ></iframe>
   </div>
 
   <div className="text-center">

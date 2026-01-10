@@ -1,0 +1,10 @@
+[00:00:02.352] Server  LOG     ✓ Ready in 1537ms
+[00:00:08.784] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:00:13.616] Server  LOG     Gerando análise para: "Bianca Padua i" "Sagitário" 11
+[00:00:19.127] Server  LOG     Análise gerada com IA com sucesso!
+[00:00:19.179] Server  ERROR   Erro ao salvar no banco: {}
+[00:00:19.180] Server  ERROR   Erro na API: {}
+[00:06:12.832] Server  LOG     Gerando análise para: "Bianca Padua i" "Sagitário" 11
+[00:06:17.834] Server  LOG     Análise gerada com IA com sucesso!
+[00:06:17.873] Server  ERROR   Erro ao salvar no banco: {}
+[00:06:17.875] Server  ERROR   Erro na API: {}
