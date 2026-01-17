@@ -76,6 +76,9 @@ function formatarDataBR(dataISO) {
 function gerarRelatorioGratuito({ nome, dataISO, signo, numeroVida, local }) {
   const primeiroNome = (nome || '').trim().split(' ')[0] || 'você';
 
+
+
+
   // INSIGHT MATADOR EMPODERADO
   const insightPorNumero = {
     1: "Você nasceu pra LIDERAR. Quando todo mundo hesita, você age. Você tem um magnetismo natural que faz as pessoas te seguirem sem você pedir. O desafio? Você ainda acha que precisa carregar tudo sozinha pra provar seu valor — mas a verdade é: você já provou. Agora é hora de liderar permitindo apoio, e aí seu poder multiplica.",
@@ -198,14 +201,6 @@ function gerarRelatorioGratuito({ nome, dataISO, signo, numeroVida, local }) {
     headline: `${primeiroNome}, você está a um passo da virada`,
   };
 }
-
-  const insightMatador = insightPorNumero[numeroVida] || "Você sente que há mais em você do que consegue expressar — e isso cansa.";
-
-  const espelhoMomento = [
-    `Você sente que está pronta pra mudança — mas algo ainda te segura no mesmo padrão.`,
-    `Não é falta de vontade. É falta de estrutura simples pra sustentar o que você já sabe.`,
-    `O próximo nível não exige força — exige direção clara.`,
-  ];
 
   const assinaturaSigno = (() => {
     const map = {
