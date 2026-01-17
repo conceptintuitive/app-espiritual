@@ -76,23 +76,23 @@ function formatarDataBR(dataISO) {
 function gerarRelatorioGratuito({ nome, dataISO, signo, numeroVida, local }) {
   const primeiroNome = (nome || '').trim().split(' ')[0] || 'você';
 
-  // INSIGHT MATADOR por número (o "soco no estômago")
-   const insightPorNumero = {
-    1: "Você lidera naturalmente e toma iniciativa quando ninguém mais toma. Mas carrega tudo sozinha até o limite, como se pedir ajuda fosse fraqueza. Quando finalmente pede, já tá exausta, irritada, no seu pior momento. E aí se cobra por não ter aguentado sozinha.",
-    2: "Você sente tudo — as emoções, as energias, os não-ditos. E acaba absorvendo os problemas dos outros como se fossem seus, carregando pesos que nem te pertencem. Você se anula pra não incomodar, mas por dentro tá gritando. E quando explode, se sente culpada por ter 'exagerado'.",
-    3: "Você tem mil ideias brilhantes, projetos que poderiam dar certo, talentos que impressionam. Mas terminar alguma coisa? Aí complica. Você começa animada e depois dispersa, pula pra próxima ideia, e no fundo sente que não realiza o seu potencial. A criatividade virou ansiedade.",
-    4: "Você constrói estrutura, rotina e estabilidade pra todo mundo ao seu redor — menos pra você mesma. Trabalha duro, segura as pontas, mas sente que nunca é o suficiente. E quando tudo desmorona, você se cobra como se fosse sua culpa não ter segurado o mundo sozinha.",
-    5: "Você ama liberdade, mudança, aventura — mas quando fica em algum lugar, parece que tá presa. Quando sai, sente culpa de ter abandonado algo ou alguém. Você foge de compromisso porque tem medo de perder sua essência, mas no fundo cansa de nunca se permitir pertencer.",
-    6: "Você cuida de todo mundo com perfeição, amor incondicional, entrega total. E se cobra violentamente quando não dá conta de ser perfeita pra todos. Você se sacrifica sem perceber, coloca todo mundo antes de você, e quando se olha no espelho, mal se reconhece.",
-    7: "Você entende tudo profundamente — lê nas entrelinhas, conecta padrões, enxerga além. Mas se sente sozinha porque ninguém te entende de volta. Você busca verdade, mas o mundo te oferece superficialidade. E no fundo, você cansa de sempre ser a pessoa que 'pensa demais'.",
-    8: "Você sabe que nasceu pra grandeza, pra liderar, construir, prosperar. Mas tem medo de ocupar esse espaço, de ser 'demais', de decepcionar se falhar. Então você se sabota antes de brilhar, se pequeniza, controla tudo pra não perder o controle. E no fim, se frustra por não realizar o que sabe que pode.",
-    9: "Você quer ajudar o mundo, servir um propósito maior, transformar vidas. Mas esquece que você também precisa de ajuda, de cuidado, de descanso. Você doa até se esgotar, carrega a dor alheia como se fosse missão. E quando não aguenta mais, se sente egoísta por precisar parar.",
-    11: "Você tem visões, intuições fortes, insights que vêm do nada e acertam sempre. Mas a ansiedade vem junto — você sente demais, percebe demais, processa demais. Sua sensibilidade é um dom, mas também um peso. Você vive intensamente, e isso cansa. O mundo parece barulhento demais pra você respirar.",
-    22: "Você sabe que tem potencial gigante, que veio pra construir algo duradouro e real. Mas o medo de não dar conta te paralisa antes de começar. Você se cobra por não estar no nível que imagina, procrastina por perfeccionismo, se sabota porque 'ainda não tá pronta'. Mas a verdade é: você já é grande, só precisa se permitir ser.",
-    33: "Você ama incondicionalmente, cura sem cobrar, acolhe sem julgar. Mas se sacrifica até se esgotar, como se o seu valor dependesse de quanto você doa. Você é luz pra todo mundo — menos pra você mesma. E no fundo, cansa de sempre ser forte, de nunca poder ser frágil sem se sentir egoísta."
+  // INSIGHT MATADOR EMPODERADO
+  const insightPorNumero = {
+    1: "Você nasceu pra LIDERAR. Quando todo mundo hesita, você age. Você tem um magnetismo natural que faz as pessoas te seguirem sem você pedir. O desafio? Você ainda acha que precisa carregar tudo sozinha pra provar seu valor — mas a verdade é: você já provou. Agora é hora de liderar permitindo apoio, e aí seu poder multiplica.",
+    2: "Você é ALTAMENTE INTUITIVA. Você lê pessoas, energias e situações como ninguém. Você sente o que não é dito e sabe exatamente o que o outro precisa antes dele falar. O desafio? Você absorve tudo e esquece que nem tudo é seu pra carregar. Quando você aprende a FILTRAR em vez de absorver, sua intuição vira superpoder sem te drenar.",
+    3: "Você é PURA CRIATIVIDADE e expressão. Ideias brilhantes surgem naturalmente pra você — você vê possibilidades onde os outros veem limites. Você nasceu pra criar, inspirar, manifestar. O desafio? Você dispersa antes de concluir porque já tá na próxima visão. Mas quando você aprende a FOCAR sem perder a magia, você vira imparável.",
+    4: "Você é a MESTRA DA CONSTRUÇÃO. Você cria estrutura, estabilidade e resultados reais. Quando você se compromete, você ENTREGA. Você tem uma força de vontade que intimida os fracos. O desafio? Você constrói pro mundo, mas esquece de construir pra você mesma. Quando você direciona essa força pra VOCÊ primeiro, tudo muda — porque aí você constrói do overflow, não do vazio.",
+    5: "Você é LIBERDADE PURA. Você se adapta, muda, expande — você não cabe em caixas. Você nasceu pra explorar, experimentar, viver intensamente. As pessoas invejam sua coragem de ser diferente. O desafio? Você foge quando deveria ficar, porque confunde compromisso com prisão. Mas quando você entende que liberdade é ESCOLHA (não fuga), você finalmente pertence sem se perder.",
+    6: "Você é AMOR INCONDICIONAL em forma humana. Você cura, acolhe, nutre — as pessoas se sentem seguras com você. Você tem um dom raro: fazer os outros se sentirem vistos. O desafio? Você doa até se esvaziar, como se seu valor dependesse disso. Mas quando você aprende a AMAR COM LIMITE, você cura sem se destruir — e aí seu impacto multiplica.",
+    7: "Você é PROFUNDIDADE RARA. Você enxerga camadas que os outros nem percebem. Você conecta padrões, busca verdade, vai além do óbvio. Você nasceu pra ensinar, pra elevar consciências. O desafio? Você se sente sozinha porque poucos acompanham sua profundidade. Mas quando você ACEITA seu nível sem se rebaixar, você atrai quem realmente te merece — e aí a solidão vira seletividade consciente.",
+    8: "Você nasceu pra GRANDEZA. Você tem poder, presença, capacidade de materializar o impossível. Quando você entra num espaço, as pessoas SENTEM. Você veio pra liderar, prosperar, construir legado. O desafio? Você tem medo da sua própria magnitude e se sabota antes de brilhar. Mas quando você OCUPA seu espaço sem medo, você vira uma força imparável — e o mundo se ajusta a VOCÊ.",
+    9: "Você é PROPÓSITO EM MOVIMENTO. Você veio pra servir algo maior que você mesma. Você sente o chamado de transformar, curar, elevar. Você tem compaixão que transcende o ego. O desafio? Você doa até se esgotar, esquecendo que você TAMBÉM é parte da missão. Mas quando você aprende a SERVIR SEM SE SACRIFICAR, você finalmente sustenta o impacto — e aí a transformação é duradoura.",
+    11: "Você é uma ANTENA ESPIRITUAL. Você recebe insights, visões, downloads que chegam do nada e ACERTAM. Você tem acesso a frequências que a maioria não capta. Você nasceu pra CANALIZAR e inspirar. O desafio? A sensibilidade extrema vem com ansiedade e sobrecarga sensorial. Mas quando você aprende a ATERRAR sua visão, você transforma intuição em AÇÃO — e aí você vira um portal de manifestação.",
+    22: "Você é uma CONSTRUTORA DE IMPÉRIOS. Você não veio pra coisas pequenas — você veio pra criar algo GRANDE, duradouro, que transcenda você. Você tem capacidade de materializar visões impossíveis. O desafio? Você procrastina por perfeccionismo e medo de não dar conta da própria grandeza. Mas a verdade é: você JÁ É gigante. Quando você para de se preparar e COMEÇA, o universo conspira a favor — porque você é o arquétipo do mestre construtor.",
+    33: "Você é CURA VIVA. Você ama sem condição, acolhe sem julgar, transforma dor em luz. As pessoas curam só de estar perto de você. Você é o amor que o mundo precisa mas raramente merece. O desafio? Você se sacrifica até desaparecer, como se seu valor fosse medido pelo quanto você doa. Mas quando você entende que VOCÊ TAMBÉM merece a cura que oferece, você finalmente sustenta sua luz — e aí seu impacto se torna eterno, não esgotável."
   };
 
-  const insightMatador = insightPorNumero[numeroVida] || "Você sente que há mais em você do que consegue expressar — e isso cansa.";
+  const insightMatador = insightPorNumero[numeroVida] || "Você sente que há mais em você do que consegue expressar. A frustração não é falta de capacidade — é falta de direção clara. Você sabe que pode mais, mas não sabe exatamente como acessar isso de forma sustentável. E isso cansa, porque o potencial tá ali, latente, mas parece travado.";
 
   const espelhoMomento = [
     `Você sente que está pronta pra mudança — mas algo ainda te segura no mesmo padrão.`,
@@ -172,30 +172,19 @@ function gerarRelatorioGratuito({ nome, dataISO, signo, numeroVida, local }) {
 
   const assinaturaNumero = (() => {
     const map = {
-  1: "Você veio com energia de INÍCIO. Você abre caminhos, toma a frente, sente quando algo precisa nascer. Quando você está alinhada, sua presença organiza o ambiente — as pessoas seguem sem você pedir.\n\nO preço do 1 é que você aprendeu a ser forte cedo demais. Você se cobra, se compara, e confunde valor com desempenho. Por dentro, existe uma tensão constante: “se eu relaxar, eu perco.”\n\nO ciclo invisível é: visão → impulso → controle → exaustão → irritação → isolamento. Você quer fazer bem feito, mas acaba fazendo sozinha, porque delegar parece risco.\n\nO custo disso é alto: você até vence, mas sente que não vive. E quando ninguém vê seu esforço, você endurece ainda mais.\n\nDireção prática agora: escolha UMA prioridade real (não dez). Defina um limite claro (tempo/energia) e peça apoio em um ponto específico. Liderança de verdade não é carregar — é conduzir.\n\nQuando o 1 aprende a receber, ele vira potência limpa: presença, decisão e resultado sem peso.",
-
-  2: "Você é leitura fina. Você percebe o que não é dito, capta clima, intenção, nuance. Sua intuição social é rara: você sabe onde tocar para curar e onde recuar para proteger.\n\nO preço do 2 é absorver demais. Você sente pelo outro, entende demais, dá chance demais. Às vezes, sua empatia vira um lugar onde você se perde.\n\nO ciclo invisível é: conexão → adaptação → silêncio sobre si → acúmulo → mágoa → afastamento. Você aguenta até não aguentar.\n\nO custo é viver com a sensação de que você “some” para manter a paz. E isso vira ansiedade e cansaço emocional.\n\nDireção prática agora: filtro. Antes de absorver, pergunte: “isso é meu?” Coloque um limite pequeno e gentil hoje (um “não” curto, um “agora não”, um “preciso pensar”).\n\nQuando o 2 aprende a se priorizar sem culpa, ele vira magnetismo: amor com limite e intuição sem drenagem.",
-
-  3: "Você é expressão viva. Ideias surgem como faísca, você enxerga possibilidades, cria beleza, humor, conexão. Sua energia muda o clima — você inspira sem esforço.\n\nO preço do 3 é dispersão e autocrítica escondida. Quando você sente que não vai ficar perfeito, você perde brilho. E, para não encarar o desconforto, você troca de foco.\n\nO ciclo invisível é: entusiasmo → mil ideias → começo rápido → queda de energia → procrastinação → culpa → recomeço.\n\nO custo é frustração: você sabe que tem talento, mas não sente consistência.\n\nDireção prática agora: estrutura leve. Escolha UMA coisa para terminar (pequena). Defina “feito é melhor que perfeito” e entregue uma versão 1.0 em 24h.\n\nQuando o 3 aprende a concluir, ele vira imparável: carisma com consistência e criação com resultado.",
-
-  4: "Você é construção. Você sustenta, organiza, dá forma. Você transforma intenção em rotina e sonho em chão. Quando você decide, você entrega.\n\nO preço do 4 é rigidez: você sente que precisa controlar tudo para ficar segura. E quando algo sai do lugar, você se cobra — como se errar fosse falha moral.\n\nO ciclo invisível é: planejamento → cobrança → esforço constante → cansaço → irritação → desistência temporária → retorno mais duro.\n\nO custo é viver sob pressão, sem espaço para prazer.\n\nDireção prática agora: flexibilidade estratégica. Defina uma regra simples que te ajude (ex.: “30 minutos por dia, não 3 horas”). Troque perfeição por constância.\n\nQuando o 4 relaxa sem perder foco, ele vira base forte: estrutura com leveza e resultado sem sofrimento.",
-
-  5: "Você é expansão. Você aprende rápido, se adapta, muda rota, enxerga o mundo grande. Sua alma não nasceu para caixas — nasceu para movimento consciente.\n\nO preço do 5 é confundir liberdade com fuga. Quando algo exige constância, você sente aperto e começa a buscar “um outro lugar” antes de sustentar o atual.\n\nO ciclo invisível é: entusiasmo → intensidade → tédio/pressão → impulsividade → mudança → arrependimento → reinício.\n\nO custo é instabilidade: você vive muitas experiências, mas demora para colher profundidade.\n\nDireção prática agora: liberdade com compromisso. Escolha uma direção por 7 dias e cumpra. Não é prisão — é escolha com prazo.\n\nQuando o 5 aprende a permanecer sem se perder, ele vira poder: expansão com raiz e coragem com consistência.",
-
-  6: "Você é cuidado. Você faz as pessoas se sentirem vistas, acolhidas, protegidas. Você tem senso estético e emocional: você cria lar onde chega.\n\nO preço do 6 é carregar demais. Você se responsabiliza por tudo e, no fundo, acredita que amor precisa ser provado por esforço.\n\nO ciclo invisível é: entrega → excesso → ressentimento → cobrança silenciosa → culpa → entrega de novo.\n\nO custo é se esvaziar e depois se sentir sozinha — mesmo cercada.\n\nDireção prática agora: limite com afeto. Diga “sim” apenas quando seu corpo também disser sim. Faça uma coisa por você antes de fazer pelo outro.\n\nQuando o 6 ama com limite, ele vira cura sustentável: presença, beleza e amor sem autoabandono.",
-
-  7: "Você é profundidade rara. Você enxerga camadas, conecta padrões, busca verdade. Você não se satisfaz com superfície — e por isso você evolui.\n\nO preço do 7 é isolamento e exigência. Você observa tanto que, às vezes, adia viver. E quando não encontra “o certo”, você se retrai.\n\nO ciclo invisível é: curiosidade → análise → dúvida → espera → distanciamento → solidão → mais análise.\n\nO custo é sentir que ninguém acompanha seu nível, e isso pode virar frieza por proteção.\n\nDireção prática agora: aterramento em experiência. Escolha uma decisão pequena e execute hoje, mesmo sem 100% de certeza. Clareza vem depois do movimento.\n\nQuando o 7 age sem se trair, ele vira sabedoria viva: profundidade com presença e verdade com direção.",
-
-  8: "Você veio para materializar. Você tem presença, força, ambição saudável e capacidade de transformar energia em resultado. Você sente chamado de grandeza.\n\nO preço do 8 é o medo do próprio tamanho. Você alterna entre ‘vou dominar’ e ‘melhor diminuir’ — porque brilhar expõe.\n\nO ciclo invisível é: meta alta → pressão → autossabotagem → culpa → controle → exaustão.\n\nO custo é viver em guerra interna: querer muito e se punir por querer.\n\nDireção prática agora: poder com verdade. Defina um objetivo claro, uma métrica simples e uma ação diária pequena. Pare de negociar com a própria grandeza.\n\nQuando o 8 ocupa espaço com consistência, ele vira inevitável: prosperidade com paz e liderança com impacto.",
-
-  9: "Você é propósito em movimento. Você sente o coletivo, tem compaixão, enxerga sentido onde outros veem caos. Você veio para fechar ciclos e elevar.\n\nO preço do 9 é se dissolver no mundo. Você doa, entende, perdoa… e esquece de si. Às vezes, você tenta salvar todo mundo para não encarar sua própria dor.\n\nO ciclo invisível é: entrega → esgotamento → desilusão → afastamento → culpa → entrega de novo.\n\nO custo é cansaço existencial e a sensação de que nada te preenche.\n\nDireção prática agora: servir sem se sacrificar. Escolha onde você realmente causa impacto (1 lugar) e diga não ao resto. Você também é parte da missão.\n\nQuando o 9 se coloca no centro da própria vida, ele vira transformação duradoura: amor com limite e propósito com energia.",
-
-  11: "Você é uma ANTENA ESPIRITUAL — e isso é real. Você capta sinais, percebe microcoisas, sente antes de acontecer. Sua intuição te dá respostas que vêm em sensação, certeza, insight.\n\nO preço do 11 é excesso de canal aberto. Você absorve barulho, clima, tensão, gente. O que era visão vira sobrecarga; a ansiedade não é fraqueza — é sensibilidade sem aterramento.\n\nO ciclo invisível é: insight → empolgação → hiperanálise → dúvida → travamento → culpa. Você tenta sustentar direção só na mente.\n\nO custo é viver “no alto” e cansar do próprio dom.\n\nDireção prática agora: aterramento diário. Silêncio real por alguns minutos, UMA prioridade, UM passo executável hoje. Visão sem estrutura vira ruído.\n\nQuando o 11 aterra, ele vira portal de realização: o invisível vira realidade.",
-
-  22: "Você é arquitetura de legado. O 22 não veio para ‘dar certo’ — veio para construir algo grande, útil, duradouro. Você tem visão e capacidade de execução quando alinha mente e chão.\n\nO preço do 22 é o peso da responsabilidade. Você sente que se errar, ‘estraga tudo’. Aí nasce o perfeccionismo e a procrastinação: você adia o começo para evitar a sensação de não dar conta.\n\nO ciclo invisível é: visão enorme → pressão → paralisia → autocobrança → exaustão mental → recomeço.\n\nO custo é frustrante: você sabe que nasceu para mais, mas fica travada no “ainda não estou pronta”.\n\nDireção prática agora: dividir para vencer. Transforme a visão em um plano de 7 dias, com entregas pequenas e concretas. O 22 ganha no tijolo, não no sonho.\n\nQuando o 22 começa, o mundo se ajusta: porque você é constância que constrói impérios.",
-
-  33: "Você é cura viva. Você ama grande, acolhe profundo, entende sem julgar. Sua presença regula o outro — você tem dom de elevar.\n\nO preço do 33 é se sacrificar até desaparecer. Você dá tanto que, quando percebe, está exausta e vazia. Às vezes, você confunde amor com salvação.\n\nO ciclo invisível é: entrega total → esgotamento → sumiço → culpa → retorno com mais entrega.\n\nO custo é alto: você vira fonte para todo mundo e seca por dentro.\n\nDireção prática agora: cura com limite. Escolha onde você cura e onde você apenas observa. Faça autocuidado como prioridade, não como recompensa.\n\nQuando o 33 se inclui, ele vira amor sustentável: impacto imenso sem autoabandono.",
-};
+      1: { luz: 'liderança natural', sombra: 'fazer tudo sozinha', mantra: 'Eu lidero com apoio' },
+      2: { luz: 'sensibilidade e intuição', sombra: 'anular-se pelo outro', mantra: 'Eu sinto sem me perder' },
+      3: { luz: 'criatividade e expressão', sombra: 'dispersão', mantra: 'Eu crio com foco' },
+      4: { luz: 'estrutura sólida', sombra: 'rigidez', mantra: 'Eu construo com leveza' },
+      5: { luz: 'liberdade e mudança', sombra: 'instabilidade', mantra: 'Eu mudo com direção' },
+      6: { luz: 'amor e cuidado', sombra: 'carregar responsabilidade alheia', mantra: 'Eu cuido sem me esgotar' },
+      7: { luz: 'profundidade espiritual', sombra: 'isolamento', mantra: 'Eu confio e me abro' },
+      8: { luz: 'poder e materialização', sombra: 'autocobrança extrema', mantra: 'Eu mereço abundância' },
+      9: { luz: 'propósito e compaixão', sombra: 'salvar todo mundo', mantra: 'Eu sirvo com limites' },
+      11: { luz: 'visão elevada', sombra: 'ansiedade e intensidade', mantra: 'Eu canalizo com paz' },
+      22: { luz: 'mestre construtor', sombra: 'medo da própria grandeza', mantra: 'Eu sustento meu tamanho' },
+      33: { luz: 'cura universal', sombra: 'sacrifício', mantra: 'Eu amo com limite' },
+    };
     return map[numeroVida] || { luz: 'caminho singular', sombra: 'teste recorrente', mantra: 'Eu escolho clareza' };
   })();
 
@@ -209,6 +198,114 @@ function gerarRelatorioGratuito({ nome, dataISO, signo, numeroVida, local }) {
     headline: `${primeiroNome}, você está a um passo da virada`,
   };
 }
+
+  const insightMatador = insightPorNumero[numeroVida] || "Você sente que há mais em você do que consegue expressar — e isso cansa.";
+
+  const espelhoMomento = [
+    `Você sente que está pronta pra mudança — mas algo ainda te segura no mesmo padrão.`,
+    `Não é falta de vontade. É falta de estrutura simples pra sustentar o que você já sabe.`,
+    `O próximo nível não exige força — exige direção clara.`,
+  ];
+
+  const assinaturaSigno = (() => {
+    const map = {
+      'Áries': {
+        luz: 'coragem, iniciativa e ação rápida',
+        sombra: 'impaciência que vira pressa sem direção',
+        ajuste: 'trocar impulso por decisão consciente',
+      },
+      'Touro': {
+        luz: 'consistência e poder de construção',
+        sombra: 'resistência à mudança por medo de perder controle',
+        ajuste: 'soltar o que já não serve sem medo',
+      },
+      'Gêmeos': {
+        luz: 'versatilidade e visão ampla',
+        sombra: 'dispersão que impede conclusão',
+        ajuste: 'escolher 1 foco por 7 dias',
+      },
+      'Câncer': {
+        luz: 'intuição profunda e empatia',
+        sombra: 'absorver energia alheia até se perder',
+        ajuste: 'proteger sua energia sem culpa',
+      },
+      'Leão': {
+        luz: 'magnetismo e expressão autêntica',
+        sombra: 'buscar validação externa',
+        ajuste: 'reconhecer seu valor internamente',
+      },
+      'Virgem': {
+        luz: 'precisão e melhoria contínua',
+        sombra: 'perfeccionismo que paralisa',
+        ajuste: 'feito com verdade > perfeito com medo',
+      },
+      'Libra': {
+        luz: 'equilíbrio e harmonia',
+        sombra: 'indecisão por medo de desagradar',
+        ajuste: 'escolher sua verdade sem negociar',
+      },
+      'Escorpião': {
+        luz: 'transformação profunda',
+        sombra: 'controle e desconfiança',
+        ajuste: 'vulnerabilidade é força',
+      },
+      'Sagitário': {
+        luz: 'visão e expansão',
+        sombra: 'fuga quando se sente limitada',
+        ajuste: 'liberdade com compromisso',
+      },
+      'Capricórnio': {
+        luz: 'estrutura e realização',
+        sombra: 'dureza consigo mesma',
+        ajuste: 'descanso também é produtividade',
+      },
+      'Aquário': {
+        luz: 'originalidade e visão futurista',
+        sombra: 'distanciamento emocional',
+        ajuste: 'presença no agora',
+      },
+      'Peixes': {
+        luz: 'conexão espiritual profunda',
+        sombra: 'confusão energética',
+        ajuste: 'aterramento para proteger seu dom',
+      },
+    };
+    return map[signo] || {
+      luz: 'potencial único',
+      sombra: 'padrão que se repete',
+      ajuste: 'clareza + ação consistente',
+    };
+
+  })();
+
+  const assinaturaNumero = (() => {
+    const map = {
+      1: { luz: 'liderança natural', sombra: 'fazer tudo sozinha', mantra: 'Eu lidero com apoio' },
+    2: { luz: 'sensibilidade e intuição', sombra: 'anular-se pelo outro', mantra: 'Eu sinto sem me perder' },
+    3: { luz: 'criatividade e expressão', sombra: 'dispersão', mantra: 'Eu crio com foco' },
+    4: { luz: 'estrutura sólida', sombra: 'rigidez', mantra: 'Eu construo com leveza' },
+    5: { luz: 'liberdade e mudança', sombra: 'instabilidade', mantra: 'Eu mudo com direção' },
+    6: { luz: 'amor e cuidado', sombra: 'carregar responsabilidade alheia', mantra: 'Eu cuido sem me esgotar' },
+    7: { luz: 'profundidade espiritual', sombra: 'isolamento', mantra: 'Eu confio e me abro' },
+    8: { luz: 'poder e materialização', sombra: 'autocobrança extrema', mantra: 'Eu mereço abundância' },
+    9: { luz: 'propósito e compaixão', sombra: 'salvar todo mundo', mantra: 'Eu sirvo com limites' },
+    11: { luz: 'visão elevada', sombra: 'ansiedade e intensidade', mantra: 'Eu canalizo com paz' },
+    22: { luz: 'mestre construtor', sombra: 'medo da própria grandeza', mantra: 'Eu sustento meu tamanho' },
+    33: { luz: 'cura universal', sombra: 'sacrifício', mantra: 'Eu amo com limite' },
+  };
+    return map[numeroVida] || { luz: 'caminho singular', sombra: 'teste recorrente', mantra: 'Eu escolho clareza' };
+  })();
+
+  return {
+    insightMatador,
+    espelhoMomento,
+    assinaturaSigno,
+    assinaturaNumero,
+    localFrase: local ? `📍 ${local}` : '',
+    dataFrase: dataISO ? `🎂 ${formatarDataBR(dataISO)}` : '',
+    headline: `${primeiroNome}, você está a um passo da virada`,
+  };
+
 
 export default function ResultadoPage() {
   const { id } = useParams();
