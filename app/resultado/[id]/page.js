@@ -77,8 +77,6 @@ function gerarRelatorioGratuito({ nome, dataISO, signo, numeroVida, local }) {
   const primeiroNome = (nome || '').trim().split(' ')[0] || 'você';
 
 
-
-
   // INSIGHT MATADOR EMPODERADO
   const insightPorNumero = {
     1: "Você nasceu pra LIDERAR. Quando todo mundo hesita, você age. Você tem um magnetismo natural que faz as pessoas te seguirem sem você pedir. O desafio? Você ainda acha que precisa carregar tudo sozinha pra provar seu valor — mas a verdade é: você já provou. Agora é hora de liderar permitindo apoio, e aí seu poder multiplica.",
@@ -188,6 +186,8 @@ function gerarRelatorioGratuito({ nome, dataISO, signo, numeroVida, local }) {
       22: { luz: 'mestre construtor', sombra: 'medo da própria grandeza', mantra: 'Eu sustento meu tamanho' },
       33: { luz: 'cura universal', sombra: 'sacrifício', mantra: 'Eu amo com limite' },
     };
+
+
     return map[numeroVida] || { luz: 'caminho singular', sombra: 'teste recorrente', mantra: 'Eu escolho clareza' };
   })();
 
@@ -201,106 +201,6 @@ function gerarRelatorioGratuito({ nome, dataISO, signo, numeroVida, local }) {
     headline: `${primeiroNome}, você está a um passo da virada`,
   };
 }
-
-  const assinaturaSigno = (() => {
-    const map = {
-      'Áries': {
-        luz: 'coragem, iniciativa e ação rápida',
-        sombra: 'impaciência que vira pressa sem direção',
-        ajuste: 'trocar impulso por decisão consciente',
-      },
-      'Touro': {
-        luz: 'consistência e poder de construção',
-        sombra: 'resistência à mudança por medo de perder controle',
-        ajuste: 'soltar o que já não serve sem medo',
-      },
-      'Gêmeos': {
-        luz: 'versatilidade e visão ampla',
-        sombra: 'dispersão que impede conclusão',
-        ajuste: 'escolher 1 foco por 7 dias',
-      },
-      'Câncer': {
-        luz: 'intuição profunda e empatia',
-        sombra: 'absorver energia alheia até se perder',
-        ajuste: 'proteger sua energia sem culpa',
-      },
-      'Leão': {
-        luz: 'magnetismo e expressão autêntica',
-        sombra: 'buscar validação externa',
-        ajuste: 'reconhecer seu valor internamente',
-      },
-      'Virgem': {
-        luz: 'precisão e melhoria contínua',
-        sombra: 'perfeccionismo que paralisa',
-        ajuste: 'feito com verdade > perfeito com medo',
-      },
-      'Libra': {
-        luz: 'equilíbrio e harmonia',
-        sombra: 'indecisão por medo de desagradar',
-        ajuste: 'escolher sua verdade sem negociar',
-      },
-      'Escorpião': {
-        luz: 'transformação profunda',
-        sombra: 'controle e desconfiança',
-        ajuste: 'vulnerabilidade é força',
-      },
-      'Sagitário': {
-        luz: 'visão e expansão',
-        sombra: 'fuga quando se sente limitada',
-        ajuste: 'liberdade com compromisso',
-      },
-      'Capricórnio': {
-        luz: 'estrutura e realização',
-        sombra: 'dureza consigo mesma',
-        ajuste: 'descanso também é produtividade',
-      },
-      'Aquário': {
-        luz: 'originalidade e visão futurista',
-        sombra: 'distanciamento emocional',
-        ajuste: 'presença no agora',
-      },
-      'Peixes': {
-        luz: 'conexão espiritual profunda',
-        sombra: 'confusão energética',
-        ajuste: 'aterramento para proteger seu dom',
-      },
-    };
-    return map[signo] || {
-      luz: 'potencial único',
-      sombra: 'padrão que se repete',
-      ajuste: 'clareza + ação consistente',
-    };
-
-  })();
-
-  const assinaturaNumero = (() => {
-    const map = {
-      1: { luz: 'liderança natural', sombra: 'fazer tudo sozinha', mantra: 'Eu lidero com apoio' },
-    2: { luz: 'sensibilidade e intuição', sombra: 'anular-se pelo outro', mantra: 'Eu sinto sem me perder' },
-    3: { luz: 'criatividade e expressão', sombra: 'dispersão', mantra: 'Eu crio com foco' },
-    4: { luz: 'estrutura sólida', sombra: 'rigidez', mantra: 'Eu construo com leveza' },
-    5: { luz: 'liberdade e mudança', sombra: 'instabilidade', mantra: 'Eu mudo com direção' },
-    6: { luz: 'amor e cuidado', sombra: 'carregar responsabilidade alheia', mantra: 'Eu cuido sem me esgotar' },
-    7: { luz: 'profundidade espiritual', sombra: 'isolamento', mantra: 'Eu confio e me abro' },
-    8: { luz: 'poder e materialização', sombra: 'autocobrança extrema', mantra: 'Eu mereço abundância' },
-    9: { luz: 'propósito e compaixão', sombra: 'salvar todo mundo', mantra: 'Eu sirvo com limites' },
-    11: { luz: 'visão elevada', sombra: 'ansiedade e intensidade', mantra: 'Eu canalizo com paz' },
-    22: { luz: 'mestre construtor', sombra: 'medo da própria grandeza', mantra: 'Eu sustento meu tamanho' },
-    33: { luz: 'cura universal', sombra: 'sacrifício', mantra: 'Eu amo com limite' },
-  };
-    return map[numeroVida] || { luz: 'caminho singular', sombra: 'teste recorrente', mantra: 'Eu escolho clareza' };
-  })();
-
-  return {
-    insightMatador,
-    espelhoMomento,
-    assinaturaSigno,
-    assinaturaNumero,
-    localFrase: local ? `📍 ${local}` : '',
-    dataFrase: dataISO ? `🎂 ${formatarDataBR(dataISO)}` : '',
-    headline: `${primeiroNome}, você está a um passo da virada`,
-  };
-
 
 export default function ResultadoPage() {
   const { id } = useParams();
