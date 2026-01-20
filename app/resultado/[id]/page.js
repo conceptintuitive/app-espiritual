@@ -633,7 +633,7 @@ export default function ResultadoPage() {
               <ul className="list-check compact">
                 <li>✓ Análise completa do seu Signo + Número (aprofundada)</li>
                 <li>✓ Mapeamento dos bloqueios invisíveis que te sabotam</li>
-                <li>✓ Previsão do seu ciclo atual (próximos 3-6 meses)</li>
+                <li>✓ Previsão do seu ciclo atual (para 2026)</li>
                 <li>✓ Plano de ação de 7 dias (rotina simples e prática)</li>
                 <li>✓ Rituais rápidos (3-7 min) pro seu perfil específico</li>
                 <li>✓ Guia de decisões: como parar de repetir o mesmo padrão</li>
@@ -643,9 +643,10 @@ export default function ResultadoPage() {
                 <strong>🎁 Bônus exclusivos:</strong>
               </div>
               <ul className="list-check compact">
-                <li>✓ Meditação guiada personalizada (áudio)</li>
-                <li>✓ Planilha de acompanhamento semanal</li>
-                <li>✓ Suporte via email por 30 dias</li>
+                <li>✓ Mapa do Amor: Seu Padrão Afetivo Real </li>
+                <li>✓ Mapa do Amor: Seu Padrão Afetivo Real</li>
+                <li>✓ Calendário de Poder: Rotina de 30 Dias Para Transformação</li>
+                <li>✓ Arquétipo vs Anti-Arquétipo: Luz e Sombra do SEU número </li>
               </ul>
             </div>
 
