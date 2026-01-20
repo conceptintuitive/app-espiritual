@@ -653,7 +653,8 @@ export default function ResultadoPage() {
               <div className="price-compare">
                 <div className="price-old-big">De R$ 59,90</div>
                 <div className="price-now-big">Por apenas R$ 19,90</div>
-                <div className="price-savings">Você economiza R$ 40,00 (67% OFF)</div>
+                <div className="price-savings">Se você fechar essa página agora, a tendência é voltar para o mesmo padrão — só com mais consciência.
+O manual existe para evitar exatamente isso.</div>
               </div>
 
               <button className="btnHuge pulse" onClick={handleComprar} disabled={processando}>
