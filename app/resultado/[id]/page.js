@@ -108,7 +108,9 @@ function gerarRelatorioGratuito({ nome, dataISO, signo, numeroVida, local }) {
 
   const espelhoMomento = [
     `Você sente que está pronta pra mudança — mas algo ainda te segura no mesmo padrão.`,
-    `Não é falta de vontade. É falta de estrutura simples pra sustentar o que você já sabe.`,
+    `Você sente que há mais em você do que consegue expressar.`,
+    `Você sabe que pode mais, mas não sabe exatamente como acessar isso de forma sustentável.`, 
+    `E isso cansa, porque o potencial tá ali, latente, mas parece travado.`,
     `O próximo nível não exige força — exige direção clara.`,
   ];
 
@@ -458,6 +460,8 @@ export default function ResultadoPage() {
         {/* CTA ANTECIPADO #1 - aparecer cedo */}
         <div className="cta-preview">
           <div className="cta-preview-text">
+            ´Você gostaria de saber mais sobre <b>AMOR</b> e <b>Dinheiro</b> ?`
+
             👇 Se você quiser <b>pular direto pro plano completo</b> (com ações práticas), 
             o botão tá aqui embaixo. Mas recomendo ler antes — vai fazer mais sentido.
           </div>
