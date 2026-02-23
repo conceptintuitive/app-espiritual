@@ -28,7 +28,7 @@ export async function POST(req) {
             ${link}
           </p>
 
-          <p style="margin:18px 0 0;">Com carinho,<br/>Bianca</p>
+          <p style="margin:18px 0 0;">Com carinho,<br/>Equipe Intuitive ✨</p>
         </div>
       `,
     });
