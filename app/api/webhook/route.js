@@ -77,6 +77,52 @@ export async function POST(request) {
 
         console.log('✅ Status atualizado para "paid"');
 
+        // ✅ Enviar evento purchase para GA4
+try {
+  const measurementId = process.env.GA4_MEASUREMENT_ID;
+  const apiSecret = process.env.GA4_API_SECRET;
+
+  if (!measurementId || !apiSecret) {
+    console.error("❌ GA4_MEASUREMENT_ID ou GA4_API_SECRET ausentes");
+  } else {
+    const value = (session.amount_total ?? 0) / 100;
+    const currency = (session.currency || "brl").toUpperCase();
+
+    const payload = {
+      client_id: `server.${session.id}`,
+      events: [
+        {
+          name: "purchase",
+          params: {
+            transaction_id: session.id,
+            value,
+            currency,
+          },
+        },
+      ],
+    };
+
+    const gaRes = await fetch(
+      `https://www.google-analytics.com/mp/collect?measurement_id=${measurementId}&api_secret=${apiSecret}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      }
+    );
+
+    if (!gaRes.ok) {
+      const txt = await gaRes.text().catch(() => "");
+      console.error("❌ Falha ao enviar purchase para GA4:", gaRes.status, txt);
+    } else {
+      console.log("✅ Purchase enviado ao GA4:", session.id);
+    }
+  }
+} catch (err) {
+  console.error("❌ Erro ao enviar purchase:", err);
+}
+
+
         // Enviar email chamando sua rota /api/send
         const sendRes = await fetch("https://intuitiveconcept.com.br/api/send", {
           method: "POST",
