@@ -365,6 +365,29 @@ const ANO_PESSOAL_MAP = {
     alerta: 'Apego ao passado e dramatização',
     poder: 'Liberar com gratidão',
     acao: `Este é ano de FINALIZAR ciclos, não de começar novos. Você vai sentir encerramento em várias áreas - relações que terminam, projetos que chegam ao fim, fases que se completam. Isso não é perda: é preparação para o novo que vem. Solte com gratidão. Agradeça o que foi. Libere espaço. O ano 9 é portal - mas você só atravessa de mãos vazias.`
+ },
+
+  // 🔮 NÚMEROS MESTRES
+
+  11: {
+    foco: 'Despertar espiritual e expansão de consciência',
+    alerta: 'Ansiedade, sobrecarga energética e confusão interna',
+    poder: 'Canalizar visão em ação concreta',
+    acao: `Ano altamente intuitivo e sensível. Você pode sentir que está "acordando" para algo maior — mas isso vem acompanhado de instabilidade emocional se não houver aterramento. Este é ano para alinhar propósito com prática. Rotina, disciplina e cuidado com o corpo são essenciais para sustentar a energia elevada do 11.`
+  },
+
+  22: {
+    foco: 'Construção de algo grande e estrutural',
+    alerta: 'Pressão excessiva e medo de falhar em grande escala',
+    poder: 'Transformar visão em legado',
+    acao: `Ano de responsabilidade ampliada. Você pode assumir posição de liderança ou estruturar algo que impacta mais pessoas. Mas cuidado com perfeccionismo paralisante. O 22 pede execução prática e visão estratégica. Grandes construções começam com pequenos sistemas diários.`
+  },
+
+  33: {
+    foco: 'Serviço elevado, cura e impacto coletivo',
+    alerta: 'Martírio e exaustão emocional',
+    poder: 'Inspirar sem se sacrificar',
+    acao: `Ano de missão elevada. Você pode se sentir chamada a ajudar, orientar ou sustentar outras pessoas. Mas o 33 exige maturidade: servir não é se sacrificar. Este é ano para equilibrar compaixão com limites. Quanto mais você cuida da própria energia, mais forte se torna seu impacto.`
   }
 };
 
@@ -425,14 +448,30 @@ A má notícia: isso exige presença, disciplina e coragem para encarar verdades
 
 A boa notícia: você já tem tudo que precisa. Só estava usando errado.
 
-**Este não é um texto para ler quando tiver tempo. É um protocolo para executar quando você estiver cansada de repetir o mesmo padrão esperando resultado diferente.**`
+💫Este não é um texto para ler quando tiver tempo. É um protocolo para executar quando você estiver cansada de repetir o mesmo padrão esperando resultado diferente.**`
     },
     
     leituraCompleta: {
-      titulo: '1. Leitura Completa: Seu "Motor" + Sua "Arquitetura"',
-      motor: {
-        subtitulo: '1.1 Seu "Motor" Energético (Signo + Elemento)',
-        conteudo: `Você é ${signo}, do elemento ${elemento}. Isso não é folclore - é código operacional.
+  titulo: '1. Leitura Completa: Seu "Motor" + Sua "Arquitetura"',
+
+  perfilEstrutural: {
+    subtitulo: 'SEU PERFIL ESTRUTURAL (Diagnóstico rápido)',
+    conteudo: `**Força dominante:** ${perfilEstrutural.forca}
+
+**Risco oculto:** ${perfilEstrutural.risco}
+
+**Gatilho emocional:** ${perfilEstrutural.gatilho}
+
+**Tendência automática:** ${perfilEstrutural.tendencia}
+
+**Modo sabotador:** ${perfilEstrutural.sabotador}
+
+**Modo magnético:** ${perfilEstrutural.magnetico}`
+  },
+
+  motor: {
+    subtitulo: '1.1 Seu "Motor" Energético (Signo + Elemento)',
+    conteudo: `Você é ${signo}, do elemento ${elemento}. Isso não é folclore - é código operacional.
 
 ${perfilElemento.motor}
 
@@ -446,13 +485,19 @@ ${perfilElemento.energia}
 
 Quando você opera alinhada com seu elemento, a vida parece "sincronizar" - as coisas fluem, as oportunidades aparecem, as pessoas certas cruzam seu caminho. Não é sorte: é ressonância. Você está vibrando na frequência natural do seu sistema, e o campo responde.
 
-Quando você opera CONTRA seu elemento, tudo vira esforço. Você nada contra a corrent${elemento === 'Fogo' ? 'e do seu próprio fogo' : elemento === 'Água' ? 'e da sua própria água' : elemento === 'Terra' ? 'e da sua própria terra' : 'e do seu próprio ar'} - e ninguém ganha dessa batalha por muito tempo.
+Quando você opera CONTRA seu elemento, tudo vira esforço. Você nada contra a corrent${
+  elemento === 'Fogo' ? 'e do seu próprio fogo' :
+  elemento === 'Água' ? 'e da sua própria água' :
+  elemento === 'Terra' ? 'e da sua própria terra' :
+  'e do seu próprio ar'
+} - e ninguém ganha dessa batalha por muito tempo.
 
 O trabalho não é "mudar quem você é". É parar de lutar contra sua natureza e aprender a usá-la a seu favor.`
-      },
-      arquitetura: {
-        subtitulo: `1.2 Sua "Arquitetura" da Alma (Número de Vida ${numeroVida})`, 
-        conteudo: `O Número de Vida ${numeroVida} - Arquétipo: ${arquetipo.principal}
+  },
+
+  arquitetura: {
+    subtitulo: `1.2 Sua "Arquitetura" da Alma (Número de Vida ${numeroVida})`,
+    conteudo: `O Número de Vida ${numeroVida} - Arquétipo: ${arquetipo.principal}
 
 ${arquetipo.profundo || `Este é o número que sua alma escolheu para dominar nesta vida. Não é coincidência. Não é aleatório. É o tema central da sua existência - a lição que vai se repetir de formas diferentes até você finalmente entender e integrar.`}
 
@@ -485,8 +530,23 @@ Repita isso não como afirmação vazia, mas como lembrete consciente toda vez q
 Seu signo é o COMO você se expressa. Seu número é O QUE você veio aprender. Quando os dois entram em coerência consciente, você vira um campo magnético ambulante - as coisas acontecem para você, não por esforço, mas por alinhamento.
 
 Quando eles brigam (você agindo pelo signo mas ignorando a lição do número, ou vice-versa), nasce o padrão clássico: muito esforço, pouco retorno. Muita ação, pouca transformação real.`
-      }
-    },
+  },
+
+  sinteseOperacional: {
+    subtitulo: 'SÍNTESE OPERACIONAL (Como você funciona na prática)',
+    conteudo: `Se você quiser parar de repetir padrões, pare de tentar “virar outra pessoa”.
+
+Você só precisa rodar seu sistema do jeito certo:
+
+1) **Direção antes de intensidade**  
+2) **Estrutura antes de inspiração**  
+3) **Ação pequena antes de promessa grande**
+
+**Comando de 72 horas (para provar mudança):**  
+Escolha UMA meta simples e execute 30 minutos por dia por 3 dias seguidos.  
+Não é para “mudar sua vida”. É para quebrar o piloto automático e recuperar comando interno.`
+  }
+},
     
     bloqueiosOcultos: {
       titulo: '2. Bloqueios Ocultos: Como Você Se Sabota (E Como Parar)',
