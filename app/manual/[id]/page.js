@@ -1110,63 +1110,93 @@ export default function ManualCompletoPage() {
     let mounted = true;
 
     async function buscarManual() {
-      setLoading(true);
-      setErro('');
+  setLoading(true);
+  setErro('');
+  setManual(null);
 
-      try {
-        const { data: analise, error: analiseError } = await supabase
-          .from('analises')
-          .select('*')
-          .eq('id', id)
-          .single();
+  try {
+    const { data: analise, error: analiseError } = await supabase
+      .from('analises')
+      .select('*')
+      .eq('id', id)
+      .single();
 
-        if (analiseError || !analise) {
-          throw new Error('Análise não encontrada');
-        }
-
-        if (!mounted) return;
-
-        const manualGerado = gerarManualCompleto(analise);
-        setManual(manualGerado);
-
-      } catch (error) {
-        if (!mounted) return;
-        setErro(error?.message || 'Erro ao carregar manual');
-      } finally {
-        if (!mounted) return;
-        setLoading(false);
-      }
+    if (analiseError || !analise) {
+      throw new Error('Análise não encontrada');
     }
 
-    if (id) buscarManual();
-    return () => { mounted = false; };
-  }, [id]);
+    if (!mounted) return;
 
-  if (loading) {
-    return (
-      <div className="wrap">
-        <style jsx global>{globalCss}</style>
-        <div className="center">
-          <div className="spinner" />
-          <p style={{color:'rgba(233,213,255,0.86)',marginTop:10}}>Carregando seu manual ultra-profundo...</p>
+    // ✅ TRAVA DE PAGAMENTO
+    const status = (analise.payment_status || '').toLowerCase();
+
+    if (status !== 'paid') {
+      throw new Error('Pagamento ainda não confirmado');
+    }
+
+    // ✅ Só gera manual se estiver pago
+    const manualGerado = gerarManualCompleto(analise);
+    setManual(manualGerado);
+
+  } catch (error) {
+    if (!mounted) return;
+    setErro(error?.message || 'Erro ao carregar manual');
+  } finally {
+    if (!mounted) return;
+    setLoading(false);
+  }
+}
+
+if (id) buscarManual();
+return () => { mounted = false; };
+}, [id]);
+
+if (loading) {
+  return (
+    <div className="wrap">
+      <style jsx global>{globalCss}</style>
+      <div className="center">
+        <div className="spinner" />
+        <p style={{color:'rgba(233,213,255,0.86)',marginTop:10}}>
+          Carregando seu manual ultra-profundo...
+        </p>
+      </div>
+    </div>
+  );
+}
+
+if (erro || !manual) {
+  return (
+    <div className="wrap">
+      <style jsx global>{globalCss}</style>
+      <div className="center">
+        <div style={{
+          maxWidth:600,
+          padding:30,
+          borderRadius:20,
+          background:'rgba(17,7,32,0.5)',
+          border:'1px solid rgba(216,180,254,0.2)'
+        }}>
+          <h1 style={{
+            fontSize:32,
+            marginBottom:15,
+            color:'rgba(245,158,11,0.95)'
+          }}>
+            Acesso bloqueado
+          </h1>
+
+          <p style={{
+            color:'rgba(233,213,255,0.86)',
+            fontSize:18
+          }}>
+            Seu pagamento ainda não foi confirmado.
+            Assim que o status estiver como <b>paid</b>, o manual será liberado automaticamente.
+          </p>
         </div>
       </div>
-    );
-  }
-
-  if (erro || !manual) {
-    return (
-      <div className="wrap">
-        <style jsx global>{globalCss}</style>
-        <div className="center">
-          <div style={{maxWidth:600,padding:30,borderRadius:20,background:'rgba(17,7,32,0.5)',border:'1px solid rgba(216,180,254,0.2)'}}>
-            <h1 style={{fontSize:32,marginBottom:15,color:'rgba(245,158,11,0.95)'}}>Ops...</h1>
-            <p style={{color:'rgba(233,213,255,0.86)',fontSize:18}}>{erro || 'Não foi possível carregar o manual'}</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+    </div>
+  );
+}
 
   return (
     <div className="wrap">
