@@ -475,15 +475,15 @@ A boa notícia: você já tem tudo que precisa. Só estava usando errado.
 
 ${perfilElemento.motor}
 
-**Seu Regente Planetário: ${regente}**
+Seu Regente Planetário: ${regente}
 
-O regente não é "influência astrológica mística" - é a frequência dominante na sua psique. ${regente} dita o estilo da sua reação instintiva, a cor do seu impulso, o sabor da sua tomada de decisão. Quando você age sem pensar, você age pelo filtro de ${regente}.
+O regente não é "influência astrológica mística", é a frequência dominante na sua psique. ${regente} dita o estilo da sua reação instintiva, a cor do seu impulso, o sabor da sua tomada de decisão. Quando você age sem pensar, você age pelo filtro de ${regente}.
 
 ${perfilElemento.energia}
 
-**A Verdade Que Ninguém Te Conta:**
+A Verdade Que Ninguém Te Conta:
 
-Quando você opera alinhada com seu elemento, a vida parece "sincronizar" - as coisas fluem, as oportunidades aparecem, as pessoas certas cruzam seu caminho. Não é sorte: é ressonância. Você está vibrando na frequência natural do seu sistema, e o campo responde.
+Quando você opera alinhada com seu elemento, a vida parece "sincronizar", as coisas fluem, as oportunidades aparecem, as pessoas certas cruzam seu caminho. Não é sorte: é ressonância. Você está vibrando na frequência natural do seu sistema, e o campo responde.
 
 Quando você opera CONTRA seu elemento, tudo vira esforço. Você nada contra a corrent${
   elemento === 'Fogo' ? 'e do seu próprio fogo' :
@@ -499,33 +499,33 @@ O trabalho não é "mudar quem você é". É parar de lutar contra sua natureza 
     subtitulo: `1.2 Sua "Arquitetura" da Alma (Número de Vida ${numeroVida})`,
     conteudo: `O Número de Vida ${numeroVida} - Arquétipo: ${arquetipo.principal}
 
-${arquetipo.profundo || `Este é o número que sua alma escolheu para dominar nesta vida. Não é coincidência. Não é aleatório. É o tema central da sua existência - a lição que vai se repetir de formas diferentes até você finalmente entender e integrar.`}
+${arquetipo.profundo || `Este é o número que sua alma escolheu para dominar nesta vida. Não é coincidência. Não é aleatório. É o tema central da sua existência, a lição que vai se repetir de formas diferentes até você finalmente entender e integrar.`}
 
-**Quando você está na LUZ do ${numeroVida}:**
+Quando você está na LUZ do ${numeroVida}:
 ${arquetipo.luz.map(l => `• ${l}`).join('\n')}
 
 Essa é você magnética, você em fluxo, você irresistível. As pessoas sentem isso mesmo sem saber explicar. Você não precisa fazer esforço para atrair - você simplesmente é, e o campo ao redor se reorganiza.
 
-**Quando você cai na SOMBRA do ${numeroVida}:**
+Quando você cai na SOMBRA do ${numeroVida}:
 ${arquetipo.sombra.map(s => `• ${s}`).join('\n')}
 
 Essa é você em autossabotagem, você em loop de repetição, você criando exatamente o que não quer. E a parte mais difícil: você não percebe. A sombra é "inteligente" - ela se disfarça de personalidade, de "jeito de ser", de "é assim que eu sou".
 
-**Sua Missão de Alma:**
+Sua Missão de Alma:
 ${arquetipo.missao}
 
-**Seu Bloqueio Principal:**
+Seu Bloqueio Principal:
 ${arquetipo.bloqueio}
 
-**Como Destravar:**
+Como Destravar:
 ${arquetipo.destrave}
 
-**Mantra de Poder:**
+Mantra de Poder:
 ${arquetipo.mantra}
 
 Repita isso não como afirmação vazia, mas como lembrete consciente toda vez que você pegar se sabotando de novo.
 
-**A Dança Entre Signo e Número:**
+A Dança Entre Signo e Número:
 
 Seu signo é o COMO você se expressa. Seu número é O QUE você veio aprender. Quando os dois entram em coerência consciente, você vira um campo magnético ambulante - as coisas acontecem para você, não por esforço, mas por alinhamento.
 
@@ -538,11 +538,11 @@ Quando eles brigam (você agindo pelo signo mas ignorando a lição do número, 
 
 Você só precisa rodar seu sistema do jeito certo:
 
-1) **Direção antes de intensidade**  
-2) **Estrutura antes de inspiração**  
-3) **Ação pequena antes de promessa grande**
+1) Direção antes de intensidade  
+2) Estrutura antes de inspiração  
+3) Ação pequena antes de promessa grande
 
-**Comando de 72 horas (para provar mudança):**  
+Comando de 72 horas (para provar mudança):
 Escolha UMA meta simples e execute 30 minutos por dia por 3 dias seguidos.  
 Não é para “mudar sua vida”. É para quebrar o piloto automático e recuperar comando interno.`
   }
@@ -554,31 +554,31 @@ Não é para “mudar sua vida”. É para quebrar o piloto automático e recupe
 
 Você chama de "meu jeito de ser". Ou de "eu só sou realista". Ou de "eu sou cautelosa". Mas não é. É mecanismo de proteção que virou prisão.
 
-**Como Você Se Sabota Pelo Seu Elemento (${elemento}):**
+Como Você Se Sabota Pelo Seu Elemento (${elemento}):
 
 ${perfilElemento.sabotagem}
 
 Reconhece? Claro que reconhece. Mas até agora você tratou isso como "defeito de personalidade" em vez de como padrão operacional que pode ser reprogramado.
 
-**Como Você Se Sabota Pelo Seu Número (${numeroVida}):**
+Como Você Se Sabota Pelo Seu Número (${numeroVida}):
 
 ${arquetipo.bloqueio}
 
 Isso dói, eu sei. Mas você não mudará o que não reconhece. E o primeiro passo para sair da prisão é admitir que você mesma construiu as grades.
 
-**A Verdade Dura Que Ninguém Te Fala:**
+A Verdade Dura Que Ninguém Te Fala:
 
 Sua sabotagem é "inteligente". Ela não parece sabotagem - parece lógica, parece proteção, parece até sabedoria. "Eu só estou sendo realista" (na verdade você está desistindo antes de tentar). "Eu sou muito sensível para isso" (na verdade você está fugindo do desconforto necessário). "Eu preciso de mais tempo para decidir" (na verdade você está usando análise como forma de procrastinação).
 
 O sabotador é mestre em se disfarçar de prudência, de amor próprio, de autocuidado. Mas o resultado é sempre o mesmo: você não age, não muda, não cresce. E aí vem a frustração - mas como a sabotagem é inconsciente, você culpa fatores externos.
 
-**Como Destravar AGORA (Não Depois, Não Quando Você Estiver "Pronta"):**
+Como Destravar AGORA (Não Depois, Não Quando Você Estiver "Pronta"):
 
 ${perfilElemento.destrave}
 
 Isso não é teoria. É prática. Se você fizer isso por 7 dias consecutivos, você quebra o padrão. Se você fizer por 21 dias, você cria novo circuito neural. Se você fizer por 90 dias, você se torna outra pessoa - não porque mudou quem você é, mas porque parou de operar no modo de autossabotagem.
 
-**O Campo Muda Quando Você Muda.**
+O Campo Muda Quando Você Muda.
 
 Não antes. Não "quando as circunstâncias estiverem certas". Agora. Você mudando o padrão interno, o externo se reorganiza. Sempre foi assim. Sempre será.`
     },
@@ -587,30 +587,30 @@ Não antes. Não "quando as circunstâncias estiverem certas". Agora. Você muda
       titulo: `3. Fase Atual: Seu Ano Pessoal ${anoPessoal2026} em 2026`,
       conteudo: `Você está em Ano Pessoal ${anoPessoal2026}. Isso significa que 2026 tem uma frequência específica para você - e se você trabalhar COM ela (em vez de contra), o ano flui. Se você ignorar, você vai nadar contra a corrente o ano inteiro.
 
-**Tema Central de 2026 Para Você:**
+Tema Central de 2026 Para Você:
 ${anoInfo.foco}
 
-**Armadilha Principal deste Ano:**
+Armadilha Principal deste Ano:
 ${anoInfo.alerta}
 
-**Seu Superpoder em 2026:**
+Seu Superpoder em 2026:
 ${anoInfo.poder}
 
-**O Que Fazer (Concretamente):**
+O Que Fazer (Concretamente):
 ${anoInfo.acao}
 
-**O Tripé de Sustentação para 2026:**
+O Tripé de Sustentação para 2026:
 
-1. **ENERGIA (Corpo + Mente)**
+1. ENERGIA (Corpo + Mente)
 Sem energia, você interpreta tudo como problema. Você vê ameaça onde há oportunidade, peso onde há desafio saudável. A energia não é só "dormir bem e comer direito" - é eliminar drenagem energética crônica (pessoas, situações, padrões mentais que te sugam) e reforçar fontes genuínas de vitalidade.
 
-2. **CLAREZA (1 Meta Por Vez)**
+2. CLAREZA (1 Meta Por Vez)
 Dispersão parece liberdade mas é prisão disfarçada. Quando você quer tudo ao mesmo tempo, não consegue nada de verdade. Escolha UMA prioridade para 2026. Uma. Não três. Uma. E estruture o ano inteiro ao redor dela. Você pode adicionar outras coisas depois - mas só depois que essa UMA coisa ganhar tração real.
 
-3. **AÇÃO (Ritmo Diário, Não Explosão Ocasional)**
+3. AÇÃO (Ritmo Diário, Não Explosão Ocasional)
 Destino não responde a intenção. Responde a repetição. 1 hora por dia durante 365 dias > 10 horas em um dia de motivação. O campo não se impressiona com entusiasmo - se impressiona com consistência. Pequenas ações diárias criam grande transformação ao longo do tempo. Explosões motivacionais criam apenas exaustão e frustração.
 
-**A Regra de Ouro Para 2026:**
+A Regra de Ouro Para 2026:
 
 Você não precisa fazer muito. Você precisa fazer TODO DIA. Mesmo nos dias ruins. Especialmente nos dias ruins. O momento em que você mais quer desistir é exatamente o momento que define se você vai quebrar o padrão ou repeti-lo mais uma vez.`
     },
@@ -619,7 +619,7 @@ Você não precisa fazer muito. Você precisa fazer TODO DIA. Mesmo nos dias rui
       titulo: '4. Rituais de Poder: Práticas Rápidas (3-7min) Que Realmente Funcionam',
       conteudo: `Esqueça rituais elaborados que você nunca vai fazer. Aqui estão práticas objetivas, rápidas e que realmente mudam padrão. A consistência importa mais que a duração.
 
-**RITUAL 1: Reset do Sistema (3 minutos - faça quando estiver travada)**
+RITUAL 1: Reset do Sistema (3 minutos - faça quando estiver travada)
 
 1. Coloque a mão no peito
 2. Respiração 5-5: inspira 5 segundos, expira 5 segundos (faça 5 rodadas)
@@ -629,7 +629,7 @@ Você não precisa fazer muito. Você precisa fazer TODO DIA. Mesmo nos dias rui
 
 Esse ritual corta o loop mental. Você não precisa de horas de meditação quando está em crise - precisa de 3 minutos de corte radical da repetição mental.
 
-**RITUAL 2: Corte de Padrão (5 minutos - faça semanalmente)**
+RITUAL 2: Corte de Padrão (5 minutos - faça semanalmente)
 
 Pegue papel e caneta (não digital):
 • Escreva: "O padrão que eu repito é..."
@@ -639,7 +639,7 @@ Pegue papel e caneta (não digital):
 
 O ritual não funciona se ficar só no insight. Precisa terminar em ação física.
 
-**RITUAL 3: Magnetismo Silencioso (7 minutos - faça de manhã quando possível)**
+RITUAL 3: Magnetismo Silencioso (7 minutos - faça de manhã quando possível)
 
 • 2 min: Coerência cardíaca (respiração lenta + mão no peito + atenção no coração físico)
 • 2 min: Postura de poder (coluna ereta + queixo paralelo ao chão + ombros para trás + olhar firme)
@@ -651,11 +651,11 @@ Isso não é "lei da atração" - é reprogramação neurofisiológica. Seu corp
 
 ${perfilElemento.ritual}
 
-**PROTEÇÃO ENERGÉTICA PARA ${elemento}:**
+PROTEÇÃO ENERGÉTICA PARA ${elemento}:
 
 ${perfilElemento.protecao}
 
-**A Verdade Sobre Rituais:**
+A Verdade Sobre Rituais:
 
 Ritual não é sobre "energia mística". É sobre criar ponto de pausa consciente em meio ao piloto automático da sua vida. É sobre lembrar quem você decidiu ser quando está funcionando no modo de sobrevivência. É sobre ter uma âncora tangível para voltar quando você se perder (e você vai se perder - todo mundo se perde).
 
