@@ -494,17 +494,17 @@ A boa notícia: você já tem tudo que precisa. Só estava usando errado.
 
   perfilEstrutural: {
     subtitulo: 'SEU PERFIL ESTRUTURAL (Diagnóstico rápido)',
-    conteudo: `**Força dominante:** ${perfilEstrutural.forca}
+    conteudo: `Força dominante: ${perfilEstrutural.forca}
 
-**Risco oculto:** ${perfilEstrutural.risco}
+Risco oculto: ${perfilEstrutural.risco}
 
-**Gatilho emocional:** ${perfilEstrutural.gatilho}
+Gatilho emocional: ${perfilEstrutural.gatilho}
 
-**Tendência automática:** ${perfilEstrutural.tendencia}
+Tendência automática: ${perfilEstrutural.tendencia}
 
-**Modo sabotador:** ${perfilEstrutural.sabotador}
+Modo sabotador: ${perfilEstrutural.sabotador}
 
-**Modo magnético:** ${perfilEstrutural.magnetico}`
+Modo magnético: ${perfilEstrutural.magnetico}`
   },
 
   motor: {
@@ -789,31 +789,31 @@ A mudança real não acontece nos dias de motivação. Acontece nos dias em que 
 
 Deixa eu te dar um exemplo brutal: você já soube que precisava terminar aquele relacionamento, sair daquele emprego, cortar aquela amizade - mas não fez. Por quê? Porque estava escolhendo conforto temporário sobre verdade permanente.
 
-**O TESTE DAS 3 PERGUNTAS (Use Antes de Qualquer Decisão)**
+O TESTE DAS 3 PERGUNTAS (Use Antes de Qualquer Decisão)
 
 Antes de dizer sim, antes de concordar, antes de aceitar - pause e pergunte:
 
-**1. Isso me EXPANDE ou me ENCOLHE?**
+1. Isso me EXPANDE ou me ENCOLHE?
 
 Sinta no corpo. Quando você imagina dizer sim para isso, seu peito abre ou fecha? Você respira fundo ou prende a respiração? Seu corpo não mente - só sua mente justifica.
 
 Expansão = crescimento (mesmo que assuste)
 Encolhimento = redução (mesmo que seja seguro)
 
-**2. Isso vem de VERDADE ou de MEDO?**
+2. Isso vem de VERDADE ou de MEDO?
 
 Verdade = você escolheria isso se não tivesse medo das consequências
 Medo = você só está escolhendo para evitar desconforto, conflito, decepção alheia
 
 Se a única razão para dizer sim é "para não magoar", "para não decepcionar", "para não parecer difícil" - você está escolhendo do medo. E decisão baseada em medo SEMPRE te leva para lugar menor do que você merece.
 
-**3. Eu escolheria isso se EU ME VALORIZASSE 20% A MAIS?**
+3. Eu escolheria isso se EU ME VALORIZASSE 20% A MAIS?
 
 Essa é a pergunta que mata justificativa. Se você se respeitasse um pouco mais, se você se visse como merece ser vista, você diria sim para isso? Ou você só está aceitando porque acha que não merece coisa melhor?
 
 Se a resposta aponta medo/encolhimento/desvalorização, você já sabe: é padrão antigo disfarçado de "oportunidade".
 
-**O "NÃO" QUE MUDA TUDO**
+O "NÃO" QUE MUDA TUDO
 
 A maior virada na sua vida vai ser quando você aprender a:
 
@@ -823,9 +823,9 @@ A maior virada na sua vida vai ser quando você aprender a:
 
 Você não precisa virar "durona". Você não precisa virar "fechada". Você só precisa virar CONSISTENTE - alinhada com o que você diz querer.
 
-**O CORTE RÁPIDO QUE SALVA ANOS DA SUA VIDA:**
+O CORTE RÁPIDO QUE SALVA ANOS DA SUA VIDA:
 
-**"Eu não decido cansada. Eu descanso, clareio, e depois decido."**
+"Eu não decido cansada. Eu descanso, clareio, e depois decido."
 
 Leia de novo.
 
@@ -833,7 +833,7 @@ Quantas decisões ruins você tomou no final do dia, no meio de uma crise, no pi
 
 Nova regra: se você está cansada, ansiosa, sobrecarregada, reativa - NÃO DECIDA. Não é "deixar para depois" - é se proteger de você mesma quando você não está no seu centro.
 
-**PROTOCOLO DE RETORNO AO CENTRO (Use Quando Estiver Perdida):**
+PROTOCOLO DE RETORNO AO CENTRO (Use Quando Estiver Perdida):
 
 1. PAUSA FÍSICA
 Levanta. Respira. Sai do lugar onde você estava. Muda o estado físico antes de tentar mudar o estado mental.
@@ -844,7 +844,7 @@ Levanta. Respira. Sai do lugar onde você estava. Muda o estado físico antes de
 3. AÇÃO MÍNIMA
 Escolha a menor ação possível que te aproxime do que é verdade. Não precisa ser a ação definitiva - apenas o próximo passo lógico.
 
-**COMO SABER SE VOCÊ ESTÁ DECIDINDO CERTO:**
+COMO SABER SE VOCÊ ESTÁ DECIDINDO CERTO:
 
 Você não vai ter certeza. Nunca vai. A vida não oferece garantia. Mas você vai ter CLAREZA - e clareza é suficiente.
 
@@ -859,7 +859,7 @@ A decisão certa não é necessariamente a confortável. É a ALINHADA.`
         titulo: 'BÔNUS 1 — Mapa do Amor: Seu Padrão Afetivo Real (Não o Romantizado)',
         conteudo: `Vamos falar de amor - mas não daquela forma poética e superficial que você já ouviu mil vezes. Vamos falar da verdade: você atrai e é atraída por padrões específicos. E até você entender QUAIS são esses padrões e POR QUE você os repete, você vai continuar achando que "amor não dá certo comigo".
 
-**SEU PADRÃO DE ATRAÇÃO PELO NÚMERO ${numeroVida}:**
+SEU PADRÃO DE ATRAÇÃO PELO NÚMERO ${numeroVida}:
 
 ${arquetipo.principal} atrai e é atraída por dinâmicas específicas. Você não "dá azar no amor" - você gravita em direção a tipos que refletem sua sombra não integrada.
 
@@ -883,26 +883,26 @@ Seu padrão: relações intensas mas breves. Você se entrega, se apaixona, vive
 Seu destrave afetivo: entender que compromisso consciente não é prisão. É escolha renovada diariamente. Você pode ser livre DENTRO de relação profunda - se você escolher parceiro que também valoriza autonomia. Liberdade real não é ausência de vínculo. É capacidade de escolher e sustentar suas escolhas.`
 : `Cada número tem um padrão de atração específico. O seu está na forma como você confunde ${arquetipo.sombra[0].toLowerCase()} com amor, como você tolera menos do que merece porque acha que "amor é assim", como você repete sempre o mesmo tipo de relação esperando resultado diferente.`}
 
-**3 REGRAS DE OURO PARA RELACIONAMENTO SAUDÁVEL (Independente do Seu Número):**
+3 REGRAS DE OURO PARA RELACIONAMENTO SAUDÁVEL (Independente do Seu Número):
 
-**REGRA 1: RECIPROCIDADE CLARA**
+REGRA 1: RECIPROCIDADE CLARA
 Amor sem troca equilibrada vira sacrifício disfarçado de "doação". Se você está sempre dando/cedendo/ajustando e o outro está sempre recebendo/exigindo/mantendo, isso não é amor. É desequilíbrio que você está chamando de "eu amo demais".
 
 Teste simples: se você sumisse por 7 dias, a pessoa te procuraria ativamente ou apenas esperaria você voltar? Se a resposta é "esperaria", você está mais investida do que ela.
 
-**REGRA 2: LIMITES RESPEITADOS**
+REGRA 2: LIMITES RESPEITADOS
 Você ensina as pessoas como te tratar. Se você não tem limites claros (ou tem mas não sustenta), você está sinalizando que qualquer tratamento é aceitável. E aí você atrai quem não te respeita - não porque "as pessoas são ruins", mas porque você mesma sinalizou que não há consequência para desrespeito.
 
 Novo padrão: Limite dito = limite sustentado. Sempre. Sem exceção. Sem "dessa vez eu deixo passar". Porque "dessa vez" vira "toda vez".
 
-**REGRA 3: PROJETO COMPATÍVEL**
+REGRA 3: PROJETO COMPATÍVEL
 Não adianta "amor verdadeiro" se vocês querem coisas fundamentalmente diferentes. Alguém que quer casar vs alguém que não quer compromisso. Alguém que quer filhos vs alguém que não quer. Alguém que valoriza estabilidade vs alguém que valoriza aventura.
 
 Amor não supera incompatibilidade de valores e direção. Você só vai se ressentir de ter abdicado do que queria "por amor" - e a pessoa vai se ressentir de ser cobrada por algo que nunca prometeu.
 
 Compatibilidade não é "ter tudo igual". É ter valores alinhados E vontade mútua de construir junto.
 
-**SINAIS VERMELHOS QUE VOCÊ IGNORA (Mas Não Deveria):**
+SINAIS VERMELHOS QUE VOCÊ IGNORA (Mas Não Deveria):
 
 • Você se sente pequena perto dessa pessoa (não é amor, é diminuição)
 • Você justifica comportamento inaceitável "porque ele/a tem trauma" (compaixão é lindo, mas você não é terapeuta não remunerada)
@@ -910,7 +910,7 @@ Compatibilidade não é "ter tudo igual". É ter valores alinhados E vontade mú
 • Você está sempre "trabalhando na relação" mas nada melhora (esforço sem reciprocidade é desperdício)
 • Você precisa "provar" que merece amor (você já merece. A pessoa certa não te fará duvidar disso)
 
-**SUA NOVA RÉGUA AFETIVA:**
+SUA NOVA RÉGUA AFETIVA:
 
 Não é "será que ele/a gosta de mim?". É: "Essa pessoa me EXPANDE ou me ENCOLHE?". 
 
@@ -923,39 +923,39 @@ Simples assim.`
         titulo: 'BÔNUS 2 — Dinheiro & Prosperidade: Seu Código Financeiro Real',
         conteudo: `Vamos falar de dinheiro - mas não daquela forma superficial de "visualize abundância". Vamos falar do padrão real que está bloqueando seu fluxo financeiro. Porque você não é "bloqueada" para dinheiro. Você só está operando com código financeiro bugado.
 
-**SEU CÓDIGO DE PROSPERIDADE PELO NÚMERO ${numeroVida}:**
+SEU CÓDIGO DE PROSPERIDADE PELO NÚMERO ${numeroVida}:
 
-Pelo seu número, você materializa dinheiro através de: **${
+Pelo seu número, você materializa dinheiro através de: ${
   numeroVida === 1 ? 'liderança e iniciativa' :
   numeroVida === 2 ? 'parcerias e colaboração' :
   numeroVida === 3 ? 'expressão e criatividade' :
   numeroVida === 5 ? 'mudança e versatilidade' :
   'trabalho alinhado com sua missão'
-}**
+}
 
 Isso não é "dica motivacional" - é como seu sistema energético se conecta com fluxo financeiro. Quando você trabalha PELO seu código, dinheiro flui. Quando você trabalha CONTRA, você nada contra a corrente.
 
-**BLOQUEIO FINANCEIRO INVISÍVEL DO ${numeroVida}:**
+BLOQUEIO FINANCEIRO INVISÍVEL DO ${numeroVida}:
 
 ${arquetipo.bloqueio}
 
 Reconhece? Esse é o padrão energético que está bloqueando seu dinheiro - não "o mercado difícil", não "falta de oportunidade", não "crise econômica". É seu padrão interno de operação.
 
-**OS 3 BLOQUEIOS FINANCEIROS QUE TODO MUNDO TEM (Mas Ninguém Admite):**
+OS 3 BLOQUEIOS FINANCEIROS QUE TODO MUNDO TEM (Mas Ninguém Admite):
 
-**BLOQUEIO 1: VOCÊ TRABALHA MUITO MAS COBRA POUCO**
+BLOQUEIO 1: VOCÊ TRABALHA MUITO MAS COBRA POUCO
 
 Sua hora tem preço. Sua experiência tem preço. Seu conhecimento tem preço. Mas você cobra como se estivesse "começando" mesmo tendo anos de experiência. Por quê? Porque no fundo você não acredita que seu trabalho vale tanto.
 
 Novo padrão: Seu preço não é baseado no que "o mercado paga". É baseado no VALOR que você entrega + o CUSTO de não ter você. Quando você começa a cobrar pelo valor real (não pelo tempo gasto), tudo muda.
 
-**BLOQUEIO 2: VOCÊ NÃO SABE QUANTO GANHA NEM QUANTO GASTA**
+BLOQUEIO 2: VOCÊ NÃO SABE QUANTO GANHA NEM QUANTO GASTA
 
 Você vive no "mais ou menos" financeiro. "Mais ou menos ganho X", "mais ou menos gasto Y". Esse "mais ou menos" é a brecha por onde seu dinheiro escorre sem você nem perceber.
 
 Nova regra: Sem organização financeira mínima, você não tem como crescer financeiramente. Você precisa saber EXATAMENTE quanto entra, quanto sai, e para onde vai. Não é sobre controle neurótico. É sobre consciência financeira.
 
-**BLOQUEIO 3: VOCÊ TEM CRENÇA LIMITANTE DISFARÇADA DE "HUMILDADE"**
+BLOQUEIO 3: VOCÊ TEM CRENÇA LIMITANTE DISFARÇADA DE "HUMILDADE"
 
 "Dinheiro não é tudo"
 "Eu não trabalho por dinheiro, eu trabalho por propósito"
@@ -963,22 +963,22 @@ Nova regra: Sem organização financeira mínima, você não tem como crescer fi
 
 Tudo isso é bloqueio disfarçado de virtude. Você PODE ter propósito E dinheiro. Pode ser espiritual E próspera. Pode servir E ser bem remunerada. Uma coisa não anula a outra - a menos que VOCÊ acredite que anula.
 
-**PLANO DE 14 DIAS PARA DESTRAVAR FLUXO FINANCEIRO:**
+PLANO DE 14 DIAS PARA DESTRAVAR FLUXO FINANCEIRO:
 
-**SEMANA 1: DIAGNÓSTICO REAL**
+SEMANA 1: DIAGNÓSTICO REAL
 
 DIA 1-2: Mapeie TUDO que entra e TUDO que sai. Sem julgamento. Apenas dados.
 DIA 3-4: Identifique vazamentos (onde você gasta sem necessidade/consciência)
 DIA 5-6: Liste suas fontes potenciais de renda (todas, não só as "oficiais")
 DIA 7: Defina sua meta financeira clara para os próximos 90 dias
 
-**SEMANA 2: AÇÃO CONSCIENTE**
+SEMANA 2: AÇÃO CONSCIENTE
 
 DIA 8-10: Elimine 3 gastos desnecessários (assinaturas esquecidas, hábitos caros sem retorno)
 DIA 11-12: Crie/ajuste sua precificação (se você presta serviço) ou negocie aumento (se você é CLT)
 DIA 13-14: Tome UMA ação diária que te aproxime da meta (prospecção, networking, lançamento)
 
-**O ERRO DE VIBRAÇÃO MAIS COMUM:**
+O ERRO DE VIBRAÇÃO MAIS COMUM:
 
 Você trabalha MUITO mas não cobra o VALOR REAL do seu trabalho. Por quê? Porque você tem medo de "perder o cliente", "assustar as pessoas", "parecer mercenária".
 
@@ -990,7 +990,7 @@ Nova verdade: Se você cobra barato, você atrai cliente que não valoriza seu t
 
 Use isso toda vez que você for negociar, precificar, ou aceitar trabalho. Se você não se valoriza, ninguém vai valorizar por você.
 
-**A VERDADE BRUTAL QUE NINGUÉM QUER OUVIR:**
+A VERDADE BRUTAL QUE NINGUÉM QUER OUVIR:
 
 Você não está "bloqueada" para dinheiro. Você só não quer pagar o preço do fluxo financeiro real - que é: cobrar certo, cortar drenagem, agir consistentemente, e parar de se sabotar com crenças limitantes disfarçadas de virtude.
 
@@ -1000,10 +1000,10 @@ Dinheiro é energia. Flui para quem respeita seu próprio valor e age alinhado c
         titulo: 'BÔNUS 3 — Calendário de Poder: Rotina de 30 Dias Para Transformação Real',
         conteudo: `Este não é calendário motivacional com desafios diários. É estrutura de SUSTENTAÇÃO - porque transformação não acontece em 1 dia de motivação. Acontece em 30 dias de repetição consciente.
 
-**META DESTE MÊS:**
+META DESTE MÊS:
 Criar uma nova baseline operacional - ou seja, um novo "normal" para você. Você não vai virar outra pessoa. Mas vai elevar seu padrão de funcionamento em pelo menos 30%.
 
-**SEMANA 1 (DIAS 1-7): CLAREZA**
+SEMANA 1 (DIAS 1-7): CLAREZA
 
 FOCO: Definir prioridade única + eliminar distrações
 
@@ -1012,7 +1012,7 @@ Dia 3-4: Liste e elimine 5 distrações principais (apps, pessoas, hábitos)
 Dia 5-6: Crie estrutura mínima para sua prioridade (o que precisa acontecer COMO)
 Dia 7: Revisão: "Minha prioridade é X e vou executar fazendo Y"
 
-**SEMANA 2 (DIAS 8-14): ENERGIA**
+SEMANA 2 (DIAS 8-14): ENERGIA
 
 FOCO: Construir base física/mental sólida
 
@@ -1021,7 +1021,7 @@ Dia 10-11: Adicione movimento diário (15min de qualquer atividade física)
 Dia 12-13: Limpeza alimentar básica (tire 2 coisas que te detonam, adicione 2 que te nutrem)
 Dia 14: Revisão: "Como está minha energia comparado com semana passada?"
 
-**SEMANA 3 (DIAS 15-21): AÇÃO**
+SEMANA 3 (DIAS 15-21): AÇÃO
 
 FOCO: Uma tarefa finalizada por dia (momento de COLHER)
 
@@ -1030,7 +1030,7 @@ Dia 18-19: Execute ação de impacto relacionada à sua prioridade do mês
 Dia 20-21: Ajuste o que não está funcionando (estratégia, abordagem, método)
 Dia 21: Revisão: "O que eu materializei esta semana?"
 
-**SEMANA 4 (DIAS 22-28): CONSOLIDAÇÃO**
+SEMANA 4 (DIAS 22-28): CONSOLIDAÇÃO
 
 FOCO: Rituais do elemento ${elemento} + revisão semanal
 
@@ -1039,23 +1039,23 @@ Dia 25-26: Corte o que não serve mais (relação, hábito, compromisso)
 Dia 27-28: Planeje próximo ciclo baseado no que funcionou este mês
 Dia 28: Revisão: "O que mudou em mim neste mês?"
 
-**DIAS 29-30: RECALIBRAÇÃO**
+DIAS 29-30: RECALIBRAÇÃO
 
 Dia 29: Pausa consciente - sem trabalho, sem produção, apenas SER
 Dia 30: Planejamento do próximo ciclo baseado em dados reais (não entusiasmo)
 
-**PRÁTICAS ESPECÍFICAS PARA ELEMENTO ${elemento}:**
+PRÁTICAS ESPECÍFICAS PARA ELEMENTO ${elemento}:
 
 ${perfilElemento.ritual}
 
-**COMO SABER SE ESTÁ FUNCIONANDO:**
+COMO SABER SE ESTÁ FUNCIONANDO:
 
 Semana 1: Você vai sentir clareza (e um pouco de ansiedade sobre "será que vou conseguir")
 Semana 2: Você vai sentir resistência (corpo e mente vão querer voltar ao velho padrão)
 Semana 3: Você vai sentir tração (as coisas começam a fluir mais fácil)
 Semana 4: Você vai sentir DIFERENÇA tangível (mais energia, mais clareza, mais resultado)
 
-**O QUE FAZER QUANDO VOCÊ FALHAR (Porque Você Vai):**
+O QUE FAZER QUANDO VOCÊ FALHAR (Porque Você Vai):
 
 Não existe "perder o desafio". Existe "recomeçar no dia seguinte". Você perdeu um dia? Volte no próximo. Perdeu três dias? Volte no quarto. O calendário não é rígido - é estrutura de apoio.
 
@@ -1067,62 +1067,62 @@ A diferença entre quem transforma e quem desiste não é "nunca falhar". É vol
 
 A maioria das pessoas vive no anti-arquétipo achando que é só "jeito de ser". Não é. É padrão de sobrevivência cristalizado que você continua executando mesmo quando já não precisa mais.
 
-**SEU ARQUÉTIPO DE PODER (${numeroVida} em LUZ):**
+SEU ARQUÉTIPO DE PODER (${numeroVida} em LUZ):
 
 ${arquetipo.luz.map(l => `• ${l}`).join('\n')}
 
 Essa é você REAL. Você sem filtro de medo, sem mecanismo de defesa, sem máscara de proteção. Quando você opera daqui, você é magnética sem esforço. As pessoas sentem isso sem saber explicar. Oportunidades aparecem. Portas se abrem. O campo responde.
 
-**SEU ANTI-ARQUÉTIPO (${numeroVida} em SOMBRA):**
+SEU ANTI-ARQUÉTIPO (${numeroVida} em SOMBRA):
 
 ${arquetipo.sombra.map(s => `• ${s}`).join('\n')}
 
 Essa é você em modo de autossabotagem. Você operando do medo disfarçado de "prudência", da proteção disfarçada de "realismo", da resistência disfarçada de "isso não é para mim".
 
-**GATILHOS QUE TE JOGAM NA SOMBRA (Aprenda a Reconhecer):**
+GATILHOS QUE TE JOGAM NA SOMBRA (Aprenda a Reconhecer):
 
-• **Quando você sente que precisa PROVAR algo** (para si mesma ou para outros)
+• Quando você sente que precisa PROVAR algo (para si mesma ou para outros)
 A sombra sempre precisa validação externa. A luz já SABE seu valor.
 
-• **Quando você age por MEDO em vez de por VERDADE**
+• Quando você age por MEDO em vez de por VERDADE
 Se a única razão para fazer/não fazer algo é "o que vai acontecer se...", você está na sombra.
 
-• **Quando você REPETE o padrão mesmo sabendo que não funciona**
+• Quando você REPETE o padrão mesmo sabendo que não funciona
 A definição de loucura é fazer sempre igual esperando resultado diferente. Reconhece?
 
-• **Quando você usa desculpas "racionais" para não agir** ("não é o momento", "preciso me preparar mais", "quando eu tiver X eu faço Y")
+• Quando você usa desculpas "racionais" para não agir ("não é o momento", "preciso me preparar mais", "quando eu tiver X eu faço Y")
 A sombra é mestre em racionalizar medo como "prudência".
 
-**PROTOCOLO DE 7 DIAS PARA SAIR DA SOMBRA E VOLTAR PARA LUZ:**
+PROTOCOLO DE 7 DIAS PARA SAIR DA SOMBRA E VOLTAR PARA LUZ:
 
-**DIA 1: RECONHECIMENTO**
+DIA 1: RECONHECIMENTO
 Identifique quando o anti-arquétipo apareceu hoje. Não julgue. Apenas observe: "Ah, eu caí na sombra quando X aconteceu".
 
-**DIA 2: PAUSA CONSCIENTE**
+DIA 2: PAUSA CONSCIENTE
 Quando pegar o gatilho acontecendo EM TEMPO REAL, pause. Respire fundo 5 vezes. Saia do lugar físico se possível. Corte o loop antes de agir.
 
-**DIA 3: PERGUNTA CHAVE**
+DIA 3: PERGUNTA CHAVE
 Pergunte: "O que meu eu MAGNÉTICO faria agora?" (não o que seu eu assustado quer fazer - o que seu EU REAL faria)
 
-**DIA 4: AÇÃO ALINHADA**
+DIA 4: AÇÃO ALINHADA
 Escolha a ação do arquétipo em luz, mesmo que pequena. Mesmo que assuste. Mesmo que não tenha garantia. Uma ação. Uma decisão. Um movimento.
 
-**DIA 5: REGISTRO**
+DIA 5: REGISTRO
 Escreva em 2-3 linhas: "Hoje eu escolhi X em vez de Y. Me senti Z". Você está criando nova memória neural.
 
-**DIA 6: REPETIÇÃO**
+DIA 6: REPETIÇÃO
 Faça de novo. E de novo. E de novo. Novo circuito neural se cria por repetição, não por insight único.
 
-**DIA 7: OBSERVAÇÃO DO CAMPO**
+DIA 7: OBSERVAÇÃO DO CAMPO
 Observe como o campo ao seu redor muda quando VOCÊ muda. As pessoas tratam você diferente? As oportunidades aparecem? Você se sente diferente?
 
-**A VERDADE SOBRE ARQUÉTIPO E SOMBRA:**
+A VERDADE SOBRE ARQUÉTIPO E SOMBRA:
 
 Você NUNCA vai eliminar completamente a sombra. Ela é parte de você. Mas você pode escolher conscientemente não operar a partir dela. Reconhecer a sombra não é "admitir defeito" - é ter poder de escolha.
 
 Quanto mais você reconhece seu padrão de sombra, mais rápido você sai dele. No começo demora dias. Depois horas. Depois minutos. Até que vira automático: "Ah, essa é minha sombra tentando me proteger de algo que eu nem preciso mais de proteção. Obrigada, mas não".
 
-**VOCÊ NÃO É O PADRÃO. VOCÊ É A CONSCIÊNCIA QUE ESCOLHE PARAR DE REPETI-LO.**
+VOCÊ NÃO É O PADRÃO. VOCÊ É A CONSCIÊNCIA QUE ESCOLHE PARAR DE REPETI-LO.
 
 Leia de novo. Essa frase muda tudo.`
       }
@@ -1134,13 +1134,13 @@ Leia de novo. Essa frase muda tudo.`
 
 Agora você tem o método. Não tem mais desculpa.
 
-**NÃO É A VIDA QUE TE PRENDE. É O PADRÃO.**
+NÃO É A VIDA QUE TE PRENDE. É O PADRÃO.
 
 Você já percebeu isso, certo? Você repete sempre a mesma história, só com personagens diferentes. Mesmo conflito, nova pessoa. Mesmo sabotagem, novo projeto. Mesmo padrão, nova roupagem.
 
 E o pior: você SABE que está repetindo. Mas continua porque o padrão é familiar. E familiaridade, por mais tóxica que seja, parece mais segura que mudança real.
 
-**MAS AGORA VOCÊ TEM O DIAGNÓSTICO.**
+MAS AGORA VOCÊ TEM O DIAGNÓSTICO.
 
 Você sabe:
 • Como seu elemento opera (motor)
@@ -1150,24 +1150,24 @@ Você sabe:
 
 Não tem mais "eu não entendo por que isso acontece comigo". Você entende. A pergunta agora é: você vai fazer algo diferente ou vai continuar lendo sobre mudança sem mudar?
 
-**O CAMPO RESPONDE À COERÊNCIA.**
+O CAMPO RESPONDE À COERÊNCIA.
 
 Coerência não é "pensar positivo". Não é "visualizar". Não é "afirmar". É AGIR alinhado com o que você diz querer. É escolher conscientemente mesmo quando o piloto automático quer te puxar de volta para o velho padrão.
 
 O campo não se impressiona com intenção. Se impressiona com REPETIÇÃO CONSCIENTE. Pequenas escolhas diárias alinhadas criam grande transformação ao longo do tempo. Explosões motivacionais esporádicas não criam nada além de frustração.
 
-**VOCÊ NÃO ESTÁ AQUI PARA SER PERFEITA.**
+VOCÊ NÃO ESTÁ AQUI PARA SER PERFEITA.
 
 Você vai falhar. Vai cair na sombra. Vai esquecer o que leu aqui. Vai voltar pro padrão antigo. Isso é NORMAL. Mudança não é linear. É dois passos pra frente, um pra trás. Mas se você continuar - se você voltar depois de falhar, se você recomeçar depois de desistir - você chega.
 
-**O QUE FAZER AGORA (NÃO AMANHÃ, NÃO "QUANDO ESTIVER PRONTA"):**
+O QUE FAZER AGORA (NÃO AMANHÃ, NÃO "QUANDO ESTIVER PRONTA"):
 
 1. **Escolha UMA coisa** deste relatório para aplicar nos próximos 7 dias
 2. **Não conte para ninguém** que você vai fazer (anunciar dissipa energia)
 3. **Apenas faça** (mesmo mal feito, mesmo imperfeito, mesmo com medo)
 4. **Observe o que muda** no campo quando você muda internamente
 
-**E DEPOIS DE 7 DIAS:**
+E DEPOIS DE 7 DIAS:
 
 Se funcionou, escolha mais uma coisa. E repita. E repita. E repita.
 
@@ -1175,7 +1175,7 @@ Em 90 dias você vai olhar para trás e não vai reconhecer quem você era. Não
 
 ---
 
-*"Você não está aqui para ser perfeita. Você está aqui para ser VERDADEIRA. E verdade - verdade alinhada com ação sustentada - é poder real, é poder sustentável, é poder que ninguém pode tirar de você porque vem de dentro."*
+"Você não está aqui para ser perfeita. Você está aqui para ser VERDADEIRA. E verdade - verdade alinhada com ação sustentada - é poder real, é poder sustentável, é poder que ninguém pode tirar de você porque vem de dentro."
 
 O manual acabou.
 
