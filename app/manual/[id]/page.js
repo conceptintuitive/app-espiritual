@@ -8,6 +8,7 @@ import { createClient } from '@supabase/supabase-js';
 // GERADOR ULTRA PROFUNDO (300+ palavras/seção)
 // ========================================
 
+
 const ELEMENTOS_SIGNOS = {
   'Áries': 'Fogo', 'Touro': 'Terra', 'Gêmeos': 'Ar', 'Câncer': 'Água',
   'Leão': 'Fogo', 'Virgem': 'Terra', 'Libra': 'Ar', 'Escorpião': 'Água',
@@ -417,6 +418,42 @@ function calcularAnoPessoal(dia, mes, anoAlvo) {
   return reduzirNumero(Number(dia) + Number(mes) + Number(anoAlvo));
 }
 
+const PERFIL_ESTRUTURAL_MAP = {
+  'Fogo': {
+    forca: 'Ação, coragem e magnetismo de início',
+    risco: 'Impulsividade e queimar etapas',
+    gatilho: 'Sentir-se controlada, desacreditada ou limitada',
+    tendencia: 'Agir rápido, decidir no calor, mover o campo pela intensidade',
+    sabotador: 'Reatividade, rompantes, desistir quando perde o tesão inicial',
+    magnetico: 'Liderança natural, presença forte, decisão rápida com direção'
+  },
+  'Terra': {
+    forca: 'Consistência, disciplina e materialização',
+    risco: 'Rigidez, medo de mudança e excesso de controle',
+    gatilho: 'Imprevisto, instabilidade e sensação de insegurança',
+    tendencia: 'Planejar, sustentar, construir aos poucos com método',
+    sabotador: 'Paralisia por risco, teimosia, “sempre foi assim”',
+    magnetico: 'Confiabilidade, estabilidade, resultado inevitável'
+  },
+  'Ar': {
+    forca: 'Visão, inteligência e comunicação estratégica',
+    risco: 'Ansiedade mental e excesso de análise',
+    gatilho: 'Ambiguidade, falta de clareza e pressão por decisão rápida',
+    tendencia: 'Pensar, conectar padrões, explicar e estruturar ideias',
+    sabotador: 'Pensar demais e agir de menos, intelectualizar emoções',
+    magnetico: 'Clareza, influência pela palavra, leitura rápida do cenário'
+  },
+  'Água': {
+    forca: 'Intuição, empatia e profundidade emocional',
+    risco: 'Absorção energética e falta de limites',
+    gatilho: 'Clima pesado, rejeição, frieza e desvalorização emocional',
+    tendencia: 'Sentir primeiro, acolher, perceber o invisível',
+    sabotador: 'Auto-sacrifício, vínculos drenantes, confundir amor com carregar',
+    magnetico: 'Presença curadora, conexão profunda, sensibilidade com maturidade'
+  }
+};
+
+
 function gerarManualCompleto(analise) {
   const { nome, data_nascimento, signo, numero_vida } = analise;
   const primeiroNome = (nome || '').trim().split(' ')[0] || 'você';
@@ -428,7 +465,8 @@ function gerarManualCompleto(analise) {
   const arquetipo = ARQUETIPOS_POR_NUMERO[numeroVida] || ARQUETIPOS_POR_NUMERO[1];
   const perfilElemento = PERFIL_POR_ELEMENTO[elemento] || PERFIL_POR_ELEMENTO['Fogo'];
   const anoInfo = ANO_PESSOAL_MAP[anoPessoal2026] || ANO_PESSOAL_MAP[1];
-
+  const perfilEstrutural =
+  PERFIL_ESTRUTURAL_MAP[elemento] || PERFIL_ESTRUTURAL_MAP['Fogo'];
   return {
     meta: { nome, data_nascimento, signo, elemento, regente, numeroVida, anoPessoal2026 },
     
@@ -1306,6 +1344,12 @@ if (erro || !manual) {
             )}
           </section>
         )}
+        {manual.leituraCompleta.perfilEstrutural && (
+  <div className="subsecao">
+    <h3 className="h3">{manual.leituraCompleta.perfilEstrutural.subtitulo}</h3>
+    <div className="texto">{manual.leituraCompleta.perfilEstrutural.conteudo}</div>
+  </div>
+)}
 
         {/* BLOQUEIOS OCULTOS */}
         {manual?.bloqueiosOcultos && (
