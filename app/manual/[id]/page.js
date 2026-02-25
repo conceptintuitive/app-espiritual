@@ -1187,16 +1187,23 @@ export default function ManualCompletoPage() {
 
     if (!mounted) return;
 
-    // ✅ TRAVA DE PAGAMENTO
-    const status = (analise.payment_status || '').toLowerCase();
+ // ✅ TRAVA DE PAGAMENTO (corrigida)
+const paymentStatus = String(analise.payment_status ?? '')
+  .trim()
+  .toLowerCase();
 
-    if (status !== 'paid') {
-      throw new Error('Pagamento ainda não confirmado');
-    }
+// opcional: aceita "pago" também (caso você use PT em algum lugar)
+const liberado = paymentStatus === 'paid' || paymentStatus === 'pago';
 
-    // ✅ Só gera manual se estiver pago
-    const manualGerado = gerarManualCompleto(analise);
-    setManual(manualGerado);
+console.log('DEBUG payment_status:', analise.payment_status, '=>', paymentStatus);
+
+if (!liberado) {
+  throw new Error(`Pagamento ainda não confirmado (payment_status="${paymentStatus || 'vazio'}")`);
+}
+
+// ✅ Só gera manual se estiver pago
+const manualGerado = gerarManualCompleto(analise);
+setManual(manualGerado);
 
   } catch (error) {
     if (!mounted) return;
@@ -1245,12 +1252,8 @@ if (erro || !manual) {
             Acesso bloqueado
           </h1>
 
-          <p style={{
-            color:'rgba(233,213,255,0.86)',
-            fontSize:18
-          }}>
-            Seu pagamento ainda não foi confirmado.
-            Assim que o status estiver como <b>paid</b>, o manual será liberado automaticamente.
+          <p style={{ color:'rgba(233,213,255,0.86)', fontSize:18 }}>
+            {erro || 'Não foi possível carregar o manual.'}
           </p>
         </div>
       </div>
