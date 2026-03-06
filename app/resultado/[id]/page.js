@@ -465,7 +465,7 @@ const BONUS_RELACIONAMENTO = [
       ],
       bonus: ['Mapa do Amor completo', 'Checklist de sinais', 'Ritual de autoestima'],
       fechamento: 'Se você continuar entrando no amor pelo pico, vai continuar saindo dele pela dor. O Manual te ensina a entrar pelo critério.',
-      ctaLabel: '💞 Quero destravar meu amor',
+      ctaLabel: '💞 “SIM! QUERO SAIR DESSE PADRÃO AGORA',
     };
   }
 
@@ -1168,32 +1168,7 @@ useEffect(() => {
           </div>
         </div>
 
-        {/* CTA FINAL */}
-<div className="ctaFinal">
 
-  <div className="priceBox">
-    <div className="oldPrice">De R$ 97,00</div>
-
-    <div className="newPrice">
-      POR APENAS <span>R$ 47,00</span>
-    </div>
-
-    <div className="warningText">
-  <p>Se você sair agora, a tendência é repetir o mesmo ciclo, só com mais consciência.</p>
-  <p>Você já entendeu o padrão. Agora falta aplicar.</p>
-</div>
-
-    <button className="ctaMainBtn" onClick={handleComprar}>
-      🚀 SIM! QUERO SAIR DESSE PADRÃO AGORA
-    </button>
-
-    <div className="ctaInfos">
-      <span>⚡ Acesso em 2 minutos</span>
-      <span>🔒 Pagamento 100% seguro</span>
-      <span>✓ 7 dias de garantia</span>
-    </div>
-  </div>
-</div>
 {/* OBJETIVO - plano 7 dias (venda) */}
 {relatorio.objetivoPack && (
   <div className="card objective-card">
