@@ -1337,7 +1337,7 @@ const STATUS_TRABALHO = [
               🎁 GRÁTIS AGORA
             </div>
 
-            <div style={{ color: 'rgba(216,180,254,0.9)', fontSize: 20, textDecoration: 'line-through' }}>De R$ 197,00</div>
+            <div style={{ color: 'rgba(216,180,254,0.9)', fontSize: 20, textDecoration: 'line-through' }}>De R$ 97,00</div>
             <div style={{ fontFamily: 'Cinzel, serif', fontWeight: 900, fontSize: 62, color: 'rgba(245,158,11,0.95)', marginTop: 4 }}>
                Hoje: gratuito
             </div>
