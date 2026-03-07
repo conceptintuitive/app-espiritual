@@ -382,8 +382,8 @@ const STATUS_TRABALHO = [
 
         /* Melhor legibilidade em telas grandes */
         .heroWrap {
-  padding: 68px 0 36px;
-  min-height: 78vh;
+  padding: 60px 0 28px;
+  min-height: 72vh;
   display: flex;
   align-items: center;
   justify-content: center;
