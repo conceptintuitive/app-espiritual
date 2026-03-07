@@ -234,17 +234,17 @@ const OBJETIVOS = [
 ];
 
 const STATUS_RELACIONAMENTO = [
-  'Solteira',
+  'Solteiro(a)',
   'Ficando',
   'Relacionamento instável',
   'Namorando',
-  'Casada',
+  'Casado(a)',
 ];
 
 const STATUS_TRABALHO = [
   'CLT',
-  'Empreendedora',
-  'Autônoma',
+  'Empreendedor(a)',
+  'Autônomo(a)',
   'Transição de carreira',
   'Estudando',
 ];
