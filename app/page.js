@@ -920,7 +920,7 @@ const STATUS_TRABALHO = [
       <div className="stickyCta" aria-hidden="false">
         <div className="stickyCard">
           <div className="stickyText">
-            {completion >= 60 ? 'Falta pouco para gerar seu mapa ✨' : 'Gere seu mapa gratuito em 2 minutos ✨'}
+            {completion >= 60 ? 'Falta pouco para gerar seu mapa ✨' : 'Gere seu mapa gratuito em menos de 2 minutos ✨'}
             <div style={{ marginTop: 6 }} className="progressBar">
               <div className="progressFill" style={{ width: `${completion}%` }} />
             </div>
@@ -985,8 +985,7 @@ const STATUS_TRABALHO = [
       <section id="formulario" className="formSection">
         <div className="containerX">
           <h2 className="sectionTitle">{leadMagnetTitle}</h2>
-          <p className="sectionSub">Preencha para gerar seu mapa completo (grátis). Você decide se quer o Manual Completo depois.</p>
-
+<p className="sectionSub">Leva menos de 1 minuto. Você decide depois se quer o Manual Completo.</p>
           <div className="formCard">
             <div className="progressRow">
               <span>Progresso</span>
@@ -1200,10 +1199,10 @@ const STATUS_TRABALHO = [
 
           <div className="listCard" style={{ maxWidth: 820, margin: '0 auto' }}>
             {[
-              { num: '1️⃣', title: 'Seu Caminho de Vida', desc: 'A missão central que sua alma veio desenvolver nesta encarnação.' },
-              { num: '2️⃣', title: 'Seus 3 Talentos Naturais', desc: 'Os dons que você já tem — e como usar com mais confiança.' },
+              { num: '1️⃣', title: 'Seu Caminho de Vida (o que você veio desenvolver)', desc: 'A missão central que sua alma veio desenvolver nesta encarnação.' },
+              { num: '2️⃣', title: 'Seus 3 Talentos Naturais (como usar melhor)', desc: 'Os dons que você já tem — e como usar com mais confiança.' },
               { num: '3️⃣', title: '1 Bloqueio Principal + Prática de 3 Minutos', desc: 'Um ajuste prático para sentir mudança real no dia a dia.' },
-              { num: '4️⃣', title: 'Seu Próximo Passo Personalizado', desc: 'Um plano simples e direto do que fazer a partir de agora.' },
+              { num: '4️⃣', title: 'Seu Próximo Passo Personalizado (o que fazer agora)', desc: 'Um plano simples e direto do que fazer a partir de agora.' },
             ].map((item, i) => (
               <div key={i} className="listRow">
                 <div className="listNum">{item.num}</div>
@@ -1225,7 +1224,7 @@ const STATUS_TRABALHO = [
 
             <div className="ctaRowCenter">
               <button type="button" className="ctaSecondary" onClick={scrollToForm}>
-                Quero gerar o meu mapa
+                Quero gerar o meu mapa agora
               </button>
             </div>
           </div>
@@ -1266,7 +1265,7 @@ const STATUS_TRABALHO = [
       {/* TESTEMUNHOS */}
       <section className="sectionPad">
         <div className="containerX">
-          <h2 className="sectionTitle">Vidas transformadas</h2>
+          <h2 className="sectionTitle">Relatos de quem já fez o mapa</h2>
           <p className="sectionSub">Relatos reais de pessoas que buscaram clareza e direção.</p>
 
           <div style={{ maxWidth: 820, margin: '0 auto' }}>
@@ -1304,7 +1303,7 @@ const STATUS_TRABALHO = [
 
             <div className="ctaRowCenter">
               <button type="button" className="ctaSecondary" onClick={scrollToForm}>
-                Quero ver meu mapa agora
+                Gerar meu mapa agora
               </button>
             </div>
           </div>
@@ -1314,7 +1313,7 @@ const STATUS_TRABALHO = [
       {/* OFERTA (GRÁTIS) */}
       <section className="sectionPad" style={{ background: 'rgba(31,10,56,0.45)' }}>
         <div className="containerX">
-          <h2 className="sectionTitle">Acesso gratuito por tempo limitado</h2>
+          <h2 className="sectionTitle">Gere seu mapa gratuitamente agora</h2>
           <p className="sectionSub">Hoje está gratuito para novos acessos.</p>
 
           <div className="listCard" style={{ maxWidth: 820, margin: '0 auto', textAlign: 'center', position: 'relative' }}>
@@ -1340,10 +1339,10 @@ const STATUS_TRABALHO = [
 
             <div style={{ color: 'rgba(216,180,254,0.9)', fontSize: 20, textDecoration: 'line-through' }}>De R$ 197,00</div>
             <div style={{ fontFamily: 'Cinzel, serif', fontWeight: 900, fontSize: 62, color: 'rgba(245,158,11,0.95)', marginTop: 4 }}>
-              R$ 0
+               Hoje: gratuito
             </div>
             <div style={{ marginTop: 8, color: 'rgba(233,213,255,0.92)', fontSize: 18 }}>
-              Gere seu mapa sem pagar nada.
+              Leva menos de 2 minutos.
               <br />
               <span style={{ color: 'rgba(216,180,254,0.92)' }}>Você só compra depois se fizer sentido.</span>
             </div>
@@ -1390,7 +1389,7 @@ const STATUS_TRABALHO = [
                 q: '📌 É realmente grátis?',
                 a: 'Sim. O mapa básico é 100% gratuito. Depois, você pode (se quiser) desbloquear o Manual Completo com aprofundamento e guia prático.',
               },
-              { q: '📌 Quanto tempo demora?', a: 'Cerca de 2 minutos para preencher. O resultado aparece instantaneamente na tela.' },
+              { q: '📌 Quanto tempo demora?', a: 'Menos de 1 minuto para preencher. O resultado aparece instantaneamente na tela.' },
               { q: '📌 Preciso saber a hora de nascimento?', a: 'Não. Se souber, melhora a precisão (principalmente na astrologia). Se não souber, você ainda recebe o mapa.' },
               { q: '📌 Meus dados estão seguros?', a: 'Sim. Usamos seus dados apenas para gerar o mapa. Você pode cancelar e-mails quando quiser.' },
             ].map((item, i) => (
