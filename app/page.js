@@ -382,15 +382,15 @@ const STATUS_TRABALHO = [
 
         /* Melhor legibilidade em telas grandes */
         .heroWrap {
-          padding: 96px 0 72px;
-          min-height: 92vh;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          text-align: center;
-          position: relative;
-          z-index: 10;
-        }
+  padding: 68px 0 36px;
+  min-height: 78vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  position: relative;
+  z-index: 10;
+}
 
         .badgeTop {
           display: inline-flex;
@@ -409,7 +409,7 @@ const STATUS_TRABALHO = [
         .heroTitle {
           font-family: 'Cinzel', serif;
           font-weight: 700;
-          font-size: clamp(44px, 5vw, 68px);
+          font-size: clamp(40px, 4.6vw, 60px);
           line-height: 1.05;
           margin-bottom: 18px;
           background: linear-gradient(90deg, #fb7185, #a855f7, #f59e0b);
@@ -501,14 +501,14 @@ const STATUS_TRABALHO = [
 
         /* FORM SECTION */
         .formSection {
-          position: relative;
-          z-index: 10;
-          padding: 86px 0;
-          background: rgba(31, 10, 56, 0.65);
-          backdrop-filter: blur(10px);
-          border-top: 1px solid rgba(216, 180, 254, 0.12);
-          border-bottom: 1px solid rgba(216, 180, 254, 0.12);
-        }
+  position: relative;
+  z-index: 10;
+  padding: 58px 0 86px;
+  background: rgba(31, 10, 56, 0.65);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(216, 180, 254, 0.12);
+  border-bottom: 1px solid rgba(216, 180, 254, 0.12);
+}
 
         .formCard {
           max-width: 760px;
