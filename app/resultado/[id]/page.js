@@ -148,7 +148,7 @@ function assinaturaSigno(signo) {
     Libra: { luz: 'harmonia e inteligência social', sombra: 'indecisão por medo de desagradar', ajuste: 'escolher sua verdade sem negociar' },
     Escorpião: { luz: 'poder de transformação', sombra: 'controle e desconfiança', ajuste: 'vulnerabilidade é força' },
     Sagitário: { luz: 'expansão e visão', sombra: 'fuga quando se sente limitada', ajuste: 'liberdade com compromisso' },
-    Capricórnio: { luz: 'estrutura e realização', sombra: 'dureza consigo mesma', ajuste: 'descanso também é produtividade' },
+    Capricórnio: { luz: 'estrutura e realização', sombra: 'dureza consigo', ajuste: 'descanso também é produtividade' },
     Aquário: { luz: 'originalidade e futuro', sombra: 'distanciamento emocional', ajuste: 'presença no agora' },
     Peixes: { luz: 'conexão espiritual', sombra: 'confusão energética', ajuste: 'aterramento para proteger seu dom' },
   };
@@ -164,7 +164,7 @@ function assinaturaSigno(signo) {
 
 function assinaturaNumero(numeroVida) {
   const map = {
-    1: { luz: 'liderança natural', sombra: 'fazer tudo sozinha', mantra: 'Eu lidero com apoio' },
+    1: { luz: 'liderança natural', sombra: 'fazer tudo por conta própria', mantra: 'Eu lidero com apoio' },
     2: { luz: 'sensibilidade e intuição', sombra: 'anular-se pelo outro', mantra: 'Eu sinto sem me perder' },
     3: { luz: 'criatividade e expressão', sombra: 'dispersão', mantra: 'Eu crio com foco' },
     4: { luz: 'estrutura e disciplina', sombra: 'rigidez', mantra: 'Eu construo com leveza' },
@@ -378,7 +378,7 @@ const BONUS_RELACIONAMENTO = [
   }
 
   // DISCIPLINA
-  if (isSameObjective(oRaw, ['ter mais disciplina', 'disciplina', 'ser mais disciplinada'])) {
+  if (isSameObjective(oRaw, ['ter mais disciplina', 'disciplina', 'ter mais disciplina'])) {
     return {
       headline: 'Disciplina, no seu caso, não é força. É estrutura certa.',
       subheadline: 'O problema não é preguiça. É depender de vontade para fazer o que precisa ser sustentado.',
@@ -794,7 +794,7 @@ const primeiroNome = (nome || '').trim().split(' ')[0] || 'Você';
       'Escorpião':
         'Como Escorpião, você vive tudo com profundidade e intensidade. O ajuste é transformar intensidade em direção, não em excesso.',
       'Sagitário':
-        'Como Sagitário, você precisa de liberdade e espaço para sentir que está viva. O ajuste é criar uma estrutura leve, não rígida.',
+        'Como Sagitário, você precisa de liberdade e espaço para se sentir livre. O ajuste é criar uma estrutura leve, não rígida.',
       'Capricórnio':
         'Como Capricórnio, você funciona bem com estrutura e meta. O ajuste é não transformar isso em peso, autocobrança ou dureza.',
       'Aquário':
@@ -1299,7 +1299,7 @@ useEffect(() => {
             <div className="subcard highlight">
               <div className="subttl">✨ Sua força natural</div>
               <div className="p">{relatorio.assinaturaSigno.luz}</div>
-              <div className="micro">Quando você tá alinhada, isso flui</div>
+              <div className="micro">Quando você se alinha, isso flui</div>
             </div>
 
             <div className="subcard danger">
