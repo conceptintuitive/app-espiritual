@@ -550,7 +550,7 @@ const STATUS_TRABALHO = [
 
   .preFormTrigger {
   max-width: 680px;
-  margin: 0 auto 26px auto;
+  margin: 0 auto 14px auto;
   text-align: center;
   padding: 26px 30px;
   border-radius: 24px;
@@ -630,18 +630,20 @@ const STATUS_TRABALHO = [
   }
 
   .triggerTitle {
-    font-size: 18px;
-    margin-bottom: 12px;
+     font-size: 18px;
+  font-weight: 600;
+  opacity: .9;
   }
 
   .triggerList li {
-    font-size: 16px;
-    line-height: 1.55;
+    font-size: 17px;
+    line-height: 1.45;
   }
 
   .triggerFinal {
-    font-size: 14px;
-    padding: 9px 14px;
+      padding: 8px 14px;
+  font-size: 15px;
+  background: rgba(245,158,11,.08);
   }
 }
 
