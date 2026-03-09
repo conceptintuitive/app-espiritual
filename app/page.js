@@ -548,36 +548,101 @@ const STATUS_TRABALHO = [
           margin-bottom: 18px;
         }
 
-        .preFormTrigger {
-  max-width: 620px;
-  margin: 0 auto 22px auto;
+  .preFormTrigger {
+  max-width: 680px;
+  margin: 0 auto 26px auto;
   text-align: center;
-  padding: 18px 20px;
-  border-radius: 16px;
-  background: linear-gradient(145deg, rgba(139,92,246,.08), rgba(236,72,153,.08));
-  border: 1px solid rgba(236,72,153,.25);
-  backdrop-filter: blur(6px);
+  padding: 26px 30px;
+  border-radius: 24px;
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at top center, rgba(236, 72, 153, 0.10), transparent 45%),
+    linear-gradient(145deg, rgba(124, 58, 237, 0.16), rgba(17, 7, 32, 0.62));
+  border: 1px solid rgba(236, 72, 153, 0.28);
+  box-shadow:
+    0 18px 50px rgba(0, 0, 0, 0.28),
+    0 0 0 1px rgba(255,255,255,0.02) inset;
+  backdrop-filter: blur(10px);
+}
+
+.preFormTrigger::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.04) 35%, transparent 70%);
+  pointer-events: none;
+}
+
+.preFormTrigger::after {
+  content: '✦';
+  position: absolute;
+  top: -18px;
+  right: 18px;
+  font-size: 68px;
+  color: rgba(255,255,255,0.06);
+  transform: rotate(12deg);
+  pointer-events: none;
 }
 
 .triggerTitle {
-  font-size: 16px;
-  margin-bottom: 8px;
-  color: rgba(255,255,255,.85);
+  font-family: 'Cinzel', serif;
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: rgba(243, 232, 255, 0.96);
+  letter-spacing: 0.3px;
 }
 
 .triggerList {
   list-style: none;
   padding: 0;
-  margin: 0 0 10px 0;
-  font-size: 15px;
-  color: rgba(255,255,255,.9);
-  line-height: 1.7;
+  margin: 0 0 16px 0;
+  display: grid;
+  gap: 10px;
+}
+
+.triggerList li {
+  color: rgba(233, 213, 255, 0.92);
+  font-size: 18px;
+  line-height: 1.6;
 }
 
 .triggerFinal {
-  font-weight: 700;
-  font-size: 15px;
-  color: #fbbf24;
+  display: inline-block;
+  margin-top: 2px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: rgba(245, 158, 11, 0.10);
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  font-weight: 800;
+  font-size: 16px;
+  color: rgba(245, 158, 11, 0.98);
+  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.08);
+}
+
+@media (max-width: 768px) {
+  .preFormTrigger {
+    max-width: 100%;
+    padding: 20px 18px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+  }
+
+  .triggerTitle {
+    font-size: 18px;
+    margin-bottom: 12px;
+  }
+
+  .triggerList li {
+    font-size: 16px;
+    line-height: 1.55;
+  }
+
+  .triggerFinal {
+    font-size: 14px;
+    padding: 9px 14px;
+  }
 }
 
         .progressRow {
@@ -1017,18 +1082,18 @@ const STATUS_TRABALHO = [
      <section id="formulario" className="formSection">
   <div className="containerX">
 <h2 className="sectionTitle">{leadMagnetTitle}</h2>
-<p className="sectionSub">Leva menos de 1 minuto. Você decide depois se quer o Manual Completo.</p>
+<p className="sectionSub">Leva menos de 1 minuto. Clareza agora - profundidade depois, se fizer sentido para você.</p>
 
 <div className="preFormTrigger">
   <p className="triggerTitle">Se você sente que:</p>
 
   <ul className="triggerList">
-    <li>• repete padrões sem entender por quê</li>
-    <li>• trava justo quando precisa avançar</li>
-    <li>• sente que poderia estar muito mais à frente</li>
+    <li>repete padrões sem entender por quê</li>
+    <li>trava justo quando precisa avançar</li>
+    <li>sente que poderia estar muito mais à frente</li>
   </ul>
 
-  <p className="triggerFinal">→ Seu mapa pode mostrar o que está por trás disso.</p>
+  <p className="triggerFinal">Seu mapa pode mostrar o que está por trás disso.</p>
 </div>
 
 <div className="formCard">
