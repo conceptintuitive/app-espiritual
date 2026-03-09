@@ -1084,7 +1084,7 @@ const STATUS_TRABALHO = [
      <section id="formulario" className="formSection">
   <div className="containerX">
 <h2 className="sectionTitle">{leadMagnetTitle}</h2>
-<p className="sectionSub">Leva menos de 1 minuto. Clareza agora - profundidade depois, se fizer sentido para você.</p>
+<p className="sectionSub">Leva menos de 1 minuto. Em segundos você entende por que repete ciclos e como mudar.</p>
 
 <div className="preFormTrigger">
   <p className="triggerTitle">Se você sente que:</p>
