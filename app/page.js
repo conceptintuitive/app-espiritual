@@ -548,6 +548,38 @@ const STATUS_TRABALHO = [
           margin-bottom: 18px;
         }
 
+        .preFormTrigger {
+  max-width: 620px;
+  margin: 0 auto 22px auto;
+  text-align: center;
+  padding: 18px 20px;
+  border-radius: 16px;
+  background: linear-gradient(145deg, rgba(139,92,246,.08), rgba(236,72,153,.08));
+  border: 1px solid rgba(236,72,153,.25);
+  backdrop-filter: blur(6px);
+}
+
+.triggerTitle {
+  font-size: 16px;
+  margin-bottom: 8px;
+  color: rgba(255,255,255,.85);
+}
+
+.triggerList {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 10px 0;
+  font-size: 15px;
+  color: rgba(255,255,255,.9);
+  line-height: 1.7;
+}
+
+.triggerFinal {
+  font-weight: 700;
+  font-size: 15px;
+  color: #fbbf24;
+}
+
         .progressRow {
           display: flex;
           align-items: center;
@@ -982,11 +1014,24 @@ const STATUS_TRABALHO = [
       </section>
 
       {/* FORM */}
-      <section id="formulario" className="formSection">
-        <div className="containerX">
-          <h2 className="sectionTitle">{leadMagnetTitle}</h2>
+     <section id="formulario" className="formSection">
+  <div className="containerX">
+<h2 className="sectionTitle">{leadMagnetTitle}</h2>
 <p className="sectionSub">Leva menos de 1 minuto. Você decide depois se quer o Manual Completo.</p>
-          <div className="formCard">
+
+<div className="preFormTrigger">
+  <p className="triggerTitle">Se você sente que:</p>
+
+  <ul className="triggerList">
+    <li>• repete padrões sem entender por quê</li>
+    <li>• trava justo quando precisa avançar</li>
+    <li>• sente que poderia estar muito mais à frente</li>
+  </ul>
+
+  <p className="triggerFinal">→ Seu mapa pode mostrar o que está por trás disso.</p>
+</div>
+
+<div className="formCard">
             <div className="progressRow">
               <span>Progresso</span>
               <span style={{ color: 'rgba(245,158,11,0.95)', fontWeight: 800 }}>{completion}%</span>
