@@ -1125,7 +1125,7 @@ const STATUS_TRABALHO = [
       {/* FORM */}
      <section id="formulario" className="formSection">
   <div className="containerX">
-<h2 className="sectionTitle">{firstName ? `Seu mapa espiritual personalizado, ${firstName}` : 'Seu mapa espiritual personalizado'}</h2>
+<h2 className="sectionTitle">{firstName ? `Seu mapa personalizado, ${firstName}` : 'Seu mapa espiritual personalizado'}</h2>
 <p className="sectionSub">Leva menos de 1 minuto. Descubra o padrão que está por trás dos seus ciclos e o que fazer agora.</p>
 
 <div className="preFormTrigger">
