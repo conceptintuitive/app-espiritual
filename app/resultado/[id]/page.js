@@ -687,16 +687,47 @@ function getTrabalhoCopy(status, numeroVida, signo) {
 // -----------------------
 function insightPorNumero(numeroVida) {
   const map = {
-    11:
-      'Você é uma ANTENA ESPIRITUAL. Você capta sinais e padrões que a maioria ignora. O desafio: sua mente tenta acompanhar algo que é energético — e isso vira ansiedade e exaustão silenciosa. Quando você aterra essa visão, você transforma intuição em ação.',
+
+    1:
+      'Existe uma parte sua cansada de esperar. Seu Número 1 não nasceu para assistir a própria vida de fora — nasceu para decidir, iniciar e mover. O que acontece é que, nos últimos tempos, você tem sentido um conflito interno: vontade de avançar e, ao mesmo tempo, um peso estranho que desacelera. Isso não é fraqueza. É tensão acumulada. Quando seu 1 sai do eixo, você alterna entre impulso e exaustão, força e silêncio. Mas quando ele volta para o lugar, algo muda rápido: você para de duvidar do próprio passo e volta a agir com clareza. O ponto é: o momento que você vive agora pede decisão — não perfeição.',
+
+    2:
+      'Você sente mais do que demonstra. Seu Número 2 está atravessando um momento de sensibilidade alta, e isso explica por que certas situações têm pesado mais do que deveriam. Você percebe detalhes, mudanças de energia e intenções que outras pessoas ignoram — e isso cansa. Quando o 2 se sobrecarrega, você tenta manter harmonia enquanto se desgasta por dentro. O que seu momento atual pede não é mais esforço emocional. Pede limite, silêncio e escolha. Quando você para de absorver tudo, sua clareza volta rápido.',
+
+    3:
+      'Sua mente está cheia, mas sua energia anda fragmentada. Seu Número 3 vive um momento em que ideias existem, vontade existe, mas algo parece dispersar sua força no meio do caminho. Isso não é falta de capacidade — é excesso de estímulo sem direção clara. Quando o 3 perde eixo, você começa várias coisas e conclui menos do que gostaria. E isso pesa. O momento que você vive agora pede uma coisa só: foco simples. Quando você reduz o ruído, sua potência aparece quase imediatamente.',
+
+    4:
+      'Você vem carregando mais do que deveria. Seu Número 4 mostra um momento de responsabilidade intensa, autocobrança alta e sensação silenciosa de peso constante. Você sustenta muita coisa — por dentro e por fora — e nem sempre percebe o quanto isso te cansa. Quando o 4 se desequilibra, tudo vira obrigação e nada parece leve. O que seu momento pede agora não é mais controle. É ajuste. Quando você solta um pouco a rigidez, sua força volta sem esforço.',
+
+    5:
+      'Existe inquietação no seu momento atual. Seu Número 5 mostra uma fase de transição interna: vontade de mudança, incômodo com o que está parado e sensação de que algo precisa se mover. O problema é que, quando o 5 não tem direção, a energia vira ansiedade ou impulsividade. Você sente que quer sair de algo — mesmo sem saber exatamente para onde. E isso é sinal claro de ciclo virando. O que seu momento pede não é fugir. É escolher com consciência.',
+
+    6:
+      'Você tem dado mais do que recebe — e já sente isso. Seu Número 6 revela um momento em que responsabilidade emocional, cuidado e cobrança interna estão altos demais. Você segura muito, organiza muito, pensa muito nos outros — e sobra pouco espaço para você. Quando o 6 sai do eixo, o cansaço vem acompanhado de culpa por querer descansar. O que seu momento pede é simples e difícil ao mesmo tempo: parar de se colocar por último(a). Quando você faz isso, sua energia muda rápido.',
+
     7:
-      'Você é PROFUNDIDADE RARA. Você enxerga camadas que os outros não veem. O desafio: quando algo te frustra, você se fecha. Quando você transforma isso em seletividade consciente, você atrai pessoas e oportunidades do seu nível.',
+      'Você está em um momento profundamente interno. Seu Número 7 mostra uma fase de análise, silêncio e percepção intensa. Você observa mais do que fala, sente mais do que explica e percebe coisas que não consegue traduzir facilmente. Isso pode trazer isolamento, dúvida ou sensação de distância do mundo. Mas também traz clareza rara. O que seu momento pede não é mais respostas externas — é confiar mais no que você já percebeu por dentro.',
+
     8:
-      'Você nasceu pra GRANDEZA. Você materializa. O desafio: medo da própria magnitude e autocobrança. Quando você ocupa seu espaço com calma, o mundo se ajusta a você.',
+      'Você sente que poderia estar mais longe do que está. Seu Número 8 mostra um momento de cobrança interna, comparação e sensação silenciosa de atraso. Você sabe do próprio potencial — e isso às vezes pesa mais do que ajuda. Quando o 8 entra em tensão, tudo vira pressão: resultado, tempo, desempenho. O que seu momento pede agora não é correr mais. É alinhar melhor. Quando você reduz a pressão, sua execução melhora quase imediatamente.',
+
+    9:
+      'Seu momento é de fechamento emocional. Seu Número 9 mostra uma fase de encerramento de ciclo, revisão interna e sensibilidade alta. Você tem sentido mais nostalgia, mais reflexão e menos tolerância para o que não faz sentido. Isso não é fraqueza — é consciência. O desafio é não prolongar ciclos por apego ou culpa. O que seu momento pede agora é desapego consciente. Quando você solta, a vida abre espaço rápido.',
+
+    11:
+      'Seu momento está intenso — e você sente isso. Seu Número 11 mostra sensibilidade amplificada, mente acelerada e percepção energética muito ativa. Você capta sinais, atmosferas e padrões antes mesmo de entender racionalmente. Isso pode gerar ansiedade, cansaço e sobrecarga silenciosa. O problema não é sentir demais. É não conseguir desligar. O que seu momento pede agora é aterramento. Quando você desacelera o corpo, sua mente organiza quase sozinha.',
+
+    22:
+      'Você está diante de um momento grande — mesmo que ainda não pareça claro. Seu Número 22 mostra uma fase de expansão possível, mas também de medo silencioso do próprio tamanho. Você sente que pode mais, mas hesita. Quando o 22 entra em tensão, você adia, racionaliza e espera demais. O que seu momento pede agora não é certeza total. É movimento gradual. Quando você começa, o caminho aparece.',
+
+    33:
+      'Seu momento pede maturidade emocional profunda. Seu Número 33 mostra sensibilidade alta, entrega intensa e uma fase em que você tem sentido tudo com mais força. Você acolhe, sustenta e sente além do necessário — e isso cansa. O desafio agora não é amar menos. É amar com limite. Quando você para de carregar o que não é seu, sua leveza volta.'
   };
+
   return (
     map[numeroVida] ||
-    'Você sente que há mais em você do que consegue expressar. A frustração não é falta de capacidade — é falta de direção clara. O próximo nível não exige força; exige estrutura simples.'
+    'Existe algo no seu momento atual que ainda não está totalmente claro — mas você sente. Não é falta de capacidade. É um padrão interno pedindo ajuste. Quando isso ganha forma, tudo começa a fluir de outro jeito.'
   );
 }
 
@@ -1145,7 +1176,7 @@ useEffect(() => {
           <div className="badge">🔒 Resultado Privado • Gerado Agora</div>
           <h1 className="title">{relatorio.headline}</h1>
           <p className="subtitle">
-            Se você chegou até aqui, é porque algo se repete.
+             Se você chegou até aqui, é porque uma parte sua já percebeu que esse padrão está se repetindo.
           </p>
 
           <div className="pills">
@@ -1163,7 +1194,7 @@ useEffect(() => {
         {/* O QUE VOCÊ CONTOU */}
         {(temObjetivo || temRelacionamento || temTrabalho) && (
           <div className="card personal-card">
-            <h2 className="h2">📌 O QUE SE REPETE NA SUA HISTÓRIA</h2>
+            <h2 className="h2">📌 O PADRÃO QUE COMEÇA A APARECER</h2>
 
             {temObjetivo && (
               <div className="personal-row">
@@ -1187,15 +1218,30 @@ useEffect(() => {
             )}
 
             {temObjetivo && (
-              <div className="note" style={{ marginTop: 14 }}>
-                <strong>Por que isso importa:</strong>
-                <div style={{ marginTop: 6 }}>{relatorio.explicacaoObjetivoPersonalizada}</div>
-              </div>
-            )}
+  <div className="note" style={{ marginTop: 14 }}>
+    <strong>O que isso começa a revelar:</strong>
+    <div style={{ marginTop: 8, lineHeight: 1.8 }}>
+      {relatorio.explicacaoObjetivoPersonalizada}
+    </div>
+  </div>
+)}
 
-            <div className="note" style={{ marginTop: 14 }}>
-              O Manual não é “conteúdo bonito”. Ele vira um <b>plano prático</b> para o seu cenário real.
-            </div>
+{relatorio.ganchoProfundo && (
+  <div className="note-alert" style={{ marginTop: 14 }}>
+    <strong>O que o restante do seu mapa aprofunda:</strong>
+    <div style={{ marginTop: 8, lineHeight: 1.8 }}>
+      {relatorio.ganchoProfundo}
+    </div>
+  </div>
+)}
+
+<div className="note-solution" style={{ marginTop: 14 }}>
+  <strong>E aqui está a virada:</strong>
+  <div style={{ marginTop: 8, lineHeight: 1.8 }}>
+    Quando você entende esse padrão com clareza, parar de repetir o mesmo deixa de ser esforço —
+    e começa a ser consequência.
+  </div>
+</div>
           </div>
         )}
 
