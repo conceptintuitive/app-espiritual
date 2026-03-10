@@ -1358,7 +1358,7 @@ useEffect(() => {
           <div className="badge">🔒 Resultado Privado • Gerado Agora</div>
           <h1 className="title">{relatorio.headline}</h1>
           <p className="subtitle">
-             Se você chegou até aqui, é porque uma parte sua já percebeu que esse padrão está se repetindo.
+             Se você chegou até aqui, é porque algo dentro de você já percebeu que esse padrão se repete.
           </p>
 
           <div className="pills">
