@@ -499,17 +499,17 @@ const BONUS_RELACIONAMENTO = [
 // ----------------------------------------------------
 // ✅ FUNÇÃO PRINCIPAL (substitui seu bloco inteiro)
 // ----------------------------------------------------
- function getObjetivoCopy(objetivo, numeroVida, signo) {
+function getObjetivoCopy(objetivo, numeroVida, signo) {
   const oRaw = norm(objetivo);
   const o = lowerClean(oRaw);
 
   if (!oRaw || o === 'selecionar' || o === 'select') {
     return {
-      headline: 'Seu mapa já mostrou o padrão. Agora falta o plano que muda o jogo.',
+      headline: 'Seu mapa já mostrou o padrão. Agora falta o plano que realmente muda o jogo.',
       subheadline: 'Clareza sem execução vira só consciência dolorida.',
-      dor: 'Você já percebeu onde se repete. O que falta não é entender mais. É ter uma estrutura simples para não voltar para o mesmo ciclo.',
-      virada: 'O Manual transforma insight em direção prática, com passos pequenos o bastante para você conseguir sustentar.',
-      promessa: 'Você sai daqui com um plano de 7 dias para sair do padrão e entrar em movimento real.',
+      dor: 'Você já percebeu onde se repete. O que falta não é entender mais. É ter um caminho simples, sustentável e inteligente para não voltar para o mesmo ciclo com outra roupa.',
+      virada: 'O Manual pega aquilo que hoje ainda está solto dentro de você e transforma em direção prática. Menos confusão. Mais clareza aplicável.',
+      promessa: 'Você sai daqui com um plano de 7 dias que tira sua mudança do campo da intenção e coloca no campo da ação real.',
       plano7: [
         'Dia 1: clareza do padrão principal',
         'Dia 2: corte do que mais drena',
@@ -526,13 +526,13 @@ const BONUS_RELACIONAMENTO = [
   }
 
   // DISCIPLINA
-  if (isSameObjective(oRaw, ['ter mais disciplina', 'disciplina', 'ter mais disciplina'])) {
+  if (isSameObjective(oRaw, ['ter mais disciplina', 'disciplina'])) {
     return {
-      headline: 'Disciplina, no seu caso, não é força. É estrutura certa.',
-      subheadline: 'O problema não é preguiça. É depender de vontade para fazer o que precisa ser sustentado.',
-      dor: 'Você até começa bem. Mas quando o dia pesa, o ritmo quebra. E cada vez que você quebra o que prometeu para si, sua confiança interna diminui.',
-      virada: 'O Manual te mostra como criar constância sem viver em autocobrança. Menos promessa vazia. Mais sistema simples.',
-      promessa: 'Você aprende a funcionar mesmo em dias normais, sem depender de motivação alta para manter o básico.',
+      headline: 'Disciplina, no seu caso, não é força. É estrutura emocional certa.',
+      subheadline: 'O problema nunca foi preguiça. É depender de motivação para sustentar o que precisa virar padrão.',
+      dor: 'Você começa bem. Muitas vezes até com intensidade. Mas quando o dia pesa, o ritmo quebra. E toda vez que você quebra o que prometeu para si, algo silencioso acontece: sua confiança interna diminui. Você não perde só constância. Perde confiança em si mesma.',
+      virada: 'O Manual não tenta te motivar. Ele te organiza. Em vez de te jogar mais cobrança, ele te mostra como criar constância com menos guerra interna, menos culpa e mais estrutura que funciona até nos dias comuns.',
+      promessa: 'Você para de viver no tudo-ou-nada e aprende a manter o essencial sem depender de estar no seu melhor estado para continuar.',
       plano7: [
         'Dia 1: identificar o sabotador que te faz parar',
         'Dia 2: criar sua rotina mínima real',
@@ -553,9 +553,9 @@ const BONUS_RELACIONAMENTO = [
     return {
       headline: 'Ansiedade, no seu caso, não é exagero. É excesso de ruído sem aterramento.',
       subheadline: 'Você não precisa se controlar mais. Precisa se regular melhor.',
-      dor: 'Sua mente acelera, o corpo acompanha e tudo vira urgência. O problema é que, quando tudo parece urgente, você perde clareza até sobre o que realmente importa.',
-      virada: 'O Manual te dá um protocolo simples para sair da espiral mental e voltar para direção, corpo e presença.',
-      promessa: 'Você aprende a diminuir o ruído interno sem perder sua intensidade, só deixando de ser conduzida por ela.',
+      dor: 'Sua mente acelera, o corpo acompanha e tudo vira urgência. O problema é que, quando tudo parece urgente, você perde clareza até sobre o que realmente importa. E quanto mais tenta resolver tudo só pensando, mais cansada, sobrecarregada e desconectada de si você fica.',
+      virada: 'O Manual te mostra como sair da espiral mental e voltar para direção, corpo e presença. Não é sobre calar sua intensidade. É sobre parar de ser arrastada por ela.',
+      promessa: 'Você aprende a reduzir o barulho interno sem perder profundidade, ficando mais centrada, mais clara e menos refém da própria aceleração.',
       plano7: [
         'Dia 1: mapear os gatilhos reais',
         'Dia 2: aterramento rápido do corpo',
@@ -575,10 +575,10 @@ const BONUS_RELACIONAMENTO = [
   if (isSameObjective(oRaw, ['melhorar autoestima', 'autoestima'])) {
     return {
       headline: 'Autoestima não sobe quando você se elogia mais. Sobe quando você se trai menos.',
-      subheadline: 'O seu problema não é falta de valor. É falta de evidência interna sustentada.',
-      dor: 'Você até se sente forte em alguns momentos. Mas quando perde ritmo, falha ou sente rejeição, a confiança desce rápido. Isso acontece porque sua autoestima ainda oscila junto com validação, performance e comparação.',
-      virada: 'O Manual te mostra como transformar autoestima em comportamento: limite, constância, auto-respeito e micro-promessas cumpridas.',
-      promessa: 'Você para de depender do que acontece fora para se sentir mais firme por dentro.',
+      subheadline: 'O problema não é falta de valor. É falta de evidência interna sustentada.',
+      dor: 'Você até se sente forte em alguns momentos. Mas quando falha, perde ritmo, se compara ou sente rejeição, sua confiança desce rápido. Isso acontece porque sua autoestima ainda está muito ligada ao que acontece fora: resposta, validação, desempenho, comparação. E tudo que depende demais de fora oscila.',
+      virada: 'O Manual te mostra como transformar autoestima em comportamento: limite, constância, auto-respeito e micro-promessas cumpridas. Sai da teoria bonita e entra no que realmente muda sua postura.',
+      promessa: 'Você para de depender tanto do ambiente para se sentir firme e começa a construir uma confiança com raiz, que não desmonta tão fácil quando algo pesa.',
       plano7: [
         'Dia 1: identificar onde você se abandona',
         'Dia 2: cumprir a primeira micro-promessa',
@@ -599,9 +599,9 @@ const BONUS_RELACIONAMENTO = [
     return {
       headline: 'Você não atrai um relacionamento saudável só porque quer. Atrai quando muda o filtro.',
       subheadline: 'O padrão no amor não quebra quando você sente mais. Quebra quando você escolhe melhor.',
-      dor: 'Você pode até perceber quando algo parece confuso, mas ainda assim se envolver rápido, criar expectativa cedo ou insistir no potencial. E é aí que a ansiedade entra e o padrão repete.',
-      virada: 'O Manual te mostra como sair da escolha emocional impulsiva e entrar em critério, clareza e posicionamento afetivo.',
-      promessa: 'Você aprende a reconhecer o que te drena antes de se perder, e a escolher consistência em vez de intensidade vazia.',
+      dor: 'Você pode até perceber quando algo parece confuso, mas ainda assim se envolver rápido, criar expectativa cedo ou insistir no potencial. E é aí que a ansiedade entra, a leitura de sinais começa e o padrão repete mais uma vez. O problema não é só sentir demais. É entrar antes de filtrar.',
+      virada: 'O Manual te mostra como sair da escolha emocional impulsiva e entrar em critério, clareza e posicionamento afetivo. Você aprende a reconhecer antes o que te drena, em vez de entender só depois que já está envolvida.',
+      promessa: 'Você começa a escolher consistência em vez de intensidade vazia, e para de confundir ansiedade com conexão real.',
       plano7: [
         'Dia 1: identificar seu padrão de atração',
         'Dia 2: definir seus 3 não-negociáveis',
@@ -613,7 +613,7 @@ const BONUS_RELACIONAMENTO = [
       ],
       bonus: ['Mapa do Amor completo', 'Checklist de sinais', 'Ritual de autoestima'],
       fechamento: 'Se você continuar entrando no amor pelo pico, vai continuar saindo dele pela dor. O Manual te ensina a entrar pelo critério.',
-      ctaLabel: '💞 “SIM! QUERO SAIR DESSE PADRÃO AGORA',
+      ctaLabel: '💞 SIM! QUERO SAIR DESSE PADRÃO AGORA',
     };
   }
 
@@ -622,9 +622,9 @@ const BONUS_RELACIONAMENTO = [
     return {
       headline: 'Seu relacionamento não melhora só com sentimento. Melhora com ajuste prático.',
       subheadline: 'O problema nem sempre é amor. Muitas vezes é padrão, ruído e repetição.',
-      dor: 'Quando o vínculo entra em desgaste, a tendência é repetir reação, mal-entendido, cobrança ou silêncio. E sem ajuste, o que poderia ser resolvido vira peso acumulado.',
-      virada: 'O Manual te mostra como enxergar o ponto que realmente está corroendo a relação, e como agir sem drama, sem implorar e sem continuar girando em círculo.',
-      promessa: 'Você entende onde o vínculo desgasta e como reposicionar sua energia para criar mais verdade, clareza e consistência.',
+      dor: 'Quando o vínculo entra em desgaste, a tendência é repetir reação, mal-entendido, cobrança ou silêncio. E sem ajuste, o que poderia ser resolvido vira peso acumulado. Aos poucos, a relação começa a cansar mais do que nutrir — não porque falta sentimento, mas porque falta clareza sobre o que está corroendo o vínculo.',
+      virada: 'O Manual te mostra como enxergar o ponto que realmente está corroendo a relação e como agir sem drama, sem implorar e sem continuar girando em círculo.',
+      promessa: 'Você entende onde o vínculo desgasta e como reposicionar sua energia para criar mais verdade, mais clareza e uma dinâmica mais leve e consistente.',
       plano7: [
         'Dia 1: mapear o padrão do vínculo',
         'Dia 2: identificar o gatilho principal',
@@ -644,10 +644,10 @@ const BONUS_RELACIONAMENTO = [
   if (isSameObjective(oRaw, ['crescer profissionalmente', 'crescimento profissional'])) {
     return {
       headline: 'Seu crescimento profissional não trava por falta de potencial. Trava por falta de direção sustentada.',
-      subheadline: 'Você não precisa de mais capacidade. Precisa de mais constância no que realmente expande sua vida.',
-      dor: 'Você pensa, vê possibilidades, sente que pode mais, mas sem um trilho claro, a energia se espalha. E o que poderia virar avanço vira esforço sem consolidação.',
-      virada: 'O Manual te mostra como transformar visão em posicionamento, foco e movimento real.',
-      promessa: 'Você sai do “eu podia estar muito melhor” e entra em um plano prático para construir progresso visível.',
+      subheadline: 'Você não precisa de mais capacidade. Precisa de mais constância na frente certa.',
+      dor: 'Você pensa, vê possibilidades, sente que pode mais — mas sem um trilho claro, a energia se espalha. E o que poderia virar avanço vira esforço sem consolidação, sensação de atraso e frustração por saber que já poderia estar em outro nível se estivesse usando sua força na direção certa.',
+      virada: 'O Manual te mostra como transformar visão em posicionamento, foco e movimento real. Você para de só perceber que pode mais e começa a agir de um jeito que produz avanço visível.',
+      promessa: 'Você sai do “eu podia estar muito melhor” e entra em um plano prático para construir crescimento real, com mais direção, mais presença e menos dispersão.',
       plano7: [
         'Dia 1: clareza do próximo nível',
         'Dia 2: corte de dispersão profissional',
@@ -668,9 +668,9 @@ const BONUS_RELACIONAMENTO = [
     return {
       headline: 'Organizar sua rotina não é sobre fazer mais. É sobre parar de viver no improviso.',
       subheadline: 'O caos não vem só da falta de tempo. Vem da falta de um eixo que se sustente.',
-      dor: 'Quando sua rotina não tem estrutura real, tudo vira urgência. Você até tenta se reorganizar, mas sem um sistema simples, volta rápido para o mesmo descontrole.',
-      virada: 'O Manual te mostra como construir uma rotina mínima, prática e realista, sem rigidez e sem ilusão de produtividade.',
-      promessa: 'Você troca correria solta por direção concreta, clareza mental e repetição que cabe na sua vida real.',
+      dor: 'Quando sua rotina não tem estrutura real, tudo vira urgência. Você até tenta se reorganizar, mas sem um sistema simples volta rápido para o mesmo descontrole. E isso cria uma sensação constante de estar sempre atrasada para a própria vida, sempre apagando incêndio e quase nunca sentindo que está no comando.',
+      virada: 'O Manual te mostra como construir uma rotina mínima, prática e realista, sem rigidez e sem ilusão de produtividade. Você aprende a criar eixo, em vez de só tentar sobreviver ao dia.',
+      promessa: 'Você troca correria solta por direção concreta, clareza mental e repetição que realmente cabe na sua vida.',
       plano7: [
         'Dia 1: identificar o que mais drena sua energia',
         'Dia 2: criar sua rotina mínima realista',
@@ -682,7 +682,7 @@ const BONUS_RELACIONAMENTO = [
       ],
       bonus: ['Checklist de Rotina', 'Ritual de foco', 'Calendário de Poder'],
       fechamento: 'Se você continuar tentando resolver a rotina só no impulso, vai continuar cansada e se sentindo atrasada. O Manual te dá eixo.',
-      ctaLabel: '🗓️ QUERO VIRAR ESSA CHAVE',
+      ctaLabel: '🗓️ Quero virar essa chave',
     };
   }
 
@@ -707,6 +707,7 @@ const BONUS_RELACIONAMENTO = [
     ctaLabel: '🚀 Quero o plano completo',
   };
 }
+
 // -----------------------
 // Copy: RELAÇÃO/TRABALHO (micro-personalização + tensão)
 // -----------------------
