@@ -185,20 +185,20 @@ function assinaturaNumero(numeroVida) {
 // ----------------------------------------------------
 function ganchoNumeroDisciplina(numeroVida) {
   const map = {
-    1: 'Com o 1, disciplina não funciona bem com enrolação. Você rende mais quando existe meta curta, comando claro e início rápido. Seu erro costuma ser esperar o momento perfeito, quando na verdade o seu número responde melhor a movimento imediato.',
-    2: 'Com o 2, disciplina precisa respeitar seu emocional. Quando o plano é duro demais, você sente mais resistência. O que funciona é constância gentil, ambiente favorável e ritmo que não te coloque em guerra com você.',
-    3: 'Com o 3, o risco é dispersar energia em coisas demais. Disciplina aqui não é rigidez: é foco leve, meta simples e repetição sem tédio. Quando você simplifica, sustenta muito mais.',
-    4: 'Com o 4, disciplina é um talento natural — mas existe um ponto de atenção: quando vira rigidez, você trava. Seu número pede estrutura, mas uma estrutura viva, que organize sem te aprisionar.',
-    5: 'Com o 5, disciplina não funciona no formato pesado. Sua mente precisa de movimento, variedade e espaço. O segredo aqui é regra simples, foco por vez e liberdade com direção.',
-    6: 'Com o 6, a sua maior dificuldade não é falta de disciplina: é colocar todo mundo antes de você. Seu número sustenta muito quando existe compromisso afetivo, mas precisa aprender a priorizar você sem culpa.',
-    7: 'Com o 7, disciplina depende de sentido. Você precisa entender o porquê, sentir coerência e ver profundidade no que está fazendo. Quando existe clareza, sua constância cresce muito.',
-    8: 'Com o 8, você executa — mas tende a misturar disciplina com autocobrança. Seu número rende mais quando existe estratégia, ritmo e calma. Você vai mais longe quando para de tentar funcionar na base da pressão.',
-    9: 'Com o 9, disciplina quebra quando você se envolve com tudo ao mesmo tempo. Seu número precisa de limite, seleção e direção emocional. O essencial aqui é parar de carregar mais do que consegue sustentar.',
-    11: 'Com o 11, disciplina precisa começar no aterramento. Sua mente acelera fácil, então constância não nasce de força bruta: nasce de rotina mínima, silêncio interno e pequenas repetições que te trazem de volta para o corpo.',
-    22: 'Com o 22, você pensa grande — e às vezes isso te paralisa. Seu número responde melhor quando o grande é quebrado em micro-passos. Disciplina aqui é transformar visão em construção real.',
-    33: 'Com o 33, disciplina enfraquece quando você se doa demais e se abandona no processo. O seu aprendizado é constância com amor, limite e preservação da própria energia.',
+    1: 'Com o Número 1, disciplina não funciona bem quando você fica esperando o momento perfeito. Sua energia responde melhor a comando claro, decisão rápida e início imediato. O que te ajuda não é pensar mais — é começar de forma simples.',
+    2: 'Com o Número 2, disciplina precisa respeitar seu emocional. Quando o plano é duro demais, sua energia resiste. O que funciona melhor é constância gentil, ambiente favorável e um ritmo que não te coloque em guerra com você.',
+    3: 'Com o Número 3, a dificuldade não costuma ser falta de potencial — e sim excesso de dispersão. Sua mente quer estímulo, novidade e movimento. Por isso, disciplina funciona melhor com foco leve, blocos curtos e repetição sem tédio.',
+    4: 'Com o Número 4, existe capacidade real de organizar, estruturar e sustentar. O cuidado é não transformar disciplina em rigidez excessiva. O que funciona melhor aqui é ordem com leveza, e não cobrança dura o tempo todo.',
+    5: 'Com o Número 5, disciplina não nasce no formato pesado. Sua energia precisa de movimento, flexibilidade e espaço para respirar. O que funciona melhor é liberdade com regra simples, em vez de controle excessivo.',
+    6: 'Com o Número 6, a constância quebra quando você coloca tudo e todos na frente de si. Muitas vezes, sua maior dificuldade não é falta de disciplina — é autoabandono silencioso. O que funciona melhor é se incluir no que precisa ser sustentado.',
+    7: 'Com o Número 7, disciplina depende de sentido. Você precisa entender o porquê, enxergar profundidade e sentir coerência no que está fazendo. Quando isso existe, sua constância cresce muito mais do que pela cobrança.',
+    8: 'Com o Número 8, você tem força para executar, mas corre o risco de transformar disciplina em pressão. O que funciona melhor aqui é estratégia, prioridade clara e ritmo consistente — sem viver em autocobrança tóxica.',
+    9: 'Com o Número 9, disciplina enfraquece quando você tenta abraçar tudo ao mesmo tempo. Sua energia precisa de seleção, limite e foco no essencial. O que funciona melhor é simplificar e parar de carregar peso demais.',
+    11: 'Com o Número 11, tudo começa no aterramento. Sua mente acelera fácil, capta estímulos demais e perde constância quando o dia começa sem eixo. Por isso, sua disciplina não nasce de força bruta — nasce de silêncio interno, pequenas repetições e decisões simples que te trazem de volta para o corpo.',
+    22: 'Com o Número 22, você pensa grande — e justamente por isso pode travar diante do tamanho do que imagina. O que funciona melhor aqui é quebrar o grande em passos menores, para transformar visão em construção real.',
+    33: 'Com o Número 33, disciplina enfraquece quando sua energia vai toda para o outro e sobra pouco para você. O que funciona melhor é constância com limite, cuidado consigo e menos sacrifício silencioso.',
   };
-  return map[numeroVida] || 'Disciplina, no seu caso, depende de um sistema pequeno, claro e repetível — algo que você consiga sustentar até nos dias mais comuns.';
+  return map[numeroVida] || 'Seu número mostra que disciplina, no seu caso, depende de uma estrutura mais coerente com a forma como sua energia realmente funciona.';
 }
 
 function ganchoNumeroAnsiedade(numeroVida) {
@@ -316,20 +316,20 @@ function ganchoNumeroRotina(numeroVida) {
 function ganchoSignoDisciplina(signo) {
   const s = norm(signo);
   const map = {
-    'Áries': 'Áries precisa de movimento. Disciplina aqui funciona com meta curta, ação imediata e menos planejamento excessivo.',
-    'Touro': 'Touro sustenta muito quando entra no ritmo. Disciplina aqui é constância estável — sem rigidez que trava.',
-    'Gêmeos': 'Gêmeos dispersa fácil. Disciplina aqui precisa de blocos curtos, variedade e menos estímulo competindo.',
-    'Câncer': 'Câncer funciona melhor quando o ambiente está seguro. Disciplina aqui é constância gentil e proteção emocional.',
-    'Leão': 'Leão sustenta quando vê sentido e reconhecimento interno. Disciplina aqui é presença, não pressão.',
-    'Virgem': 'Virgem tem disciplina natural — o risco é exagerar na cobrança. Aqui funciona “bom o suficiente” com constância.',
-    'Libra': 'Libra trava na indecisão. Disciplina aqui depende de escolher rápido e não voltar atrás toda hora.',
-    'Escorpião': 'Escorpião sustenta com intensidade. Disciplina aqui precisa de foco profundo e menos dispersão emocional.',
-    'Sagitário': 'Sagitário precisa de liberdade. Disciplina aqui é direção com espaço — não rotina sufocante.',
-    'Capricórnio': 'Capricórnio sustenta muito — mas se sobrecarrega. Disciplina aqui é ritmo sustentável, não exaustão.',
-    'Aquário': 'Aquário precisa de lógica. Disciplina aqui funciona com sistema simples e autonomia.',
-    'Peixes': 'Peixes perde eixo fácil. Disciplina aqui começa no aterramento e rotina mínima.',
+    'Áries': 'Como Áries, você funciona melhor quando entra em movimento rápido. Quando pensa demais antes de agir, sua energia trava ou se espalha. Disciplina, no seu caso, precisa de começo simples, meta curta e menos excesso de planejamento.',
+    'Touro': 'Como Touro, você sustenta muito quando encontra ritmo e estabilidade. O problema é que, quando algo parece pesado demais, sua energia resiste. Disciplina, no seu caso, funciona melhor com constância realista e estrutura que não pareça castigo.',
+    'Gêmeos': 'Como Gêmeos, sua mente abre várias frentes ao mesmo tempo. Quando falta eixo, você começa muita coisa e sustenta menos do que gostaria. Disciplina, no seu caso, funciona melhor com foco curto, variedade controlada e menos estímulo competindo pela sua atenção.',
+    'Câncer': 'Como Câncer, seu estado emocional influencia diretamente sua constância. Quando o ambiente pesa, seu ritmo sente. Disciplina, no seu caso, precisa de segurança interna, rotina acolhedora e menos guerra contra você.',
+    'Leão': 'Como Leão, você rende melhor quando sente propósito e presença no que faz. Quando a rotina vira obrigação vazia, sua energia perde força. Disciplina, no seu caso, funciona melhor quando existe direção clara e compromisso com o que realmente importa.',
+    'Virgem': 'Como Virgem, você tem potência natural para organizar, melhorar e sustentar. O risco é transformar isso em cobrança excessiva. Disciplina, no seu caso, funciona melhor quando existe estrutura simples, repetição e menos perfeccionismo.',
+    'Libra': 'Como Libra, você perde força quando fica decidindo demais antes de começar. Muitas vezes o problema não é falta de capacidade, e sim excesso de oscilação. Disciplina, no seu caso, precisa de escolhas mais rápidas e menos negociação com o que já deveria ter começado.',
+    'Escorpião': 'Como Escorpião, você funciona em profundidade. Quando entra de verdade, sustenta muito. O problema é que, sem direção clara, sua intensidade pode virar excesso emocional ou tudo-ou-nada. Disciplina, no seu caso, precisa de foco e constância sem radicalismo.',
+    'Sagitário': 'Como Sagitário, você precisa de liberdade para funcionar bem — e é exatamente por isso que métodos rígidos demais tendem a falhar com você. Disciplina, no seu caso, não nasce de prisão. Nasce de direção, leveza e uma estrutura possível de sustentar.',
+    'Capricórnio': 'Como Capricórnio, você tem força para sustentar, construir e ir longe. O problema é quando isso vira peso, rigidez e autocobrança constante. Disciplina, no seu caso, funciona melhor com ritmo consistente e menos dureza interna.',
+    'Aquário': 'Como Aquário, você precisa entender a lógica do que está fazendo para conseguir sustentar. Quando algo parece mecânico ou sem sentido, sua energia se desconecta. Disciplina, no seu caso, precisa de autonomia, sistema simples e clareza.',
+    'Peixes': 'Como Peixes, você sente muito e perde o eixo com facilidade quando o dia começa sem direção clara. Por isso, disciplina para você não funciona como rigidez — funciona como aterramento, previsibilidade e uma rotina mínima que realmente caiba na sua energia.',
   };
-  return map[s] || 'Disciplina aqui depende de ritmo simples, repetição leve e menos pressão.';
+  return map[s] || 'Seu signo mostra que disciplina, no seu caso, não depende de força bruta. Depende de um jeito mais alinhado de conduzir sua energia.';
 }
 
 function ganchoSignoAnsiedade(signo) {
