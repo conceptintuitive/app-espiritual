@@ -394,7 +394,7 @@ export default function ManualPage() {
             🔒 Manual Completo • Premium • Personalizado
           </div>
           <h1 className="title">
-            {firstName}, BIANCA, SEU PADRÃO FICOU CLARO.
+            {firstName}, SEU PADRÃO FICOU CLARO.
 AGORA VAMOS VIRAR A CHAVE.
           </h1>
           <p className="subtitle">
@@ -467,7 +467,7 @@ e mostrar como sair dele.
               <div className="toolbarLeft">
                 <div className="toolbarTitle">📚 Navegue pelo seu manual</div>
                 <div className="muted" style={{ fontSize: 14 }}>
-                    Escolha por onde começar
+                    Leia na ordem ou comece pelo que mais te chamou.
                 </div>
               </div>
 
