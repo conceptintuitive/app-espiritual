@@ -824,17 +824,59 @@ const primeiroNome = (nome || '').trim().split(' ')[0] || 'Você';
     const conexaoSigno = CONEXAO_SIGNO[signoNormalizado] || '';
     const conexaoNumero = CONEXAO_NUMERO[numeroNormalizado] || '';
 
-    return [
-      `Você escolheu: ${objetivoFinal}. E isso não é aleatório.`,
-      conexaoSigno,
-      conexaoNumero,
-      'Seu objetivo não é mudar quem você é. É ajustar como você usa sua energia.'
-    ]
-      .filter(Boolean)
-      .join(' ');
+    const intro = [
+  'Nada aqui é por acaso.',
+  'Quando suas respostas são colocadas lado a lado, um padrão começa a aparecer.',
+  'E esse padrão explica mais do que parece sobre o momento que você está vivendo.'
+].join(' ');
+
+const objetivoLinha = `Você escolheu: ${objetivoFinal}. E isso não é só uma preferência. Isso aponta para uma necessidade real do seu momento.`;
+
+const fechamento = 'Seu objetivo não é virar outra pessoa. É entender com mais clareza onde sua energia está escapando — e o que precisa ser ajustado para a sua vida começar a responder diferente.';
+
+return [
+  intro,
+  objetivoLinha,
+  conexaoSigno,
+  conexaoNumero,
+  fechamento
+]
+  .filter(Boolean)
+  .join(' ');
   })();
 
   const espelhoMomento = espelhoPorObjetivo(objetivo_principal || '');
+  const ganchoProfundo = (() => {
+  if (!hasChoice(objetivoFinal)) return '';
+
+  const blocos = {
+    'Atrair Relacionamento Saudável':
+      'O restante do seu mapa mostra com mais clareza onde você começa a se perder emocionalmente, o tipo de vínculo que realmente combina com você e o ajuste que impede você de repetir intensidade vazia achando que é conexão real.',
+
+    'Melhorar Meu Relacionamento Atual':
+      'O restante do seu mapa mostra onde a relação desgasta de verdade, qual padrão está corroendo o vínculo em silêncio e o que precisa mudar para sair da repetição e voltar para uma dinâmica mais leve e verdadeira.',
+
+    'Reduzir Ansiedade':
+      'O restante do seu mapa mostra o que mais acelera sua mente, por que o seu sistema entra em sobrecarga com tanta facilidade e o que realmente ajuda você a sair do excesso de ruído sem perder sua profundidade.',
+
+    'Melhorar Autoestima':
+      'O restante do seu mapa mostra onde você se abandona sem perceber, o que faz sua confiança oscilar e qual ajuste interno muda sua postura sem depender de validação externa.',
+
+    'Ter Mais Disciplina':
+      'O restante do seu mapa mostra por que sua constância quebra, onde você se sabota no meio do caminho e como criar um ritmo que funcione de verdade para a sua energia.',
+
+    'Crescer Profissionalmente':
+      'O restante do seu mapa mostra onde seu potencial está sendo desperdiçado, o padrão que trava sua expansão e qual reposicionamento faz sua energia começar a produzir avanço real.',
+
+    'Organizar Minha Rotina':
+      'O restante do seu mapa mostra o que mais drena sua energia, por que sua rotina desorganiza tão rápido e o que precisa ser ajustado para você sustentar um eixo mais estável.'
+  };
+
+  return (
+    blocos[objetivoFinal] ||
+    'O restante do seu mapa aprofunda esse padrão e mostra com clareza o que está por trás dele, onde ele se repete e como começar a mudar isso de forma prática.'
+  );
+})();
 
   const localFrase = local ? `📍 ${local}` : '';
   const dataFrase = dataISO ? `🎂 ${formatarDataBR(dataISO)}` : '';
@@ -843,27 +885,28 @@ const primeiroNome = (nome || '').trim().split(' ')[0] || 'Você';
   const ctaLabel = objetivoPack?.ctaLabel || '🚀 Quero o Manual Completo (R$ 47,00)';
 
   return {
-    headline,
-    localFrase,
-    dataFrase,
-    objetivoFinal,
-    relacionamentoFinal,
-    trabalhoFinal,
+  headline,
+  localFrase,
+  dataFrase,
+  objetivoFinal,
+  relacionamentoFinal,
+  trabalhoFinal,
 
-    insightMatador: insightPorNumero(numeroVida),
-    espelhoMomento,
+  insightMatador: insightPorNumero(numeroVida),
+  espelhoMomento,
 
-    assinaturaSigno: assSigno,
-    assinaturaNumero: assNumero,
+  assinaturaSigno: assSigno,
+  assinaturaNumero: assNumero,
 
-    explicacaoObjetivoPersonalizada,
+  explicacaoObjetivoPersonalizada,
+  ganchoProfundo,
 
-    objetivoPack,
-    relPack,
-    trabPack,
+  objetivoPack,
+  relPack,
+  trabPack,
 
-    ctaLabel,
-  };
+  ctaLabel,
+};
 }
 // -----------------------
 // Page Component
@@ -1120,7 +1163,7 @@ useEffect(() => {
         {/* O QUE VOCÊ CONTOU */}
         {(temObjetivo || temRelacionamento || temTrabalho) && (
           <div className="card personal-card">
-            <h2 className="h2">📌 O que você me contou no formulário</h2>
+            <h2 className="h2">📌 O QUE SE REPETE NA SUA HISTÓRIA</h2>
 
             {temObjetivo && (
               <div className="personal-row">
