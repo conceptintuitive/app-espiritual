@@ -293,20 +293,20 @@ function ganchoNumeroCrescimentoProfissional(numeroVida) {
 
 function ganchoNumeroRotina(numeroVida) {
   const map = {
-    1: 'Com o 1, rotina precisa ser objetiva e prática. Seu número funciona melhor quando o dia começa com direção clara, e não com excesso de opções.',
-    2: 'Com o 2, rotina precisa respeitar seu emocional. Seu número sustenta melhor quando o ambiente está mais leve e o ritmo não te coloca em guerra com você.',
-    3: 'Com o 3, rotina quebra quando tudo fica solto demais. Seu número precisa de estrutura leve, foco por blocos e menos estímulo competindo pela sua atenção.',
-    4: 'Com o 4, rotina é uma força natural — desde que não vire prisão. Seu número responde muito bem a ordem, previsibilidade e repetição funcional.',
-    5: 'Com o 5, rotina não pode parecer jaula. Seu número organiza melhor o dia quando existe flexibilidade com regra simples e espaço para respirar.',
-    6: 'Com o 6, rotina bagunça quando você começa o dia vivendo em função dos outros. Seu número precisa se incluir no planejamento para não terminar em exaustão.',
-    7: 'Com o 7, rotina funciona quando tem sentido, silêncio e menos ruído. Seu número precisa de espaço mental para render de verdade.',
-    8: 'Com o 8, rotina melhora muito quando existe prioridade clara, ritmo e execução limpa. Seu número não precisa fazer mais — precisa fazer com mais alinhamento.',
-    9: 'Com o 9, rotina desorganiza quando você tenta abraçar tudo. Seu número precisa de enxugamento, limite e critério sobre o que realmente importa.',
-    11: 'Com o 11, rotina começa no aterramento. Seu número precisa reduzir excesso mental logo cedo, senão o dia vira sobrecarga e dispersão.',
-    22: 'Com o 22, rotina precisa servir construção grande sem parecer esmagadora. Seu número rende mais quando o dia é quebrado em etapas simples e concretas.',
-    33: 'Com o 33, rotina só funciona quando inclui cuidado com sua energia. Seu número não sustenta organização se tudo for doação, peso e excesso de responsabilidade.',
+    1: 'Com o Número 1, sua rotina funciona melhor quando começa com direção clara. Quando o dia abre com excesso de opções, você perde força. O que te ajuda é decidir rápido e entrar em ação.',
+    2: 'Com o Número 2, sua rotina precisa respeitar seu emocional. Quando o ambiente está pesado, sua energia sente. O que funciona melhor é um ritmo mais gentil e sustentável.',
+    3: 'Com o Número 3, sua rotina quebra quando tudo fica solto demais. Sua mente pede estímulo, mas sem alguma estrutura o dia vira dispersão. O segredo é foco leve e blocos curtos.',
+    4: 'Com o Número 4, você tem capacidade natural de organizar e sustentar. O cuidado é não transformar rotina em rigidez. O que funciona é ordem com leveza.',
+    5: 'Com o Número 5, sua rotina não pode parecer uma jaula. Quando tudo fica rígido demais, sua energia rejeita. O que funciona é liberdade com regra simples.',
+    6: 'Com o Número 6, sua rotina desorganiza quando você começa o dia vivendo em função dos outros. Seu aprendizado aqui é se incluir no planejamento e parar de se deixar por último.',
+    7: 'Com o Número 7, sua rotina só funciona quando faz sentido. Quando existe excesso de ruído, sua energia se fecha. O que ajuda é silêncio, clareza e menos dispersão.',
+    8: 'Com o Número 8, sua rotina melhora muito quando existe prioridade clara. Você não precisa fazer mais — precisa executar melhor e com menos pressão.',
+    9: 'Com o Número 9, sua rotina desorganiza quando você tenta abraçar tudo. Seu aprendizado é enxugar, escolher o essencial e parar de carregar peso demais.',
+    11: 'Com o Número 11, tudo começa no aterramento. Sua mente acelera fácil, e quando você não organiza sua energia logo cedo, o dia vira sobrecarga, dispersão e sensação de não sair do lugar.',
+    22: 'Com o Número 22, sua rotina precisa transformar visão grande em passos simples. Quando tudo parece enorme, você trava. O que ajuda é quebrar o dia em etapas concretas.',
+    33: 'Com o Número 33, sua rotina só funciona quando inclui cuidado com a sua energia. Se tudo vira entrega, responsabilidade e peso, você se perde no caminho.',
   };
-  return map[numeroVida] || 'No seu caso, organizar a rotina depende de simplificar o dia, reduzir o excesso e criar uma estrutura que seja sustentável na vida real.';
+  return map[numeroVida] || 'Seu número mostra que sua rotina precisa de uma estrutura mais alinhada com a sua energia real.';
 }
 
 
@@ -430,20 +430,20 @@ function ganchoSignoCrescimentoProfissional(signo) {
 function ganchoSignoRotina(signo) {
   const s = norm(signo);
   const map = {
-    'Áries': 'Áries precisa começar rápido. Rotina aqui começa com ação.',
-    'Touro': 'Touro precisa de ritmo estável. Rotina aqui é previsibilidade.',
-    'Gêmeos': 'Gêmeos precisa de variedade. Rotina aqui é blocos curtos.',
-    'Câncer': 'Câncer precisa de ambiente seguro. Rotina aqui é conforto.',
-    'Leão': 'Leão precisa de sentido. Rotina aqui é propósito.',
-    'Virgem': 'Virgem precisa de ordem. Rotina aqui é estrutura simples.',
-    'Libra': 'Libra precisa decidir. Rotina aqui é menos indecisão.',
-    'Escorpião': 'Escorpião precisa de foco. Rotina aqui é profundidade.',
-    'Sagitário': 'Sagitário precisa de liberdade. Rotina aqui é flexível.',
-    'Capricórnio': 'Capricórnio precisa de execução. Rotina aqui é consistência.',
-    'Aquário': 'Aquário precisa de autonomia. Rotina aqui é sistema simples.',
-    'Peixes': 'Peixes precisa de aterramento. Rotina aqui é previsível.',
+    'Áries': 'Como Áries, você funciona melhor quando começa rápido. O problema é que, sem direção clara, a energia vira correria e impulsividade. Sua rotina precisa de ação simples logo no início do dia.',
+    'Touro': 'Como Touro, você precisa de ritmo estável para render bem. Quando o dia começa bagunçado, seu sistema perde segurança e tudo pesa mais. Sua rotina funciona melhor com previsibilidade e constância.',
+    'Gêmeos': 'Como Gêmeos, sua mente abre muitas abas ao mesmo tempo. Quando falta estrutura, o dia vira excesso de estímulo e dispersão. Sua rotina precisa de blocos curtos e foco leve.',
+    'Câncer': 'Como Câncer, seu emocional influencia muito seu ritmo. Quando o ambiente está pesado ou instável, sua energia desorganiza rápido. Sua rotina precisa de base emocional segura.',
+    'Leão': 'Como Leão, você precisa sentir sentido no que faz. Quando a rotina vira obrigação vazia, sua energia cai. O que funciona é uma estrutura com propósito e presença.',
+    'Virgem': 'Como Virgem, você rende muito com ordem — mas o excesso de cobrança pode transformar rotina em prisão. O ajuste aqui é estrutura simples, sem perfeccionismo.',
+    'Libra': 'Como Libra, você tende a perder tempo tentando decidir o melhor caminho. Sua rotina melhora quando existe menos indecisão e mais escolha prática.',
+    'Escorpião': 'Como Escorpião, você funciona melhor quando tem profundidade e foco. O problema é que, sem eixo, sua intensidade vira sobrecarga. Sua rotina precisa de menos ruído e mais direção.',
+    'Sagitário': 'Como Sagitário, você precisa de liberdade para funcionar bem — e é exatamente por isso que rotinas rígidas nunca funcionam para você. O ajuste aqui não é controle excessivo, e sim uma estrutura leve, flexível e possível de sustentar.',
+    'Capricórnio': 'Como Capricórnio, você funciona bem com meta e execução. O problema é quando isso vira peso, autocobrança e dureza. Sua rotina precisa ser consistente, mas também respirável.',
+    'Aquário': 'Como Aquário, você precisa de autonomia e lógica para entrar no ritmo. Sua rotina melhora muito quando existe um sistema simples, inteligente e sem excesso de imposição.',
+    'Peixes': 'Como Peixes, sua energia oscila fácil quando o dia começa sem eixo. Sua rotina precisa de aterramento, previsibilidade e menos ruído para não virar dispersão.',
   };
-  return map[s] || 'Rotina aqui depende de simplificar e repetir o essencial.';
+  return map[s] || 'Seu signo mostra que sua rotina precisa ser mais coerente com a forma como sua energia realmente funciona.';
 }
 
 // ----------------------------------------------------
