@@ -715,50 +715,58 @@ function getRelacionamentoCopy(status, numeroVida, signo) {
   const s = titleCase(status);
   if (!hasChoice(s)) return null;
 
-  const extra =
+  const extraNumero =
     numeroVida === 11
-      ? 'Seu 11 intensifica conexão — então você precisa de limite energético pra não se sobrecarregar.'
+      ? 'Como seu Número 11 intensifica conexão, percepção e sensibilidade, você sente vínculos com mais força do que a maioria — e por isso precisa de mais clareza para não transformar intensidade em ansiedade.'
       : numeroVida === 7
-        ? 'Seu 7 não aceita superficialidade — isso é dom, mas precisa de filtro pra não virar isolamento.'
-        : '';
+        ? 'Como seu Número 7 não aceita superficialidade, você tende a perceber rápido quando algo não tem verdade — mas, sem filtro, isso pode virar fechamento emocional ou distância.'
+        : numeroVida === 2
+          ? 'Como seu Número 2 busca vínculo, reciprocidade e segurança emocional, sua tendência é sentir rápido quando algo fica ambíguo — e isso pode mexer muito com você.'
+          : numeroVida === 6
+            ? 'Como seu Número 6 ama cuidando, existe uma tendência a assumir peso emocional demais quando gosta — e isso precisa de limite para não virar autoabandono.'
+            : '';
 
-  const signoTouch =
+  const extraSigno =
     signo === 'Libra'
-      ? 'Libra tende a evitar conflito — o Manual te dá clareza sem culpa.'
+      ? 'Como Libra tende a buscar harmonia e evitar desconforto, pode acabar prolongando situações ambíguas por mais tempo do que deveria.'
       : signo === 'Escorpião'
-        ? 'Escorpião sente tudo no extremo — o Manual te dá limite sem esfriar.'
-        : '';
+        ? 'Como Escorpião sente tudo em profundidade, vínculos confusos ou instáveis mexem com você de um jeito mais intenso do que parece por fora.'
+        : signo === 'Câncer'
+          ? 'Como Câncer se envolve com profundidade emocional, a falta de segurança no vínculo pode te afetar muito mais do que você demonstra.'
+          : signo === 'Peixes'
+            ? 'Como Peixes sente muito e projeta com facilidade, o risco é entrar pelo sentimento antes de filtrar pela realidade.'
+            : '';
 
   const map = {
-    Solteira: {
+    'Solteiro(A)': {
       title: '💞 Sobre seu momento afetivo',
       text:
-        `Estar solteira agora pode ser um período de reorganização emocional. ${extra} ${signoTouch} ` +
-        'No Manual, você vê seu padrão de atração (o que te puxa pro “quase”) e como virar isso em escolha consciente.',
+        `Estar solteiro(a) agora não significa ausência de amor — pode significar reorganização emocional. ${extraNumero} ${extraSigno} ` +
+        'O Manual te mostra qual padrão de atração mais te puxa para o “quase”, o que faz você se envolver antes da hora e como transformar isso em escolha mais consciente.',
     },
     Ficando: {
       title: '💞 Sobre seu momento afetivo',
       text:
-        `Ficar “no meio” costuma disparar ansiedade e leitura de sinais. ${extra} ` +
-        'No Manual você aprende a conduzir com clareza sem se perder — e a entender quando insistir e quando cortar.',
+        `Ficar “no meio” costuma disparar leitura de sinais, expectativa e ansiedade emocional. ${extraNumero} ${extraSigno} ` +
+        'O Manual te ajuda a entender quando existe conexão real, quando existe só intensidade momentânea e como se posicionar sem se perder no processo.',
     },
     'Relacionamento Instável': {
       title: '💞 Sobre seu momento afetivo',
       text:
-        `Seu mapa mostra onde o ciclo de vai-e-volta nasce. ${extra} ${signoTouch} ` +
-        'No Manual, você aprende o limite que muda o jogo sem drama e sem implorar consistência.',
+        `Quando o vínculo entra em instabilidade, quase sempre existe um padrão se repetindo por baixo. ${extraNumero} ${extraSigno} ` +
+        'O Manual mostra onde nasce esse ciclo de vai-e-volta, qual limite muda o jogo e como parar de sustentar uma dinâmica que te desgasta.',
     },
     Namorando: {
       title: '💞 Sobre seu momento afetivo',
       text:
-        `Seu mapa mostra como fortalecer respeito e admiração (e o que evitar pra não desgastar). ${extra} ` +
-        'No Manual, você recebe um ajuste simples de comunicação + energia que melhora o dia a dia.',
+        `Mesmo quando existe sentimento, o vínculo pode desgastar se certos padrões continuarem passando despercebidos. ${extraNumero} ${extraSigno} ` +
+        'O Manual te mostra como fortalecer respeito, clareza e consistência, e qual ajuste emocional muda a qualidade da relação.',
     },
-    Casada: {
+    'Casado(A)': {
       title: '💞 Sobre seu momento afetivo',
       text:
-        `Seu mapa revela o ponto que gera atrito no cotidiano e como voltar para parceria sem sobrecarga. ${extra} ` +
-        'No Manual, você recebe práticas curtas que reorganizam a energia do vínculo.',
+        `No vínculo mais estruturado, o desgaste costuma vir menos de grandes eventos e mais de padrões repetidos no cotidiano. ${extraNumero} ${extraSigno} ` +
+        'O Manual te mostra o que está gerando atrito por baixo, como reorganizar sua energia dentro da relação e como voltar para parceria sem sobrecarga.',
     },
   };
 
@@ -766,7 +774,7 @@ function getRelacionamentoCopy(status, numeroVida, signo) {
     map[s] || {
       title: '💞 Sobre seu momento afetivo',
       text:
-        `Seu mapa ajuda você a entender seu padrão afetivo e destravar a próxima fase com maturidade. ${extra} ${signoTouch}`,
+        `Seu mapa mostra como você vive vínculo, onde tende a se perder emocionalmente e o que precisa ser ajustado para que sua vida afetiva fique mais clara, madura e menos repetitiva. ${extraNumero} ${extraSigno}`,
     }
   );
 }
@@ -775,57 +783,66 @@ function getTrabalhoCopy(status, numeroVida, signo) {
   const s = titleCase(status);
   if (!hasChoice(s)) return null;
 
-  const extra =
+  const extraNumero =
     numeroVida === 8 || numeroVida === 22
-      ? 'Seu número tem energia de materialização — mas exige foco e execução sem autocobrança tóxica.'
+      ? 'Seu número tem força de construção e materialização, mas essa potência pede foco, direção e execução sem transformar tudo em pressão.'
       : numeroVida === 3 || numeroVida === 5
-        ? 'Seu número ama movimento — então sua prosperidade depende de estrutura simples, não de rigidez.'
-        : '';
+        ? 'Seu número precisa de movimento, liberdade e leveza para render bem — e justamente por isso precisa de estrutura simples, não de rigidez.'
+        : numeroVida === 7
+          ? 'Seu número funciona melhor quando existe profundidade, clareza e sentido no que está sendo construído.'
+          : numeroVida === 11
+            ? 'Seu número enxerga muito, sente muito e percebe além — mas precisa transformar visão em ação para que isso vire resultado concreto.'
+            : '';
 
-  const signoTouch =
+  const extraSigno =
     signo === 'Capricórnio'
-      ? 'Capricórnio cresce com metas e ritmo — o Manual te dá um plano enxuto e aplicável.'
+      ? 'Como Capricórnio cresce com estrutura, meta e consistência, seu desafio não é falta de capacidade — é não transformar tudo em peso.'
       : signo === 'Sagitário'
-        ? 'Sagitário precisa de propósito — o Manual te dá direção sem te prender.'
-        : '';
+        ? 'Como Sagitário precisa de propósito e expansão, seu crescimento trava quando a energia fica presa em algo que já não faz sentido.'
+        : signo === 'Virgem'
+          ? 'Como Virgem busca melhorar tudo, existe o risco de refinar demais e agir de menos.'
+          : signo === 'Aquário'
+            ? 'Como Aquário precisa de autonomia e coerência com a própria visão, ambientes muito limitadores drenam sua potência.'
+            : '';
 
   const map = {
     CLT: {
       title: '💼 Sobre seu trabalho',
       text:
-        `Seu mapa mostra como crescer com consistência e parar de se sabotar por pressa/perfeccionismo. ${extra} ${signoTouch} ` +
-        'No Manual, você vê o padrão que te trava e o ajuste de 7 dias pra voltar pro controle.',
+        `No trabalho formal, seu crescimento depende menos de esforço bruto e mais de direção, posicionamento e consistência na frente certa. ${extraNumero} ${extraSigno} ` +
+        'O Manual mostra o padrão que hoje trava seu avanço e o ajuste de 7 dias para você voltar a ter mais controle da própria trajetória.',
     },
-    Empreendedora: {
+    'Empreendedor(A)': {
       title: '💼 Sobre seu trabalho',
       text:
-        `Seu mapa revela onde você dispersa ou se cobra demais — e como alinhar foco + execução pra escalar. ${extra} ${signoTouch} ` +
-        'No Manual, você recebe um plano de execução curto que vira resultado.',
+        `Empreender exige visão, energia e constância — e é justamente aí que seus padrões ficam mais visíveis. ${extraNumero} ${extraSigno} ` +
+        'O Manual mostra onde você está dispersando força, se cobrando além do necessário ou perdendo foco, e como alinhar execução com crescimento real.',
     },
-    Autônoma: {
+    'Autônomo(A)': {
       title: '💼 Sobre seu trabalho',
       text:
-        `Seu mapa mostra como organizar rotina, vendas e energia sem viver no modo “correria”. ${extra} ${signoTouch} ` +
-        'No Manual, você aplica um plano simples de 7 dias pra voltar pra constância.',
+        `Na autonomia, quando falta eixo, tudo vira correria, sobrecarga e sensação de instabilidade. ${extraNumero} ${extraSigno} ` +
+        'O Manual te mostra como organizar rotina, energia e prioridade para voltar para um ritmo mais consistente e sustentável.',
     },
     'Transição De Carreira': {
       title: '💼 Sobre seu trabalho',
       text:
-        `Seu mapa mostra o próximo passo lógico e como escolher caminho com clareza e confiança. ${extra} ${signoTouch} ` +
-        'No Manual, você recebe um plano prático pra sair do “travada” e ir pra ação.',
+        `Transição de carreira quase sempre mistura vontade de avançar com medo de escolher errado. ${extraNumero} ${extraSigno} ` +
+        'O Manual mostra o padrão que hoje trava sua decisão, o que precisa ficar mais claro e qual próximo passo faz mais sentido agora.',
     },
     Estudando: {
       title: '💼 Sobre seu trabalho',
       text:
-        `Seu mapa mostra como manter constância sem se punir quando a motivação oscila. ${extra} ${signoTouch} ` +
-        'No Manual, você aprende um sistema simples pra estudar e evoluir sem travar.',
+        `Quando você está em fase de estudo ou preparação, o maior desafio nem sempre é capacidade — muitas vezes é constância. ${extraNumero} ${extraSigno} ` +
+        'O Manual te mostra como criar um sistema mais inteligente para evoluir sem viver no ciclo de motivação alta seguida de queda.',
     },
   };
 
   return (
     map[s] || {
       title: '💼 Sobre seu trabalho',
-      text: `Seu mapa ajuda você a tomar decisões melhores e construir progresso real. ${extra} ${signoTouch}`,
+      text:
+        `Seu mapa mostra como você constrói progresso, onde sua energia profissional está escapando e o que precisa ser ajustado para gerar avanço mais real e consistente. ${extraNumero} ${extraSigno}`,
     }
   );
 }
