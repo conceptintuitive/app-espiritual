@@ -1077,14 +1077,15 @@ const STATUS_TRABALHO = [
           </div>
 
           <div className="heroTitle">
-  Você não está travada à toa.
+  SE VOCÊ SENTE QUE ALGO TE TRAVA,
+
   <br />
-  Existe um padrão invisível te sabotando.
+  EXISTE UM PADRÃO INVISÍVEL POR TRÁS DISSO.
 </div>
 
 <p className="heroSub">
   Descubra em minutos por que você repete ciclos,
-  o que te trava de verdade e qual é o seu próximo passo.
+  o que está te travando de verdade e qual é o seu próximo passo.
 </p>
 
           <div className="heroProof">
