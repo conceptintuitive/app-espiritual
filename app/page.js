@@ -380,6 +380,41 @@ const STATUS_TRABALHO = [
           }
         }
 
+        @media (max-width: 768px) {
+  .heroWrap {
+    padding: 42px 0 18px;
+    min-height: auto;
+  }
+
+  .heroSub {
+    font-size: 18px;
+    line-height: 1.45;
+  }
+
+  .ctaMain {
+    width: 100%;
+    max-width: 420px;
+    font-size: 16px;
+    padding: 15px 20px;
+  }
+
+  .heroProof {
+    gap: 10px;
+  }
+
+  .heroProof span {
+    font-size: 13px;
+    padding: 8px 10px;
+  }
+
+  .urgencyBox {
+    text-align: left;
+    width: 100%;
+    max-width: 420px;
+    justify-content: flex-start;
+  }
+}
+
         /* Melhor legibilidade em telas grandes */
         .heroWrap {
   padding: 60px 0 28px;
@@ -407,17 +442,20 @@ const STATUS_TRABALHO = [
         }
 
         .heroTitle {
-          font-family: 'Cinzel', serif;
-          font-weight: 700;
-          font-size: clamp(40px, 4.6vw, 60px);
-          line-height: 1.05;
-          margin-bottom: 18px;
-          background: linear-gradient(90deg, #fb7185, #a855f7, #f59e0b);
-          -webkit-background-clip: text;
-          background-clip: text;
-          color: transparent;
-          animation: fadeInDown 0.9s ease-out;
-        }
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  font-size: clamp(34px, 4.2vw, 56px);
+  line-height: 1.12;
+  max-width: 980px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 18px;
+  background: linear-gradient(90deg, #fb7185, #a855f7, #f59e0b);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: fadeInDown 0.9s ease-out;
+}
 
         .heroSub {
           font-size: clamp(18px, 2.2vw, 24px);
@@ -1035,45 +1073,48 @@ const STATUS_TRABALHO = [
         <div className="containerX">
           <div className="badgeTop" style={{ animation: 'fadeInDown 0.9s ease-out' }}>
             <span>🔒</span>
-            <span>Privado • Sem spam • Resultado na hora</span>
+            <span>Privado • Sem spam • Resultado em poucos minutos</span>
           </div>
 
-          <div className="heroTitle">Descubra os Segredos<br />da Sua Alma</div>
+          <div className="heroTitle">
+  Você não está travada à toa.
+  <br />
+  Existe um padrão invisível te sabotando.
+</div>
 
-          <p className="heroSub">
-            Numerologia + Astrologia + Neurociência Espiritual
-            <br />
-            em um mapa claro, direto e prático.
-          </p>
+<p className="heroSub">
+  Descubra em minutos por que você repete ciclos,
+  o que te trava de verdade e qual é o seu próximo passo.
+</p>
 
           <div className="heroProof">
-            <span>⭐ 4.9/5</span>
-            <span>⚡ Instantâneo na tela</span>
-            <span>✨ 2.847+ mapas gerados</span>
+            <span>⭐ Clareza imediata</span>
+            <span>⚡ Resultado em poucos minutos</span>
+            <span>✨ Leitura personalizada para você</span>
           </div>
 
           <button type="button" className="ctaMain" onClick={scrollToForm}>
-            ✨ GERAR MEU MAPA GRÁTIS <span style={{ position: 'relative', zIndex: 2 }}>→</span>
-          </button>
+  ✨ QUERO DESCOBRIR MEU MAPA AGORA <span style={{ position: 'relative', zIndex: 2 }}>→</span>
+</button>
 
-          <div className="urgencyBox">
+          <div cnlassName="urgencyBox">
             <span style={{ fontSize: 18 }}>🔥</span>
             <div style={{ textAlign: 'left' }}>
-              <div style={{ fontWeight: 700 }}>Hoje está gratuito para novos acessos</div>
-              <div style={{ opacity: 0.92 }}>Limite diário para manter a qualidade do processamento</div>
+              <div style={{ fontWeight: 700 }}>Seu mapa gratuito está disponível hoje</div>
+              <div style={{ opacity: 0.92 }}>O acesso pode ser encerrado a qualquer momento para novos pedidos</div>
             </div>
           </div>
 
           <div style={{ marginTop: 18, opacity: 0.9 }}>
             <div style={{ display: 'flex', justifyContent: 'center', gap: 10, flexWrap: 'wrap', color: 'rgba(216,180,254,0.92)', fontSize: 13 }}>
               <span style={{ padding: '8px 12px', borderRadius: 999, border: '1px solid rgba(216,180,254,0.12)', background: 'rgba(17,7,32,0.22)' }}>
-                🧠 Explicado de forma simples
+                🧠 Sem linguagem complicada
               </span>
               <span style={{ padding: '8px 12px', borderRadius: 999, border: '1px solid rgba(216,180,254,0.12)', background: 'rgba(17,7,32,0.22)' }}>
-                ⚡ Prático (próximos passos)
+                ⚡ Com próximos passos práticos
               </span>
               <span style={{ padding: '8px 12px', borderRadius: 999, border: '1px solid rgba(216,180,254,0.12)', background: 'rgba(17,7,32,0.22)' }}>
-                🔐 Dados protegidos
+                🔐 Privado e personalizado
               </span>
             </div>
           </div>
@@ -1083,14 +1124,14 @@ const STATUS_TRABALHO = [
       {/* FORM */}
      <section id="formulario" className="formSection">
   <div className="containerX">
-<h2 className="sectionTitle">{leadMagnetTitle}</h2>
-<p className="sectionSub">Leva menos de 1 minuto. Em segundos você entende por que repete ciclos e como mudar.</p>
+<h2 className="sectionTitle">{firstName ? `Seu mapa espiritual personalizado, ${firstName}` : 'Seu mapa espiritual personalizado'}</h2>
+<p className="sectionSub">Leva menos de 1 minuto. Descubra o padrão que está por trás dos seus ciclos e o que fazer agora.</p>
 
 <div className="preFormTrigger">
   <p className="triggerTitle">Se você sente que:</p>
 
   <ul className="triggerList">
-    <li>repete padrões sem entender por quê</li>
+    <li>repete ciclos mesmo tentando mudar</li>
     <li>trava justo quando precisa avançar</li>
     <li>sente que poderia estar muito mais à frente</li>
   </ul>
@@ -1100,8 +1141,8 @@ const STATUS_TRABALHO = [
 
 <div className="formCard">
             <div className="progressRow">
-              <span>Progresso</span>
-              <span style={{ color: 'rgba(245,158,11,0.95)', fontWeight: 800 }}>{completion}%</span>
+        <span>Seu mapa está quase pronto</span>              
+        <span style={{ color: 'rgba(245,158,11,0.95)', fontWeight: 800 }}>{completion}%</span>
             </div>
             <div className="progressBar" aria-hidden="true">
               <div className="progressFill" style={{ width: `${completion}%` }} />
@@ -1222,7 +1263,9 @@ const STATUS_TRABALHO = [
                     <span>{focusHint || 'Dica: “hora” e “local” aumentam a precisão, mas você já recebe o mapa mesmo sem eles.'}</span>
                   </div>
                 </div>
-
+                  <div style={{ color: 'rgba(233,213,255,0.88)', fontSize: 14, marginTop: 6, marginBottom: 14 }}>
+  Essas respostas deixam sua leitura mais precisa e mais útil para o momento que você está vivendo.
+</div>
                 <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid rgba(216,180,254,0.12)' }}>
   <div style={{
     fontFamily: 'Cinzel, serif',
@@ -1288,7 +1331,7 @@ const STATUS_TRABALHO = [
                       Gerando seu mapa...
                     </span>
                   ) : (
-                    '✨ GERAR MEU MAPA AGORA'
+                    '✨ DESCOBRIR MEU MAPA AGORA'
                   )}
                 </button>
 
@@ -1306,16 +1349,16 @@ const STATUS_TRABALHO = [
       {/* O QUE VOCÊ RECEBE */}
       <section className="sectionPad">
         <div className="containerX">
-          <h2 className="sectionTitle">Você vai receber agora</h2>
+          <h2 className="sectionTitle">O que seu mapa vai te mostrar</h2>
           <p className="sectionSub">Clareza + direção prática para sua próxima fase.</p>
 
           <div className="listCard" style={{ maxWidth: 820, margin: '0 auto' }}>
             {[
-              { num: '1️⃣', title: 'Seu Caminho de Vida (o que você veio desenvolver)', desc: 'A missão central que sua alma veio desenvolver nesta encarnação.' },
-              { num: '2️⃣', title: 'Seus 3 Talentos Naturais (como usar melhor)', desc: 'Os dons que você já tem — e como usar com mais confiança.' },
-              { num: '3️⃣', title: '1 Bloqueio Principal + Prática de 3 Minutos', desc: 'Um ajuste prático para sentir mudança real no dia a dia.' },
-              { num: '4️⃣', title: 'Seu Próximo Passo Personalizado (o que fazer agora)', desc: 'Um plano simples e direto do que fazer a partir de agora.' },
-            ].map((item, i) => (
+  { num: '1️⃣', title: 'Seu padrão central', desc: 'O que mais se repete na sua vida hoje — e por que isso continua acontecendo.' },
+  { num: '2️⃣', title: 'Seus talentos naturais', desc: 'Os dons e forças que você já tem, mas talvez ainda não esteja usando do jeito certo.' },
+  { num: '3️⃣', title: 'Seu bloqueio principal', desc: 'O ponto que mais drena sua energia e atrasa seus resultados hoje.' },
+  { num: '4️⃣', title: 'Seu próximo passo', desc: 'Uma direção prática e personalizada para você sair do lugar com mais clareza.' },
+].map((item, i) => (
               <div key={i} className="listRow">
                 <div className="listNum">{item.num}</div>
                 <div>
@@ -1326,12 +1369,12 @@ const STATUS_TRABALHO = [
             ))}
 
             <div style={{ marginTop: 14, borderRadius: 16, border: '1px solid rgba(245,158,11,0.22)', background: 'rgba(245,158,11,0.08)', padding: 14 }}>
-              <div style={{ fontWeight: 800, color: 'rgba(245,158,11,0.95)' }}>✨ Importante</div>
-              <div style={{ color: 'rgba(233,213,255,0.92)' }}>
-                Depois do seu mapa grátis, você pode (se quiser) desbloquear o <b>Manual Completo</b> com aprofundamento e guia prático.
-                <br />
-                <span style={{ opacity: 0.9 }}>Sem pressão — só se fizer sentido pra você.</span>
-              </div>
+              <div style={{ fontWeight: 800, color: 'rgba(245,158,11,0.95)' }}>✨ Depois, se fizer sentido para você</div>
+<div style={{ color: 'rgba(233,213,255,0.92)' }}>
+  Você poderá desbloquear o <b>Manual Completo</b> com aprofundamento, plano prático, amor, dinheiro e calendário personalizado.
+  <br />
+  <span style={{ opacity: 0.9 }}>Primeiro você vê seu mapa. Depois decide com calma.</span>
+</div>
             </div>
 
             <div className="ctaRowCenter">
@@ -1382,24 +1425,24 @@ const STATUS_TRABALHO = [
 
           <div style={{ maxWidth: 820, margin: '0 auto' }}>
             {[
-              {
-                text:
-                  '“Eu sempre senti que tinha algo maior me puxando… mas não sabia nomear. O mapa me deu clareza e um passo prático. Foi como organizar a mente e o coração.”',
-                name: 'Marina S., 34 anos - São Paulo, SP',
-                avatar: 'M',
-              },
-              {
-                text:
-                  '“Achei que seria genérico — e me surpreendi. Bateu em pontos muito específicos e o exercício foi simples, mas realmente mudou meu dia.”',
-                name: 'Julia M., 28 anos - Rio de Janeiro, RJ',
-                avatar: 'J',
-              },
-              {
-                text:
-                  '“O melhor é que não fica só no ‘místico’: tem explicação e direção. Eu usei como bússola para decisões e fez diferença.”',
-                name: 'Roberto C., 41 anos - Belo Horizonte, MG',
-                avatar: 'R',
-              },
+               {
+    text:
+      '“Eu já tinha feito outras coisas espirituais antes, mas essa foi a primeira vez que senti clareza de verdade. Parecia que alguém tinha traduzido o que eu estava vivendo.”',
+    name: 'Marina S., 34 anos - São Paulo, SP',
+    avatar: 'M',
+  },
+  {
+    text:
+      '“Achei que seria genérico, mas veio muito mais específico do que eu esperava. Me fez entender um padrão que eu repetia há anos.”',
+    name: 'Julia M., 28 anos - Rio de Janeiro, RJ',
+    avatar: 'J',
+  },
+  {
+    text:
+      '“O que eu mais gostei foi que não ficou só no místico. Me deu clareza e um próximo passo real, que eu consegui aplicar no mesmo dia.”',
+    name: 'Roberto C., 41 anos - Belo Horizonte, MG',
+    avatar: 'R',
+  },
             ].map((t, i) => (
               <div key={i} className="testiCard">
                 <div className="testiText">{t.text}</div>
@@ -1449,10 +1492,13 @@ const STATUS_TRABALHO = [
               🎁 GRÁTIS AGORA
             </div>
 
-            <div style={{ color: 'rgba(216,180,254,0.9)', fontSize: 20, textDecoration: 'line-through' }}>De R$ 97,00</div>
-            <div style={{ fontFamily: 'Cinzel, serif', fontWeight: 900, fontSize: 62, color: 'rgba(245,158,11,0.95)', marginTop: 4 }}>
-               Hoje: gratuito
-            </div>
+           <div style={{ color: 'rgba(216,180,254,0.9)', fontSize: 20, textDecoration: 'line-through' }}>Valor simbólico: R$ 97,00</div>
+<div style={{ fontFamily: 'Cinzel, serif', fontWeight: 900, fontSize: 62, color: 'rgba(245,158,11,0.95)', marginTop: 4 }}>
+   Hoje: gratuito
+</div>
+<div style={{ marginTop: 10, color: 'rgba(233,213,255,0.92)', fontSize: 17 }}>
+  Você recebe sua leitura primeiro e só avança se fizer sentido.
+</div>
             <div style={{ marginTop: 8, color: 'rgba(233,213,255,0.92)', fontSize: 18 }}>
               Leva menos de 2 minutos.
               <br />
@@ -1495,11 +1541,10 @@ const STATUS_TRABALHO = [
             {[
               {
                 q: '📌 Como funciona o Mapa Espiritual?',
-                a: 'Combinamos Numerologia, Astrologia e princípios de Neurociência (de forma prática) para gerar um relatório personalizado com clareza e próximos passos.',
-              },
+                a: 'Seu mapa combina Numerologia, Astrologia e uma leitura prática de padrões para te mostrar o que se repete, o que te trava e qual é o próximo passo mais alinhado para você.',              },
               {
                 q: '📌 É realmente grátis?',
-                a: 'Sim. O mapa básico é 100% gratuito. Depois, você pode (se quiser) desbloquear o Manual Completo com aprofundamento e guia prático.',
+                a: 'Sim. Seu mapa inicial é gratuito. Depois de ver sua leitura, você decide com calma se quer desbloquear a versão completa.',
               },
               { q: '📌 Quanto tempo demora?', a: 'Menos de 1 minuto para preencher. O resultado aparece instantaneamente na tela.' },
               { q: '📌 Preciso saber a hora de nascimento?', a: 'Não. Se souber, melhora a precisão (principalmente na astrologia). Se não souber, você ainda recebe o mapa.' },
@@ -1525,15 +1570,15 @@ const STATUS_TRABALHO = [
         <div className="containerX">
           <div style={{ maxWidth: 900, margin: '0 auto', textAlign: 'center' }}>
             <h2 className="sectionTitle" style={{ marginBottom: 10 }}>
-              Sua intuição já sabe.
+                O padrão que te trava não precisa continuar.
               <br />
-              Agora é hora de confirmar com clareza.
+              Descubra agora o que está por trás disso.
             </h2>
             <p className="sectionSub">Gere seu mapa gratuito agora — é rápido e sem pressão.</p>
 
             <div className="ctaRowCenter">
               <button type="button" className="ctaSecondary" onClick={scrollToForm}>
-                ✨ Gerar meu mapa grátis
+                ✨ Quero descobrir meu mapa
               </button>
             </div>
 
