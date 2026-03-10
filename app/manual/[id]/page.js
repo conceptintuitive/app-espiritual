@@ -398,7 +398,13 @@ export default function ManualPage() {
 AGORA VAMOS VIRAR A CHAVE.
           </h1>
           <p className="subtitle">
-            Um mapa claro do seu padrão —  e de como virar a chave.
+           Nada aqui é por acaso.
+
+Quando colocamos tudo lado a lado,
+o padrão fica claro.
+
+Este manual existe para nomear isso, 
+e mostrar como sair dele.
           </p>
 
           <div className="pills">
