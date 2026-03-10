@@ -185,57 +185,148 @@ function assinaturaNumero(numeroVida) {
 // ----------------------------------------------------
 function ganchoNumeroDisciplina(numeroVida) {
   const map = {
-    '1': 'Com o 1, você funciona melhor com meta curta + comando claro. Disciplina é direção e início rápido.',
-    '2': 'Com o 2, disciplina é consistência gentil. Você sustenta mais quando o plano respeita seu emocional.',
-    '3': 'Com o 3, o risco é dispersar. Disciplina aqui é foco curto e repetível (sem tédio).',
-    '4': 'Com o 4, você ama estrutura. O cuidado é não transformar isso em rigidez que trava.',
-    '5': 'Com o 5, a mente pede novidade. Disciplina é variedade com regra simples (um foco por vez).',
-    '6': 'Com o 6, você assume demais. Disciplina é priorizar você sem culpa e sem se esgotar.',
-    '7': 'Com o 7, você precisa entender o “porquê”. Disciplina é clareza + rotina mínima, sem excesso.',
-    '8': 'Com o 8, você dá conta — mas se cobra. Disciplina é execução com calma, não autocobrança tóxica.',
-    '9': 'Com o 9, você se envolve com tudo. Disciplina é limites e escolha do essencial.',
-    '11': 'Com o 11, sua mente dispara fácil — disciplina precisa ser aterramento + rotina mínima.',
-    '22': 'Com o 22, você pensa grande — disciplina é dividir em micro-passos pra virar construção real.',
-    '33': 'Com o 33, você cuida demais — disciplina é “limite com amor” pra manter constância.',
+    1: 'Com o 1, disciplina não funciona bem com enrolação. Você rende mais quando existe meta curta, comando claro e início rápido. Seu erro costuma ser esperar o momento perfeito, quando na verdade o seu número responde melhor a movimento imediato.',
+    2: 'Com o 2, disciplina precisa respeitar seu emocional. Quando o plano é duro demais, você sente mais resistência. O que funciona é constância gentil, ambiente favorável e ritmo que não te coloque em guerra com você.',
+    3: 'Com o 3, o risco é dispersar energia em coisas demais. Disciplina aqui não é rigidez: é foco leve, meta simples e repetição sem tédio. Quando você simplifica, sustenta muito mais.',
+    4: 'Com o 4, disciplina é um talento natural — mas existe um ponto de atenção: quando vira rigidez, você trava. Seu número pede estrutura, mas uma estrutura viva, que organize sem te aprisionar.',
+    5: 'Com o 5, disciplina não funciona no formato pesado. Sua mente precisa de movimento, variedade e espaço. O segredo aqui é regra simples, foco por vez e liberdade com direção.',
+    6: 'Com o 6, a sua maior dificuldade não é falta de disciplina: é colocar todo mundo antes de você. Seu número sustenta muito quando existe compromisso afetivo, mas precisa aprender a priorizar você sem culpa.',
+    7: 'Com o 7, disciplina depende de sentido. Você precisa entender o porquê, sentir coerência e ver profundidade no que está fazendo. Quando existe clareza, sua constância cresce muito.',
+    8: 'Com o 8, você executa — mas tende a misturar disciplina com autocobrança. Seu número rende mais quando existe estratégia, ritmo e calma. Você vai mais longe quando para de tentar funcionar na base da pressão.',
+    9: 'Com o 9, disciplina quebra quando você se envolve com tudo ao mesmo tempo. Seu número precisa de limite, seleção e direção emocional. O essencial aqui é parar de carregar mais do que consegue sustentar.',
+    11: 'Com o 11, disciplina precisa começar no aterramento. Sua mente acelera fácil, então constância não nasce de força bruta: nasce de rotina mínima, silêncio interno e pequenas repetições que te trazem de volta para o corpo.',
+    22: 'Com o 22, você pensa grande — e às vezes isso te paralisa. Seu número responde melhor quando o grande é quebrado em micro-passos. Disciplina aqui é transformar visão em construção real.',
+    33: 'Com o 33, disciplina enfraquece quando você se doa demais e se abandona no processo. O seu aprendizado é constância com amor, limite e preservação da própria energia.',
   };
-  return map[numeroVida] || 'Disciplina aqui é um sistema pequeno que você sustenta até em dias ruins.';
+  return map[numeroVida] || 'Disciplina, no seu caso, depende de um sistema pequeno, claro e repetível — algo que você consiga sustentar até nos dias mais comuns.';
 }
 
 function ganchoNumeroAnsiedade(numeroVida) {
   const map = {
-    1: 'Com o 1, ansiedade vem de pressa interna. O protocolo é ação simples + ritmo constante.',
-    2: 'Com o 2, ansiedade vem de absorver o outro. O protocolo é limite emocional + aterramento.',
-    3: 'Com o 3, ansiedade vem de excesso de estímulo. O protocolo é reduzir ruído + foco curto.',
-    4: 'Com o 4, ansiedade vem de controle/rigidez. O protocolo é flexibilidade com rotina mínima.',
-    5: 'Com o 5, ansiedade vem de instabilidade. O protocolo é “âncora diária” + decisão simples.',
-    6: 'Com o 6, ansiedade vem de responsabilidade demais. O protocolo é priorização + autocuidado real.',
-    7: 'Com o 7, você rumina em silêncio — o protocolo é clareza + descarrego mental curto.',
-    8: 'Com o 8, ansiedade vem de pressão por resultado. O protocolo é execução com pausa e corpo presente.',
-    9: 'Com o 9, ansiedade vem de carregar o mundo. O protocolo é limite + aterramento.',
-    11: 'O 11 amplifica sensibilidade — o protocolo precisa tirar você da mente e levar pro corpo.',
-    22: 'Com o 22, ansiedade vem do “tamanho da missão”. O protocolo é micro-passos e consistência.',
-    33: 'Com o 33, ansiedade vem de se doar além do limite. O protocolo é “amor com limite”.',
+    1: 'Com o 1, ansiedade costuma vir de pressa interna, excesso de urgência e necessidade de resolver tudo logo. Seu número melhora quando troca aceleração por ação simples e ritmo constante.',
+    2: 'Com o 2, ansiedade geralmente nasce de absorver o outro, ler demais o ambiente e se afetar demais pelo que está ao redor. Seu protocolo precisa incluir limite emocional e aterramento.',
+    3: 'Com o 3, ansiedade vem de excesso de estímulo, excesso de pensamento e energia espalhada. O caminho aqui é reduzir ruído, simplificar e trazer foco curto para a mente não se perder.',
+    4: 'Com o 4, ansiedade aparece quando a necessidade de controle cresce demais. Seu número pede estrutura, mas não rigidez. O alívio vem de flexibilidade com rotina mínima.',
+    5: 'Com o 5, ansiedade costuma nascer da instabilidade, da dificuldade de sustentar eixo e da sensação de inquietação constante. Seu número precisa de âncoras simples no dia.',
+    6: 'Com o 6, ansiedade vem de responsabilidade demais, peso demais e excesso de preocupação com o outro. Seu sistema melhora quando existe priorização, descanso e autocuidado real.',
+    7: 'Com o 7, ansiedade tende a acontecer em silêncio. Você rumina, analisa e tenta entender tudo internamente. O protocolo aqui precisa incluir descarrego mental e menos isolamento da própria mente.',
+    8: 'Com o 8, ansiedade geralmente vem de pressão por resultado, cobrança alta e medo de não estar à altura do que sabe que pode construir. Seu número melhora quando une execução com pausa e presença.',
+    9: 'Com o 9, ansiedade aparece quando você tenta carregar mais do que é seu, manter ciclos além do ponto e absorver o peso do mundo. Seu eixo volta com limite e aterramento.',
+    11: 'Com o 11, a sensibilidade é amplificada. Você sente antes de entender, capta antes de explicar. Por isso, ansiedade aqui não melhora só com pensamento: melhora quando sai da mente e volta para o corpo.',
+    22: 'Com o 22, ansiedade costuma vir do tamanho da missão, da visão grande e do medo silencioso de não sustentar tudo. O caminho é micro-passos, constância e menos pressão pelo “grande” imediato.',
+    33: 'Com o 33, ansiedade vem de se doar além do limite, sentir demais e tentar sustentar emocionalmente mais do que deveria. Seu protocolo precisa incluir amor com limite.',
   };
-  return map[numeroVida] || 'O protocolo é aterramento e decisão simples (sem ruminação).';
+  return map[numeroVida] || 'No seu caso, ansiedade não se resolve com mais pensamento. Ela melhora quando existe aterramento, simplificação e um jeito mais claro de conduzir sua energia.';
 }
 
 function ganchoNumeroRelacionamento(numeroVida) {
   const map = {
-    1: 'Com o 1, você precisa de admiração e clareza. Amor saudável é escolher quem soma e não disputa poder.',
-    2: 'Com o 2, você precisa de segurança emocional. Amor saudável é reciprocidade, não migalha.',
-    3: 'Com o 3, você precisa de leveza e verdade. Amor saudável é presença, não joguinho.',
-    4: 'Com o 4, você precisa de constância. Amor saudável é estabilidade com afeto, não frieza.',
-    5: 'Com o 5, você precisa de liberdade com compromisso. Amor saudável não prende — alinha.',
-    6: 'Com o 6, você ama cuidar. Amor saudável é parceria, não maternagem.',
-    7: 'Com o 7, você precisa de profundidade. Amor saudável é verdade e respeito pelo seu tempo.',
-    8: 'Com o 8, você atrai intensidade. Amor saudável é poder compartilhado, não controle.',
-    9: 'Com o 9, você é coração grande. Amor saudável é limite para não “salvar” o outro.',
-    11: 'Com o 11, você sente tudo forte — amor saudável é limite energético + clareza (pra não virar ansiedade).',
-    22: 'Com o 22, você quer construir. Amor saudável é projeto a dois, não promessas vazias.',
-    33: 'Com o 33, você dá muito. Amor saudável é amor com limite e reciprocidade real.',
+    1: 'Com o 1, você precisa de admiração, clareza e alguém que some sem disputar espaço. Relacionamento saudável, no seu caso, não combina com confusão nem com jogos de poder.',
+    2: 'Com o 2, o amor saudável precisa trazer segurança emocional, presença e reciprocidade. Seu número não floresce com migalha, ambiguidade ou vínculo raso.',
+    3: 'Com o 3, relacionamento saudável precisa de leveza, troca real e verdade. Seu número se desgasta em jogos, silêncio confuso e relações que perdem brilho rápido.',
+    4: 'Com o 4, amor saudável é constância. Você precisa sentir firmeza, coerência e estabilidade emocional. Relações frias ou imprevisíveis drenam muito seu número.',
+    5: 'Com o 5, relacionamento saudável não é prisão. Seu número precisa de liberdade com compromisso, espaço com verdade e conexão sem sufoco.',
+    6: 'Com o 6, você ama cuidando — mas seu aprendizado é não transformar amor em excesso de responsabilidade. O relacionamento saudável aqui é parceria, não maternagem.',
+    7: 'Com o 7, amor saudável precisa de profundidade, verdade e respeito pelo seu tempo interno. Seu número não se entrega bem ao superficial.',
+    8: 'Com o 8, você atrai intensidade — e por isso precisa escolher bem. O relacionamento saudável aqui é poder compartilhado, respeito e maturidade emocional, não controle.',
+    9: 'Com o 9, seu coração é grande, mas isso exige critério. Amor saudável, no seu caso, pede limite para você não cair na armadilha de tentar salvar quem não quer crescer.',
+    11: 'Com o 11, você sente tudo muito forte. Relacionamento saudável aqui exige clareza, limite energético e consistência, para intensidade não virar ansiedade afetiva.',
+    22: 'Com o 22, você quer construir algo real. O amor saudável aqui é projeto a dois, presença concreta e alinhamento de futuro — não promessa vazia.',
+    33: 'Com o 33, você se doa muito. Por isso, relacionamento saudável, no seu caso, precisa de reciprocidade real, maturidade e amor com limite.',
   };
-  return map[numeroVida] || 'Amor saudável aqui é critério + posicionamento (sem ansiedade).';
+  return map[numeroVida] || 'No seu caso, amor saudável depende menos de sorte e mais de filtro, critério e posicionamento emocional.';
 }
+
+function ganchoNumeroRelacionamento(numeroVida) {
+  const map = {
+    1: 'Com o 1, você precisa de admiração, clareza e alguém que some sem disputar espaço. Relacionamento saudável, no seu caso, não combina com confusão nem com jogos de poder.',
+    2: 'Com o 2, o amor saudável precisa trazer segurança emocional, presença e reciprocidade. Seu número não floresce com migalha, ambiguidade ou vínculo raso.',
+    3: 'Com o 3, relacionamento saudável precisa de leveza, troca real e verdade. Seu número se desgasta em jogos, silêncio confuso e relações que perdem brilho rápido.',
+    4: 'Com o 4, amor saudável é constância. Você precisa sentir firmeza, coerência e estabilidade emocional. Relações frias ou imprevisíveis drenam muito seu número.',
+    5: 'Com o 5, relacionamento saudável não é prisão. Seu número precisa de liberdade com compromisso, espaço com verdade e conexão sem sufoco.',
+    6: 'Com o 6, você ama cuidando — mas seu aprendizado é não transformar amor em excesso de responsabilidade. O relacionamento saudável aqui é parceria, não maternagem.',
+    7: 'Com o 7, amor saudável precisa de profundidade, verdade e respeito pelo seu tempo interno. Seu número não se entrega bem ao superficial.',
+    8: 'Com o 8, você atrai intensidade — e por isso precisa escolher bem. O relacionamento saudável aqui é poder compartilhado, respeito e maturidade emocional, não controle.',
+    9: 'Com o 9, seu coração é grande, mas isso exige critério. Amor saudável, no seu caso, pede limite para você não cair na armadilha de tentar salvar quem não quer crescer.',
+    11: 'Com o 11, você sente tudo muito forte. Relacionamento saudável aqui exige clareza, limite energético e consistência, para intensidade não virar ansiedade afetiva.',
+    22: 'Com o 22, você quer construir algo real. O amor saudável aqui é projeto a dois, presença concreta e alinhamento de futuro — não promessa vazia.',
+    33: 'Com o 33, você se doa muito. Por isso, relacionamento saudável, no seu caso, precisa de reciprocidade real, maturidade e amor com limite.',
+  };
+  return map[numeroVida] || 'No seu caso, amor saudável depende menos de sorte e mais de filtro, critério e posicionamento emocional.';
+}
+
+function ganchoNumeroAutoestima(numeroVida) {
+  const map = {
+    1: 'Com o 1, autoestima cresce quando você se vê em movimento, decidindo e liderando a própria vida. Seu número perde força quando você espera validação externa para agir.',
+    2: 'Com o 2, autoestima está muito ligada à forma como você se percebe nos vínculos. Seu número precisa aprender a não confundir ser amado(a) com se abandonar para ser aceito(a).',
+    3: 'Com o 3, autoestima floresce quando você se expressa com liberdade. Seu número se enfraquece quando se compara demais, se censura ou sente que precisa caber em moldes que não são seus.',
+    4: 'Com o 4, autoestima vem de consistência e evidência interna. Seu número confia mais em si quando percebe que consegue sustentar o que promete — sem transformar isso em rigidez.',
+    5: 'Com o 5, autoestima cresce quando você se sente livre, vivo(a) e em expansão. Seu número sofre quando liberdade vira instabilidade e você perde referência de si no meio do excesso.',
+    6: 'Com o 6, autoestima costuma oscilar quando você cuida de todo mundo e esquece de se incluir. Seu número precisa sentir que também merece atenção, descanso e prioridade.',
+    7: 'Com o 7, autoestima depende muito de coerência interna. Você se fortalece quando honra sua profundidade e enfraquece quando tenta se adaptar ao raso para ser aceito(a).',
+    8: 'Com o 8, autoestima está profundamente ligada ao valor pessoal e à capacidade de se posicionar. Seu número enfraquece quando confunde desempenho com merecimento.',
+    9: 'Com o 9, autoestima cresce quando você reconhece a própria sensibilidade como força, não como peso. Seu número precisa parar de achar que amor exige autoabandono.',
+    11: 'Com o 11, autoestima oscila quando sua sensibilidade é mal interpretada até por você. Seu número precisa entender que sentir muito não te diminui — só pede aterramento e direção.',
+    22: 'Com o 22, autoestima está ligada ao quanto você honra o seu potencial real. Seu número se sabota quando diminui a própria visão por medo de não sustentar o tamanho dela.',
+    33: 'Com o 33, autoestima amadurece quando você para de medir valor pelo quanto entrega aos outros. Seu número precisa sentir que merece amor mesmo sem viver em sacrifício.',
+  };
+  return map[numeroVida] || 'No seu caso, autoestima não sobe com frase bonita. Ela cresce quando você muda a forma como se trata, se posiciona e sustenta o próprio valor.';
+}
+
+function ganchoNumeroRelacionamentoAtual(numeroVida) {
+  const map = {
+    1: 'Com o 1, o relacionamento melhora quando existe respeito, admiração e espaço para individualidade. Seu número entra em atrito quando sente disputa, desvalorização ou controle excessivo.',
+    2: 'Com o 2, a relação melhora com delicadeza, escuta e segurança emocional. Seu número sofre quando o vínculo entra em frieza, silêncio confuso ou instabilidade afetiva.',
+    3: 'Com o 3, o relacionamento melhora quando volta a existir leveza, conversa e presença real. Seu número se desgasta quando a relação fica pesada, previsível e sem troca emocional viva.',
+    4: 'Com o 4, a relação melhora com consistência, previsibilidade e construção concreta. Seu número precisa sentir firmeza para parar de entrar em estado de defesa.',
+    5: 'Com o 5, o vínculo melhora quando existe renovação, verdade e espaço para respirar. Seu número sofre quando a relação vira rotina sufocante ou cobrança sem conexão.',
+    6: 'Com o 6, o relacionamento melhora quando o cuidado deixa de ser unilateral. Seu número precisa de parceria e reciprocidade, não de excesso de peso emocional nas próprias costas.',
+    7: 'Com o 7, o relacionamento melhora com verdade e profundidade. Seu número fecha quando não se sente compreendido(a) ou quando a relação fica superficial demais.',
+    8: 'Com o 8, a relação melhora quando existe respeito mútuo, maturidade e poder equilibrado. Seu número entra em desgaste quando tudo vira disputa ou tentativa de controle.',
+    9: 'Com o 9, o vínculo melhora quando existe perdão com consciência e limite com amor. Seu número sofre quando continua sustentando ciclos desgastados por apego ao que já foi.',
+    11: 'Com o 11, o relacionamento melhora quando a energia do vínculo fica mais clara e menos caótica. Seu número precisa de paz, consistência e menos sobrecarga emocional.',
+    22: 'Com o 22, a relação melhora quando volta a existir projeto comum, alinhamento e construção real. Seu número desanima em vínculos sem direção ou sem presença concreta.',
+    33: 'Com o 33, o vínculo melhora quando o amor deixa de ser sacrifício e volta a ser troca. Seu número precisa amar sem se anular.',
+  };
+  return map[numeroVida] || 'No seu caso, melhorar a relação depende de sair da repetição automática e voltar para uma dinâmica mais consciente, clara e recíproca.';
+}
+
+function ganchoNumeroCrescimentoProfissional(numeroVida) {
+  const map = {
+    1: 'Com o 1, crescimento profissional vem quando você assume liderança, iniciativa e visibilidade. Seu número trava quando espera permissão demais para ocupar espaço.',
+    2: 'Com o 2, crescimento profissional acontece quando você usa sua sensibilidade como inteligência relacional, sem deixar isso virar insegurança ou excesso de adaptação.',
+    3: 'Com o 3, crescer profissionalmente depende de transformar talento e comunicação em direção. Seu número precisa parar de espalhar energia em muitas frentes ao mesmo tempo.',
+    4: 'Com o 4, crescimento profissional é construção. Seu número avança com método, consistência e execução — desde que isso não vire rigidez ou perfeccionismo travando ação.',
+    5: 'Com o 5, crescimento profissional vem quando existe movimento com estratégia. Seu número precisa de expansão, mas não pode viver de impulso ou excesso de dispersão.',
+    6: 'Com o 6, crescer profissionalmente depende de aprender a servir sem se sobrecarregar. Seu número tem força para gerar valor, mas precisa de limite para não viver em exaustão.',
+    7: 'Com o 7, crescimento profissional vem de profundidade, estudo, verdade e diferenciação. Seu número não floresce em ambientes rasos ou sem sentido.',
+    8: 'Com o 8, crescimento profissional está diretamente ligado a poder pessoal, posicionamento e capacidade de materializar. Seu número cresce muito quando para de se sabotar por pressão excessiva.',
+    9: 'Com o 9, crescer profissionalmente depende de propósito. Seu número avança quando sente sentido no que constrói e trava quando entra em lugares que drenam alma e energia.',
+    11: 'Com o 11, crescimento profissional vem quando sua visão elevada encontra aterramento. Seu número tem percepção rara, mas precisa transformar insight em execução concreta.',
+    22: 'Com o 22, crescimento profissional pode ser enorme — mas depende de estrutura. Seu número nasceu para construir grande, desde que pare de adiar por medo do próprio tamanho.',
+    33: 'Com o 33, crescer profissionalmente passa por impacto humano, valor e presença. Seu número floresce quando transforma sensibilidade em contribuição sem se sacrificar no processo.',
+  };
+  return map[numeroVida] || 'No seu caso, crescimento profissional depende menos de capacidade e mais de direção, posicionamento e constância na frente certa.';
+}
+
+function ganchoNumeroRotina(numeroVida) {
+  const map = {
+    1: 'Com o 1, rotina precisa ser objetiva e prática. Seu número funciona melhor quando o dia começa com direção clara, e não com excesso de opções.',
+    2: 'Com o 2, rotina precisa respeitar seu emocional. Seu número sustenta melhor quando o ambiente está mais leve e o ritmo não te coloca em guerra com você.',
+    3: 'Com o 3, rotina quebra quando tudo fica solto demais. Seu número precisa de estrutura leve, foco por blocos e menos estímulo competindo pela sua atenção.',
+    4: 'Com o 4, rotina é uma força natural — desde que não vire prisão. Seu número responde muito bem a ordem, previsibilidade e repetição funcional.',
+    5: 'Com o 5, rotina não pode parecer jaula. Seu número organiza melhor o dia quando existe flexibilidade com regra simples e espaço para respirar.',
+    6: 'Com o 6, rotina bagunça quando você começa o dia vivendo em função dos outros. Seu número precisa se incluir no planejamento para não terminar em exaustão.',
+    7: 'Com o 7, rotina funciona quando tem sentido, silêncio e menos ruído. Seu número precisa de espaço mental para render de verdade.',
+    8: 'Com o 8, rotina melhora muito quando existe prioridade clara, ritmo e execução limpa. Seu número não precisa fazer mais — precisa fazer com mais alinhamento.',
+    9: 'Com o 9, rotina desorganiza quando você tenta abraçar tudo. Seu número precisa de enxugamento, limite e critério sobre o que realmente importa.',
+    11: 'Com o 11, rotina começa no aterramento. Seu número precisa reduzir excesso mental logo cedo, senão o dia vira sobrecarga e dispersão.',
+    22: 'Com o 22, rotina precisa servir construção grande sem parecer esmagadora. Seu número rende mais quando o dia é quebrado em etapas simples e concretas.',
+    33: 'Com o 33, rotina só funciona quando inclui cuidado com sua energia. Seu número não sustenta organização se tudo for doação, peso e excesso de responsabilidade.',
+  };
+  return map[numeroVida] || 'No seu caso, organizar a rotina depende de simplificar o dia, reduzir o excesso e criar uma estrutura que seja sustentável na vida real.';
+}
+
 
 // ----------------------------------------------------
 // GANCHOS por SIGNO (universal)
@@ -243,20 +334,20 @@ function ganchoNumeroRelacionamento(numeroVida) {
 function ganchoSignoDisciplina(signo) {
   const s = norm(signo);
   const map = {
-    'Áries': 'Áries precisa de começo rápido — o método é “ação pequena agora”, não planejamento eterno.',
-    'Touro': 'Touro sustenta quando faz sentido — o método é consistência e progresso visível.',
-    'Gêmeos': 'Gêmeos precisa de variedade com regra simples. Um foco por vez, por 7 dias.',
-    'Câncer': 'Câncer precisa de segurança emocional — disciplina é rotina que acolhe, não que pune.',
-    'Leão': 'Leão sustenta quando se sente reconhecida — disciplina é ritual com recompensa inteligente.',
-    'Virgem': 'Virgem se cobra — o método é “feito com verdade”, não perfeição.',
-    'Libra': 'Libra trava na indecisão — disciplina é decidir o essencial e parar de negociar com o hábito.',
-    'Escorpião': 'Escorpião vai ao extremo — disciplina é intensidade com constância (sem 8 ou 80).',
-    'Sagitário': 'Sagitário precisa de liberdade — o método é estrutura leve, não rigidez.',
-    'Capricórnio': 'Capricórnio ama metas — disciplina é plano enxuto + execução diária.',
-    'Aquário': 'Aquário precisa de sentido e autonomia — disciplina é sistema inteligente, não regra vazia.',
-    'Peixes': 'Peixes absorve energia — disciplina é aterramento + limites simples para não se perder.',
+    'Áries': 'Áries precisa de movimento. Disciplina aqui funciona com meta curta, ação imediata e menos planejamento excessivo.',
+    'Touro': 'Touro sustenta muito quando entra no ritmo. Disciplina aqui é constância estável — sem rigidez que trava.',
+    'Gêmeos': 'Gêmeos dispersa fácil. Disciplina aqui precisa de blocos curtos, variedade e menos estímulo competindo.',
+    'Câncer': 'Câncer funciona melhor quando o ambiente está seguro. Disciplina aqui é constância gentil e proteção emocional.',
+    'Leão': 'Leão sustenta quando vê sentido e reconhecimento interno. Disciplina aqui é presença, não pressão.',
+    'Virgem': 'Virgem tem disciplina natural — o risco é exagerar na cobrança. Aqui funciona “bom o suficiente” com constância.',
+    'Libra': 'Libra trava na indecisão. Disciplina aqui depende de escolher rápido e não voltar atrás toda hora.',
+    'Escorpião': 'Escorpião sustenta com intensidade. Disciplina aqui precisa de foco profundo e menos dispersão emocional.',
+    'Sagitário': 'Sagitário precisa de liberdade. Disciplina aqui é direção com espaço — não rotina sufocante.',
+    'Capricórnio': 'Capricórnio sustenta muito — mas se sobrecarrega. Disciplina aqui é ritmo sustentável, não exaustão.',
+    'Aquário': 'Aquário precisa de lógica. Disciplina aqui funciona com sistema simples e autonomia.',
+    'Peixes': 'Peixes perde eixo fácil. Disciplina aqui começa no aterramento e rotina mínima.',
   };
-  return map[s] || 'O método respeita sua energia para você não depender de motivação.';
+  return map[s] || 'Disciplina aqui depende de ritmo simples, repetição leve e menos pressão.';
 }
 
 function ganchoSignoAnsiedade(signo) {
@@ -281,20 +372,96 @@ function ganchoSignoAnsiedade(signo) {
 function ganchoSignoRelacionamento(signo) {
   const s = norm(signo);
   const map = {
-    'Áries': 'No amor, Áries precisa de admiração e verdade — sem joguinho e sem disputa.',
-    'Touro': 'No amor, Touro precisa de constância — promessa sem atitude te drena.',
-    'Gêmeos': 'No amor, Gêmeos precisa de conversa real — sinal confuso vira ansiedade.',
-    'Câncer': 'No amor, Câncer precisa de segurança — sem reciprocidade, você absorve demais.',
-    'Leão': 'No amor, Leão precisa de presença e respeito — migalha não combina com você.',
-    'Virgem': 'No amor, Virgem precisa de clareza — não é seu trabalho “consertar” o outro.',
-    'Libra': 'No amor, Libra precisa de escolha — paz não é evitar conflito, é alinhar verdade.',
-    'Escorpião': 'No amor, Escorpião precisa de lealdade — intensidade sem compromisso vira caos.',
-    'Sagitário': 'No amor, Sagitário precisa de liberdade — mas com compromisso, não com fuga.',
-    'Capricórnio': 'No amor, Capricórnio precisa de construção — consistência é linguagem de amor.',
-    'Aquário': 'No amor, Aquário precisa de autenticidade — conexão real sem distância emocional.',
-    'Peixes': 'No amor, Peixes precisa de limite — amor sem filtro vira confusão energética.',
+    'Áries': 'Áries precisa de admiração e verdade. Amor saudável aqui não combina com joguinho.',
+    'Touro': 'Touro precisa de constância. Amor saudável aqui é presença com atitude.',
+    'Gêmeos': 'Gêmeos precisa de conversa real. Amor saudável aqui é clareza, não ambiguidade.',
+    'Câncer': 'Câncer precisa de segurança emocional. Amor saudável aqui é reciprocidade.',
+    'Leão': 'Leão precisa de presença e respeito. Amor saudável aqui não aceita migalha.',
+    'Virgem': 'Virgem precisa de clareza. Amor saudável aqui não é consertar o outro.',
+    'Libra': 'Libra precisa de escolha. Amor saudável aqui é verdade, não indecisão.',
+    'Escorpião': 'Escorpião precisa de lealdade. Amor saudável aqui não mistura intensidade com caos.',
+    'Sagitário': 'Sagitário precisa de liberdade com verdade. Amor saudável aqui não prende nem foge.',
+    'Capricórnio': 'Capricórnio precisa de construção. Amor saudável aqui é consistência.',
+    'Aquário': 'Aquário precisa de autenticidade. Amor saudável aqui é conexão sem distância emocional.',
+    'Peixes': 'Peixes precisa de limite. Amor saudável aqui é filtro emocional.',
   };
-  return map[s] || 'No amor: critério emocional + posicionamento (sem ansiedade).';
+  return map[s] || 'Amor saudável aqui depende de clareza emocional e posicionamento.';
+}
+
+function ganchoSignoAutoestima(signo) {
+  const s = norm(signo);
+  const map = {
+    'Áries': 'Áries fortalece autoestima quando age. Você se sente melhor em movimento do que esperando validação.',
+    'Touro': 'Touro precisa de estabilidade interna. Autoestima aqui cresce com consistência e autocuidado real.',
+    'Gêmeos': 'Gêmeos oscila quando se compara. Autoestima aqui cresce quando você honra sua própria voz.',
+    'Câncer': 'Câncer sente muito — autoestima cresce quando você para de se medir pelo outro.',
+    'Leão': 'Leão precisa de reconhecimento interno. Autoestima aqui amadurece quando para de depender da validação externa.',
+    'Virgem': 'Virgem se cobra demais. Autoestima aqui cresce quando você aprende a reconhecer o que já faz bem.',
+    'Libra': 'Libra perde força tentando agradar. Autoestima aqui nasce quando você se escolhe primeiro.',
+    'Escorpião': 'Escorpião se protege demais. Autoestima aqui cresce quando você confia mais em si.',
+    'Sagitário': 'Sagitário se fortalece quando se expande. Autoestima aqui nasce do movimento e da experiência.',
+    'Capricórnio': 'Capricórnio confunde valor com resultado. Autoestima aqui cresce quando você se respeita além da performance.',
+    'Aquário': 'Aquário precisa de autenticidade. Autoestima aqui cresce quando você honra o que te torna diferente.',
+    'Peixes': 'Peixes sente demais. Autoestima aqui nasce quando você aprende a se proteger emocionalmente.',
+  };
+  return map[s] || 'Autoestima aqui cresce quando você para de se comparar e começa a se posicionar.';
+}
+
+function ganchoSignoRelacionamentoAtual(signo) {
+  const s = norm(signo);
+  const map = {
+    'Áries': 'Para Áries, a relação melhora com diálogo direto e menos disputa.',
+    'Touro': 'Para Touro, melhora quando existe segurança e consistência.',
+    'Gêmeos': 'Para Gêmeos, melhora com comunicação clara e menos suposição.',
+    'Câncer': 'Para Câncer, melhora quando existe acolhimento real.',
+    'Leão': 'Para Leão, melhora quando existe presença e valorização.',
+    'Virgem': 'Para Virgem, melhora com clareza e menos crítica.',
+    'Libra': 'Para Libra, melhora quando decisões são tomadas sem evitar conflito.',
+    'Escorpião': 'Para Escorpião, melhora com verdade e menos controle.',
+    'Sagitário': 'Para Sagitário, melhora com liberdade e honestidade.',
+    'Capricórnio': 'Para Capricórnio, melhora com atitude concreta.',
+    'Aquário': 'Para Aquário, melhora com conexão emocional mais presente.',
+    'Peixes': 'Para Peixes, melhora com limite e clareza emocional.',
+  };
+  return map[s] || 'A relação melhora quando existe mais verdade e menos repetição automática.';
+}
+
+function ganchoSignoCrescimentoProfissional(signo) {
+  const s = norm(signo);
+  const map = {
+    'Áries': 'Áries cresce quando lidera. Seu avanço depende de assumir posição.',
+    'Touro': 'Touro cresce com consistência. Seu avanço vem da constância.',
+    'Gêmeos': 'Gêmeos cresce com comunicação e estratégia.',
+    'Câncer': 'Câncer cresce quando sente segurança no que faz.',
+    'Leão': 'Leão cresce com visibilidade e protagonismo.',
+    'Virgem': 'Virgem cresce com método e precisão.',
+    'Libra': 'Libra cresce quando decide e se posiciona.',
+    'Escorpião': 'Escorpião cresce com foco profundo.',
+    'Sagitário': 'Sagitário cresce com expansão e movimento.',
+    'Capricórnio': 'Capricórnio cresce com construção sólida.',
+    'Aquário': 'Aquário cresce com inovação e autonomia.',
+    'Peixes': 'Peixes cresce quando conecta propósito com prática.',
+  };
+  return map[s] || 'Crescimento aqui depende de direção clara e execução consistente.';
+}
+
+function ganchoSignoRotina(signo) {
+  const s = norm(signo);
+  const map = {
+    'Áries': 'Áries precisa começar rápido. Rotina aqui começa com ação.',
+    'Touro': 'Touro precisa de ritmo estável. Rotina aqui é previsibilidade.',
+    'Gêmeos': 'Gêmeos precisa de variedade. Rotina aqui é blocos curtos.',
+    'Câncer': 'Câncer precisa de ambiente seguro. Rotina aqui é conforto.',
+    'Leão': 'Leão precisa de sentido. Rotina aqui é propósito.',
+    'Virgem': 'Virgem precisa de ordem. Rotina aqui é estrutura simples.',
+    'Libra': 'Libra precisa decidir. Rotina aqui é menos indecisão.',
+    'Escorpião': 'Escorpião precisa de foco. Rotina aqui é profundidade.',
+    'Sagitário': 'Sagitário precisa de liberdade. Rotina aqui é flexível.',
+    'Capricórnio': 'Capricórnio precisa de execução. Rotina aqui é consistência.',
+    'Aquário': 'Aquário precisa de autonomia. Rotina aqui é sistema simples.',
+    'Peixes': 'Peixes precisa de aterramento. Rotina aqui é previsível.',
+  };
+  return map[s] || 'Rotina aqui depende de simplificar e repetir o essencial.';
 }
 
 // ----------------------------------------------------
@@ -770,6 +937,34 @@ function espelhoPorObjetivo(objetivo) {
   return key ? map[key] : base;
 }
 
+function getGanchoSignoPorObjetivo(objetivo, signo) {
+  const o = (objetivo || '').toLowerCase().trim();
+
+  if (o === 'organizar minha rotina') return ganchoSignoRotina(signo);
+  if (o === 'crescer profissionalmente') return ganchoSignoCrescimentoProfissional(signo);
+  if (o === 'melhorar autoestima') return ganchoSignoAutoestima(signo);
+  if (o === 'reduzir ansiedade') return ganchoSignoAnsiedade(signo);
+  if (o === 'ter mais disciplina') return ganchoSignoDisciplina(signo);
+  if (o === 'atrair relacionamento saudável') return ganchoSignoRelacionamento(signo);
+  if (o === 'melhorar meu relacionamento atual') return ganchoSignoRelacionamentoAtual(signo);
+
+  return '';
+}
+
+function getGanchoPorObjetivoENumero(objetivo, numeroVida) {
+  const o = (objetivo || '').toLowerCase().trim();
+
+  if (o === 'ter mais disciplina') return ganchoNumeroDisciplina(numeroVida);
+  if (o === 'reduzir ansiedade') return ganchoNumeroAnsiedade(numeroVida);
+  if (o === 'melhorar autoestima') return ganchoNumeroAutoestima(numeroVida);
+  if (o === 'atrair relacionamento saudável') return ganchoNumeroRelacionamento(numeroVida);
+  if (o === 'melhorar meu relacionamento atual') return ganchoNumeroRelacionamentoAtual(numeroVida);
+  if (o === 'crescer profissionalmente') return ganchoNumeroCrescimentoProfissional(numeroVida);
+  if (o === 'organizar minha rotina') return ganchoNumeroRotina(numeroVida);
+
+  return 'Seu número mostra um ponto importante sobre como você vive esse momento — e o Manual aprofunda exatamente como transformar isso em direção prática.';
+}
+
 // -----------------------
 // Relatório (objeto final que a UI vai usar)
 // -----------------------
@@ -803,81 +998,42 @@ const primeiroNome = (nome || '').trim().split(' ')[0] || 'Você';
   const headline = hasChoice(objetivoFinal)
     ? `${primeiroNome}, sua virada começa agora`
     : `${primeiroNome}, aqui começa a leitura do seu padrão principal`;
+
+
   // bloco “isso não é aleatório” (aparece quando tem objetivo)
   const explicacaoObjetivoPersonalizada = (() => {
-    if (!hasChoice(objetivoFinal)) return '';
+  if (!hasChoice(objetivoFinal)) return '';
 
-    const CONEXAO_SIGNO = {
-      'Áries':
-        'Como Áries, você funciona melhor com ação rápida e direção clara. O ajuste não é se frear demais, é canalizar impulso com consistência.',
-      'Touro':
-        'Como Touro, você precisa de constância e segurança para sustentar mudança. O ajuste é sair da rigidez sem perder estabilidade.',
-      'Gêmeos':
-        'Como Gêmeos, você precisa de foco curto e repetível. O ajuste é parar de espalhar energia e escolher uma direção por vez.',
-      'Câncer':
-        'Como Câncer, seu emocional influencia muito seu ritmo. O ajuste é criar segurança interna para não decidir a partir da oscilação.',
-      'Leão':
-        'Como Leão, você precisa sentir presença e verdade no que faz. O ajuste é sustentar valor próprio sem depender de validação externa.',
-      'Virgem':
-        'Como Virgem, você se cobra e tenta melhorar tudo. O ajuste é constância sem perfeição e movimento antes de controle total.',
-      'Libra':
-        'Como Libra, você tende a oscilar quando tenta agradar demais ou manter tudo em equilíbrio. O ajuste é decisão com mais verdade.',
-      'Escorpião':
-        'Como Escorpião, você vive tudo com profundidade e intensidade. O ajuste é transformar intensidade em direção, não em excesso.',
-      'Sagitário':
-        'Como Sagitário, você precisa de liberdade e espaço para se sentir livre. O ajuste é criar uma estrutura leve, não rígida.',
-      'Capricórnio':
-        'Como Capricórnio, você funciona bem com estrutura e meta. O ajuste é não transformar isso em peso, autocobrança ou dureza.',
-      'Aquário':
-        'Como Aquário, você precisa de autonomia e clareza para sustentar constância. O ajuste é dar forma prática ao que sua mente já enxerga.',
-      'Peixes':
-        'Como Peixes, você precisa de aterramento para não se perder no excesso de sensação, imaginação ou ruído emocional.',
-    };
+  const intro = [
+    'Nada aqui é por acaso.',
+    'Quando suas respostas são colocadas lado a lado, um padrão começa a aparecer.',
+    'E esse padrão explica mais do que parece sobre o momento que você está vivendo.'
+  ].join(' ');
 
-    const CONEXAO_NUMERO = {
-      1: 'Seu Número 1 pede iniciativa e autonomia. A constância vem de direção clara, não de esperar o momento perfeito.',
-      2: 'Seu Número 2 pede sensibilidade e vínculo. A constância vem de ritmo gentil, não de cobrança agressiva.',
-      3: 'Seu Número 3 pede expressão e leveza. A constância vem de foco simples, não de excesso de estímulo.',
-      4: 'Seu Número 4 quer estrutura, mas quando isso vira rigidez, trava. O ajuste é leveza com consistência.',
-      5: 'Seu Número 5 pede movimento e liberdade. A constância vem de regra simples, não de prisão.',
-      6: 'Seu Número 6 tende a cuidar demais e assumir peso que não precisa. A constância vem de se incluir no que você sustenta.',
-      7: 'Seu Número 7 pede profundidade e clareza interna. A constância vem de confiança no processo, não de isolamento.',
-      8: 'Seu Número 8 pede realização e força. A constância vem de foco estratégico, não de pressão contínua.',
-      9: 'Seu Número 9 pede propósito e sentido. A constância vem de limite e direção, não de carregar tudo.',
-      11: 'Seu Número 11 amplifica sensibilidade e aceleração mental. A constância vem de aterramento e rotina mínima.',
-      22: 'Seu Número 22 pede construção grande e visão aplicada. A constância vem de dividir o grande em passos simples.',
-      33: 'Seu Número 33 pede entrega, cuidado e presença. A constância vem de amor com limite, não de autoabandono.',
-    };
+  const objetivoLinha = `Você escolheu: ${objetivoFinal}. E isso não é só uma preferência. Isso aponta para uma necessidade real do seu momento.`;
 
-    const signoNormalizado = titleCase(signo || '');
-    const numeroNormalizado = Number(numeroVida);
+  const ganchoSigno = getGanchoSignoPorObjetivo(objetivoFinal, signo);
+  const ganchoNumero = getGanchoPorObjetivoENumero(objetivoFinal, numeroVida);
 
-    const conexaoSigno = CONEXAO_SIGNO[signoNormalizado] || '';
-    const conexaoNumero = CONEXAO_NUMERO[numeroNormalizado] || '';
+  const fechamento =
+    'Seu objetivo não é virar outra pessoa. É entender com mais clareza onde sua energia está escapando — e o que precisa ser ajustado para a sua vida começar a responder diferente.';
 
-    const intro = [
-  'Nada aqui é por acaso.',
-  'Quando suas respostas são colocadas lado a lado, um padrão começa a aparecer.',
-  'E esse padrão explica mais do que parece sobre o momento que você está vivendo.'
-].join(' ');
+  return [
+    intro,
+    objetivoLinha,
+    ganchoSigno,
+    ganchoNumero,
+    fechamento
+  ]
+    .filter(Boolean)
+    .join(' ');
+})();
 
-const objetivoLinha = `Você escolheu: ${objetivoFinal}. E isso não é só uma preferência. Isso aponta para uma necessidade real do seu momento.`;
+  // espelho emocional (identificação)
+const espelhoMomento = espelhoPorObjetivo(objetivo_principal || '');
 
-const fechamento = 'Seu objetivo não é virar outra pessoa. É entender com mais clareza onde sua energia está escapando — e o que precisa ser ajustado para a sua vida começar a responder diferente.';
-
-return [
-  intro,
-  objetivoLinha,
-  conexaoSigno,
-  conexaoNumero,
-  fechamento
-]
-  .filter(Boolean)
-  .join(' ');
-  })();
-
-  const espelhoMomento = espelhoPorObjetivo(objetivo_principal || '');
-  const ganchoProfundo = (() => {
+// gancho profundo (curiosidade para o manual)
+const ganchoProfundo = (() => {
   if (!hasChoice(objetivoFinal)) return '';
 
   const blocos = {
@@ -915,7 +1071,7 @@ return [
   // CTA label dinâmico (conversão)
   const ctaLabel = objetivoPack?.ctaLabel || '🚀 Quero o Manual Completo (R$ 47,00)';
 
-  return {
+ return {
   headline,
   localFrase,
   dataFrase,
@@ -1191,72 +1347,78 @@ useEffect(() => {
           {relatorio.localFrase && <div className="muted" style={{ marginTop: 8 }}>{relatorio.localFrase}</div>}
         </div>
 
-        {/* O QUE VOCÊ CONTOU */}
-        {(temObjetivo || temRelacionamento || temTrabalho) && (
-          <div className="card personal-card">
-            <h2 className="h2">📌 O PADRÃO QUE COMEÇA A APARECER</h2>
+{/* O QUE VOCÊ CONTOU */}
+{(temObjetivo || temRelacionamento || temTrabalho) && (
+  <div className="card personal-card">
+    <h2 className="h2">📌 O PADRÃO QUE COMEÇA A APARECER</h2>
 
-            {temObjetivo && (
-              <div className="personal-row">
-                <div className="personal-label">🎯 Objetivo principal:</div>
-                <div className="personal-value">{relatorio.objetivoFinal}</div>
-              </div>
-            )}
+    {temObjetivo && (
+      <div className="personal-row">
+        <div className="personal-label">🎯 Objetivo principal:</div>
+        <div className="personal-value">{relatorio.objetivoFinal}</div>
+      </div>
+    )}
 
-            {temRelacionamento && (
-              <div className="personal-row">
-                <div className="personal-label">💞 Status de relacionamento:</div>
-                <div className="personal-value">{relatorio.relacionamentoFinal}</div>
-              </div>
-            )}
+    {temRelacionamento && (
+      <div className="personal-row">
+        <div className="personal-label">💞 Status de relacionamento:</div>
+        <div className="personal-value">{relatorio.relacionamentoFinal}</div>
+      </div>
+    )}
 
-            {temTrabalho && (
-              <div className="personal-row">
-                <div className="personal-label">💼 Status de trabalho:</div>
-                <div className="personal-value">{relatorio.trabalhoFinal}</div>
-              </div>
-            )}
+    {temTrabalho && (
+      <div className="personal-row">
+        <div className="personal-label">💼 Status de trabalho:</div>
+        <div className="personal-value">{relatorio.trabalhoFinal}</div>
+      </div>
+    )}
 
-            {temObjetivo && (
-  <div className="note" style={{ marginTop: 14 }}>
-    <strong>O que isso começa a revelar:</strong>
-    <div style={{ marginTop: 8, lineHeight: 1.8 }}>
-      {relatorio.explicacaoObjetivoPersonalizada}
+    {temObjetivo && (
+      <div className="note" style={{ marginTop: 16 }}>
+        <strong>O que isso começa a revelar:</strong>
+        <div style={{ marginTop: 10, lineHeight: 1.85 }}>
+          {relatorio.explicacaoObjetivoPersonalizada}
+        </div>
+      </div>
+    )}
+
+    {relatorio.ganchoProfundo && (
+      <div className="note-alert" style={{ marginTop: 14 }}>
+        <strong>O que o restante do seu mapa aprofunda:</strong>
+        <div style={{ marginTop: 10, lineHeight: 1.85 }}>
+          {relatorio.ganchoProfundo}
+        </div>
+      </div>
+    )}
+
+    <div className="note-solution" style={{ marginTop: 14 }}>
+      <strong>E aqui está a virada:</strong>
+      <div style={{ marginTop: 10, lineHeight: 1.85 }}>
+        Quando você entende esse padrão com mais clareza, parar de repetir o mesmo
+        deixa de ser esforço — e começa a ser consequência.
+      </div>
     </div>
   </div>
 )}
 
-{relatorio.ganchoProfundo && (
-  <div className="note-alert" style={{ marginTop: 14 }}>
-    <strong>O que o restante do seu mapa aprofunda:</strong>
-    <div style={{ marginTop: 8, lineHeight: 1.8 }}>
-      {relatorio.ganchoProfundo}
-    </div>
-  </div>
-)}
+{/* INSIGHT MATADOR */}
+<div className="card insight-card">
+  <div className="insight-icon">💡</div>
 
-<div className="note-solution" style={{ marginTop: 14 }}>
-  <strong>E aqui está a virada:</strong>
-  <div style={{ marginTop: 8, lineHeight: 1.8 }}>
-    Quando você entende esse padrão com clareza, parar de repetir o mesmo deixa de ser esforço —
-    e começa a ser consequência.
+  <h2 className="h2" style={{ textAlign: 'center', marginBottom: 16 }}>
+    Seu Número {numeroVidaFinal} mostra uma verdade importante sobre o seu momento
+  </h2>
+
+  <div className="muted" style={{ marginBottom: 12, textAlign: 'center' }}>
+    Quando cruzamos seu número com o que você está vivendo agora, o padrão fica ainda mais claro.
+  </div>
+
+  <div className="insight-text">{relatorio.insightMatador}</div>
+
+  <div className="insight-footer">
+    Se isso fez sentido, é porque esse padrão já estava em você — o mapa só colocou em palavras.
   </div>
 </div>
-          </div>
-        )}
-
-        {/* INSIGHT MATADOR */}
-        <div className="card insight-card">
-          <div className="insight-icon">💡</div>
-          <h2 className="h2" style={{ textAlign: 'center', marginBottom: 16 }}>
-            Seu Número {numeroVidaFinal} revela algo sobre você
-          </h2>
-          <div className="insight-text">{relatorio.insightMatador}</div>
-          <div className="insight-footer">
-            Se isso bateu forte, não é acaso. É porque <b>o mapa funciona</b>.
-          </div>
-        </div>
-
 
 {/* OBJETIVO - plano 7 dias (venda) */}
 {relatorio.objetivoPack && (
