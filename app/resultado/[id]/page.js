@@ -203,112 +203,111 @@ function ganchoNumeroDisciplina(numeroVida) {
 
 function ganchoNumeroAnsiedade(numeroVida) {
   const map = {
-    1: 'Com o 1, ansiedade costuma vir de pressa interna, excesso de urgência e necessidade de resolver tudo logo. Seu número melhora quando troca aceleração por ação simples e ritmo constante.',
-    2: 'Com o 2, ansiedade geralmente nasce de absorver o outro, ler demais o ambiente e se afetar demais pelo que está ao redor. Seu protocolo precisa incluir limite emocional e aterramento.',
-    3: 'Com o 3, ansiedade vem de excesso de estímulo, excesso de pensamento e energia espalhada. O caminho aqui é reduzir ruído, simplificar e trazer foco curto para a mente não se perder.',
-    4: 'Com o 4, ansiedade aparece quando a necessidade de controle cresce demais. Seu número pede estrutura, mas não rigidez. O alívio vem de flexibilidade com rotina mínima.',
-    5: 'Com o 5, ansiedade costuma nascer da instabilidade, da dificuldade de sustentar eixo e da sensação de inquietação constante. Seu número precisa de âncoras simples no dia.',
-    6: 'Com o 6, ansiedade vem de responsabilidade demais, peso demais e excesso de preocupação com o outro. Seu sistema melhora quando existe priorização, descanso e autocuidado real.',
-    7: 'Com o 7, ansiedade tende a acontecer em silêncio. Você rumina, analisa e tenta entender tudo internamente. O protocolo aqui precisa incluir descarrego mental e menos isolamento da própria mente.',
-    8: 'Com o 8, ansiedade geralmente vem de pressão por resultado, cobrança alta e medo de não estar à altura do que sabe que pode construir. Seu número melhora quando une execução com pausa e presença.',
-    9: 'Com o 9, ansiedade aparece quando você tenta carregar mais do que é seu, manter ciclos além do ponto e absorver o peso do mundo. Seu eixo volta com limite e aterramento.',
-    11: 'Com o 11, a sensibilidade é amplificada. Você sente antes de entender, capta antes de explicar. Por isso, ansiedade aqui não melhora só com pensamento: melhora quando sai da mente e volta para o corpo.',
-    22: 'Com o 22, ansiedade costuma vir do tamanho da missão, da visão grande e do medo silencioso de não sustentar tudo. O caminho é micro-passos, constância e menos pressão pelo “grande” imediato.',
-    33: 'Com o 33, ansiedade vem de se doar além do limite, sentir demais e tentar sustentar emocionalmente mais do que deveria. Seu protocolo precisa incluir amor com limite.',
+    1: 'Com o Número 1, ansiedade costuma vir de urgência interna, pressa e necessidade de resolver tudo rápido. O que te ajuda não é acelerar mais — é trocar pressão por ação simples e ritmo constante.',
+    2: 'Com o Número 2, ansiedade cresce quando você absorve demais o ambiente, o outro e tudo o que está ao redor. O que te ajuda é limite emocional, menos fusão e mais aterramento.',
+    3: 'Com o Número 3, ansiedade costuma vir de excesso de estímulo, excesso de pensamento e energia espalhada. O que te ajuda é reduzir ruído, simplificar e voltar para um foco por vez.',
+    4: 'Com o Número 4, ansiedade cresce quando a necessidade de controle fica rígida demais. O que te ajuda é flexibilidade, menos aperto e uma rotina mínima que não te sufoque.',
+    5: 'Com o Número 5, ansiedade aparece quando sua energia perde eixo, entra em inquietação e busca saída sem direção clara. O que te ajuda é criar âncoras simples ao longo do dia.',
+    6: 'Com o Número 6, ansiedade costuma nascer do excesso de responsabilidade, da preocupação com o outro e do peso que você assume sem perceber. O que te ajuda é priorização e mais cuidado consigo.',
+    7: 'Com o Número 7, ansiedade tende a acontecer em silêncio. Você pensa demais, rumina demais e tenta entender tudo por dentro. O que te ajuda é descarregar a mente e reduzir o excesso de isolamento interno.',
+    8: 'Com o Número 8, ansiedade costuma vir da pressão por resultado, do medo de não dar conta e da cobrança silenciosa que acompanha sua ambição. O que te ajuda é presença, pausa e menos tensão na execução.',
+    9: 'Com o Número 9, ansiedade cresce quando você tenta carregar mais do que é seu, prolonga ciclos e absorve dores além da conta. O que te ajuda é limite, desapego e aterramento.',
+    11: 'Com o Número 11, tudo fica mais intenso. Sua mente acelera, sua percepção amplia e o excesso de estímulo te sobrecarrega rápido. O que te ajuda não é pensar mais — é sair da mente e voltar para o corpo.',
+    22: 'Com o Número 22, ansiedade costuma vir do tamanho da missão, da visão grande e do medo silencioso de não sustentar tudo o que poderia construir. O que te ajuda é quebrar o grande em passos possíveis.',
+    33: 'Com o Número 33, ansiedade cresce quando você se doa demais, sente demais e tenta sustentar mais do que deveria. O que te ajuda é limite, descanso e amor sem autoabandono.',
   };
-  return map[numeroVida] || 'No seu caso, ansiedade não se resolve com mais pensamento. Ela melhora quando existe aterramento, simplificação e um jeito mais claro de conduzir sua energia.';
+  return map[numeroVida] || 'Seu número mostra que sua ansiedade melhora quando existe mais aterramento, mais clareza e menos excesso mental.';
 }
 
 function ganchoNumeroRelacionamento(numeroVida) {
   const map = {
-    1: 'Com o 1, você precisa de admiração, clareza e alguém que some sem disputar espaço. Relacionamento saudável, no seu caso, não combina com confusão nem com jogos de poder.',
-    2: 'Com o 2, o amor saudável precisa trazer segurança emocional, presença e reciprocidade. Seu número não floresce com migalha, ambiguidade ou vínculo raso.',
-    3: 'Com o 3, relacionamento saudável precisa de leveza, troca real e verdade. Seu número se desgasta em jogos, silêncio confuso e relações que perdem brilho rápido.',
-    4: 'Com o 4, amor saudável é constância. Você precisa sentir firmeza, coerência e estabilidade emocional. Relações frias ou imprevisíveis drenam muito seu número.',
-    5: 'Com o 5, relacionamento saudável não é prisão. Seu número precisa de liberdade com compromisso, espaço com verdade e conexão sem sufoco.',
-    6: 'Com o 6, você ama cuidando — mas seu aprendizado é não transformar amor em excesso de responsabilidade. O relacionamento saudável aqui é parceria, não maternagem.',
-    7: 'Com o 7, amor saudável precisa de profundidade, verdade e respeito pelo seu tempo interno. Seu número não se entrega bem ao superficial.',
-    8: 'Com o 8, você atrai intensidade — e por isso precisa escolher bem. O relacionamento saudável aqui é poder compartilhado, respeito e maturidade emocional, não controle.',
-    9: 'Com o 9, seu coração é grande, mas isso exige critério. Amor saudável, no seu caso, pede limite para você não cair na armadilha de tentar salvar quem não quer crescer.',
-    11: 'Com o 11, você sente tudo muito forte. Relacionamento saudável aqui exige clareza, limite energético e consistência, para intensidade não virar ansiedade afetiva.',
-    22: 'Com o 22, você quer construir algo real. O amor saudável aqui é projeto a dois, presença concreta e alinhamento de futuro — não promessa vazia.',
-    33: 'Com o 33, você se doa muito. Por isso, relacionamento saudável, no seu caso, precisa de reciprocidade real, maturidade e amor com limite.',
+    1: 'Com o Número 1, você precisa sentir admiração, clareza e espaço para existir sem disputa. O risco é confundir intensidade com compatibilidade. O que te ajuda é escolher vínculos mais consistentes do que eletrizantes.',
+    2: 'Com o Número 2, amor saudável precisa trazer segurança emocional, reciprocidade e presença real. O risco é aceitar migalha para não perder conexão. O que te ajuda é sentir sem se abandonar.',
+    3: 'Com o Número 3, amor saudável precisa de leveza, verdade e troca viva. O risco é se cansar em relações ambíguas, rasas ou confusas. O que te ajuda é escolher clareza e presença.',
+    4: 'Com o Número 4, amor saudável pede constância, coerência e estabilidade emocional. O risco é permanecer em relações frias ou incertas por tempo demais. O que te ajuda é observar mais o que se sustenta do que o que se promete.',
+    5: 'Com o Número 5, amor saudável não pode parecer prisão. O risco é entrar em vínculos que sufocam sua energia ou oscilam demais. O que te ajuda é liberdade com verdade e compromisso.',
+    6: 'Com o Número 6, você ama cuidando, mas o risco é transformar amor em excesso de responsabilidade. O que te ajuda é escolher parceria, e não peso afetivo.',
+    7: 'Com o Número 7, amor saudável precisa de profundidade, verdade e respeito pelo seu tempo interno. O risco é se fechar demais depois de frustração. O que te ajuda é filtro, e não isolamento.',
+    8: 'Com o Número 8, você tende a atrair intensidade e vínculos fortes. O risco é confundir poder com controle. O que te ajuda é escolher respeito, maturidade e equilíbrio.',
+    9: 'Com o Número 9, seu coração é grande, mas isso exige critério. O risco é tentar salvar quem ainda não quer crescer. O que te ajuda é amor com limite.',
+    11: 'Com o Número 11, você sente tudo muito forte, e isso pode transformar conexão em ansiedade se não existir clareza. O que te ajuda é consistência, limite energético e presença real.',
+    22: 'Com o Número 22, amor saudável precisa de construção concreta, visão em comum e presença de verdade. O risco é investir em promessa sem base. O que te ajuda é observar quem sustenta o que diz.',
+    33: 'Com o Número 33, você se doa muito, e justamente por isso precisa de reciprocidade madura. O risco é transformar amor em sacrifício. O que te ajuda é amar sem se anular.',
   };
-  return map[numeroVida] || 'No seu caso, amor saudável depende menos de sorte e mais de filtro, critério e posicionamento emocional.';
+  return map[numeroVida] || 'Seu número mostra que amor saudável, no seu caso, depende de mais critério, mais clareza e menos repetição emocional.';
 }
 
 function ganchoNumeroAutoestima(numeroVida) {
   const map = {
-    1: 'Com o 1, autoestima cresce quando você se vê em movimento, decidindo e liderando a própria vida. Seu número perde força quando você espera validação externa para agir.',
-    2: 'Com o 2, autoestima está muito ligada à forma como você se percebe nos vínculos. Seu número precisa aprender a não confundir ser amado(a) com se abandonar para ser aceito(a).',
-    3: 'Com o 3, autoestima floresce quando você se expressa com liberdade. Seu número se enfraquece quando se compara demais, se censura ou sente que precisa caber em moldes que não são seus.',
-    4: 'Com o 4, autoestima vem de consistência e evidência interna. Seu número confia mais em si quando percebe que consegue sustentar o que promete — sem transformar isso em rigidez.',
-    5: 'Com o 5, autoestima cresce quando você se sente livre, vivo(a) e em expansão. Seu número sofre quando liberdade vira instabilidade e você perde referência de si no meio do excesso.',
-    6: 'Com o 6, autoestima costuma oscilar quando você cuida de todo mundo e esquece de se incluir. Seu número precisa sentir que também merece atenção, descanso e prioridade.',
-    7: 'Com o 7, autoestima depende muito de coerência interna. Você se fortalece quando honra sua profundidade e enfraquece quando tenta se adaptar ao raso para ser aceito(a).',
-    8: 'Com o 8, autoestima está profundamente ligada ao valor pessoal e à capacidade de se posicionar. Seu número enfraquece quando confunde desempenho com merecimento.',
-    9: 'Com o 9, autoestima cresce quando você reconhece a própria sensibilidade como força, não como peso. Seu número precisa parar de achar que amor exige autoabandono.',
-    11: 'Com o 11, autoestima oscila quando sua sensibilidade é mal interpretada até por você. Seu número precisa entender que sentir muito não te diminui — só pede aterramento e direção.',
-    22: 'Com o 22, autoestima está ligada ao quanto você honra o seu potencial real. Seu número se sabota quando diminui a própria visão por medo de não sustentar o tamanho dela.',
-    33: 'Com o 33, autoestima amadurece quando você para de medir valor pelo quanto entrega aos outros. Seu número precisa sentir que merece amor mesmo sem viver em sacrifício.',
+    1: 'Com o Número 1, sua autoestima cresce quando você se vê decidindo, iniciando e ocupando espaço. O risco é esperar validação demais antes de agir. O que te ajuda é confiar mais no seu impulso e menos na aprovação externa.',
+    2: 'Com o Número 2, sua autoestima tem muita ligação com vínculo, aceitação e sensibilidade. O risco é confundir ser amado(a) com se anular para manter conexão. O que te ajuda é sentir sem se abandonar.',
+    3: 'Com o Número 3, sua autoestima cresce quando você se expressa com liberdade e honra sua própria voz. O risco é se comparar demais ou se censurar para caber em moldes que não são seus. O que te ajuda é aparecer com mais verdade.',
+    4: 'Com o Número 4, sua autoestima se fortalece quando você percebe que consegue sustentar o que promete. O risco é transformar valor em rigidez e cobrança. O que te ajuda é consistência com leveza.',
+    5: 'Com o Número 5, sua autoestima cresce quando você se sente viva, livre e em movimento. O risco é perder referência de si no meio da instabilidade. O que te ajuda é liberdade com eixo.',
+    6: 'Com o Número 6, sua autoestima oscila quando você cuida de tudo e esquece de se incluir. O risco é medir seu valor pelo quanto entrega aos outros. O que te ajuda é se tratar como prioridade também.',
+    7: 'Com o Número 7, sua autoestima depende muito de coerência interna. O risco é se enfraquecer tentando caber no raso. O que te ajuda é honrar sua profundidade e confiar mais no que percebe.',
+    8: 'Com o Número 8, sua autoestima tem relação forte com valor, posicionamento e poder pessoal. O risco é confundir merecimento com resultado. O que te ajuda é se reconhecer além da performance.',
+    9: 'Com o Número 9, sua autoestima cresce quando você reconhece sua sensibilidade como força e não como peso. O risco é carregar demais e esquecer de si. O que te ajuda é amor com limite.',
+    11: 'Com o Número 11, sua autoestima pode oscilar quando você interpreta sua sensibilidade como excesso ou fragilidade. O que te ajuda é entender que sentir muito não te diminui — só pede aterramento e direção.',
+    22: 'Com o Número 22, sua autoestima cresce quando você honra o tamanho do seu potencial sem se encolher diante dele. O risco é diminuir sua visão por medo de sustentá-la. O que te ajuda é se autorizar a construir maior.',
+    33: 'Com o Número 33, sua autoestima amadurece quando você para de medir valor pelo quanto salva, acolhe ou sustenta os outros. O risco é transformar amor em sacrifício. O que te ajuda é lembrar que você merece amor sem autoabandono.',
   };
-  return map[numeroVida] || 'No seu caso, autoestima não sobe com frase bonita. Ela cresce quando você muda a forma como se trata, se posiciona e sustenta o próprio valor.';
+  return map[numeroVida] || 'Seu número mostra que sua autoestima cresce quando você muda a forma como se trata, se posiciona e sustenta seu valor.';
 }
 
 function ganchoNumeroRelacionamentoAtual(numeroVida) {
   const map = {
-    1: 'Com o 1, o relacionamento melhora quando existe respeito, admiração e espaço para individualidade. Seu número entra em atrito quando sente disputa, desvalorização ou controle excessivo.',
-    2: 'Com o 2, a relação melhora com delicadeza, escuta e segurança emocional. Seu número sofre quando o vínculo entra em frieza, silêncio confuso ou instabilidade afetiva.',
-    3: 'Com o 3, o relacionamento melhora quando volta a existir leveza, conversa e presença real. Seu número se desgasta quando a relação fica pesada, previsível e sem troca emocional viva.',
-    4: 'Com o 4, a relação melhora com consistência, previsibilidade e construção concreta. Seu número precisa sentir firmeza para parar de entrar em estado de defesa.',
-    5: 'Com o 5, o vínculo melhora quando existe renovação, verdade e espaço para respirar. Seu número sofre quando a relação vira rotina sufocante ou cobrança sem conexão.',
-    6: 'Com o 6, o relacionamento melhora quando o cuidado deixa de ser unilateral. Seu número precisa de parceria e reciprocidade, não de excesso de peso emocional nas próprias costas.',
-    7: 'Com o 7, o relacionamento melhora com verdade e profundidade. Seu número fecha quando não se sente compreendido(a) ou quando a relação fica superficial demais.',
-    8: 'Com o 8, a relação melhora quando existe respeito mútuo, maturidade e poder equilibrado. Seu número entra em desgaste quando tudo vira disputa ou tentativa de controle.',
-    9: 'Com o 9, o vínculo melhora quando existe perdão com consciência e limite com amor. Seu número sofre quando continua sustentando ciclos desgastados por apego ao que já foi.',
-    11: 'Com o 11, o relacionamento melhora quando a energia do vínculo fica mais clara e menos caótica. Seu número precisa de paz, consistência e menos sobrecarga emocional.',
-    22: 'Com o 22, a relação melhora quando volta a existir projeto comum, alinhamento e construção real. Seu número desanima em vínculos sem direção ou sem presença concreta.',
-    33: 'Com o 33, o vínculo melhora quando o amor deixa de ser sacrifício e volta a ser troca. Seu número precisa amar sem se anular.',
+    1: 'Com o Número 1, a relação melhora quando existe respeito, admiração e espaço para individualidade. O que desgasta é sentir disputa, controle ou desvalorização.',
+    2: 'Com o Número 2, a relação melhora com delicadeza, escuta e segurança emocional. O que desgasta é frieza, instabilidade e sensação de não ser realmente acolhido(a).',
+    3: 'Com o Número 3, a relação melhora quando volta a existir leveza, conversa e troca viva. O que desgasta é peso demais, monotonia e comunicação travada.',
+    4: 'Com o Número 4, a relação melhora com consistência, previsibilidade e construção concreta. O que desgasta é instabilidade, promessa solta e sensação de insegurança constante.',
+    5: 'Com o Número 5, a relação melhora quando existe renovação, verdade e espaço. O que desgasta é sufoco, rotina pesada e sensação de aprisionamento emocional.',
+    6: 'Com o Número 6, a relação melhora quando o cuidado deixa de ser unilateral. O que desgasta é excesso de responsabilidade afetiva caindo sempre do mesmo lado.',
+    7: 'Com o Número 7, a relação melhora com profundidade, verdade e respeito pelo seu tempo interno. O que desgasta é superficialidade, ruído emocional e desconexão real.',
+    8: 'Com o Número 8, a relação melhora quando existe respeito mútuo, maturidade e equilíbrio de poder. O que desgasta é disputa, controle e tensão constante.',
+    9: 'Com o Número 9, a relação melhora quando existe perdão com consciência e limite com amor. O que desgasta é continuar sustentando ciclos que já pedem fechamento.',
+    11: 'Com o Número 11, a relação melhora quando a energia do vínculo fica mais clara, estável e menos caótica. O que desgasta é excesso de intensidade sem direção emocional.',
+    22: 'Com o Número 22, a relação melhora quando volta a existir projeto, alinhamento e construção concreta. O que desgasta é promessa demais e base de menos.',
+    33: 'Com o Número 33, a relação melhora quando amor deixa de ser sacrifício e volta a ser troca. O que desgasta é doar demais e receber de menos.',
   };
-  return map[numeroVida] || 'No seu caso, melhorar a relação depende de sair da repetição automática e voltar para uma dinâmica mais consciente, clara e recíproca.';
+  return map[numeroVida] || 'Seu número mostra que a relação melhora quando existe mais clareza, mais verdade e menos repetição automática.';
 }
 
 function ganchoNumeroCrescimentoProfissional(numeroVida) {
   const map = {
-    1: 'Com o 1, crescimento profissional vem quando você assume liderança, iniciativa e visibilidade. Seu número trava quando espera permissão demais para ocupar espaço.',
-    2: 'Com o 2, crescimento profissional acontece quando você usa sua sensibilidade como inteligência relacional, sem deixar isso virar insegurança ou excesso de adaptação.',
-    3: 'Com o 3, crescer profissionalmente depende de transformar talento e comunicação em direção. Seu número precisa parar de espalhar energia em muitas frentes ao mesmo tempo.',
-    4: 'Com o 4, crescimento profissional é construção. Seu número avança com método, consistência e execução — desde que isso não vire rigidez ou perfeccionismo travando ação.',
-    5: 'Com o 5, crescimento profissional vem quando existe movimento com estratégia. Seu número precisa de expansão, mas não pode viver de impulso ou excesso de dispersão.',
-    6: 'Com o 6, crescer profissionalmente depende de aprender a servir sem se sobrecarregar. Seu número tem força para gerar valor, mas precisa de limite para não viver em exaustão.',
-    7: 'Com o 7, crescimento profissional vem de profundidade, estudo, verdade e diferenciação. Seu número não floresce em ambientes rasos ou sem sentido.',
-    8: 'Com o 8, crescimento profissional está diretamente ligado a poder pessoal, posicionamento e capacidade de materializar. Seu número cresce muito quando para de se sabotar por pressão excessiva.',
-    9: 'Com o 9, crescer profissionalmente depende de propósito. Seu número avança quando sente sentido no que constrói e trava quando entra em lugares que drenam alma e energia.',
-    11: 'Com o 11, crescimento profissional vem quando sua visão elevada encontra aterramento. Seu número tem percepção rara, mas precisa transformar insight em execução concreta.',
-    22: 'Com o 22, crescimento profissional pode ser enorme — mas depende de estrutura. Seu número nasceu para construir grande, desde que pare de adiar por medo do próprio tamanho.',
-    33: 'Com o 33, crescer profissionalmente passa por impacto humano, valor e presença. Seu número floresce quando transforma sensibilidade em contribuição sem se sacrificar no processo.',
+    1: 'Com o Número 1, seu crescimento profissional depende de iniciativa, coragem e mais visibilidade. O que te trava é esperar permissão demais para ocupar espaço.',
+    2: 'Com o Número 2, seu crescimento vem quando você usa sua sensibilidade como inteligência relacional, sem deixar isso virar excesso de adaptação ou insegurança.',
+    3: 'Com o Número 3, crescer profissionalmente depende de transformar criatividade, comunicação e talento em direção concreta. O que te trava é espalhar energia em frentes demais.',
+    4: 'Com o Número 4, seu crescimento profissional é construção: método, constância e execução. O risco é travar pela rigidez ou pelo perfeccionismo excessivo.',
+    5: 'Com o Número 5, seu crescimento pede movimento, expansão e estratégia. O risco é viver só de impulso e perder constância no que realmente importa.',
+    6: 'Com o Número 6, crescer profissionalmente depende de aprender a servir sem se sobrecarregar. O risco é gerar valor para todo mundo e se esgotar no processo.',
+    7: 'Com o Número 7, seu crescimento vem de profundidade, estudo, diferenciação e verdade. O que te trava é permanecer tempo demais só na análise e pouco na aplicação.',
+    8: 'Com o Número 8, seu crescimento profissional tem relação direta com posicionamento, resultado e poder pessoal. O que te trava é a pressão excessiva sobre o que você já poderia estar vivendo.',
+    9: 'Com o Número 9, seu crescimento depende de propósito, sentido e coerência com o que constrói. O que te trava é insistir em lugares que já não alimentam sua alma.',
+    11: 'Com o Número 11, seu crescimento profissional depende de transformar visão em execução. Você percebe muito, sente muito e enxerga longe — mas precisa aterrar melhor para construir.',
+    22: 'Com o Número 22, seu crescimento pode ser enorme, mas exige estrutura. O que te trava não é falta de potencial — é medo silencioso do tamanho do que realmente poderia sustentar.',
+    33: 'Com o Número 33, seu crescimento profissional floresce quando sua sensibilidade vira contribuição sem se transformar em sacrifício. O que te ajuda é impacto com limite.',
   };
-  return map[numeroVida] || 'No seu caso, crescimento profissional depende menos de capacidade e mais de direção, posicionamento e constância na frente certa.';
+  return map[numeroVida] || 'Seu número mostra que seu crescimento profissional depende menos de capacidade e mais de direção, constância e posicionamento.';
 }
 
 function ganchoNumeroRotina(numeroVida) {
   const map = {
-    1: 'Com o Número 1, sua rotina funciona melhor quando começa com direção clara. Quando o dia abre com excesso de opções, você perde força. O que te ajuda é decidir rápido e entrar em ação.',
-    2: 'Com o Número 2, sua rotina precisa respeitar seu emocional. Quando o ambiente está pesado, sua energia sente. O que funciona melhor é um ritmo mais gentil e sustentável.',
-    3: 'Com o Número 3, sua rotina quebra quando tudo fica solto demais. Sua mente pede estímulo, mas sem alguma estrutura o dia vira dispersão. O segredo é foco leve e blocos curtos.',
-    4: 'Com o Número 4, você tem capacidade natural de organizar e sustentar. O cuidado é não transformar rotina em rigidez. O que funciona é ordem com leveza.',
-    5: 'Com o Número 5, sua rotina não pode parecer uma jaula. Quando tudo fica rígido demais, sua energia rejeita. O que funciona é liberdade com regra simples.',
-    6: 'Com o Número 6, sua rotina desorganiza quando você começa o dia vivendo em função dos outros. Seu aprendizado aqui é se incluir no planejamento e parar de se deixar por último.',
-    7: 'Com o Número 7, sua rotina só funciona quando faz sentido. Quando existe excesso de ruído, sua energia se fecha. O que ajuda é silêncio, clareza e menos dispersão.',
-    8: 'Com o Número 8, sua rotina melhora muito quando existe prioridade clara. Você não precisa fazer mais — precisa executar melhor e com menos pressão.',
-    9: 'Com o Número 9, sua rotina desorganiza quando você tenta abraçar tudo. Seu aprendizado é enxugar, escolher o essencial e parar de carregar peso demais.',
-    11: 'Com o Número 11, tudo começa no aterramento. Sua mente acelera fácil, e quando você não organiza sua energia logo cedo, o dia vira sobrecarga, dispersão e sensação de não sair do lugar.',
-    22: 'Com o Número 22, sua rotina precisa transformar visão grande em passos simples. Quando tudo parece enorme, você trava. O que ajuda é quebrar o dia em etapas concretas.',
-    33: 'Com o Número 33, sua rotina só funciona quando inclui cuidado com a sua energia. Se tudo vira entrega, responsabilidade e peso, você se perde no caminho.',
+    1: 'Com o Número 1, sua rotina funciona melhor quando o dia começa com direção clara. Quando abre com excesso de opções, sua força se espalha. O que te ajuda é decidir rápido e entrar em ação.',
+    2: 'Com o Número 2, sua rotina precisa respeitar seu emocional. Quando o ambiente pesa, sua energia sente. O que te ajuda é ritmo gentil, constância possível e menos guerra interna.',
+    3: 'Com o Número 3, sua rotina quebra quando tudo fica solto demais. Sua mente quer estímulo, mas sem alguma estrutura vira dispersão. O que te ajuda é foco leve e blocos curtos.',
+    4: 'Com o Número 4, você tem força natural para organizar, estruturar e sustentar. O cuidado é não transformar rotina em rigidez. O que te ajuda é ordem com leveza.',
+    5: 'Com o Número 5, sua rotina não pode parecer prisão. Quando tudo fica rígido demais, sua energia rejeita. O que te ajuda é liberdade com regra simples.',
+    6: 'Com o Número 6, sua rotina desorganiza quando o dia começa em função dos outros. O que te ajuda é se incluir no planejamento e parar de se deixar por último(a).',
+    7: 'Com o Número 7, sua rotina só funciona quando faz sentido e existe menos ruído. O que te ajuda é silêncio, coerência e um eixo mais interno.',
+    8: 'Com o Número 8, sua rotina melhora muito quando existe prioridade clara e execução limpa. Você não precisa fazer mais — precisa organizar melhor a sua força.',
+    9: 'Com o Número 9, sua rotina se perde quando você tenta abraçar tudo. O que te ajuda é enxugar, escolher o essencial e parar de carregar peso demais.',
+    11: 'Com o Número 11, tudo começa no aterramento. Sua mente acelera fácil, e quando o dia começa sem eixo, vira sobrecarga, dispersão e sensação de não sair do lugar. O que te ajuda é silêncio, pequenas repetições e mais presença no corpo.',
+    22: 'Com o Número 22, sua rotina precisa transformar visão grande em passos simples. O que te trava é tentar sustentar o todo ao mesmo tempo. O que te ajuda é quebrar o dia em etapas concretas.',
+    33: 'Com o Número 33, sua rotina só funciona quando inclui cuidado com a sua energia. Se tudo vira entrega, responsabilidade e peso, você se perde no caminho. O que te ajuda é estrutura com limite.',
   };
-  return map[numeroVida] || 'Seu número mostra que sua rotina precisa de uma estrutura mais alinhada com a sua energia real.';
+  return map[numeroVida] || 'Seu número mostra que sua rotina precisa de uma estrutura mais coerente com a forma como sua energia realmente funciona.';
 }
-
 
 // ----------------------------------------------------
 // GANCHOS por SIGNO (universal)
@@ -335,113 +334,113 @@ function ganchoSignoDisciplina(signo) {
 function ganchoSignoAnsiedade(signo) {
   const s = norm(signo);
   const map = {
-    'Áries': 'Áries acelera — então o ajuste é desacelerar o corpo e tomar 1 decisão simples por vez.',
-    'Touro': 'Touro se prende no controle — o ajuste é segurança com flexibilidade (sem rigidez).',
-    'Gêmeos': 'Gêmeos hiperestimula a mente — o ajuste é reduzir ruído e focar em blocos curtos.',
-    'Câncer': 'Câncer absorve — o ajuste é limite emocional e proteção energética sem culpa.',
-    'Leão': 'Leão sente pressão por performance — o ajuste é presença e autoestima que não depende de validação.',
-    'Virgem': 'Virgem rumina e se cobra — o ajuste é “bom o suficiente” com rotina mínima.',
-    'Libra': 'Libra fica presa em possibilidades — o ajuste é decisão e encerramento de ciclos.',
-    'Escorpião': 'Escorpião intensifica — o ajuste é aterramento e confiança sem controle.',
-    'Sagitário': 'Sagitário foge quando se sente limitado — o ajuste é liberdade com compromisso (sem fuga).',
-    'Capricórnio': 'Capricórnio carrega demais — o ajuste é descanso estratégico e autocobrança saudável.',
-    'Aquário': 'Aquário pode desconectar do corpo — o ajuste é presença e prática somática curta.',
-    'Peixes': 'Peixes sente tudo — o ajuste é aterramento e filtros energéticos simples.',
+    'Áries': 'Como Áries, sua energia acelera rápido. Quando algo te pressiona por dentro, seu corpo entra em urgência e sua mente quer resolver tudo de uma vez. O que te ajuda não é correr mais — é desacelerar o corpo e voltar para uma decisão de cada vez.',
+    'Touro': 'Como Touro, você busca estabilidade, e justamente por isso sofre quando sente que algo está saindo do controle. Sua ansiedade aumenta quando existe rigidez interna demais. O que te ajuda é segurança com flexibilidade, e não mais aperto.',
+    'Gêmeos': 'Como Gêmeos, sua mente abre muitas frentes ao mesmo tempo. Quando a ansiedade cresce, o ruído interno dispara e tudo parece importante demais ao mesmo tempo. O que te ajuda é reduzir estímulo, simplificar e voltar para um foco por vez.',
+    'Câncer': 'Como Câncer, seu emocional absorve muito do ambiente. Quando a energia ao redor pesa, você sente no corpo e na mente. O que te ajuda é proteção emocional, limite e menos exposição ao que te desorganiza.',
+    'Leão': 'Como Leão, parte da sua ansiedade vem da pressão de sustentar imagem, presença ou performance. Quando tudo pesa demais, você sente que precisa dar conta o tempo todo. O que te ajuda é presença real e autoestima menos dependente de validação.',
+    'Virgem': 'Como Virgem, sua mente tenta organizar tudo — e é justamente aí que pode se prender em excesso de análise. Quando a ansiedade cresce, a autocobrança cresce junto. O que te ajuda é reduzir perfeccionismo e voltar para o suficiente possível.',
+    'Libra': 'Como Libra, sua ansiedade cresce quando você fica presa entre possibilidades, tentando evitar desconforto ou desagradar. O excesso de ponderação esgota sua energia. O que te ajuda é decidir com mais verdade e encerrar o que já pesa.',
+    'Escorpião': 'Como Escorpião, você sente tudo com intensidade. Quando a ansiedade cresce, essa intensidade pode virar controle, vigilância ou excesso de tensão interna. O que te ajuda é aterramento, confiança e menos necessidade de prever tudo.',
+    'Sagitário': 'Como Sagitário, sua ansiedade aumenta quando você se sente preso(a), sem saída ou sem espaço interno. Quando a energia aperta, a vontade é fugir do peso. O que te ajuda é liberdade com compromisso, e não fuga.',
+    'Capricórnio': 'Como Capricórnio, sua ansiedade costuma vir do excesso de responsabilidade, do medo de falhar e da cobrança silenciosa que você carrega. O que te ajuda é descanso estratégico, menos dureza e mais ritmo sustentável.',
+    'Aquário': 'Como Aquário, você tende a subir demais para a mente e se afastar do corpo quando a ansiedade cresce. O problema é que quanto mais mental, mais distante da regulação você fica. O que te ajuda é presença e práticas curtas que te tragam de volta.',
+    'Peixes': 'Como Peixes, você sente muito e absorve demais quando está sem proteção interna. A ansiedade, no seu caso, pode vir tanto do excesso emocional quanto do excesso de estímulo sutil. O que te ajuda é aterramento, filtro e menos exposição ao caos.',
   };
-  return map[s] || 'Ajuste do signo: presença no corpo + escolha simples (sem ruminação).';
+  return map[s] || 'Seu signo mostra que sua ansiedade não pede mais controle mental. Pede regulação, presença e um jeito mais gentil de conduzir sua energia.';
 }
 
 function ganchoSignoRelacionamento(signo) {
   const s = norm(signo);
   const map = {
-    'Áries': 'Áries precisa de admiração e verdade. Amor saudável aqui não combina com joguinho.',
-    'Touro': 'Touro precisa de constância. Amor saudável aqui é presença com atitude.',
-    'Gêmeos': 'Gêmeos precisa de conversa real. Amor saudável aqui é clareza, não ambiguidade.',
-    'Câncer': 'Câncer precisa de segurança emocional. Amor saudável aqui é reciprocidade.',
-    'Leão': 'Leão precisa de presença e respeito. Amor saudável aqui não aceita migalha.',
-    'Virgem': 'Virgem precisa de clareza. Amor saudável aqui não é consertar o outro.',
-    'Libra': 'Libra precisa de escolha. Amor saudável aqui é verdade, não indecisão.',
-    'Escorpião': 'Escorpião precisa de lealdade. Amor saudável aqui não mistura intensidade com caos.',
-    'Sagitário': 'Sagitário precisa de liberdade com verdade. Amor saudável aqui não prende nem foge.',
-    'Capricórnio': 'Capricórnio precisa de construção. Amor saudável aqui é consistência.',
-    'Aquário': 'Aquário precisa de autenticidade. Amor saudável aqui é conexão sem distância emocional.',
-    'Peixes': 'Peixes precisa de limite. Amor saudável aqui é filtro emocional.',
+    'Áries': 'Como Áries, você precisa de admiração, verdade e alguém que acompanhe sua energia sem disputar espaço. O problema é que intensidade sem maturidade pode parecer conexão quando na verdade é só atrito. O que te ajuda é escolher mais pela consistência do que pelo pico.',
+    'Touro': 'Como Touro, você precisa de constância, presença e segurança para florescer no amor. Promessa sem atitude te desgasta muito. O que te ajuda é parar de investir onde não existe base emocional real.',
+    'Gêmeos': 'Como Gêmeos, você precisa de troca viva, conversa real e clareza. Relações ambíguas cansam sua mente e drenam sua energia. O que te ajuda é escolher vínculos mais claros e menos confusos.',
+    'Câncer': 'Como Câncer, você precisa de segurança emocional para se abrir de verdade. O problema é que, quando gosta, pode se envolver rápido demais e sentir antes de saber se existe base. O que te ajuda é filtrar melhor antes de entregar tanto.',
+    'Leão': 'Como Leão, você precisa de presença, admiração e respeito. Relações mornas, rasas ou desatentas não combinam com a sua energia. O que te ajuda é parar de normalizar migalha afetiva.',
+    'Virgem': 'Como Virgem, você precisa de clareza, coerência e alguém que não transforme a relação em bagunça emocional. O problema é cair no lugar de tentar entender, ajustar ou consertar demais. O que te ajuda é lembrar que amor não é projeto de reparo.',
+    'Libra': 'Como Libra, você precisa de reciprocidade, escolha e alinhamento real. O problema é prolongar vínculos ambíguos para evitar desconforto. O que te ajuda é escolher mais cedo o que te faz bem e encerrar o que te confunde.',
+    'Escorpião': 'Como Escorpião, você precisa de lealdade, profundidade e verdade. O desafio é não confundir intensidade com compatibilidade. O que te ajuda é olhar menos para o que é forte e mais para o que é estável.',
+    'Sagitário': 'Como Sagitário, você precisa de liberdade, espontaneidade e verdade no amor. Relações que prendem, manipulam ou sufocam drenam sua energia. O que te ajuda é escolher quem constrói junto sem te limitar.',
+    'Capricórnio': 'Como Capricórnio, você precisa de construção, maturidade e consistência. Relações vazias, soltas ou sem presença concreta te cansam. O que te ajuda é observar mais o que a pessoa sustenta do que o que promete.',
+    'Aquário': 'Como Aquário, você precisa de autenticidade e conexão real, sem excesso de jogo emocional. O problema é entrar em vínculos distantes, confusos ou desconectados. O que te ajuda é escolher presença com verdade.',
+    'Peixes': 'Como Peixes, você ama com profundidade, mas precisa de limite para não se perder no que imagina ou sente antes da hora. O que te ajuda é escolher com mais filtro e menos projeção.',
   };
-  return map[s] || 'Amor saudável aqui depende de clareza emocional e posicionamento.';
+  return map[s] || 'Seu signo mostra que amor saudável, no seu caso, depende de critério emocional, clareza e menos repetição automática.';
 }
 
 function ganchoSignoAutoestima(signo) {
   const s = norm(signo);
   const map = {
-    'Áries': 'Áries fortalece autoestima quando age. Você se sente melhor em movimento do que esperando validação.',
-    'Touro': 'Touro precisa de estabilidade interna. Autoestima aqui cresce com consistência e autocuidado real.',
-    'Gêmeos': 'Gêmeos oscila quando se compara. Autoestima aqui cresce quando você honra sua própria voz.',
-    'Câncer': 'Câncer sente muito — autoestima cresce quando você para de se medir pelo outro.',
-    'Leão': 'Leão precisa de reconhecimento interno. Autoestima aqui amadurece quando para de depender da validação externa.',
-    'Virgem': 'Virgem se cobra demais. Autoestima aqui cresce quando você aprende a reconhecer o que já faz bem.',
-    'Libra': 'Libra perde força tentando agradar. Autoestima aqui nasce quando você se escolhe primeiro.',
-    'Escorpião': 'Escorpião se protege demais. Autoestima aqui cresce quando você confia mais em si.',
-    'Sagitário': 'Sagitário se fortalece quando se expande. Autoestima aqui nasce do movimento e da experiência.',
-    'Capricórnio': 'Capricórnio confunde valor com resultado. Autoestima aqui cresce quando você se respeita além da performance.',
-    'Aquário': 'Aquário precisa de autenticidade. Autoestima aqui cresce quando você honra o que te torna diferente.',
-    'Peixes': 'Peixes sente demais. Autoestima aqui nasce quando você aprende a se proteger emocionalmente.',
+    'Áries': 'Como Áries, sua autoestima cresce quando você age, decide e sente que está avançando. O problema é que, quando trava, você pode interpretar pausa como fraqueza. O que te fortalece é voltar a confiar no próprio impulso sem esperar validação externa.',
+    'Touro': 'Como Touro, sua autoestima tem muita relação com segurança interna. Quando você perde eixo, tende a se fechar ou duvidar mais do próprio valor. O que te fortalece é consistência, autocuidado real e uma base emocional mais estável.',
+    'Gêmeos': 'Como Gêmeos, sua autoestima pode oscilar quando sua mente entra em comparação ou excesso de leitura externa. Você perde força quando tenta caber em referências que não têm a sua energia. O que te fortalece é honrar sua voz e sua forma própria de se expressar.',
+    'Câncer': 'Como Câncer, sua autoestima sente muito o impacto dos vínculos. Quando você se mede demais pelo olhar do outro, sua força oscila. O que te fortalece é parar de buscar fora a confirmação do que precisa ser sustentado dentro.',
+    'Leão': 'Como Leão, você nasceu para brilhar — mas seu aprendizado é não depender o tempo todo da resposta externa para reconhecer seu valor. O que te fortalece é presença, orgulho saudável e reconhecimento interno.',
+    'Virgem': 'Como Virgem, sua autoestima pode enfraquecer quando a autocrítica domina tudo. Você vê o que falta antes de ver o que já existe, e isso pesa. O que te fortalece é reconhecer o próprio valor sem condicionar tudo ao desempenho perfeito.',
+    'Libra': 'Como Libra, sua autoestima cai quando você se abandona tentando manter harmonia, agradar demais ou evitar desconforto. O que te fortalece é se escolher com mais verdade.',
+    'Escorpião': 'Como Escorpião, sua autoestima está muito ligada a confiança, poder pessoal e profundidade. Quando você se fecha demais, começa a carregar tudo sozinho(a). O que te fortalece é confiar mais na própria força sem precisar se endurecer tanto.',
+    'Sagitário': 'Como Sagitário, sua autoestima cresce quando você se sente vivo(a), em movimento e em expansão. Quando se sente limitado(a) ou travado(a), sua energia desce rápido. O que te fortalece é voltar a se conectar com direção e liberdade.',
+    'Capricórnio': 'Como Capricórnio, sua autoestima pode ficar presa demais em desempenho, resultado e utilidade. O problema é que isso te faz esquecer que valor não nasce só do que você entrega. O que te fortalece é se respeitar além da performance.',
+    'Aquário': 'Como Aquário, sua autoestima cresce quando você honra sua autenticidade. Quando tenta se adaptar demais ao que não combina com você, perde eixo. O que te fortalece é sustentar o que te torna diferente sem se diminuir.',
+    'Peixes': 'Como Peixes, sua autoestima oscila quando você absorve demais o ambiente, o olhar do outro ou dores que nem eram suas. O que te fortalece é proteção emocional, limite e mais clareza sobre o que realmente é seu.',
   };
-  return map[s] || 'Autoestima aqui cresce quando você para de se comparar e começa a se posicionar.';
+  return map[s] || 'Seu signo mostra que sua autoestima cresce quando você para de se medir por fora e começa a sustentar seu valor com mais verdade.';
 }
 
 function ganchoSignoRelacionamentoAtual(signo) {
   const s = norm(signo);
   const map = {
-    'Áries': 'Para Áries, a relação melhora com diálogo direto e menos disputa.',
-    'Touro': 'Para Touro, melhora quando existe segurança e consistência.',
-    'Gêmeos': 'Para Gêmeos, melhora com comunicação clara e menos suposição.',
-    'Câncer': 'Para Câncer, melhora quando existe acolhimento real.',
-    'Leão': 'Para Leão, melhora quando existe presença e valorização.',
-    'Virgem': 'Para Virgem, melhora com clareza e menos crítica.',
-    'Libra': 'Para Libra, melhora quando decisões são tomadas sem evitar conflito.',
-    'Escorpião': 'Para Escorpião, melhora com verdade e menos controle.',
-    'Sagitário': 'Para Sagitário, melhora com liberdade e honestidade.',
-    'Capricórnio': 'Para Capricórnio, melhora com atitude concreta.',
-    'Aquário': 'Para Aquário, melhora com conexão emocional mais presente.',
-    'Peixes': 'Para Peixes, melhora com limite e clareza emocional.',
+    'Áries': 'Como Áries, a relação melhora quando existe diálogo direto, menos disputa e menos reação impulsiva. O que mais desgasta aqui não é falta de sentimento — é excesso de atrito sem ajuste.',
+    'Touro': 'Como Touro, a relação melhora quando existe constância, previsibilidade e segurança emocional. O que desgasta é o acúmulo silencioso de peso e ressentimento.',
+    'Gêmeos': 'Como Gêmeos, a relação melhora com comunicação clara, conversa real e menos ruído mental. O que desgasta é a suposição demais e a clareza de menos.',
+    'Câncer': 'Como Câncer, a relação melhora quando existe acolhimento, segurança e espaço emocional verdadeiro. O que desgasta é sentir demais e falar de menos.',
+    'Leão': 'Como Leão, a relação melhora quando existe presença, valorização e troca viva. O que desgasta é se sentir invisível, pouco reconhecido(a) ou emocionalmente sozinho(a).',
+    'Virgem': 'Como Virgem, a relação melhora com clareza, menos crítica e menos tentativa de controlar tudo pelo detalhe. O que desgasta é excesso de tensão silenciosa.',
+    'Libra': 'Como Libra, a relação melhora quando o vínculo para de fugir de conversas necessárias. O que desgasta é manter paz aparente às custas da verdade.',
+    'Escorpião': 'Como Escorpião, a relação melhora com verdade, profundidade e menos controle. O que desgasta é o excesso de intensidade sem alinhamento claro.',
+    'Sagitário': 'Como Sagitário, a relação melhora quando existe honestidade, espaço e menos sensação de prisão emocional. O que desgasta é o peso que tira sua leveza.',
+    'Capricórnio': 'Como Capricórnio, a relação melhora com atitude concreta, presença e construção real. O que desgasta é promessa demais com sustentação de menos.',
+    'Aquário': 'Como Aquário, a relação melhora quando existe conexão mais presente, menos distância emocional e mais verdade no vínculo. O que desgasta é o excesso de desconexão.',
+    'Peixes': 'Como Peixes, a relação melhora com limite, clareza e menos confusão emocional. O que desgasta é sentir demais sem conseguir organizar o que está acontecendo.',
   };
-  return map[s] || 'A relação melhora quando existe mais verdade e menos repetição automática.';
+  return map[s] || 'Seu signo mostra que a relação melhora quando existe mais verdade, mais presença e menos repetição automática.';
 }
 
 function ganchoSignoCrescimentoProfissional(signo) {
   const s = norm(signo);
   const map = {
-    'Áries': 'Áries cresce quando lidera. Seu avanço depende de assumir posição.',
-    'Touro': 'Touro cresce com consistência. Seu avanço vem da constância.',
-    'Gêmeos': 'Gêmeos cresce com comunicação e estratégia.',
-    'Câncer': 'Câncer cresce quando sente segurança no que faz.',
-    'Leão': 'Leão cresce com visibilidade e protagonismo.',
-    'Virgem': 'Virgem cresce com método e precisão.',
-    'Libra': 'Libra cresce quando decide e se posiciona.',
-    'Escorpião': 'Escorpião cresce com foco profundo.',
-    'Sagitário': 'Sagitário cresce com expansão e movimento.',
-    'Capricórnio': 'Capricórnio cresce com construção sólida.',
-    'Aquário': 'Aquário cresce com inovação e autonomia.',
-    'Peixes': 'Peixes cresce quando conecta propósito com prática.',
+    'Áries': 'Como Áries, seu crescimento profissional depende de iniciativa, coragem e posicionamento. O que te trava não é falta de capacidade — é perder tempo demais esperando certeza antes de agir.',
+    'Touro': 'Como Touro, seu crescimento acontece quando existe constância, direção clara e construção sustentável. O problema é resistir demais à mudança quando ela já se tornou necessária.',
+    'Gêmeos': 'Como Gêmeos, você cresce quando transforma inteligência, comunicação e visão em direção prática. O que te trava é espalhar energia em muitas frentes ao mesmo tempo.',
+    'Câncer': 'Como Câncer, seu crescimento depende muito de segurança emocional e sentido no que faz. Quando o ambiente pesa, sua energia profissional sente. O que te ajuda é base interna mais firme.',
+    'Leão': 'Como Leão, seu crescimento profissional pede visibilidade, protagonismo e confiança na própria força. O que te trava é diminuir sua luz para caber em ambientes pequenos demais.',
+    'Virgem': 'Como Virgem, seu crescimento vem de método, consistência e refinamento. O problema é quando a melhora infinita substitui a ação concreta. O que te ajuda é executar antes de controlar tudo.',
+    'Libra': 'Como Libra, seu crescimento depende de decisão e posicionamento. O que te trava é oscilar demais entre possibilidades e adiar o passo que já deveria ter sido dado.',
+    'Escorpião': 'Como Escorpião, seu crescimento pede foco profundo, intensidade bem direcionada e menos dispersão emocional. O que te ajuda é colocar sua força onde realmente existe potência.',
+    'Sagitário': 'Como Sagitário, seu crescimento acontece quando existe expansão, visão e movimento. O que te trava é permanecer tempo demais em lugares que já não cabem mais na sua energia.',
+    'Capricórnio': 'Como Capricórnio, seu crescimento profissional tem muita força quando existe meta, construção e consistência. O problema é transformar tudo em peso e autocobrança excessiva.',
+    'Aquário': 'Como Aquário, seu crescimento depende de autonomia, inovação e coerência com sua própria visão. O que te trava é tentar crescer dentro de estruturas que já não combinam com você.',
+    'Peixes': 'Como Peixes, seu crescimento acontece quando propósito encontra prática. O problema é sentir muito e estruturar de menos. O que te ajuda é dar forma real ao que já vive forte dentro de você.',
   };
-  return map[s] || 'Crescimento aqui depende de direção clara e execução consistente.';
+  return map[s] || 'Seu signo mostra que seu crescimento profissional depende de mais direção, mais verdade e menos dispersão da sua energia.';
 }
 
 function ganchoSignoRotina(signo) {
   const s = norm(signo);
   const map = {
-    'Áries': 'Como Áries, você funciona melhor quando começa rápido. O problema é que, sem direção clara, a energia vira correria e impulsividade. Sua rotina precisa de ação simples logo no início do dia.',
-    'Touro': 'Como Touro, você precisa de ritmo estável para render bem. Quando o dia começa bagunçado, seu sistema perde segurança e tudo pesa mais. Sua rotina funciona melhor com previsibilidade e constância.',
-    'Gêmeos': 'Como Gêmeos, sua mente abre muitas abas ao mesmo tempo. Quando falta estrutura, o dia vira excesso de estímulo e dispersão. Sua rotina precisa de blocos curtos e foco leve.',
-    'Câncer': 'Como Câncer, seu emocional influencia muito seu ritmo. Quando o ambiente está pesado ou instável, sua energia desorganiza rápido. Sua rotina precisa de base emocional segura.',
-    'Leão': 'Como Leão, você precisa sentir sentido no que faz. Quando a rotina vira obrigação vazia, sua energia cai. O que funciona é uma estrutura com propósito e presença.',
-    'Virgem': 'Como Virgem, você rende muito com ordem — mas o excesso de cobrança pode transformar rotina em prisão. O ajuste aqui é estrutura simples, sem perfeccionismo.',
-    'Libra': 'Como Libra, você tende a perder tempo tentando decidir o melhor caminho. Sua rotina melhora quando existe menos indecisão e mais escolha prática.',
-    'Escorpião': 'Como Escorpião, você funciona melhor quando tem profundidade e foco. O problema é que, sem eixo, sua intensidade vira sobrecarga. Sua rotina precisa de menos ruído e mais direção.',
-    'Sagitário': 'Como Sagitário, você precisa de liberdade para funcionar bem — e é exatamente por isso que rotinas rígidas nunca funcionam para você. O ajuste aqui não é controle excessivo, e sim uma estrutura leve, flexível e possível de sustentar.',
-    'Capricórnio': 'Como Capricórnio, você funciona bem com meta e execução. O problema é quando isso vira peso, autocobrança e dureza. Sua rotina precisa ser consistente, mas também respirável.',
-    'Aquário': 'Como Aquário, você precisa de autonomia e lógica para entrar no ritmo. Sua rotina melhora muito quando existe um sistema simples, inteligente e sem excesso de imposição.',
-    'Peixes': 'Como Peixes, sua energia oscila fácil quando o dia começa sem eixo. Sua rotina precisa de aterramento, previsibilidade e menos ruído para não virar dispersão.',
+    'Áries': 'Como Áries, você funciona melhor quando começa rápido. Quando pensa demais antes de agir, o dia já perde força. Sua rotina precisa de ação simples logo no início, e não de excesso de preparação.',
+    'Touro': 'Como Touro, você rende muito melhor quando encontra ritmo e previsibilidade. Quando o dia começa desorganizado, seu sistema sente e tudo pesa mais. Sua rotina precisa de estabilidade realista.',
+    'Gêmeos': 'Como Gêmeos, sua mente abre muitas abas ao mesmo tempo. Quando falta estrutura, o dia vira dispersão e excesso de estímulo. Sua rotina precisa de blocos curtos, ordem leve e menos ruído.',
+    'Câncer': 'Como Câncer, seu ritmo depende muito do ambiente e do estado emocional com que o dia começa. Quando existe instabilidade interna, sua rotina desanda rápido. O que te ajuda é uma base mais acolhedora e segura.',
+    'Leão': 'Como Leão, você precisa sentir propósito e presença no que faz. Quando a rotina vira obrigação vazia, sua energia cai. O que te ajuda é uma estrutura que faça sentido para você sustentar.',
+    'Virgem': 'Como Virgem, você tem potência natural para organizar — mas pode se perder no excesso de detalhe, ajuste e cobrança. Sua rotina funciona melhor quando existe ordem simples, sem perfeccionismo excessivo.',
+    'Libra': 'Como Libra, você perde tempo demais quando o dia começa com indecisão. Sua rotina melhora muito quando existem menos escolhas abertas e mais definição prática logo cedo.',
+    'Escorpião': 'Como Escorpião, você precisa de foco, profundidade e menos dispersão emocional. Quando o dia começa solto demais, sua intensidade vira sobrecarga. Sua rotina precisa de eixo claro.',
+    'Sagitário': 'Como Sagitário, você precisa de liberdade para funcionar bem — e é exatamente por isso que rotinas rígidas nunca funcionam com você. O ajuste aqui não é controle excessivo, e sim uma estrutura leve, flexível e possível de sustentar.',
+    'Capricórnio': 'Como Capricórnio, você funciona muito bem com meta, estrutura e execução. O cuidado é não transformar rotina em peso constante. O que te ajuda é consistência com mais respiro.',
+    'Aquário': 'Como Aquário, sua rotina melhora quando existe lógica, autonomia e menos imposição vazia. O que funciona para você é um sistema simples que faça sentido de verdade.',
+    'Peixes': 'Como Peixes, você sente muito e perde o eixo com facilidade quando o dia começa sem direção clara. Sua rotina precisa de aterramento, previsibilidade e menos ruído para não virar dispersão.',
   };
   return map[s] || 'Seu signo mostra que sua rotina precisa ser mais coerente com a forma como sua energia realmente funciona.';
 }
@@ -885,6 +884,7 @@ function insightPorNumero(numeroVida) {
 // -----------------------
 function espelhoPorObjetivo(objetivo) {
   const o = titleCase(objetivo);
+
   const base = [
     'Você já percebeu que o problema não é falta de potencial.',
     'Você sente que o padrão se repete, mesmo quando tenta fazer diferente.',
@@ -893,29 +893,63 @@ function espelhoPorObjetivo(objetivo) {
 
   const map = {
     'Ter Mais Disciplina': [
-      'Você não é “sem disciplina”. Você só não tem um sistema pequeno que você sustenta.',
-      'Você começa bem e cai quando a mente pesa — e isso gera culpa.',
-      'O problema não é motivação: é estrutura mínima + gatilho certo.',
-      'Quando você acerta isso, você vira constante sem sofrimento absurdo.',
+      'Você não é “sem disciplina”. Você só ainda não encontrou um sistema que consegue sustentar.',
+      'Você começa bem, mas perde ritmo quando o dia pesa — e isso vira culpa.',
+      'O problema não é falta de força. É excesso de dependência da motivação.',
+      'O que você precisa é constância possível, e não cobrança infinita.',
       'O próximo nível é consistência inteligente.',
     ],
+
     'Reduzir Ansiedade': [
-      'Você sente sua mente acelerando mesmo quando “tá tudo bem”.',
-      'Você entende tudo, mas não consegue desligar o ruído.',
-      'Seu corpo pede aterramento — e você sabe disso.',
-      'Você quer paz sem perder sua intensidade.',
+      'Você sente sua mente acelerando mesmo quando, por fora, parece tudo normal.',
+      'Você entende muita coisa — mas não consegue desligar o ruído interno.',
+      'Seu corpo pede aterramento antes da sua mente pedir mais explicação.',
+      'Você quer paz sem perder profundidade.',
       'O próximo nível é calma com direção.',
     ],
+
+    'Melhorar Autoestima': [
+      'Você sabe que tem valor — mas nem sempre consegue sustentar isso por dentro.',
+      'Sua confiança oscila mais do que deveria quando algo falha, pesa ou te frustra.',
+      'O problema não é falta de potencial. É falta de evidência interna contínua.',
+      'Você não quer só se sentir melhor. Você quer se respeitar mais.',
+      'O próximo nível é confiança com raiz.',
+    ],
+
     'Atrair Relacionamento Saudável': [
-      'Você não quer mais “quase”. Você quer consistência.',
-      'Você sente quando algo é raso — e isso te cansa.',
-      'Você quer um amor que some, não que te drene.',
-      'Você quer escolher melhor sem ficar ansiosa.',
-      'O próximo nível é filtro + posicionamento.',
+      'Você não quer mais viver “quase”. Você quer algo real.',
+      'Você sente quando algo é raso, mas às vezes ainda entra pela intensidade.',
+      'Você não quer mais confundir conexão com ansiedade.',
+      'Você quer escolher melhor sem se perder no processo.',
+      'O próximo nível é filtro, critério e posicionamento.',
+    ],
+
+    'Melhorar Meu Relacionamento Atual': [
+      'Você sente que existe algo importante no vínculo, mas também percebe um desgaste se repetindo.',
+      'O problema nem sempre é falta de amor — muitas vezes é padrão mal resolvido.',
+      'Você não quer seguir vivendo a mesma tensão em versões diferentes.',
+      'Você quer entender o que realmente está corroendo a relação.',
+      'O próximo nível é clareza, ajuste e reposicionamento.',
+    ],
+
+    'Crescer Profissionalmente': [
+      'Você sente que poderia estar mais longe do que está.',
+      'Não falta capacidade. Falta direção sustentada na frente certa.',
+      'Você pensa, enxerga possibilidades, mas sua energia ainda se espalha demais.',
+      'Você não quer só trabalhar mais. Quer avançar de verdade.',
+      'O próximo nível é foco com movimento real.',
+    ],
+
+    'Organizar Minha Rotina': [
+      'Você sente que seu dia escapa das mãos mais rápido do que deveria.',
+      'O problema não é só falta de tempo — é falta de eixo.',
+      'Você até tenta se organizar, mas sem estrutura simples volta rápido para o mesmo caos.',
+      'Você não quer viver apagando incêndio o tempo todo.',
+      'O próximo nível é ritmo, clareza e repetição possível.',
     ],
   };
 
-  const key = Object.keys(map).find((k) => k.toLowerCase() === o.toLowerCase());
+  const key = Object.keys(map).find((k) => lowerClean(k) === lowerClean(o));
   return key ? map[key] : base;
 }
 
@@ -1483,7 +1517,7 @@ useEffect(() => {
         {/* CTA cedo */}
         <div className="cta-preview">
           <div className="cta-preview-text">
-            Você quer ver a parte completa de <b>amor</b>, <b>dinheiro</b> e o <b>plano de 7 dias</b> pro seu caso?
+           Até aqui, você viu o começo do padrão. O Manual aprofunda onde isso se repete em amor, dinheiro e te entrega o plano de 7 dias para virar essa chave.
           </div>
           <button className="btnMedium" onClick={handleComprar} disabled={processando}>
             {processando ? '⏳ Abrindo…' : relatorio.ctaLabel}
