@@ -237,24 +237,6 @@ function ganchoNumeroRelacionamento(numeroVida) {
   return map[numeroVida] || 'No seu caso, amor saudável depende menos de sorte e mais de filtro, critério e posicionamento emocional.';
 }
 
-function ganchoNumeroRelacionamento(numeroVida) {
-  const map = {
-    1: 'Com o 1, você precisa de admiração, clareza e alguém que some sem disputar espaço. Relacionamento saudável, no seu caso, não combina com confusão nem com jogos de poder.',
-    2: 'Com o 2, o amor saudável precisa trazer segurança emocional, presença e reciprocidade. Seu número não floresce com migalha, ambiguidade ou vínculo raso.',
-    3: 'Com o 3, relacionamento saudável precisa de leveza, troca real e verdade. Seu número se desgasta em jogos, silêncio confuso e relações que perdem brilho rápido.',
-    4: 'Com o 4, amor saudável é constância. Você precisa sentir firmeza, coerência e estabilidade emocional. Relações frias ou imprevisíveis drenam muito seu número.',
-    5: 'Com o 5, relacionamento saudável não é prisão. Seu número precisa de liberdade com compromisso, espaço com verdade e conexão sem sufoco.',
-    6: 'Com o 6, você ama cuidando — mas seu aprendizado é não transformar amor em excesso de responsabilidade. O relacionamento saudável aqui é parceria, não maternagem.',
-    7: 'Com o 7, amor saudável precisa de profundidade, verdade e respeito pelo seu tempo interno. Seu número não se entrega bem ao superficial.',
-    8: 'Com o 8, você atrai intensidade — e por isso precisa escolher bem. O relacionamento saudável aqui é poder compartilhado, respeito e maturidade emocional, não controle.',
-    9: 'Com o 9, seu coração é grande, mas isso exige critério. Amor saudável, no seu caso, pede limite para você não cair na armadilha de tentar salvar quem não quer crescer.',
-    11: 'Com o 11, você sente tudo muito forte. Relacionamento saudável aqui exige clareza, limite energético e consistência, para intensidade não virar ansiedade afetiva.',
-    22: 'Com o 22, você quer construir algo real. O amor saudável aqui é projeto a dois, presença concreta e alinhamento de futuro — não promessa vazia.',
-    33: 'Com o 33, você se doa muito. Por isso, relacionamento saudável, no seu caso, precisa de reciprocidade real, maturidade e amor com limite.',
-  };
-  return map[numeroVida] || 'No seu caso, amor saudável depende menos de sorte e mais de filtro, critério e posicionamento emocional.';
-}
-
 function ganchoNumeroAutoestima(numeroVida) {
   const map = {
     1: 'Com o 1, autoestima cresce quando você se vê em movimento, decidindo e liderando a própria vida. Seu número perde força quando você espera validação externa para agir.',
@@ -938,7 +920,7 @@ function espelhoPorObjetivo(objetivo) {
 }
 
 function getGanchoSignoPorObjetivo(objetivo, signo) {
-  const o = (objetivo || '').toLowerCase().trim();
+const o = lowerClean(objetivo);
 
   if (o === 'organizar minha rotina') return ganchoSignoRotina(signo);
   if (o === 'crescer profissionalmente') return ganchoSignoCrescimentoProfissional(signo);
@@ -1012,8 +994,9 @@ const primeiroNome = (nome || '').trim().split(' ')[0] || 'Você';
 
   const objetivoLinha = `Você escolheu: ${objetivoFinal}. E isso não é só uma preferência. Isso aponta para uma necessidade real do seu momento.`;
 
-  const ganchoSigno = getGanchoSignoPorObjetivo(objetivoFinal, signo);
-  const ganchoNumero = getGanchoPorObjetivoENumero(objetivoFinal, numeroVida);
+  const ganchoSigno = getGanchoSignoPorObjetivo(objetivo_principal, signo);
+
+  const ganchoNumero = getGanchoPorObjetivoENumero(objetivo_principal, numeroVida);
 
   const fechamento =
     'Seu objetivo não é virar outra pessoa. É entender com mais clareza onde sua energia está escapando — e o que precisa ser ajustado para a sua vida começar a responder diferente.';
