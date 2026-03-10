@@ -986,28 +986,19 @@ const primeiroNome = (nome || '').trim().split(' ')[0] || 'Você';
   const explicacaoObjetivoPersonalizada = (() => {
   if (!hasChoice(objetivoFinal)) return '';
 
-  const intro = [
-    'Nada aqui é por acaso.',
-    'Quando suas respostas são colocadas lado a lado, um padrão começa a aparecer.',
-    'E esse padrão explica mais do que parece sobre o momento que você está vivendo.'
-  ].join(' ');
+  const intro =
+    'Nada aqui é por acaso. Quando suas respostas são colocadas lado a lado, um padrão começa a aparecer — e esse padrão explica mais do que parece sobre o momento que você está vivendo.';
 
-  const objetivoLinha = `Você escolheu: ${objetivoFinal}. E isso não é só uma preferência. Isso aponta para uma necessidade real do seu momento.`;
+  const objetivoLinha =
+    `Você escolheu: ${objetivoFinal}. E isso não é só uma preferência. Isso aponta para uma necessidade real do seu momento.`;
 
   const ganchoSigno = getGanchoSignoPorObjetivo(objetivo_principal, signo);
-
   const ganchoNumero = getGanchoPorObjetivoENumero(objetivo_principal, numeroVida);
 
   const fechamento =
     'Seu objetivo não é virar outra pessoa. É entender com mais clareza onde sua energia está escapando — e o que precisa ser ajustado para a sua vida começar a responder diferente.';
 
-  return [
-    intro,
-    objetivoLinha,
-    ganchoSigno,
-    ganchoNumero,
-    fechamento
-  ]
+  return [intro, objetivoLinha, ganchoSigno, ganchoNumero, fechamento]
     .filter(Boolean)
     .join(' ');
 })();
