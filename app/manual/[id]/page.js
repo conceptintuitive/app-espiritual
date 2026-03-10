@@ -394,7 +394,8 @@ export default function ManualPage() {
             🔒 Manual Completo • Premium • Personalizado
           </div>
           <h1 className="title">
-            {firstName}, seu momento de Virada
+            {firstName}, BIANCA, SEU PADRÃO FICOU CLARO.
+AGORA VAMOS VIRAR A CHAVE.
           </h1>
           <p className="subtitle">
             Um mapa claro do seu padrão —  e de como virar a chave.
