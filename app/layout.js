@@ -18,7 +18,7 @@ export const metadata = {
   authors: [{ name: 'Manual dos Poderes Ocultos' }],
   creator: 'Manual dos Poderes Ocultos',
   publisher: 'Manual dos Poderes Ocultos',
-  
+
   openGraph: {
     title: 'Manual dos Poderes Ocultos | Descubra Seu Mapa Espiritual',
     description: 'Análise completa de Numerologia + Astrologia + Previsões personalizadas. Descubra os segredos da sua alma.',
@@ -69,40 +69,30 @@ export default function RootLayout({ children }) {
   return (
     <html lang="pt-BR">
       <head>
-        <meta name="google-site-verification" content="Dm-MjTPhbvz9q1IFUDc22sqm0DC2t5pbU4wtrkd5V3M" />
-        {/* Google Analytics */}
+        <meta
+          name="google-site-verification"
+          content="Dm-MjTPhbvz9q1IFUDc22sqm0DC2t5pbU4wtrkd5V3M"
+        />
+
         <script
           async
           src="https://www.googletagmanager.com/gtag/js?id=G-4YT1QFSD1P"
         />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', 'G-4YT1QFSD1P');
-            `,
-          }}
-        />
 
-        {/* Google Ads Conversion Tracking */}
         <script
-          async
-          src="https://www.googletagmanager.com/gtag/js?id=AW-16938088515"
-        />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', 'AW-16938088515');
-            `,
-          }}
-        />
+  dangerouslySetInnerHTML={{
+    __html: `
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
 
-        {/* Schema.org JSON-LD */}
+      gtag('config', 'G-4YT1QFSD1P');
+      gtag('config', 'AW-16938088515');
+      gtag('config', 'AW-17660841644');
+    `,
+  }}
+/>
+
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -122,9 +112,7 @@ export default function RootLayout({ children }) {
           }}
         />
       </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         {children}
       </body>
     </html>
