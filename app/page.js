@@ -240,6 +240,37 @@ export default function Home() {
         .a5{animation:fadeUp .75s .34s ease-out both}
         .a6{animation:fadeUp .75s .42s ease-out both}
 
+        /* Hero specific */
+        .hero-eyebrow { display:inline-flex; align-items:center; gap:8px; padding:9px 18px; border-radius:999px; border:1px solid rgba(216,180,254,.14); background:rgba(9,4,26,.42); backdrop-filter:blur(10px); color:rgba(216,180,254,.88); font-size:14px; font-family:var(--B); margin-bottom:24px; }
+
+        .hero-h1 { font-family:var(--D); font-weight:700; font-size:clamp(30px,4.8vw,58px); line-height:1.12; max-width:880px; margin:0 auto 20px; }
+        .hero-h1 em { font-style:normal; background:linear-gradient(112deg,#fb7185 0%,#c084fc 50%,#f59e0b 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+
+        .hero-sub { font-size:clamp(17px,2vw,21px); color:rgba(233,213,255,.85); max-width:620px; margin:0 auto 28px; font-family:var(--B); line-height:1.65; }
+        .hero-sub strong { color:rgba(243,232,255,.98); font-style:italic; }
+
+        .cta-wrap { display:inline-flex; flex-direction:column; align-items:center; gap:10px; }
+        .cta-microcopy { font-size:13px; color:rgba(216,180,254,.58); font-family:var(--B); }
+        .cta-microcopy span { color:rgba(134,239,172,.75); }
+
+        .urgency-pill {
+          display:inline-flex; gap:8px; align-items:center;
+          padding:10px 16px; border-radius:12px;
+          border:1px solid rgba(239,68,68,.38); background:rgba(127,29,29,.18);
+          color:rgba(254,202,202,.92); font-size:13px; font-family:var(--B);
+          animation: fadeUp .75s .5s ease-out both;
+        }
+        .urgency-pill strong { color:rgba(254,202,202,1); }
+
+        .scroll-hint { display:flex; flex-direction:column; align-items:center; gap:6px; margin-top:10px; color:rgba(216,180,254,.4); font-size:12px; font-family:var(--B); animation:float 2.5s ease-in-out infinite; }
+        .scroll-hint svg { opacity:.4; }
+
+        .proof-pills { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-bottom:28px; }
+        .proof-pill  { padding:8px 14px; border-radius:999px; font-size:13px; font-family:var(--B); border:1px solid rgba(216,180,254,.11); background:rgba(9,4,26,.28); color:rgba(216,180,254,.88); }
+
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.4} }
+        .live-dot { width:7px; height:7px; border-radius:50%; background:#22c55e; display:inline-block; margin-right:5px; animation:blink 1.8s ease-in-out infinite; flex-shrink:0; }
+
         /* Layout */
         .ctr    { width:100%; max-width:1100px; margin:0 auto; padding:0 clamp(16px,4vw,28px); }
         .ctr-md { width:100%; max-width:790px;  margin:0 auto; padding:0 clamp(16px,4vw,28px); }
@@ -399,70 +430,101 @@ export default function Home() {
       </div>
 
       {/* ═══════════════════════ HERO ═══════════════════════════════════════ */}
-      <section className="sec" style={{ minHeight: '78vh', display: 'flex', alignItems: 'center' }}>
+      <section className="sec" style={{ minHeight: '80vh', display: 'flex', alignItems: 'center' }}>
         <div className="ctr" style={{ textAlign: 'center' }}>
 
-          <div className="a1">
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '9px 18px', borderRadius: 999, border: '1px solid rgba(216,180,254,.14)', background: 'rgba(9,4,26,.42)', backdropFilter: 'blur(10px)', color: 'rgba(216,180,254,.88)', fontSize: 14, fontFamily: 'var(--B)', marginBottom: 22 }}>
+          {/* Eyebrow — trust + live activity */}
+          <div className="a1" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, flexWrap: 'wrap', marginBottom: 24 }}>
+            <span className="hero-eyebrow" style={{ margin: 0 }}>
               🔒 Privado · Sem spam · Resultado em minutos
+            </span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', padding: '9px 14px', borderRadius: 999, border: '1px solid rgba(34,197,94,.22)', background: 'rgba(34,197,94,.07)', color: 'rgba(134,239,172,.9)', fontSize: 13, fontFamily: 'var(--B)', gap: 4 }}>
+              <span className="live-dot" />
+              <strong style={{ color: 'rgba(134,239,172,1)' }}>{liveCount.toLocaleString('pt-BR')}</strong>&nbsp;mapas gerados essa semana
             </span>
           </div>
 
+          {/* H1 — sentence case, emocional, não grita */}
           <div className="a2">
-            <h1 style={{ fontFamily: 'var(--D)', fontWeight: 700, fontSize: 'clamp(32px,5.2vw,62px)', lineHeight: 1.1, maxWidth: 960, margin: '0 auto 20px', background: 'linear-gradient(112deg,#fb7185 0%,#c084fc 48%,#f59e0b 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-              Se você sente que algo te trava,<br />
-              existe um padrão invisível<br />
-              por trás disso.
+            <h1 className="hero-h1" style={{ textAlign: 'center' }}>
+              <em>Você tenta mudar,</em><br />
+              mas volta para o mesmo lugar.<br />
+              <span style={{ color: 'rgba(233,213,255,.88)', fontWeight: 400, fontSize: '0.78em' }}>Existe um padrão invisível por trás disso.</span>
             </h1>
           </div>
 
+          {/* Sub — faz a pessoa se sentir vista */}
           <div className="a3">
-            <p style={{ fontSize: 'clamp(17px,2vw,22px)', color: 'rgba(233,213,255,.88)', maxWidth: 660, margin: '0 auto 26px', fontFamily: 'var(--B)', lineHeight: 1.65 }}>
-              Descubra em minutos por que você repete ciclos, o que está te travando de verdade e qual é o seu próximo passo.
+            <p className="hero-sub">
+              Em menos de 2 minutos, seu mapa revela <strong>por que você repete ciclos</strong>,
+              o que está te travando de verdade e qual é o próximo passo concreto para sair daqui.
             </p>
           </div>
 
-          {/* Social proof counter */}
+          {/* Social proof com avatars */}
           <div className="a3" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 24 }}>
             <div className="av-stack">
-              {[['M', '#ec4899,#a855f7'], ['J', '#f59e0b,#ef4444'], ['R', '#6366f1,#8b5cf6']].map(([l, g], i) => (
-                <div key={i} className="av" style={{ background: `linear-gradient(135deg,${g})` }}>{l}</div>
+              {[['M','#ec4899,#a855f7'],['J','#f59e0b,#ef4444'],['R','#6366f1,#8b5cf6']].map(([l,g],i)=>(
+                <div key={i} className="av" style={{ background:`linear-gradient(135deg,${g})` }}>{l}</div>
               ))}
             </div>
-            <span style={{ fontSize: 14, color: 'rgba(216,180,254,.88)', fontFamily: 'var(--B)' }}>
-              <strong style={{ color: 'rgba(243,232,255,.97)' }}>{liveCount.toLocaleString('pt-BR')}</strong> pessoas descobriram seu mapa essa semana
+            <span style={{ fontSize: 14, color: 'rgba(216,180,254,.82)', fontFamily: 'var(--B)' }}>
+              <strong style={{ color: 'rgba(243,232,255,.97)' }}>Marina, Julia e mais {(liveCount - 3).toLocaleString('pt-BR')}</strong> já descobriram o padrão delas
             </span>
           </div>
 
-          <div className="a4" style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 28 }}>
-            {['⭐ Clareza imediata', '⚡ Resultado em minutos', '✨ Leitura personalizada'].map((b) => (
-              <span key={b} className="pill">{b}</span>
+          {/* Proof pills */}
+          <div className="a4 proof-pills">
+            {[
+              '⭐ Clareza em minutos',
+              '🎯 Próximo passo concreto',
+              '✨ Leitura 100% personalizada',
+            ].map((b) => (
+              <span key={b} className="proof-pill">{b}</span>
             ))}
           </div>
 
-          {/* CTA with glow */}
-          <div className="a5" style={{ position: 'relative', display: 'inline-block' }}>
-            <div style={{ position: 'absolute', inset: -4, borderRadius: 999, background: 'linear-gradient(90deg,#ec4899,#7c3aed)', filter: 'blur(20px)', opacity: .42, animation: 'glow 2.6s ease-in-out infinite', zIndex: -1 }} />
-            <button className="btn-main" onClick={scrollToForm}>
-              ✨ QUERO DESCOBRIR MEU MAPA AGORA →
-            </button>
-          </div>
+          {/* CTA block */}
+          <div className="a5" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
 
-          <div className="a5" style={{ marginTop: 18, display: 'flex', justifyContent: 'center' }}>
-            <div className="urgency">
+            {/* Glow + button */}
+            <div style={{ position: 'relative', display: 'inline-block', marginBottom: 10 }}>
+              <div style={{ position: 'absolute', inset: -5, borderRadius: 999, background: 'linear-gradient(90deg,#ec4899,#7c3aed)', filter: 'blur(22px)', opacity: .45, animation: 'glow 2.6s ease-in-out infinite', zIndex: -1 }} />
+              <button className="btn-main" onClick={scrollToForm} style={{ fontSize: 'clamp(15px,2vw,18px)', padding: 'clamp(15px,2.5vw,18px) clamp(28px,4vw,46px)' }}>
+                ✨ Quero descobrir meu mapa agora →
+              </button>
+            </div>
+
+            {/* Microcopy embaixo do botão — remove hesitação */}
+            <p style={{ fontSize: 13, color: 'rgba(216,180,254,.52)', fontFamily: 'var(--B)', margin: '2px 0 16px' }}>
+              <span style={{ color: 'rgba(134,239,172,.7)' }}>Gratuito</span> · Sem cartão · Resultado imediato na tela
+            </p>
+
+            {/* Urgency — visível, com número */}
+            <div style={{
+              display: 'inline-flex', gap: 10, alignItems: 'center',
+              padding: '11px 20px', borderRadius: 14,
+              border: '1px solid rgba(239,68,68,.42)', background: 'rgba(127,29,29,.2)',
+              color: 'rgba(254,202,202,.92)', fontSize: 13, fontFamily: 'var(--B)',
+            }}>
               🔥
               <div style={{ textAlign: 'left' }}>
-                <strong style={{ display: 'block', fontSize: 13 }}>Seu mapa gratuito está disponível hoje</strong>
-                <span style={{ fontSize: 12, opacity: .85 }}>O acesso pode ser encerrado a qualquer momento</span>
+                <strong style={{ display: 'block', fontSize: 13, color: 'rgba(254,202,202,1)' }}>
+                  Apenas <span style={{ color: '#fca5a5' }}>47 acessos gratuitos</span> disponíveis hoje
+                </strong>
+                <span style={{ fontSize: 12, opacity: .82 }}>O acesso pode ser encerrado a qualquer momento</span>
               </div>
             </div>
           </div>
 
-          <div className="a6" style={{ marginTop: 18, display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
-            {['🧠 Sem linguagem complicada', '⚡ Com próximos passos práticos', '🔐 Privado e personalizado'].map((b) => (
-              <span key={b} style={{ padding: '7px 12px', borderRadius: 999, fontSize: 12, fontFamily: 'var(--B)', border: '1px solid rgba(216,180,254,.08)', background: 'rgba(9,4,26,.18)', color: 'rgba(216,180,254,.72)' }}>{b}</span>
-            ))}
+          {/* Scroll hint */}
+          <div className="a6 scroll-hint" style={{ marginTop: 28 }}>
+            <span>preencha abaixo e veja seu mapa</span>
+            <svg width="16" height="20" viewBox="0 0 16 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M8 1v14M2 11l6 6 6-6" stroke="rgba(216,180,254,.5)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
           </div>
+
         </div>
       </section>
 
