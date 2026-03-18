@@ -430,7 +430,7 @@ export default function Home() {
       </div>
 
       {/* ═══════════════════════ HERO ═══════════════════════════════════════ */}
-      <section className="sec" style={{ minHeight: '72vh', display: 'flex', alignItems: 'center', paddingBottom: 'clamp(28px,4vh,44px)' }}>
+      <section className="sec" style={{ minHeight: '72vh', display: 'flex', alignItems: 'center', paddingBottom: 'clamp(12px,2vh,20px)' }}>
         <div className="ctr" style={{ textAlign: 'center' }}>
 
           {/* Eyebrow — trust + live activity */}
@@ -549,7 +549,7 @@ export default function Home() {
       </section>
 
       {/* ═══════════════════════ FORM ═══════════════════════════════════════ */}
-      <section id="formulario" className="sec sec-alt" style={{ paddingTop: 'clamp(32px,4vh,48px)' }}>
+      <section id="formulario" className="sec sec-alt" style={{ paddingTop: 'clamp(20px,3vh,32px)' }}>
         <div className="ctr-md">
 
           {/* Compact header */}
