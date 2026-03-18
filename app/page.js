@@ -430,7 +430,7 @@ export default function Home() {
       </div>
 
       {/* ═══════════════════════ HERO ═══════════════════════════════════════ */}
-      <section className="sec" style={{ minHeight: '80vh', display: 'flex', alignItems: 'center' }}>
+      <section className="sec" style={{ minHeight: '72vh', display: 'flex', alignItems: 'center', paddingBottom: 'clamp(28px,4vh,44px)' }}>
         <div className="ctr" style={{ textAlign: 'center' }}>
 
           {/* Eyebrow — trust + live activity */}
@@ -518,41 +518,42 @@ export default function Home() {
           </div>
 
           {/* Scroll hint */}
-          <div className="a6 scroll-hint" style={{ marginTop: 28 }}>
+          <div style={{ marginTop: 22, display:'flex', flexDirection:'column', alignItems:'center', gap:6, color:'rgba(216,180,254,.38)', fontSize:12, fontFamily:'var(--B)', animation:'float 2.5s ease-in-out infinite' }}>
             <span>preencha abaixo e veja seu mapa</span>
-            <svg width="16" height="20" viewBox="0 0 16 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M8 1v14M2 11l6 6 6-6" stroke="rgba(216,180,254,.5)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <svg width="14" height="18" viewBox="0 0 16 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M8 1v14M2 11l6 6 6-6" stroke="rgba(216,180,254,.35)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </div>
 
         </div>
       </section>
 
-      <div className="divider" />
-
       {/* ═══════════════════════ FORM ═══════════════════════════════════════ */}
-      <section id="formulario" className="sec sec-alt">
+      <section id="formulario" className="sec sec-alt" style={{ paddingTop: 'clamp(32px,4vh,48px)' }}>
         <div className="ctr-md">
-          <h2 className="sec-title">{firstName ? `Seu mapa personalizado, ${firstName}` : 'Seu mapa espiritual personalizado'}</h2>
-          <p className="sec-sub">Leva menos de 1 minuto. Descubra o padrão que está por trás dos seus ciclos e o que fazer agora.</p>
 
-          {/* Trigger card */}
-          <div className="trigger">
-            <p style={{ fontFamily: 'var(--D)', fontSize: 18, fontWeight: 700, marginBottom: 14, color: 'rgba(243,232,255,.97)' }}>Se você sente que:</p>
-            <ul style={{ listStyle: 'none', display: 'grid', gap: 9, marginBottom: 16 }}>
-              {['repete ciclos mesmo tentando mudar', 'trava justo quando precisa avançar', 'sente que poderia estar muito mais à frente'].map((t) => (
-                <li key={t} style={{ fontSize: 18, color: 'rgba(233,213,255,.9)', fontFamily: 'var(--B)' }}>
-                  <span style={{ color: 'rgba(236,72,153,.75)', marginRight: 8 }}>✦</span>{t}
-                </li>
+          {/* Compact header */}
+          <div style={{ textAlign: 'center', marginBottom: 22 }}>
+            <h2 style={{ fontFamily: 'var(--D)', fontWeight: 700, fontSize: 'clamp(20px,2.8vw,32px)', color: 'rgba(243,232,255,.97)', marginBottom: 12 }}>
+              {firstName ? `Seu mapa, ${firstName}` : 'Seu mapa personalizado'}
+            </h2>
+            <div style={{ display: 'flex', gap: 7, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 12 }}>
+              {[['🔢','Numerologia'],['♑','Astrologia'],['🧠','Neurociência'],['✨','Esoterismo']].map(([icon,label]) => (
+                <span key={label} style={{ display:'inline-flex', alignItems:'center', gap:5, padding:'5px 12px', borderRadius:999, fontSize:13, fontFamily:'var(--B)', border:'1px solid rgba(216,180,254,.16)', background:'rgba(124,58,237,.12)', color:'rgba(216,180,254,.9)' }}>
+                  {icon} {label}
+                </span>
               ))}
-            </ul>
-            <span style={{ display: 'inline-block', padding: '10px 18px', borderRadius: 999, background: 'rgba(245,158,11,.1)', border: '1px solid rgba(245,158,11,.24)', color: 'rgba(245,158,11,.97)', fontWeight: 700, fontSize: 15, fontFamily: 'var(--B)' }}>
-              Seu mapa pode mostrar o que está por trás disso.
-            </span>
+            </div>
+            <p style={{ fontSize: 14, color: 'rgba(216,180,254,.6)', fontFamily: 'var(--B)' }}>Preencha abaixo — leva menos de 1 minuto.</p>
           </div>
 
           {/* Form card */}
           <div className="form-card">
+
+            {/* Method explainer strip inside card */}
+            <div style={{ borderRadius:12, background:'rgba(124,58,237,.1)', border:'1px solid rgba(124,58,237,.2)', padding:'10px 14px', marginBottom:18, fontSize:13, color:'rgba(216,180,254,.82)', fontFamily:'var(--B)', lineHeight:1.5, textAlign:'center' }}>
+              Seu mapa cruza <strong style={{color:'rgba(243,232,255,.95)'}}>Numerologia</strong>, <strong style={{color:'rgba(243,232,255,.95)'}}>Astrologia</strong>, <strong style={{color:'rgba(243,232,255,.95)'}}>Neurociência</strong> e <strong style={{color:'rgba(243,232,255,.95)'}}>Esoterismo</strong> para revelar o padrão invisível por trás dos seus ciclos.
+            </div>
 
             {/* Smart progress bar */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
