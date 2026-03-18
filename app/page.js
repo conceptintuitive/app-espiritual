@@ -446,19 +446,39 @@ export default function Home() {
 
           {/* H1 — sentence case, emocional, não grita */}
           <div className="a2">
-            <h1 className="hero-h1" style={{ textAlign: 'center' }}>
-              <em>Você tenta mudar,</em><br />
-              mas volta para o mesmo lugar.<br />
-              <span style={{ color: 'rgba(233,213,255,.88)', fontWeight: 400, fontSize: '0.78em' }}>Existe um padrão invisível por trás disso.</span>
+            <h1 style={{ textAlign: 'center', maxWidth: 820, margin: '0 auto 22px' }}>
+              {/* Line 1 — small, italic, colorido: o gancho emocional */}
+              <span style={{
+                display: 'block',
+                fontFamily: 'var(--D)', fontStyle: 'italic', fontWeight: 400,
+                fontSize: 'clamp(18px,2.4vw,26px)',
+                background: 'linear-gradient(90deg,#fb7185,#c084fc)',
+                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+                marginBottom: 4, letterSpacing: '.02em',
+              }}>
+                Você tenta mudar,
+              </span>
+              {/* Line 2 — grande, branco, bold: o problema real */}
+              <span style={{
+                display: 'block',
+                fontFamily: 'var(--D)', fontWeight: 700,
+                fontSize: 'clamp(28px,5vw,58px)',
+                color: 'rgba(243,232,255,.98)',
+                lineHeight: 1.1, marginBottom: 10,
+              }}>
+                mas algo invisível<br />te puxa de volta.
+              </span>
+              {/* Line 3 — menor, suave: a promessa */}
+              <span style={{
+                display: 'block',
+                fontFamily: 'var(--B)', fontWeight: 400,
+                fontSize: 'clamp(16px,1.8vw,20px)',
+                color: 'rgba(216,180,254,.72)',
+                lineHeight: 1.5,
+              }}>
+                Seu mapa revela o que é — e o que fazer agora.
+              </span>
             </h1>
-          </div>
-
-          {/* Sub — faz a pessoa se sentir vista */}
-          <div className="a3">
-            <p className="hero-sub">
-              Em menos de 2 minutos, seu mapa revela <strong>por que você repete ciclos</strong>,
-              o que está te travando de verdade e qual é o próximo passo concreto para sair daqui.
-            </p>
           </div>
 
           {/* Social proof com avatars */}
