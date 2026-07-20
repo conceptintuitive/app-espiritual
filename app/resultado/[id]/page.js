@@ -476,17 +476,6 @@ export default function ResultadoPage() {
         {cartaTarot && (
           <div className="section-card" style={{ background: 'linear-gradient(135deg, rgba(17,7,32,0.85) 0%, rgba(55,15,90,0.3) 100%)', borderColor: 'rgba(212,168,83,0.25)' }}>
             <div className="section-label" style={{ color: '#f0c870' }}>Sua Carta do Dia</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', borderRadius: 14, background: 'rgba(212,168,83,0.07)', border: '1px solid rgba(212,168,83,0.18)', marginBottom: 16 }}>
-              <span style={{ fontSize: 32 }}>{cartaTarot.simbolo || '🔮'}</span>
-              <div>
-                <div style={{ fontFamily: 'Cinzel, serif', fontSize: 18, fontWeight: 700, color: '#f0c870', marginBottom: 3 }}>
-                  {cartaTarot.nome}{cartaTarot.invertida ? ' — Invertida' : ''}
-                </div>
-                <div style={{ fontSize: 13, color: 'rgba(240,200,112,0.65)', letterSpacing: '0.04em' }}>
-                  {(cartaTarot.palavrasChave || []).join(' · ')}
-                </div>
-              </div>
-            </div>
             <div className="locked-card" style={{ borderColor: 'rgba(212,168,83,0.25)' }}>
               <div className="locked-icon">🔒</div>
               <p className="locked-text">

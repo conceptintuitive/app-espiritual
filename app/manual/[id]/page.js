@@ -861,17 +861,6 @@ e mostrar como sair dele.
                         </div>
                       </div>
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 18, padding: '16px 18px', borderRadius: 14, background: 'rgba(212,168,83,0.07)', border: '1px solid rgba(212,168,83,0.2)' }}>
-                        <span style={{ fontSize: 36 }}>{c.simbolo || '🔮'}</span>
-                        <div>
-                          <div style={{ fontFamily: 'var(--fontSerif, serif)', fontSize: 20, fontWeight: 700, color: '#f0c870', marginBottom: 4 }}>
-                            {c.nome}{c.invertida ? ' — Invertida' : ''}
-                          </div>
-                          <div style={{ fontSize: 13, color: 'rgba(240,200,112,0.7)', letterSpacing: '0.05em' }}>
-                            {(c.palavrasChave || []).join(' · ')}
-                          </div>
-                        </div>
-                      </div>
                       {section.interpTitulo && (
                         <div style={{ fontSize: 16, fontStyle: 'italic', color: 'rgba(212,168,83,0.9)', marginBottom: 12 }}>
                           "{section.interpTitulo}"

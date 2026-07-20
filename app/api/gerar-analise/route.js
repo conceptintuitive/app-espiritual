@@ -15,7 +15,7 @@ async function gerarImagemTarot(cartaSorteada, analiseId, supabaseUrl, serviceRo
 
   const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(`${cardPrompt}, ${styleBase}${energySuffix}`)}?width=1200&height=630&nologo=true&model=flux`;
 
-  const imgRes = await fetch(pollinationsUrl, { signal: AbortSignal.timeout(60000) });
+  const imgRes = await fetch(pollinationsUrl, { signal: AbortSignal.timeout(50000) });
   if (!imgRes.ok) throw new Error(`Pollinations status ${imgRes.status}`);
 
   const imgBuffer = await imgRes.arrayBuffer();
