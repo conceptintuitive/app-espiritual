@@ -42,7 +42,10 @@ function QuizOverlay({ onClose }) {
   const [direction, setDirection] = useState('forward');
   const [areaTraada, setAreaTravada] = useState('');
   const [padrao, setPadrao] = useState('');
-  const [dataNasc, setDataNasc] = useState('');
+  const [dataNasc,   setDataNasc]   = useState('');
+  const [horaNasc,   setHoraNasc]   = useState('');
+  const [localNasc,  setLocalNasc]  = useState('');
+  const [noSabeHora, setNoSabeHora] = useState(false);
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -81,9 +84,9 @@ function QuizOverlay({ onClose }) {
       nome: nomeTrimmed,
       email: emailTrimmed,
       data_nascimento: dataNasc,
-      hora_nascimento: '',
-      local_nascimento: '',
-      noTime: true,
+      hora_nascimento: noSabeHora ? '' : horaNasc,
+      local_nascimento: localNasc,
+      noTime: noSabeHora || !horaNasc,
       objetivo_principal: areaTraada,
       relacao_status: '',
       trabalho_status: '',
@@ -255,7 +258,7 @@ function QuizOverlay({ onClose }) {
               </div>
             )}
 
-            {/* STEP 3 — Data de nascimento */}
+            {/* STEP 3 — Dados de nascimento */}
             {step === 3 && (
               <div>
                 <p style={{ fontSize: 13, color: '#8b5cf6', fontFamily: 'var(--F)', fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 10 }}>Etapa 3</p>
@@ -263,8 +266,10 @@ function QuizOverlay({ onClose }) {
                   Qual é a sua data de nascimento?
                 </h2>
                 <p style={{ fontSize: 15, color: '#9896a8', fontFamily: 'var(--F)', marginBottom: 24 }}>
-                  Usamos para calcular seu número de vida e signo. Sem hora de nascimento necessária.
+                  A data é obrigatória. Hora e cidade são opcionais.
                 </p>
+
+                {/* Data */}
                 <input
                   type="date"
                   value={dataNasc}
@@ -273,9 +278,60 @@ function QuizOverlay({ onClose }) {
                     width: '100%', padding: '15px 18px', borderRadius: 14,
                     border: '1px solid rgba(139,92,246,.3)', background: 'rgba(18,18,30,.9)',
                     color: '#f0eff4', fontFamily: 'var(--F)', fontSize: 17,
-                    outline: 'none', colorScheme: 'dark', marginBottom: 20,
+                    outline: 'none', colorScheme: 'dark', marginBottom: 18, boxSizing: 'border-box',
                   }}
                 />
+
+                {/* Hora */}
+                <label style={{ display: 'block', fontSize: 13, color: '#9896a8', fontFamily: 'var(--F)', marginBottom: 6 }}>
+                  Hora de nascimento <span style={{ color: '#6b6980' }}>(opcional)</span>
+                </label>
+                <input
+                  type="time"
+                  value={horaNasc}
+                  onChange={e => setHoraNasc(e.target.value)}
+                  disabled={noSabeHora}
+                  style={{
+                    width: '100%', padding: '13px 18px', borderRadius: 14,
+                    border: '1px solid rgba(139,92,246,.3)', background: 'rgba(18,18,30,.9)',
+                    color: noSabeHora ? '#4a4860' : '#f0eff4', fontFamily: 'var(--F)', fontSize: 16,
+                    outline: 'none', colorScheme: 'dark', marginBottom: 10, boxSizing: 'border-box',
+                    opacity: noSabeHora ? 0.45 : 1, cursor: noSabeHora ? 'not-allowed' : 'auto',
+                    transition: 'opacity .2s',
+                  }}
+                />
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18, cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={noSabeHora}
+                    onChange={e => { setNoSabeHora(e.target.checked); if (e.target.checked) setHoraNasc(''); }}
+                    style={{ width: 16, height: 16, accentColor: '#8b5cf6', cursor: 'pointer' }}
+                  />
+                  <span style={{ fontSize: 13, color: '#9896a8', fontFamily: 'var(--F)' }}>Não sei minha hora de nascimento</span>
+                </label>
+
+                {/* Cidade */}
+                <label style={{ display: 'block', fontSize: 13, color: '#9896a8', fontFamily: 'var(--F)', marginBottom: 6 }}>
+                  Cidade onde nasceu <span style={{ color: '#6b6980' }}>(opcional)</span>
+                </label>
+                <input
+                  type="text"
+                  value={localNasc}
+                  onChange={e => setLocalNasc(e.target.value)}
+                  placeholder="Ex: São Paulo, SP"
+                  style={{
+                    width: '100%', padding: '13px 18px', borderRadius: 14,
+                    border: '1px solid rgba(139,92,246,.3)', background: 'rgba(18,18,30,.9)',
+                    color: '#f0eff4', fontFamily: 'var(--F)', fontSize: 16,
+                    outline: 'none', marginBottom: 10, boxSizing: 'border-box',
+                  }}
+                />
+
+                {/* Texto de apoio */}
+                <p style={{ fontSize: 13, color: '#6b6980', fontFamily: 'var(--F)', marginBottom: 22, lineHeight: 1.5 }}>
+                  💡 Com hora e cidade calculamos seu Ascendente com precisão — mas não são obrigatórios.
+                </p>
+
                 <button
                   onClick={() => { if (!dataNasc) { setErro('Selecione sua data de nascimento.'); return; } goNext(4); }}
                   style={{
