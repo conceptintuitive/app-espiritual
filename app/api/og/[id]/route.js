@@ -1,12 +1,12 @@
 import { ImageResponse } from 'next/og';
-import { createClient } from '@supabase/supabase-js';
 
 export const runtime = 'edge';
 
 export async function GET(request, { params }) {
-  const { id } = params;
+  // Next.js 15/16: params é uma Promise — obrigatório await
+  const { id } = await params;
 
-  // Busca dados da análise
+  // Busca dados da análise via REST API do Supabase (compatível com Edge runtime)
   let nome = 'Seu Mapa';
   let cartaNome = '';
   let cartaInvertida = false;
@@ -14,25 +14,36 @@ export async function GET(request, { params }) {
   let palavrasChave = [];
 
   try {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    );
-    const { data } = await supabase
-      .from('analises')
-      .select('nome, carta_tarot')
-      .eq('id', id)
-      .single();
-
-    if (data?.nome) nome = data.nome.split(' ')[0];
-    if (data?.carta_tarot) {
-      const carta = JSON.parse(data.carta_tarot);
-      cartaNome = carta.nome || '';
-      cartaInvertida = carta.invertida || false;
-      cartaSimbol = carta.simbolo || '🔮';
-      palavrasChave = carta.palavrasChave || [];
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (supabaseUrl && supabaseKey && id) {
+      const res = await fetch(
+        `${supabaseUrl}/rest/v1/analises?id=eq.${id}&select=nome,carta_tarot&limit=1`,
+        {
+          headers: {
+            apikey: supabaseKey,
+            Authorization: `Bearer ${supabaseKey}`,
+          },
+        }
+      );
+      if (res.ok) {
+        const rows = await res.json();
+        const data = Array.isArray(rows) ? rows[0] : null;
+        if (data?.nome) nome = data.nome.split(' ')[0];
+        if (data?.carta_tarot) {
+          const carta = typeof data.carta_tarot === 'string'
+            ? JSON.parse(data.carta_tarot)
+            : data.carta_tarot;
+          cartaNome     = carta.nome          || '';
+          cartaInvertida = carta.invertida    || false;
+          cartaSimbol   = carta.simbolo       || '🔮';
+          palavrasChave = carta.palavrasChave || [];
+        }
+      }
     }
-  } catch (_) {}
+  } catch (e) {
+    console.error('[OG] fetch falhou:', e?.message);
+  }
 
   const fraseChave = palavrasChave.slice(0, 2).join(' · ') || 'Mapa Espiritual';
   const cartaLabel = cartaNome
