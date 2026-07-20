@@ -3,7 +3,33 @@ import { createClient } from '@supabase/supabase-js';
 import { calcularPlanetas, calcularAscendente, calcularAnoPessoal, calcularNumeroAlma, calcularNumeroExpressao } from '@/lib/calculos';
 import { gerarPreviewIA, gerarDiagnosticoIA, gerarAmorIA, gerarArquetiposIA, gerarPlano7IA, gerarInterpretacaoTarotIA } from '@/lib/ia';
 import { buildDiagnosticoCtx, buildAmorCtx, buildArquetiposCtx, buildPlano7Ctx } from '@/lib/manualgenerator';
-import { sortearCarta } from '@/lib/tarot';
+import { sortearCarta, TAROT_PROMPTS_EN } from '@/lib/tarot';
+
+// Gera imagem via Pollinations.ai, sobe pro Supabase Storage, retorna URL pública
+async function gerarImagemTarot(cartaSorteada, analiseId, supabaseUrl, serviceRoleKey) {
+  const cardPrompt = TAROT_PROMPTS_EN[cartaSorteada.nome] || `mystical tarot symbolism ${cartaSorteada.nome} card`;
+  const energySuffix = cartaSorteada.invertida
+    ? ', reversed shadowy energy, darker atmospheric tones, descending cosmic forces'
+    : ', radiant upright energy, ascending golden light, celestial power';
+  const styleBase = 'mystical tarot card illustration, deep purple and gold cosmic background, ethereal magical atmosphere, ornate decorative borders, ancient esoteric art style, dramatic atmospheric lighting, no text, no words, no letters, no numbers, no writing';
+
+  const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(`${cardPrompt}, ${styleBase}${energySuffix}`)}?width=1200&height=630&nologo=true&model=flux`;
+
+  const imgRes = await fetch(pollinationsUrl, { signal: AbortSignal.timeout(60000) });
+  if (!imgRes.ok) throw new Error(`Pollinations status ${imgRes.status}`);
+
+  const imgBuffer = await imgRes.arrayBuffer();
+  const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
+
+  const { error: uploadError } = await supabaseAdmin.storage
+    .from('imagens-ia')
+    .upload(`og-${analiseId}.jpg`, imgBuffer, { contentType: 'image/jpeg', upsert: true });
+
+  if (uploadError) throw new Error(`Upload falhou: ${uploadError.message}`);
+
+  const { data: urlData } = supabaseAdmin.storage.from('imagens-ia').getPublicUrl(`og-${analiseId}.jpg`);
+  return urlData.publicUrl;
+}
 
 // Geocoding via Nominatim (OpenStreetMap) — gratuito, sem API key
 // Retorna { lat, lon } ou null em caso de falha
@@ -184,7 +210,9 @@ export async function POST(request) {
     // Geração de IA em background — não bloqueia a resposta ao cliente
     ;(async () => {
       try {
-        const [previewR, diagnosticoR, amorR, arquetiposR, plano7R, tarotR] = await Promise.allSettled([
+        const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+        const [previewR, diagnosticoR, amorR, arquetiposR, plano7R, tarotR, imagemR] = await Promise.allSettled([
           gerarPreviewIA({
             signo,
             signoLua:   planetas?.signoLua   ?? null,
@@ -204,6 +232,9 @@ export async function POST(request) {
             objetivo:  objetivo_principal || '',
             firstName: nome.trim().split(' ')[0],
           }),
+          serviceRoleKey
+            ? gerarImagemTarot(cartaSorteada, analiseId, supabaseUrl, serviceRoleKey)
+            : Promise.reject(new Error('SUPABASE_SERVICE_ROLE_KEY não configurada')),
         ]);
 
         const extras = {};
@@ -213,6 +244,7 @@ export async function POST(request) {
         const arquetipos  = arquetiposR.status  === 'fulfilled' ? arquetiposR.value  : null;
         const plano7      = plano7R.status      === 'fulfilled' ? plano7R.value      : null;
         const tarot       = tarotR.status       === 'fulfilled' ? tarotR.value       : null;
+        const imagemUrl   = imagemR.status      === 'fulfilled' ? imagemR.value      : null;
 
         if (preview)     extras.preview_gerado              = preview;
         if (diagnostico) extras.diagnostico_gerado          = JSON.stringify(diagnostico);
@@ -220,6 +252,11 @@ export async function POST(request) {
         if (arquetipos)  extras.arquetipos_gerado           = JSON.stringify(arquetipos);
         if (plano7)      extras.plano7_gerado               = JSON.stringify(plano7);
         if (tarot)       extras.carta_tarot_interpretacao   = JSON.stringify(tarot);
+        if (imagemUrl)   extras.imagem_ia_url               = imagemUrl;
+
+        if (imagemR.status === 'rejected') {
+          console.error('[Pollinations] falhou:', imagemR.reason?.message || imagemR.reason);
+        }
 
         if (Object.keys(extras).length) {
           await supabase.from('analises').update(extras).eq('id', analiseId);

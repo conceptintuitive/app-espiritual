@@ -839,9 +839,28 @@ e mostrar como sair dele.
                 // TIPO: TAROT
                 if (section.type === 'tarot') {
                   const c = section.carta || {};
+                  const manualFirstName = row?.nome?.split(' ')[0] || '';
                   return (
                     <div key={anchor} id={anchor} className="card premium" style={{ background: 'linear-gradient(135deg, rgba(17,7,32,0.9) 0%, rgba(55,15,90,0.4) 100%)', borderColor: 'rgba(212,168,83,0.3)' }}>
                       <h2 className="h2">{section.title}</h2>
+
+                      {/* Banner: imagem IA com overlay de nome/carta */}
+                      <div style={{ position: 'relative', borderRadius: 12, overflow: 'hidden', marginBottom: 20, aspectRatio: '1200/630', background: 'linear-gradient(135deg, #0a0118, #2d0a4e)' }}>
+                        <img
+                          src={row?.imagem_ia_url || `/api/og/${id}`}
+                          alt=""
+                          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                        />
+                        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(5,0,15,0.85) 0%, rgba(5,0,15,0.05) 55%, rgba(5,0,15,0.4) 100%)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', padding: 22, gap: 6 }}>
+                          {manualFirstName && (
+                            <p style={{ fontFamily: 'Georgia, serif', fontSize: 20, fontWeight: 700, color: '#f0eff4', margin: 0, textAlign: 'center', textShadow: '0 2px 12px rgba(0,0,0,0.9)' }}>{manualFirstName}</p>
+                          )}
+                          <p style={{ fontSize: 12, color: 'rgba(240,200,112,0.85)', letterSpacing: '0.08em', textTransform: 'uppercase', margin: 0 }}>
+                            {c.simbolo} {c.nome}{c.invertida ? ' — Invertida' : ''}
+                          </p>
+                        </div>
+                      </div>
+
                       <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 18, padding: '16px 18px', borderRadius: 14, background: 'rgba(212,168,83,0.07)', border: '1px solid rgba(212,168,83,0.2)' }}>
                         <span style={{ fontSize: 36 }}>{c.simbolo || '🔮'}</span>
                         <div>

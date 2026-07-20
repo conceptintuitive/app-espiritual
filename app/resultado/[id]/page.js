@@ -182,9 +182,9 @@ export default function ResultadoPage() {
     } catch { return null; }
   }, [analise]);
 
-  // polling — refetch se diagnostico ainda não chegou (até 10 tentativas × 4s = 40s)
+  // polling — refetch até diagnostico + imagem_ia_url chegarem (até 10 tentativas × 4s = 40s)
   useEffect(() => {
-    if (!analise || analise.diagnostico_gerado || retryCount >= 10) return;
+    if (!analise || (analise.diagnostico_gerado && analise.imagem_ia_url) || retryCount >= 10) return;
     setRetrying(true);
     const timer = setTimeout(async () => {
       try {
@@ -350,14 +350,22 @@ export default function ResultadoPage() {
           </div>
         )}
 
-        {/* ══ IMAGEM PERSONALIZADA ══ */}
+        {/* ══ IMAGEM IA (Pollinations) + fallback SVG ══ */}
         {cartaTarot && (
-          <div style={{ marginTop: 28, borderRadius: 16, overflow: 'hidden', border: '1px solid rgba(212,168,83,0.2)' }}>
+          <div style={{ position: 'relative', marginTop: 28, borderRadius: 16, overflow: 'hidden', border: '1px solid rgba(212,168,83,0.2)', aspectRatio: '1200/630', background: 'linear-gradient(135deg, #0a0118 0%, #2d0a4e 50%, #0d0125 100%)' }}>
+            {/* Imagem real ou fallback SVG enquanto gera */}
             <img
-              src={`/api/og/${id}`}
-              alt={`Mapa de ${firstName}`}
-              style={{ width: '100%', display: 'block' }}
+              src={analise.imagem_ia_url || `/api/og/${id}`}
+              alt=""
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
             />
+            {/* Overlay com nome + carta via HTML/CSS */}
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(5,0,15,0.85) 0%, rgba(5,0,15,0.05) 55%, rgba(5,0,15,0.4) 100%)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', padding: 28, gap: 8 }}>
+              <p style={{ fontFamily: 'Georgia, serif', fontSize: 22, fontWeight: 700, color: '#f0eff4', margin: 0, textAlign: 'center', textShadow: '0 2px 14px rgba(0,0,0,0.9)' }}>{firstName}</p>
+              <p style={{ fontSize: 13, color: 'rgba(240,200,112,0.85)', letterSpacing: '0.08em', textTransform: 'uppercase', margin: 0 }}>
+                {cartaTarot.simbolo} {cartaTarot.nome}{cartaTarot.invertida ? ' — Invertida' : ''}
+              </p>
+            </div>
           </div>
         )}
 
