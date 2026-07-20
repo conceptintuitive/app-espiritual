@@ -74,6 +74,13 @@ function truncateAtWord(text, maxChars) {
   return lastSpace > 0 ? cut.slice(0, lastSpace) + '…' : cut + '…';
 }
 
+function firstSentences(text, n = 2) {
+  if (!text) return '';
+  const sentences = text.match(/[^.!?]*[.!?]+/g) || [];
+  const result = sentences.slice(0, n).join(' ').trim();
+  return result || text;
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function ResultadoPage() {
   const { id } = useParams();
@@ -172,6 +179,14 @@ export default function ResultadoPage() {
   const cartaTarot = useMemo(() => {
     if (!analise?.carta_tarot) return null;
     try { return JSON.parse(analise.carta_tarot); } catch { return null; }
+  }, [analise]);
+
+  const cartaTarotInterp = useMemo(() => {
+    if (!analise?.carta_tarot_interpretacao) return null;
+    try {
+      const p = JSON.parse(analise.carta_tarot_interpretacao);
+      return { titulo: p?.titulo || null, body: p?.body || null };
+    } catch { return null; }
   }, [analise]);
 
   const plano7Parsed = useMemo(() => {
@@ -476,6 +491,14 @@ export default function ResultadoPage() {
         {cartaTarot && (
           <div className="section-card" style={{ background: 'linear-gradient(135deg, rgba(17,7,32,0.85) 0%, rgba(55,15,90,0.3) 100%)', borderColor: 'rgba(212,168,83,0.25)' }}>
             <div className="section-label" style={{ color: '#f0c870' }}>Sua Carta do Dia</div>
+            {cartaTarotInterp?.titulo && (
+              <p className="amor-headline">"{cartaTarotInterp.titulo}"</p>
+            )}
+            {cartaTarotInterp?.body && (
+              <div className="content-fade content-fade-sm" style={{ maxHeight: '120px' }}>
+                <p className="body-text">{firstSentences(cartaTarotInterp.body, 2)}</p>
+              </div>
+            )}
             <div className="locked-card" style={{ borderColor: 'rgba(212,168,83,0.25)' }}>
               <div className="locked-icon">🔒</div>
               <p className="locked-text">
