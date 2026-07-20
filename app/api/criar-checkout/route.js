@@ -86,7 +86,7 @@ if (analise.payment_status === "paid") {
 
     const sessionParams = {
   mode: "payment",
-  payment_method_types: ["card"],
+  payment_method_types: ["card", "boleto"],
   line_items: [
     {
       price_data: {

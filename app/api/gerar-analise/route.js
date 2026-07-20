@@ -1,5 +1,38 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { calcularPlanetas, calcularAscendente, calcularAnoPessoal, calcularNumeroAlma, calcularNumeroExpressao } from '@/lib/calculos';
+import { gerarPreviewIA, gerarDiagnosticoIA, gerarAmorIA, gerarArquetiposIA, gerarPlano7IA, gerarInterpretacaoTarotIA } from '@/lib/ia';
+import { buildDiagnosticoCtx, buildAmorCtx, buildArquetiposCtx, buildPlano7Ctx } from '@/lib/manualgenerator';
+import { sortearCarta } from '@/lib/tarot';
+
+// Geocoding via Nominatim (OpenStreetMap) — gratuito, sem API key
+// Retorna { lat, lon } ou null em caso de falha
+async function geocodeLocal(localNascimento) {
+  if (!localNascimento?.trim()) return null;
+  try {
+    const q   = encodeURIComponent(localNascimento.trim());
+    const url = `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&countrycodes=br`;
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'IntuitiveConcept/1.0 conceptintuitive@gmail.com' },
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!Array.isArray(data) || !data.length) return null;
+    const lat = parseFloat(data[0].lat);
+    const lon = parseFloat(data[0].lon);
+    return isNaN(lat) || isNaN(lon) ? null : { lat, lon };
+  } catch {
+    return null;
+  }
+}
+
+// Heurística de UTC offset para o Brasil.
+// Brasil padrão: UTC-3. Historicamente, estados do Sul/Sudeste/Centro-Oeste
+// observaram horário de verão (UTC-2) de novembro a fevereiro até 2019.
+function brasilUtcOffset(month) {
+  return [11, 12, 1, 2].includes(month) ? -2 : -3;
+}
 
 function parseDataISO(dateStr) {
   if (!dateStr) return null;
@@ -45,26 +78,21 @@ function calcularNumeroVida(dataISO) {
 
 export async function POST(request) {
   try {
-   const body = await request.json(); // ✅ FIX 1: define body
-   
-const {
-  nome,
-  email,
-  data_nascimento,
-  hora_nascimento,
-  local_nascimento,
-  noTime,
-  objetivo_principal,
-  relacao_status,
-  trabalho_status,
-} = body;
+    const body = await request.json();
+    const {
+      nome,
+      email,
+      data_nascimento,
+      hora_nascimento,
+      local_nascimento,
+      noTime,
+      objetivo_principal,
+      relacao_status,
+      trabalho_status,
+    } = body;
 
-    // 👇 AQUI
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-    console.log('SUPABASE_URL ok?', !!supabaseUrl);
-    console.log('SUPABASE_KEY ok?', !!supabaseKey);
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
     if (!supabaseUrl || !supabaseKey) {
       return NextResponse.json(
@@ -75,23 +103,6 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    console.log('SUPABASE_URL:', supabaseUrl?.slice(0, 40) + '...');
-
-// teste simples de rede
-try {
-  const r = await fetch(supabaseUrl + '/rest/v1/', {
-    headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` },
-  });
-  console.log('PING SUPABASE STATUS:', r.status);
-} catch (e) {
-  console.log('PING SUPABASE FALHOU:', e?.message || e);
-  return NextResponse.json(
-    { error: 'Falha de rede ao acessar Supabase', details: e?.message || String(e) },
-    { status: 500 }
-  );
-}
-
-    // ✅ 3) validações (agora nome/email/data existem)
     if (!nome?.trim() || nome.trim().length < 3) {
       return NextResponse.json({ error: 'Nome inválido' }, { status: 400 });
     }
@@ -102,9 +113,30 @@ try {
       return NextResponse.json({ error: 'Data inválida' }, { status: 400 });
     }
 
-    // Calcular
-    const signo = calcularSigno(data_nascimento);
+    const signo      = calcularSigno(data_nascimento);
     const numeroVida = calcularNumeroVida(data_nascimento);
+    const anoPessoal      = calcularAnoPessoal(data_nascimento);
+    const numeroAlma      = calcularNumeroAlma(nome);
+    const numeroExpressao = calcularNumeroExpressao(nome);
+
+    let planetas = null;
+    try {
+      planetas = calcularPlanetas(data_nascimento, noTime ? null : hora_nascimento);
+    } catch (_) {}
+
+    // Geocoding (rápido, 5s timeout) — necessário para signoAscendente no insert
+    let coords = null;
+    let signoAscendente = null;
+    try {
+      const [, m] = data_nascimento.split('-').map(Number);
+      const utcOffset = brasilUtcOffset(m);
+      coords = await geocodeLocal(local_nascimento);
+      if (coords && !noTime && hora_nascimento) {
+        signoAscendente = calcularAscendente(data_nascimento, hora_nascimento, coords.lat, coords.lon, utcOffset);
+      }
+    } catch (_) {}
+
+    const cartaSorteada = sortearCarta();
 
     const dadosInsert = {
       nome: nome.trim(),
@@ -112,18 +144,29 @@ try {
       data_nascimento,
       hora_nascimento: noTime ? null : (hora_nascimento || null),
       local_nascimento: local_nascimento || null,
-
       objetivo_principal: objetivo_principal || null,
       relacao_status: relacao_status || null,
       trabalho_status: trabalho_status || null,
-
       signo,
-      numero_vida: numeroVida,
+      numero_vida:       numeroVida,
+      ano_pessoal:       anoPessoal      ?? null,
+      numero_alma:       numeroAlma      ?? null,
+      numero_expressao:  numeroExpressao ?? null,
+      signo_lua:        planetas?.signoLua        ?? null,
+      signo_venus:      planetas?.signoVenus      ?? null,
+      signo_marte:      planetas?.signoMarte      ?? null,
+      signo_nodo:       planetas?.signoNodo       ?? null,
+      signo_mercurio:   planetas?.signoMercurio   ?? null,
+      signo_ascendente: signoAscendente           ?? null,
+      lua_cuspide:      planetas?.luaCuspide      ?? null,
+      latitude:         coords?.lat               ?? null,
+      longitude:        coords?.lon               ?? null,
+      carta_tarot: JSON.stringify(cartaSorteada),
       status: 'pendente',
       payment_status: 'pending',
     };
 
- const { data, error } = await supabase
+    const { data, error } = await supabase
       .from('analises')
       .insert(dadosInsert)
       .select('id');
@@ -135,7 +178,59 @@ try {
       );
     }
 
-    return NextResponse.json({ success: true, id: data?.[0]?.id });
+    const analiseId = data[0].id;
+    const rowCtx = { ...dadosInsert, id: analiseId };
+
+    // Geração de IA em background — não bloqueia a resposta ao cliente
+    ;(async () => {
+      try {
+        const [previewR, diagnosticoR, amorR, arquetiposR, plano7R, tarotR] = await Promise.allSettled([
+          gerarPreviewIA({
+            signo,
+            signoLua:   planetas?.signoLua   ?? null,
+            signoVenus: planetas?.signoVenus ?? null,
+            signoMarte: planetas?.signoMarte ?? null,
+            numN:       numeroVida,
+          }),
+          gerarDiagnosticoIA(buildDiagnosticoCtx(rowCtx)),
+          gerarAmorIA(buildAmorCtx(rowCtx)),
+          gerarArquetiposIA(buildArquetiposCtx(rowCtx)),
+          gerarPlano7IA(buildPlano7Ctx(rowCtx)),
+          gerarInterpretacaoTarotIA({
+            carta:     cartaSorteada,
+            invertida: cartaSorteada.invertida,
+            signo,
+            numN:      numeroVida,
+            objetivo:  objetivo_principal || '',
+            firstName: nome.trim().split(' ')[0],
+          }),
+        ]);
+
+        const extras = {};
+        const preview     = previewR.status     === 'fulfilled' ? previewR.value     : null;
+        const diagnostico = diagnosticoR.status === 'fulfilled' ? diagnosticoR.value : null;
+        const amor        = amorR.status        === 'fulfilled' ? amorR.value        : null;
+        const arquetipos  = arquetiposR.status  === 'fulfilled' ? arquetiposR.value  : null;
+        const plano7      = plano7R.status      === 'fulfilled' ? plano7R.value      : null;
+        const tarot       = tarotR.status       === 'fulfilled' ? tarotR.value       : null;
+
+        if (preview)     extras.preview_gerado              = preview;
+        if (diagnostico) extras.diagnostico_gerado          = JSON.stringify(diagnostico);
+        if (amor)        extras.amor_gerado                 = JSON.stringify(amor);
+        if (arquetipos)  extras.arquetipos_gerado           = JSON.stringify(arquetipos);
+        if (plano7)      extras.plano7_gerado               = JSON.stringify(plano7);
+        if (tarot)       extras.carta_tarot_interpretacao   = JSON.stringify(tarot);
+
+        if (Object.keys(extras).length) {
+          await supabase.from('analises').update(extras).eq('id', analiseId);
+          console.log('[IA] salvos:', Object.keys(extras).join(', '));
+        }
+      } catch (e) {
+        console.error('[IA background] falhou:', e?.message || e);
+      }
+    })();
+
+    return NextResponse.json({ success: true, id: analiseId });
   } catch (error) {
     return NextResponse.json(
       { error: 'Erro interno', details: error?.message || String(error) },

@@ -97,8 +97,10 @@ export default function ManualPage() {
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState('');
   const [processando, setProcessando] = useState(false);
+  const [gerando, setGerando] = useState(false);
 
   const starsBuiltRef = useRef(false);
+  const geracaoIniciada = useRef(false);
 
   // ==============================================
   // EFEITO: CRIAR ESTRELAS NO FUNDO
@@ -195,6 +197,45 @@ export default function ManualPage() {
   const hasPaid = useMemo(() => isPaid(row), [row]);
 
   // ==============================================
+  // EFEITO: GERAÇÃO SOB DEMANDA
+  // Quando pago e campos _gerado ausentes, chama a API para gerar agora.
+  // O webhook tenta primeiro via after(); esta rota é o fallback garantido.
+  // ==============================================
+  useEffect(() => {
+    if (!row || !hasPaid || row.fechamento_gerado) return;
+    if (geracaoIniciada.current) return;
+
+    geracaoIniciada.current = true;
+    setGerando(true);
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 270_000); // 4.5 min
+
+    fetch('/api/gerar-manual-completo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ analiseId: id }),
+      signal: controller.signal,
+    })
+      .then((r) => r.json())
+      .then(async () => {
+        const supabase = getSupabaseClient();
+        if (!supabase) return;
+        const { data } = await supabase.from('analises').select('*').eq('id', id).single();
+        if (data) setRow(data);
+      })
+      .catch((err) => {
+        if (err.name !== 'AbortError') {
+          console.error('[manual] gerar-manual-completo falhou:', err?.message);
+        }
+      })
+      .finally(() => {
+        clearTimeout(timeout);
+        setGerando(false);
+      });
+  }, [row, hasPaid, id]);
+
+  // ==============================================
   // GERAR MANUAL PREMIUM
   // ==============================================
   const manual = useMemo(() => {
@@ -209,6 +250,31 @@ export default function ManualPage() {
       trabalhoStatus: row.trabalho_status,
       local: row.local_nascimento,
       dataNascimentoISO: row.data_nascimento,
+      diagnosticoGerado:  row.diagnostico_gerado  || null,
+      amorGerado:         row.amor_gerado         || null,
+      tipoPessoaGerado:   row.tipo_pessoa_gerado  || null,
+      plano7Gerado:       row.plano7_gerado        || null,
+      signoLua:           row.signo_lua            || null,
+      signoVenus:         row.signo_venus          || null,
+      signoMarte:         row.signo_marte          || null,
+      signoNodo:          row.signo_nodo           || null,
+      signoMercurio:      row.signo_mercurio       || null,
+      signoAscendente:    row.signo_ascendente     || null,
+      anoPessoal:         row.ano_pessoal          ?? null,
+      numeroAlma:         row.numero_alma          ?? null,
+      numeroExpressao:    row.numero_expressao     ?? null,
+      arquetiposGerado:   row.arquetipos_gerado    || null,
+      pontoCegoGerado:    row.ponto_cego_gerado   || null,
+      bloqueiosGerado:    row.bloqueios_gerado     || null,
+      dinheiroGerado:     row.dinheiro_gerado      || null,
+      rituaisGerado:      row.rituais_gerado       || null,
+      objetivoGerado:     row.objetivo_gerado      || null,
+      leituraGerada:      row.leitura_gerada       || null,
+      calendarioGerado:   row.calendario_gerado    || null,
+      fechamentoGerado:          row.fechamento_gerado           || null,
+      sinteseGerada:             row.sintese_gerada              || null,
+      cartaTarot:                row.carta_tarot                 || null,
+      cartaTarotInterpretacao:   row.carta_tarot_interpretacao   || null,
     };
 
     try {
@@ -221,6 +287,13 @@ export default function ManualPage() {
       };
     }
   }, [row]);
+
+  useEffect(() => {
+  if (!row) return;
+  console.log('[DEBUG] diagnostico_gerado:', row.diagnostico_gerado ? row.diagnostico_gerado.slice(0, 60) + '…' : 'NULL');
+  console.log('[DEBUG] amor_gerado:', row.amor_gerado ? '✅ preenchido' : 'NULL');
+  console.log('[DEBUG] tipo_pessoa_gerado:', row.tipo_pessoa_gerado ? '✅ preenchido' : 'NULL');
+}, [row]);
 
   useEffect(() => {
   if (!manual || manual.__error) return;
@@ -387,7 +460,27 @@ export default function ManualPage() {
 
       {/* CONTEÚDO */}
       <div className="container">
-        
+
+        {/* ========== LOADING (aguardando geração IA) ========== */}
+        {gerando ? (
+          <div className="center" style={{ minHeight: '70vh', padding: '40px 20px' }}>
+            <div className="spinner" style={{ width: 64, height: 64, borderWidth: 4, margin: '0 auto 24px' }} />
+            <p style={{ fontSize: 22, fontFamily: "'Cinzel', serif", fontWeight: 700, color: 'var(--text)', marginBottom: 10, textAlign: 'center' }}>
+              ✨ Estamos preparando seu manual personalizado...
+            </p>
+            <p className="muted" style={{ fontSize: 17, marginBottom: 8, textAlign: 'center' }}>
+              Isso leva de 30 a 60 segundos. Não feche esta página.
+            </p>
+            <p className="muted" style={{ fontSize: 14, marginTop: 12, marginBottom: 32, textAlign: 'center' }}>
+              📩 Você também receberá o link de acesso por email. Verifique sua caixa de spam caso não encontre.
+            </p>
+            <div className="progressBar">
+              <div className="progressFill" />
+            </div>
+          </div>
+        ) : (
+        <>
+
         {/* ========== HERO ========== */}
         <div className="hero">
           <div className="badge">
@@ -531,6 +624,27 @@ e mostrar como sair dele.
                   );
                 }
 
+                // TIPO: MAPA
+                if (section.type === 'mapa') {
+                  return (
+                    <div key={anchor} id={anchor} className="card premium">
+                      <h2 className="h2">{section.title}</h2>
+                      <div className="subttl" style={{ marginBottom: 10 }}>🗺 Legenda do seu mapa</div>
+                      <ul className="list-check compact">
+                        {Array.isArray(section.items) && section.items.map((item, i) => (
+                          <li key={i}>✦ {item}</li>
+                        ))}
+                      </ul>
+                      {section.sintese && (
+                        <div className="note" style={{ marginTop: 18 }}>
+                          <div className="subttl" style={{ marginBottom: 8 }}>✨ Síntese Integrada</div>
+                          <div className="richText">{section.sintese}</div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+
                 // TIPO: TOC
                 if (section.type === 'toc') {
                   return (
@@ -582,36 +696,14 @@ e mostrar como sair dele.
                         <div style={{ marginTop: 10 }}>{section.hook}</div>
                       </div>
 
-                      <div className="grid2" style={{ marginTop: 14 }}>
-                        <div className="subcard highlight">
-                          <div className="subttl">📍 Passo a passo (7 dias)</div>
-                          <ul className="list-check compact">
-                            {Array.isArray(section.days) && 
-                              section.days.map((day, i) => (
-                                <li key={i}>✓ {day}</li>
-                              ))}
-                          </ul>
-                        </div>
-
-                        <div className="subcard">
-                          <div className="subttl">🧘 Rituais</div>
-                          <ul className="list-check compact">
-                            {Array.isArray(section.rituals) && 
-                              section.rituals.map((ritual, i) => (
-                                <li key={i}>✓ {ritual}</li>
-                              ))}
-                          </ul>
-
-                          <div className="subttl" style={{ marginTop: 12 }}>
-                            ✅ Checkpoints
-                          </div>
-                          <ul className="list-check compact">
-                            {Array.isArray(section.checkpoints) && 
-                              section.checkpoints.map((checkpoint, i) => (
-                                <li key={i}>✓ {checkpoint}</li>
-                              ))}
-                          </ul>
-                        </div>
+                      <div style={{ marginTop: 14 }}>
+                        <div className="subttl">📍 Passo a passo (7 dias)</div>
+                        <ul className="list-check compact" style={{ marginTop: 8 }}>
+                          {Array.isArray(section.days) &&
+                            section.days.map((day, i) => (
+                              <li key={i}>✓ {day}</li>
+                            ))}
+                        </ul>
                       </div>
                     </div>
                   );
@@ -744,6 +836,38 @@ e mostrar como sair dele.
                   );
                 }
 
+                // TIPO: TAROT
+                if (section.type === 'tarot') {
+                  const c = section.carta || {};
+                  return (
+                    <div key={anchor} id={anchor} className="card premium" style={{ background: 'linear-gradient(135deg, rgba(17,7,32,0.9) 0%, rgba(55,15,90,0.4) 100%)', borderColor: 'rgba(212,168,83,0.3)' }}>
+                      <h2 className="h2">{section.title}</h2>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 18, padding: '16px 18px', borderRadius: 14, background: 'rgba(212,168,83,0.07)', border: '1px solid rgba(212,168,83,0.2)' }}>
+                        <span style={{ fontSize: 36 }}>{c.simbolo || '🔮'}</span>
+                        <div>
+                          <div style={{ fontFamily: 'var(--fontSerif, serif)', fontSize: 20, fontWeight: 700, color: '#f0c870', marginBottom: 4 }}>
+                            {c.nome}{c.invertida ? ' — Invertida' : ''}
+                          </div>
+                          <div style={{ fontSize: 13, color: 'rgba(240,200,112,0.7)', letterSpacing: '0.05em' }}>
+                            {(c.palavrasChave || []).join(' · ')}
+                          </div>
+                        </div>
+                      </div>
+                      {section.interpTitulo && (
+                        <div style={{ fontSize: 16, fontStyle: 'italic', color: 'rgba(212,168,83,0.9)', marginBottom: 12 }}>
+                          "{section.interpTitulo}"
+                        </div>
+                      )}
+                      {section.interpBody && (
+                        <div className="richText">{section.interpBody}</div>
+                      )}
+                      {!section.interpBody && (
+                        <div className="richText">{c.invertida ? c.significadoInvertido : c.significado}</div>
+                      )}
+                    </div>
+                  );
+                }
+
                 // TIPO: CLOSING
                 if (section.type === 'closing') {
                   return (
@@ -790,6 +914,8 @@ e mostrar como sair dele.
               </div>
             </div>
           </>
+        )}
+        </>
         )}
       </div>
     </div>
@@ -1277,5 +1403,28 @@ const globalCss = `
     .btn, .btnMedium {
       width: 100%;
     }
+  }
+
+  /* ========== PROGRESS BAR ========== */
+  .progressBar {
+    width: 100%;
+    max-width: 400px;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+
+  .progressFill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #ec4899, #8b5cf6);
+    border-radius: 999px;
+    animation: progress-fill 45s cubic-bezier(0.05, 0.8, 0.5, 1) forwards;
+  }
+
+  @keyframes progress-fill {
+    0% { width: 0%; }
+    100% { width: 95%; }
   }
 `;
