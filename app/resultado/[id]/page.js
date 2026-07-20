@@ -182,9 +182,9 @@ export default function ResultadoPage() {
     } catch { return null; }
   }, [analise]);
 
-  // polling — refetch até diagnostico + imagem_ia_url chegarem (até 10 tentativas × 4s = 40s)
+  // polling — refetch até diagnostico_gerado chegar (até 10 tentativas × 4s = 40s)
   useEffect(() => {
-    if (!analise || (analise.diagnostico_gerado && analise.imagem_ia_url) || retryCount >= 10) return;
+    if (!analise || analise.diagnostico_gerado || retryCount >= 10) return;
     setRetrying(true);
     const timer = setTimeout(async () => {
       try {
