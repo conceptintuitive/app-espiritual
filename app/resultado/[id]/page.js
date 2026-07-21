@@ -2,7 +2,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 
 // ── Supabase ──────────────────────────────────────────────────────────────────
@@ -85,6 +85,8 @@ function firstSentences(text, n = 2) {
 export default function ResultadoPage() {
   const { id } = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isPending = searchParams.get('pending') === 'true';
 
   const [analise, setAnalise] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -93,6 +95,7 @@ export default function ResultadoPage() {
   const [showSticky, setShowSticky]   = useState(false);
   const [retryCount, setRetryCount]   = useState(0);
   const [retrying,   setRetrying]     = useState(false);
+  const [pendingTimedOut, setPendingTimedOut] = useState(false);
 
   // estrelas
   const starsBuiltRef = useRef(false);
@@ -140,6 +143,48 @@ export default function ResultadoPage() {
     if (id) buscar();
     return () => { mounted = false; };
   }, [id]);
+
+  // polling de confirmação de pagamento — só ativa com ?pending=true (retorno do PIX/MP)
+  useEffect(() => {
+    if (!isPending || !id) return;
+    let mounted = true;
+    let timer = null;
+    let attempts = 0;
+    const maxAttempts = 30; // 30 x 4s ≈ 2 minutos
+
+    async function checkPayment() {
+      try {
+        const supabase = getSupabaseClient();
+        if (supabase) {
+          const { data } = await supabase
+            .from('analises')
+            .select('payment_status')
+            .eq('id', id)
+            .single();
+          if (!mounted) return;
+          if (data?.payment_status === 'paid') {
+            router.replace(`/manual/${id}`);
+            return;
+          }
+        }
+      } catch {}
+
+      if (!mounted) return;
+      attempts += 1;
+      if (attempts >= maxAttempts) {
+        setPendingTimedOut(true);
+        return;
+      }
+      timer = setTimeout(checkPayment, 4000);
+    }
+
+    checkPayment();
+
+    return () => {
+      mounted = false;
+      if (timer) clearTimeout(timer);
+    };
+  }, [isPending, id, router]);
 
   // derived
   const signoFinal = useMemo(() => {
@@ -281,6 +326,36 @@ export default function ResultadoPage() {
           <h1 style={{ marginBottom: 10 }}>Ops…</h1>
           <p className="muted">{erro || 'Erro ao carregar'}</p>
           <button className="btn" onClick={() => router.push('/')}>Voltar</button>
+        </div>
+      </div>
+    );
+  }
+
+  if (isPending && !pendingTimedOut) {
+    return (
+      <div className="wrap">
+        <style jsx global>{globalCss}</style>
+        <div id="stars" className="stars" />
+        <div className="center">
+          <div className="spinner" />
+          <p className="muted">Confirmando seu pagamento…</p>
+          <p className="muted" style={{ fontSize: 14 }}>Isso pode levar alguns instantes.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isPending && pendingTimedOut) {
+    return (
+      <div className="wrap">
+        <style jsx global>{globalCss}</style>
+        <div id="stars" className="stars" />
+        <div className="center">
+          <h1 style={{ marginBottom: 10 }}>Quase lá…</h1>
+          <p className="muted">
+            Ainda estamos confirmando seu pagamento — isso pode levar alguns minutos.
+            Você também vai receber o link do seu manual por e-mail assim que for confirmado.
+          </p>
         </div>
       </div>
     );
