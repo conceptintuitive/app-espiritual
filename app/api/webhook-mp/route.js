@@ -12,6 +12,7 @@ import {
   gerarRituaisIA, gerarObjetivoIA, gerarLeituraIA, gerarCalendarioIA,
   gerarFechamentoIA, gerarSinteseIA,
 } from "@/lib/ia";
+import { sendGA4Purchase } from "@/lib/ga4";
 
 export const runtime = "nodejs";
 
@@ -165,6 +166,14 @@ export async function POST(request) {
       } catch (iaErr) {
         console.error("❌ Erro ao gerar conteúdo IA (MP):", iaErr?.message || iaErr);
       }
+
+      // GA4 purchase ───────────────────────────────────────────────────────────
+      await sendGA4Purchase({
+        transactionId: paymentId.toString(),
+        value: payment.transaction_amount ?? 0,
+        currency: (payment.currency_id || "BRL").toUpperCase(),
+        clientId: `server.${paymentId}`,
+      });
     });
 
     console.log("✅ Análise", analiseId, "marcada como paga via MP");

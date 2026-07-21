@@ -14,6 +14,7 @@ import {
   gerarRituaisIA, gerarObjetivoIA, gerarLeituraIA, gerarCalendarioIA,
   gerarFechamentoIA, gerarSinteseIA,
 } from "@/lib/ia";
+import { sendGA4Purchase } from "@/lib/ga4";
 
 // ─── Lógica compartilhada entre pagamento síncrono e assíncrono (boleto) ──────
 async function handlePaymentSuccess(session, supabase) {
@@ -118,44 +119,12 @@ async function handlePaymentSuccess(session, supabase) {
     }
 
     // GA4 purchase ─────────────────────────────────────────────────────────────
-    try {
-      const measurementId = process.env.GA4_MEASUREMENT_ID;
-      const apiSecret = process.env.GA4_API_SECRET;
-
-      if (!measurementId || !apiSecret) {
-        console.error("❌ GA4_MEASUREMENT_ID ou GA4_API_SECRET ausentes");
-      } else {
-        const gaRes = await fetch(
-          `https://www.google-analytics.com/mp/collect?measurement_id=${measurementId}&api_secret=${apiSecret}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              client_id: `server.${session.id}`,
-              events: [
-                {
-                  name: "purchase",
-                  params: {
-                    transaction_id: session.id,
-                    value: (session.amount_total ?? 0) / 100,
-                    currency: (session.currency || "brl").toUpperCase(),
-                  },
-                },
-              ],
-            }),
-          }
-        );
-
-        if (!gaRes.ok) {
-          const txt = await gaRes.text().catch(() => "");
-          console.error("❌ Falha ao enviar purchase para GA4:", gaRes.status, txt);
-        } else {
-          console.log("✅ Purchase enviado ao GA4:", session.id);
-        }
-      }
-    } catch (err) {
-      console.error("❌ Erro ao enviar purchase:", err);
-    }
+    await sendGA4Purchase({
+      transactionId: session.id,
+      value: (session.amount_total ?? 0) / 100,
+      currency: (session.currency || "brl").toUpperCase(),
+      clientId: `server.${session.id}`,
+    });
 
     // Email de acesso ──────────────────────────────────────────────────────────
     try {
