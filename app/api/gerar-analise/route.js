@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { calcularPlanetas, calcularAscendente, calcularAnoPessoal, calcularNumeroAlma, calcularNumeroExpressao } from '@/lib/calculos';
 import { gerarPreviewIA, gerarDiagnosticoIA, gerarAmorIA, gerarArquetiposIA, gerarPlano7IA, gerarInterpretacaoTarotIA } from '@/lib/ia';
@@ -194,8 +194,9 @@ export async function POST(request) {
     const analiseId = data[0].id;
     const rowCtx = { ...dadosInsert, id: analiseId };
 
-    // Geração de IA em background — não bloqueia a resposta ao cliente
-    ;(async () => {
+    // Geração de IA em background — roda após a resposta ser enviada ao cliente,
+    // sem risco da Vercel encerrar a function no meio (after() garante a execução)
+    after(async () => {
       try {
         const [previewR, diagnosticoR, amorR, arquetiposR, plano7R, tarotR] = await Promise.allSettled([
           gerarPreviewIA({
@@ -241,7 +242,7 @@ export async function POST(request) {
       } catch (e) {
         console.error('[IA background] falhou:', e?.message || e);
       }
-    })();
+    });
 
     return NextResponse.json({ success: true, id: analiseId });
   } catch (error) {

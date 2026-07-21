@@ -197,9 +197,13 @@ export default function ResultadoPage() {
     } catch { return null; }
   }, [analise]);
 
-  // polling — refetch até diagnostico_gerado chegar (até 10 tentativas × 4s = 40s)
+  const iaCompleta = Boolean(
+    analise?.diagnostico_gerado && analise?.amor_gerado && analise?.arquetipos_gerado
+  );
+
+  // polling — refetch até diagnostico + amor + arquetipos chegarem (até 10 tentativas × 4s = 40s)
   useEffect(() => {
-    if (!analise || analise.diagnostico_gerado || retryCount >= 10) return;
+    if (!analise || iaCompleta || retryCount >= 10) return;
     setRetrying(true);
     const timer = setTimeout(async () => {
       try {
@@ -329,8 +333,8 @@ export default function ResultadoPage() {
         </div>
         )}
 
-        {/* spinner de polling enquanto diagnóstico não chegou */}
-        {!analise.diagnostico_gerado && (retrying || retryCount < 3) && (
+        {/* spinner de polling enquanto diagnóstico + amor + arquétipos não chegarem */}
+        {!iaCompleta && (retrying || retryCount < 3) && (
           <div className="gerando-card">
             <div className="gerando-spinner" />
             <p className="gerando-text">Gerando seu diagnóstico…</p>
