@@ -13,6 +13,7 @@ import {
   gerarFechamentoIA, gerarSinteseIA,
 } from "@/lib/ia";
 import { sendGA4Purchase } from "@/lib/ga4";
+import { sendTikTokPurchase } from "@/lib/tiktok";
 
 export const runtime = "nodejs";
 
@@ -173,6 +174,14 @@ export async function POST(request) {
         value: payment.transaction_amount ?? 0,
         currency: (payment.currency_id || "BRL").toUpperCase(),
         clientId: `server.${paymentId}`,
+      });
+
+      // TikTok CompletePayment ─────────────────────────────────────────────────
+      await sendTikTokPurchase({
+        transactionId: paymentId.toString(),
+        value: payment.transaction_amount ?? 0,
+        currency: (payment.currency_id || "BRL").toUpperCase(),
+        email: analiseData?.email,
       });
     });
 

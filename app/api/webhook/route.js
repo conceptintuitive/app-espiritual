@@ -15,6 +15,7 @@ import {
   gerarFechamentoIA, gerarSinteseIA,
 } from "@/lib/ia";
 import { sendGA4Purchase } from "@/lib/ga4";
+import { sendTikTokPurchase } from "@/lib/tiktok";
 
 // ─── Lógica compartilhada entre pagamento síncrono e assíncrono (boleto) ──────
 async function handlePaymentSuccess(session, supabase) {
@@ -124,6 +125,14 @@ async function handlePaymentSuccess(session, supabase) {
       value: (session.amount_total ?? 0) / 100,
       currency: (session.currency || "brl").toUpperCase(),
       clientId: `server.${session.id}`,
+    });
+
+    // TikTok CompletePayment ───────────────────────────────────────────────────
+    await sendTikTokPurchase({
+      transactionId: session.id,
+      value: (session.amount_total ?? 0) / 100,
+      currency: (session.currency || "brl").toUpperCase(),
+      email,
     });
 
     // Email de acesso ──────────────────────────────────────────────────────────
