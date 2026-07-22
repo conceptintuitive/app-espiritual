@@ -182,6 +182,7 @@ export async function POST(request) {
         value: payment.transaction_amount ?? 0,
         currency: (payment.currency_id || "BRL").toUpperCase(),
         email: analiseData?.email,
+        analiseId,
       });
     });
 

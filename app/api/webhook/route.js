@@ -133,6 +133,7 @@ async function handlePaymentSuccess(session, supabase) {
       value: (session.amount_total ?? 0) / 100,
       currency: (session.currency || "brl").toUpperCase(),
       email,
+      analiseId,
     });
 
     // Email de acesso ──────────────────────────────────────────────────────────
