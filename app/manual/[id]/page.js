@@ -326,6 +326,17 @@ export default function ManualPage() {
   }, [manual]);
 
   // ==============================================
+  // SEÇÕES VISÍVEIS NO CORPO/SUMÁRIO
+  // A carta de tarot já aparece na abertura do manual (imagem + texto completo),
+  // então é excluída daqui para não duplicar e para manter os anchors sec_${idx}
+  // alinhados entre o sumário e o corpo.
+  // ==============================================
+  const visibleSections = useMemo(() => {
+    if (!Array.isArray(manual?.sections)) return [];
+    return manual.sections.filter((s) => s?.type !== 'tarot');
+  }, [manual]);
+
+  // ==============================================
   // HANDLER: ABRIR CHECKOUT
   // ==============================================
   async function handleComprar() {
@@ -624,8 +635,8 @@ e mostrar como sair dele.
                     </div>
                   </div>
 
-                  {/* Teaser: nome da carta + frase de gancho, sem a interpretação completa */}
-                  <div style={{ textAlign: 'center', marginTop: 18, padding: '0 12px' }}>
+                  {/* Interpretação completa: nome da carta + gancho + texto personalizado */}
+                  <div className="card premium" style={{ marginTop: 18, textAlign: 'center' }}>
                     <h3
                       style={{
                         fontFamily: "'Cinzel', serif",
@@ -645,12 +656,17 @@ e mostrar como sair dele.
                           fontSize: 19,
                           fontStyle: 'italic',
                           color: 'rgba(233,213,255,0.9)',
-                          margin: '8px auto 0',
+                          margin: '10px auto 0',
                           maxWidth: 620,
                         }}
                       >
                         "{hookPhrase}"
                       </p>
+                    )}
+                    {fallbackText && (
+                      <div className="richText" style={{ textAlign: 'left' }}>
+                        {fallbackText}
+                      </div>
                     )}
                   </div>
                 </>
@@ -684,25 +700,23 @@ e mostrar como sair dele.
 
               {/* TABLE OF CONTENTS */}
               <div className="toc">
-                {Array.isArray(manual?.sections) &&
-                  manual.sections
-                    .filter((s) => s?.title)
-                    .map((s, idx) => {
-                      const anchor = `sec_${idx}`;
-                      return (
-                        <a key={anchor} href={`#${anchor}`} className="tocItem">
-                          {s.title}
-                        </a>
-                      );
-                    })}
+                {visibleSections
+                  .filter((s) => s?.title)
+                  .map((s, idx) => {
+                    const anchor = `sec_${idx}`;
+                    return (
+                      <a key={anchor} href={`#${anchor}`} className="tocItem">
+                        {s.title}
+                      </a>
+                    );
+                  })}
               </div>
             </div>
 
             {/* ========== RENDER DAS SEÇÕES ========== */}
-            {Array.isArray(manual?.sections) &&
-              manual.sections.map((section, idx) => {
+            {visibleSections.map((section, idx) => {
                 const anchor = `sec_${idx}`;
-                
+
 
                 // TIPO: COVER
                 if (section.type === 'cover') {
@@ -934,28 +948,6 @@ e mostrar como sair dele.
                             </ul>
                           </div>
                         ))}
-                    </div>
-                  );
-                }
-
-                // TIPO: TAROT
-                if (section.type === 'tarot') {
-                  const c = section.carta || {};
-                  return (
-                    <div key={anchor} id={anchor} className="card premium" style={{ background: 'linear-gradient(135deg, rgba(17,7,32,0.9) 0%, rgba(55,15,90,0.4) 100%)', borderColor: 'rgba(212,168,83,0.3)' }}>
-                      <h2 className="h2">{section.title}</h2>
-
-                      {section.interpTitulo && (
-                        <div style={{ fontSize: 16, fontStyle: 'italic', color: 'rgba(212,168,83,0.9)', marginBottom: 12 }}>
-                          "{section.interpTitulo}"
-                        </div>
-                      )}
-                      {section.interpBody && (
-                        <div className="richText">{section.interpBody}</div>
-                      )}
-                      {!section.interpBody && (
-                        <div className="richText">{c.invertida ? c.significadoInvertido : c.significado}</div>
-                      )}
                     </div>
                   );
                 }
