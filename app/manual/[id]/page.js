@@ -49,6 +49,18 @@ function hasValidChoice(value) {
   return text !== 'selecionar' && text !== 'select' && text !== 'escolher';
 }
 
+function firstSentences(text, maxSentences = 1) {
+  const clean = String(text ?? '')
+    .replace(/\r\n/g, '\n')
+    .replace(/\*\*/g, '')
+    .replace(/\*/g, '')
+    .trim();
+  if (!clean) return '';
+  const sentences = clean.match(/[^.!?]+[.!?]+(\s+|$)/g);
+  if (!sentences) return clean;
+  return sentences.slice(0, maxSentences).join(' ').trim();
+}
+
 // ==============================================
 // VERIFICA SE O PAGAMENTO FOI CONFIRMADO
 // ==============================================
@@ -565,6 +577,12 @@ e mostrar como sair dele.
               const c = tarotSection.carta || {};
               const manualFirstName = row?.nome?.split(' ')[0] || '';
 
+              const fallbackText =
+                tarotSection.interpBody ||
+                (c.invertida ? c.significadoInvertido : c.significado);
+              const hookPhrase =
+                normalize(tarotSection.interpTitulo) || firstSentences(fallbackText, 1);
+
               return (
                 <>
                   <div
@@ -620,7 +638,7 @@ e mostrar como sair dele.
                     >
                       {c.simbolo ? `${c.simbolo} ` : ''}{c.nome}{c.invertida ? ' — Invertida' : ''}
                     </h3>
-                    {tarotSection.interpTitulo && (
+                    {hookPhrase && (
                       <p
                         style={{
                           fontFamily: "'Cormorant Garamond', serif",
@@ -631,7 +649,7 @@ e mostrar como sair dele.
                           maxWidth: 620,
                         }}
                       >
-                        "{tarotSection.interpTitulo}"
+                        "{hookPhrase}"
                       </p>
                     )}
                   </div>
