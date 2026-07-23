@@ -629,9 +629,6 @@ e mostrar como sair dele.
                       {manualFirstName && (
                         <p style={{ fontFamily: 'Georgia, serif', fontSize: 20, fontWeight: 700, color: '#f0eff4', margin: 0, textAlign: 'center', textShadow: '0 2px 12px rgba(0,0,0,0.9)' }}>{manualFirstName}</p>
                       )}
-                      <p style={{ fontSize: 12, color: 'rgba(240,200,112,0.85)', letterSpacing: '0.08em', textTransform: 'uppercase', margin: 0 }}>
-                        {c.simbolo} {c.nome}{c.invertida ? ' — Invertida' : ''}
-                      </p>
                     </div>
                   </div>
 
