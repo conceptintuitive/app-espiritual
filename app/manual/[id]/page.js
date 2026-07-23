@@ -566,44 +566,76 @@ e mostrar como sair dele.
               const manualFirstName = row?.nome?.split(' ')[0] || '';
 
               return (
-                <div
-                  style={{
-                    position: 'relative',
-                    borderRadius: 20,
-                    overflow: 'hidden',
-                    marginTop: 22,
-                    aspectRatio: '1200/630',
-                    background: 'linear-gradient(135deg, #0a0118, #2d0a4e)',
-                    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.35)',
-                    border: '1px solid rgba(212,168,83,0.3)',
-                  }}
-                >
-                  <img
-                    src={row?.imagem_ia_url || `/api/og/${id}`}
-                    alt=""
-                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                  />
+                <>
                   <div
                     style={{
-                      position: 'absolute',
-                      inset: 0,
-                      background: 'linear-gradient(to top, rgba(5,0,15,0.85) 0%, rgba(5,0,15,0.05) 55%, rgba(5,0,15,0.4) 100%)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'flex-end',
-                      padding: 22,
-                      gap: 6,
+                      position: 'relative',
+                      borderRadius: 20,
+                      overflow: 'hidden',
+                      marginTop: 22,
+                      aspectRatio: '1200/630',
+                      background: 'linear-gradient(135deg, #0a0118, #2d0a4e)',
+                      boxShadow: '0 20px 60px rgba(0, 0, 0, 0.35)',
+                      border: '1px solid rgba(212,168,83,0.3)',
                     }}
                   >
-                    {manualFirstName && (
-                      <p style={{ fontFamily: 'Georgia, serif', fontSize: 20, fontWeight: 700, color: '#f0eff4', margin: 0, textAlign: 'center', textShadow: '0 2px 12px rgba(0,0,0,0.9)' }}>{manualFirstName}</p>
-                    )}
-                    <p style={{ fontSize: 12, color: 'rgba(240,200,112,0.85)', letterSpacing: '0.08em', textTransform: 'uppercase', margin: 0 }}>
-                      {c.simbolo} {c.nome}{c.invertida ? ' — Invertida' : ''}
-                    </p>
+                    <img
+                      src={row?.imagem_ia_url || `/api/og/${id}`}
+                      alt=""
+                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                    />
+                    <div
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        background: 'linear-gradient(to top, rgba(5,0,15,0.85) 0%, rgba(5,0,15,0.05) 55%, rgba(5,0,15,0.4) 100%)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'flex-end',
+                        padding: 22,
+                        gap: 6,
+                      }}
+                    >
+                      {manualFirstName && (
+                        <p style={{ fontFamily: 'Georgia, serif', fontSize: 20, fontWeight: 700, color: '#f0eff4', margin: 0, textAlign: 'center', textShadow: '0 2px 12px rgba(0,0,0,0.9)' }}>{manualFirstName}</p>
+                      )}
+                      <p style={{ fontSize: 12, color: 'rgba(240,200,112,0.85)', letterSpacing: '0.08em', textTransform: 'uppercase', margin: 0 }}>
+                        {c.simbolo} {c.nome}{c.invertida ? ' — Invertida' : ''}
+                      </p>
+                    </div>
                   </div>
-                </div>
+
+                  {/* Teaser: nome da carta + frase de gancho, sem a interpretação completa */}
+                  <div style={{ textAlign: 'center', marginTop: 18, padding: '0 12px' }}>
+                    <h3
+                      style={{
+                        fontFamily: "'Cinzel', serif",
+                        fontSize: 'clamp(20px, 4vw, 28px)',
+                        fontWeight: 700,
+                        color: '#fbbf24',
+                        margin: 0,
+                        letterSpacing: '0.02em',
+                      }}
+                    >
+                      {c.simbolo ? `${c.simbolo} ` : ''}{c.nome}{c.invertida ? ' — Invertida' : ''}
+                    </h3>
+                    {tarotSection.interpTitulo && (
+                      <p
+                        style={{
+                          fontFamily: "'Cormorant Garamond', serif",
+                          fontSize: 19,
+                          fontStyle: 'italic',
+                          color: 'rgba(233,213,255,0.9)',
+                          margin: '8px auto 0',
+                          maxWidth: 620,
+                        }}
+                      >
+                        "{tarotSection.interpTitulo}"
+                      </p>
+                    )}
+                  </div>
+                </>
               );
             })()}
 
