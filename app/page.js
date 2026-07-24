@@ -51,6 +51,7 @@ function QuizOverlay({ onClose }) {
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
   const [erro, setErro] = useState('');
+  const [nomeErro, setNomeErro] = useState('');
 
   useEffect(() => {
     if (!loading) { setLoadingStep(0); return; }
@@ -73,7 +74,9 @@ function QuizOverlay({ onClose }) {
   const handleSubmit = async () => {
     const nomeTrimmed = nome.trim();
     const emailTrimmed = email.trim();
-    if (nomeTrimmed.length < 3) { setErro('Por favor, preencha seu nome completo.'); return; }
+    setNomeErro('');
+    const nomePalavras = nomeTrimmed.split(/\s+/).filter(Boolean);
+    if (nomePalavras.length < 2) { setNomeErro('Digite seu nome completo para um resultado mais preciso.'); return; }
     if (!emailTrimmed.includes('@')) { setErro('Digite um e-mail válido.'); return; }
     if (!dataNasc) { setErro('Selecione sua data de nascimento.'); return; }
 
@@ -362,12 +365,12 @@ function QuizOverlay({ onClose }) {
                 </p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 20 }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: 14, color: '#9896a8', fontFamily: 'var(--F)', marginBottom: 7 }}>Seu nome</label>
+                    <label style={{ display: 'block', fontSize: 14, color: '#9896a8', fontFamily: 'var(--F)', marginBottom: 7 }}>Seu nome completo (de nascimento)</label>
                     <input
                       type="text"
                       value={nome}
                       onChange={e => setNome(e.target.value)}
-                      placeholder="Ex: Maria da Silva"
+                      placeholder="Ex: Maria da Silva Santos"
                       style={{
                         width: '100%', padding: '14px 16px', borderRadius: 14,
                         border: '1px solid rgba(139,92,246,.3)', background: 'rgba(18,18,30,.9)',
@@ -375,6 +378,14 @@ function QuizOverlay({ onClose }) {
                         outline: 'none',
                       }}
                     />
+                    <p style={{ fontSize: 12, color: '#6b6980', fontFamily: 'var(--F)', marginTop: 6, lineHeight: 1.4 }}>
+                      Use o nome que está na sua certidão de nascimento — ele é a base do seu mapa numerológico.
+                    </p>
+                    {nomeErro && (
+                      <p style={{ fontSize: 13, color: 'rgba(254,202,202,.9)', fontFamily: 'var(--F)', marginTop: 6 }}>
+                        {nomeErro}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label style={{ display: 'block', fontSize: 14, color: '#9896a8', fontFamily: 'var(--F)', marginBottom: 7 }}>Seu e-mail</label>
