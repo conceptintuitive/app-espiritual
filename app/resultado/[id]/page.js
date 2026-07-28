@@ -515,7 +515,7 @@ export default function ResultadoPage() {
                 Seus bloqueios financeiros e o caminho para destravar estão no manual completo.
               </p>
               <button className="btn-cta" onClick={handleComprar} disabled={processando}>
-                {processando ? '⏳ Abrindo…' : 'VER MEU DIAGNÓSTICO COMPLETO'}
+                {processando ? '⏳ Abrindo…' : 'DESBLOQUEAR MEU MANUAL — R$ 47'}
               </button>
             </div>
           </div>
@@ -584,7 +584,7 @@ export default function ResultadoPage() {
                 A interpretação completa de como {cartaTarot.nome}{cartaTarot.invertida ? ' Invertida' : ''} se conecta ao seu perfil e objetivo está no manual completo.
               </p>
               <button className="btn-cta" onClick={handleComprar} disabled={processando}>
-                {processando ? '⏳ Abrindo…' : 'VER MINHA INTERPRETAÇÃO COMPLETA'}
+                {processando ? '⏳ Abrindo…' : 'DESBLOQUEAR MEU MANUAL — R$ 47'}
               </button>
             </div>
           </div>
@@ -632,8 +632,9 @@ export default function ResultadoPage() {
               { check: false, label: 'Fechamento e Mantra Pessoal' },
             ].map(({ check, label }) => (
               <li key={label} className={`manual-index-item ${check ? 'manual-index-seen' : 'manual-index-locked'}`}>
-                <span className="manual-index-icon">{check ? '✓' : '🔒'}</span>
+                <span className="manual-index-icon">{check ? '👁️' : '🔒'}</span>
                 {label}
+                {check && <span className="manual-index-tag"> — prévia liberada</span>}
               </li>
             ))}
           </ul>
@@ -643,7 +644,7 @@ export default function ResultadoPage() {
         {/* ══ BLOCO 7 — OFERTA FINAL ══ */}
         <div className="card offer-card">
           <div className="offer-badge-sm">Seu plano completo</div>
-          <p className="ancora-valor">13 seções personalizadas · 30+ páginas · feito só pra você</p>
+          <p className="ancora-valor">14 seções personalizadas · 30+ páginas · feito só pra você</p>
           <div className="offer-price-row">
             <span className="price-old-sm">de R$ 97,00</span>
             <span className="price-now-sm">por R$ 47,00</span>
@@ -657,10 +658,10 @@ export default function ResultadoPage() {
             <li>✓ 3 rituais específicos pro seu perfil</li>
           </ul>
           <div className="manual-preview-note">
-            📖 Seu manual tem 13 seções escritas exclusivamente para {firstName}. Nenhum outro manual é igual ao seu.
+            📖 Seu manual tem 14 seções escritas exclusivamente para {firstName}. Nenhum outro manual é igual ao seu.
           </div>
           <button className="btn-cta" onClick={handleComprar} disabled={processando}>
-            {processando ? '⏳ Abrindo…' : 'QUERO MEU MANUAL COMPLETO'}
+            {processando ? '⏳ Abrindo…' : 'DESBLOQUEAR MEU MANUAL — R$ 47'}
           </button>
           <p className="pos-compra">
             Após o pagamento, você receberá o link do seu manual por email em poucos minutos. Verifique também a caixa de spam.
@@ -687,7 +688,7 @@ export default function ResultadoPage() {
         <div className="reforco-block">
           <p className="reforco-text">Se as 3 primeiras frases já te descreveram, imagina o diagnóstico completo.</p>
           <button className="btn-cta btn-cta-sm" onClick={handleComprar} disabled={processando}>
-            {processando ? '⏳ Abrindo…' : 'QUERO MEU MANUAL COMPLETO'}
+            {processando ? '⏳ Abrindo…' : 'DESBLOQUEAR MEU MANUAL — R$ 47'}
           </button>
           <p className="pos-compra" style={{ marginTop: 10 }}>
             Após o pagamento, você receberá o link do seu manual por email em poucos minutos. Verifique também a caixa de spam.
@@ -1186,7 +1187,8 @@ const globalCss = `
   .manual-index-seen { color: rgba(250,245,255,0.95); }
   .manual-index-locked { color: var(--muted); opacity: 0.7; }
   .manual-index-icon { font-size: 14px; width: 18px; text-align: center; flex-shrink: 0; }
-  .manual-index-seen .manual-index-icon { color: #10b981; font-weight: 700; }
+  .manual-index-seen .manual-index-icon { color: #f0c870; font-weight: 700; }
+  .manual-index-tag { color: #f0c870; font-size: 12px; font-style: italic; opacity: 0.85; }
   .manual-index-footer {
     margin-top: 18px; font-size: 14px; font-style: italic;
     color: var(--muted); text-align: center; line-height: 1.65;
