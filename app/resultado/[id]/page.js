@@ -96,6 +96,20 @@ export default function ResultadoPage() {
   const [retryCount, setRetryCount]   = useState(0);
   const [retrying,   setRetrying]     = useState(false);
   const [pendingTimedOut, setPendingTimedOut] = useState(false);
+  const [bumpCalendario90, setBumpCalendario90] = useState(false);
+  const [nowTick, setNowTick] = useState(() => Date.now());
+
+  useEffect(() => {
+    const t = setInterval(() => setNowTick(Date.now()), 30000);
+    return () => clearInterval(t);
+  }, []);
+
+  const minutosDesdeGeracao = useMemo(() => {
+    if (!analise?.created_at) return null;
+    const diffMs = nowTick - new Date(analise.created_at).getTime();
+    if (!Number.isFinite(diffMs) || diffMs < 0) return null;
+    return Math.floor(diffMs / 60000);
+  }, [analise, nowTick]);
 
   // estrelas
   const starsBuiltRef = useRef(false);
@@ -290,7 +304,7 @@ export default function ResultadoPage() {
       const response = await fetch('/api/criar-checkout-mp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ analiseId: id }),
+        body: JSON.stringify({ analiseId: id, bumpCalendario90 }),
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data?.details || data?.error || 'Erro ao abrir checkout');
@@ -609,7 +623,11 @@ export default function ResultadoPage() {
 
         {/* ══ SOCIAL PROOF ══ */}
         <div className="section-card social-proof-card">
-          <p className="social-proof-text">✨ Mais de 25 análises geradas este mês</p>
+          <div className="social-proof-row">
+            <span className="social-proof-item">✨ Mais de 25 análises geradas este mês</span>
+            <span className="social-proof-item">🔒 Pagamento seguro (Pix, cartão ou boleto)</span>
+            <span className="social-proof-item">🛡️ Garantia de 7 dias</span>
+          </div>
         </div>
 
         {/* ══ BLOCO C — O QUE TEM NO MANUAL ══ */}
@@ -645,6 +663,11 @@ export default function ResultadoPage() {
         {/* ══ BLOCO 7 — OFERTA FINAL ══ */}
         <div className="card offer-card">
           <div className="offer-badge-sm">Seu plano completo</div>
+          {minutosDesdeGeracao !== null && (
+            <p className="urgencia-tempo">
+              ⏱️ Sua análise foi gerada {minutosDesdeGeracao < 1 ? 'agora mesmo' : `há ${minutosDesdeGeracao} min`} — o padrão ainda está fresco na sua cabeça. Fica mais fácil aplicar agora do que depois.
+            </p>
+          )}
           <p className="ancora-valor">14 seções personalizadas · 30+ páginas · feito só pra você</p>
           <div className="offer-price-row">
             <span className="price-old-sm">de R$ 97,00</span>
@@ -661,8 +684,22 @@ export default function ResultadoPage() {
           <div className="manual-preview-note">
             📖 Seu manual tem 14 seções escritas exclusivamente para {firstName}. Nenhum outro manual é igual ao seu.
           </div>
+          <label className="bump-oferta">
+            <input
+              type="checkbox"
+              checked={bumpCalendario90}
+              onChange={(e) => setBumpCalendario90(e.target.checked)}
+            />
+            <span>
+              <strong>+ Calendário Espiritual Estendido (90 dias)</strong> — mais 60 dias de orientação diária além dos 30 já inclusos, por apenas <strong>+R$ 17</strong>
+            </span>
+          </label>
           <button className="btn-cta" onClick={handleComprar} disabled={processando}>
-            {processando ? '⏳ Abrindo…' : 'DESBLOQUEAR MEU MANUAL — R$ 47'}
+            {processando
+              ? '⏳ Abrindo…'
+              : bumpCalendario90
+                ? 'DESBLOQUEAR MEU MANUAL + 90 DIAS — R$ 64'
+                : 'DESBLOQUEAR MEU MANUAL — R$ 47'}
           </button>
           <p className="pagamento-metodos">Pix, cartão ou boleto — aprovação em poucos minutos.</p>
           <p className="pos-compra">
@@ -1107,6 +1144,26 @@ const globalCss = `
     text-align: center; margin-top: -6px; letter-spacing: 0.02em;
   }
 
+  /* Urgência (tempo real desde a geração) */
+  .urgencia-tempo {
+    font-size: 12.5px; color: rgba(240,200,120,0.9);
+    text-align: center; margin: -4px 0 8px; letter-spacing: 0.01em;
+  }
+
+  /* Order bump */
+  .bump-oferta {
+    display: flex; align-items: flex-start; gap: 10px;
+    background: rgba(139,92,246,0.08);
+    border: 1px solid rgba(139,92,246,0.3);
+    border-radius: 12px; padding: 12px 14px;
+    margin: 4px 0 2px; cursor: pointer;
+    font-size: 13px; color: var(--muted); line-height: 1.5; text-align: left;
+  }
+  .bump-oferta input[type="checkbox"] {
+    margin-top: 3px; width: 16px; height: 16px; flex-shrink: 0; accent-color: #a855f7;
+  }
+  .bump-oferta strong { color: #fff; }
+
   /* Pós-compra */
   .pos-compra {
     font-size: 13px; color: var(--muted);
@@ -1182,6 +1239,11 @@ const globalCss = `
     padding: 16px 22px; text-align: center;
   }
   .social-proof-text { font-size: 14px; color: var(--muted); letter-spacing: 0.04em; }
+  .social-proof-row {
+    display: flex; flex-wrap: wrap; justify-content: center;
+    gap: 10px 20px;
+  }
+  .social-proof-item { font-size: 13px; color: var(--muted); letter-spacing: 0.02em; white-space: nowrap; }
 
   /* ── Índice do manual ── */
   .manual-index-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; }

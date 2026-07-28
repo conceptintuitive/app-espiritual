@@ -54,12 +54,15 @@ export async function POST(request) {
       return NextResponse.json({ received: true, status: payment.status });
     }
 
-    // external_reference = analiseId (definido na criação da preferência)
-    const analiseId = payment.external_reference;
-    if (!analiseId) {
+    // external_reference = analiseId (definido na criação da preferência), com
+    // sufixo "::bump90" quando o order bump do calendário estendido foi comprado.
+    const externalReference = payment.external_reference;
+    if (!externalReference) {
       console.error("Pagamento aprovado mas sem external_reference");
       return NextResponse.json({ error: "Sem referência" }, { status: 400 });
     }
+    const [analiseId, bumpMarker] = externalReference.split("::");
+    const bumpCalendario90 = bumpMarker === "bump90";
 
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -67,13 +70,16 @@ export async function POST(request) {
       { auth: { persistSession: false } }
     );
 
+    const updatePayload = {
+      payment_status: "paid",
+      mp_payment_id: paymentId.toString(),
+      updated_at: new Date().toISOString(),
+    };
+    if (bumpCalendario90) updatePayload.bump_calendario_90 = true;
+
     const { error: updateError } = await supabase
       .from("analises")
-      .update({
-        payment_status: "paid",
-        mp_payment_id: paymentId.toString(),
-        updated_at: new Date().toISOString(),
-      })
+      .update(updatePayload)
       .eq("id", analiseId);
 
     if (updateError) {

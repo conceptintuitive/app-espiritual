@@ -27,6 +27,7 @@ export async function POST(request) {
 
     const body = await request.json().catch(() => null);
     const analiseId = body?.analiseId;
+    const bumpCalendario90 = body?.bumpCalendario90 === true;
 
     if (!analiseId) {
       return NextResponse.json({ error: "ID da análise é obrigatório" }, { status: 400 });
@@ -48,19 +49,36 @@ export async function POST(request) {
 
     const baseUrl = getBaseUrl();
 
+    const items = [
+      {
+        id: analiseId,
+        title: "Manual Premium Personalizado",
+        description: `Relatório personalizado completo para ${analise.nome ?? "você"}`,
+        quantity: 1,
+        currency_id: "BRL",
+        unit_price: 47,
+      },
+    ];
+
+    if (bumpCalendario90) {
+      items.push({
+        id: `${analiseId}-bump-calendario90`,
+        title: "Calendário Espiritual Estendido — 90 dias",
+        description: "Adiciona mais 60 dias de orientação diária ao Plano de 30 dias do manual",
+        quantity: 1,
+        currency_id: "BRL",
+        unit_price: 17,
+      });
+    }
+
+    // external_reference carrega o analiseId e, se aplicável, a marcação do bump —
+    // o webhook usa isso pra saber se deve liberar o calendário estendido.
+    const externalReference = bumpCalendario90 ? `${analiseId}::bump90` : analiseId;
+
     const preference = new Preference(client);
     const result = await preference.create({
       body: {
-        items: [
-          {
-            id: analiseId,
-            title: "Manual Premium Personalizado",
-            description: `Relatório personalizado completo para ${analise.nome ?? "você"}`,
-            quantity: 1,
-            currency_id: "BRL",
-            unit_price: 47,
-          },
-        ],
+        items,
         payer: {
           email: analise.email || undefined,
         },
@@ -70,7 +88,7 @@ export async function POST(request) {
           pending: `${baseUrl}/resultado/${analiseId}?pending=true`,
         },
         auto_return: "approved",
-        external_reference: analiseId,
+        external_reference: externalReference,
         payment_methods: {
           excluded_payment_types: [],
           installments: 1,

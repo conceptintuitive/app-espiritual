@@ -283,6 +283,7 @@ export default function ManualPage() {
       objetivoGerado:     row.objetivo_gerado      || null,
       leituraGerada:      row.leitura_gerada       || null,
       calendarioGerado:   row.calendario_gerado    || null,
+      bumpCalendario90:   !!row.bump_calendario_90,
       fechamentoGerado:          row.fechamento_gerado           || null,
       sinteseGerada:             row.sintese_gerada              || null,
       cartaTarot:                row.carta_tarot                 || null,
