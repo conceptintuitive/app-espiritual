@@ -57,6 +57,7 @@ export async function POST(req) {
 
     const data = await resend.emails.send({
       from: "acesso@intuitiveconcept.com.br",
+      reply_to: "conceptintuitive@gmail.com",
       to: email,
       subject: "Seu acesso ao Manual dos Poderes Ocultos 🔮",
       html,

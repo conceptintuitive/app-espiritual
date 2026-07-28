@@ -54,6 +54,7 @@ async function enviarLembrete(resend, { email, nome, id, tier }) {
 
   await resend.emails.send({
     from: "acesso@intuitiveconcept.com.br",
+    reply_to: "conceptintuitive@gmail.com",
     to: email,
     subject: assunto,
     html,
