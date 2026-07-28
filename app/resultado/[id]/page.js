@@ -437,6 +437,7 @@ export default function ResultadoPage() {
               <button className="btn-cta" onClick={handleComprar} disabled={processando}>
                 {processando ? '⏳ Abrindo…' : 'DESBLOQUEAR MEU MANUAL — R$ 47'}
               </button>
+              <p className="pagamento-metodos">Pix, cartão ou boleto — aprovação em poucos minutos.</p>
               <p className="pos-compra" style={{ marginTop: 10 }}>
                 Após o pagamento, você receberá o link do seu manual por email em poucos minutos. Verifique também a caixa de spam.
               </p>
@@ -663,6 +664,7 @@ export default function ResultadoPage() {
           <button className="btn-cta" onClick={handleComprar} disabled={processando}>
             {processando ? '⏳ Abrindo…' : 'DESBLOQUEAR MEU MANUAL — R$ 47'}
           </button>
+          <p className="pagamento-metodos">Pix, cartão ou boleto — aprovação em poucos minutos.</p>
           <p className="pos-compra">
             Após o pagamento, você receberá o link do seu manual por email em poucos minutos. Verifique também a caixa de spam.
           </p>
@@ -1097,6 +1099,12 @@ const globalCss = `
   .countdown-real {
     font-size: 14px; color: var(--muted);
     text-align: center; line-height: 1.6; max-width: 380px;
+  }
+
+  /* Métodos de pagamento */
+  .pagamento-metodos {
+    font-size: 13px; color: rgba(167,243,208,0.85);
+    text-align: center; margin-top: -6px; letter-spacing: 0.02em;
   }
 
   /* Pós-compra */

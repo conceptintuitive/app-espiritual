@@ -42,6 +42,7 @@ npm run start    # Servidor de produção
 | `app/api/criar-checkout/route.js` | Cria sessão Stripe (R$ 47). Previne double-pay. |
 | `app/api/webhook/route.js` | Valida assinatura Stripe, atualiza DB, envia e-mail, dispara evento GA4 `purchase`. |
 | `app/api/send/route.js` | Envia e-mail de acesso via Resend. |
+| `app/api/cron/lembretes/route.js` | Cron (Vercel, `vercel.json`) que envia e-mail de recuperação para `analises` com `payment_status='pending'`: 1º lembrete após 1h, 2º após 24h. Idempotente via `lembrete_1_enviado_em` / `lembrete_2_enviado_em`. |
 | `app/page.js` | Landing page com formulário (55 KB); persiste estado no localStorage. |
 | `app/resultado/[id]/page.js` | Prévia gratuita — estrutura de página de vendas em PT-BR. |
 | `app/manual/[id]/page.js` | Manual completo; chama `generateManual()`, exporta PDF via html2canvas + jsPDF. |
@@ -69,7 +70,10 @@ GROQ_API_KEY=
 GA4_MEASUREMENT_ID=
 GA4_API_SECRET=
 NEXT_PUBLIC_SITE_URL=
+CRON_SECRET=
 ```
+
+`CRON_SECRET` protege `/api/cron/lembretes`: a Vercel injeta automaticamente o header `Authorization: Bearer $CRON_SECRET` nas chamadas de cron quando essa env var está configurada no projeto.
 
 `SUPABASE_SERVICE_ROLE_KEY` é usada apenas em API routes (server-side). As variáveis `NEXT_PUBLIC_*` ficam expostas no cliente.
 
