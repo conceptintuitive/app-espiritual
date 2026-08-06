@@ -95,7 +95,7 @@ if (analise.payment_status === "paid") {
           name: "Manual Premium Personalizado",
           description: `Relatório personalizado completo para ${analise.nome ?? "você"}`,
         },
-        unit_amount: 4700,
+        unit_amount: 2990,
       },
       quantity: 1,
     },

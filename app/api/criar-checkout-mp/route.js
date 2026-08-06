@@ -58,7 +58,7 @@ export async function POST(request) {
             description: `Relatório personalizado completo para ${analise.nome ?? "você"}`,
             quantity: 1,
             currency_id: "BRL",
-            unit_price: 47,
+            unit_price: 29.9,
           },
         ],
         payer: {
