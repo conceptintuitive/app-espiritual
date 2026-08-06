@@ -110,15 +110,35 @@ function CheckItem({ itemKey, checked, onToggle, children }) {
 }
 
 // ==============================================
-// ROTEIRO FALADO DE UM RITUAL (texto puro, sem markdown, pra narração)
+// ROTEIROS FALADOS (texto puro, sem markdown, pra narração)
 // ==============================================
+function stripMarkdown(s) {
+  return String(s ?? '').replace(/\*\*/g, '').replace(/\*/g, '');
+}
+
 function buildRitualNarration(r) {
-  const clean = (s) => String(s ?? '').replace(/\*\*/g, '').replace(/\*/g, '');
   const parts = [
-    `Ritual: ${clean(r.nome)}.`,
-    r.quando ? `Use quando: ${clean(r.quando)}.` : '',
-    ...(Array.isArray(r.passos) ? r.passos.map((p, i) => `Passo ${i + 1}: ${clean(p)}.`) : []),
-    r.frase ? `Para fechar: ${clean(r.frase)}` : '',
+    `Ritual: ${stripMarkdown(r.nome)}.`,
+    r.quando ? `Use quando: ${stripMarkdown(r.quando)}.` : '',
+    ...(Array.isArray(r.passos) ? r.passos.map((p, i) => `Passo ${i + 1}: ${stripMarkdown(p)}.`) : []),
+    r.frase ? `Para fechar: ${stripMarkdown(r.frase)}` : '',
+  ];
+  return parts.filter(Boolean).join(' ');
+}
+
+function buildDiagBlockNarration(block) {
+  const parts = [
+    block?.label ? `${stripMarkdown(block.label)}.` : '',
+    stripMarkdown(block?.text),
+  ];
+  return parts.filter(Boolean).join(' ');
+}
+
+function buildArchetypeNarration(item) {
+  const parts = [
+    `${stripMarkdown(item?.label)}: ${stripMarkdown(item?.nome)}.`,
+    stripMarkdown(item?.descricao),
+    item?.frase ? `Frase: ${stripMarkdown(item.frase)}` : '',
   ];
   return parts.filter(Boolean).join(' ');
 }
@@ -126,7 +146,7 @@ function buildRitualNarration(r) {
 // ==============================================
 // BOTÃO "OUVIR" — narração 100% no navegador (Web Speech API), sem custo e sem API externa
 // ==============================================
-function ListenButton({ text }) {
+function ListenButton({ text, label = 'Ouvir', pauseLabel = 'Pausar áudio' }) {
   const [playing, setPlaying] = useState(false);
   const [supported, setSupported] = useState(false);
 
@@ -170,7 +190,7 @@ function ListenButton({ text }) {
 
   return (
     <button type="button" className="listen-btn" onClick={handleToggle}>
-      {playing ? '⏸️ Pausar áudio' : '🔊 Ouvir este ritual guiado'}
+      {playing ? `⏸️ ${pauseLabel}` : `🔊 ${label}`}
     </button>
   );
 }
@@ -953,6 +973,7 @@ e mostrar como sair dele.
                           {splitBodyIntoParasAndQuote(b.text).paragraphs.map((p, j) => (
                             <p key={j} className="richText-p">{renderInline(p)}</p>
                           ))}
+                          <ListenButton text={buildDiagBlockNarration(b)} label="Ouvir este bloco" />
                         </div>
                       ))}
                       {section.quote && <blockquote className="pullQuote">"{renderInline(section.quote)}"</blockquote>}
@@ -970,6 +991,7 @@ e mostrar como sair dele.
                           <div className="subttl">{it.icon} {it.label} — {it.nome}</div>
                           <p className="richText-p" style={{ marginTop: 8 }}>{renderInline(it.descricao)}</p>
                           {it.frase && <blockquote className="pullQuote small">"{renderInline(it.frase)}"</blockquote>}
+                          <ListenButton text={buildArchetypeNarration(it)} label="Ouvir este arquétipo" />
                         </div>
                       ))}
                     </div>
@@ -993,7 +1015,7 @@ e mostrar como sair dele.
                               </ol>
                             )}
                             {r.frase && <blockquote className="pullQuote small">"{renderInline(r.frase)}"</blockquote>}
-                            <ListenButton text={buildRitualNarration(r)} />
+                            <ListenButton text={buildRitualNarration(r)} label="Ouvir este ritual guiado" />
                             <ul className="list-check compact" style={{ marginTop: 6 }}>
                               <CheckItem itemKey={ck} checked={!!checks[ck]} onToggle={toggleCheck}>
                                 Já pratiquei este ritual
