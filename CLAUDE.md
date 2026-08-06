@@ -69,9 +69,11 @@ GROQ_API_KEY=
 GA4_MEASUREMENT_ID=
 GA4_API_SECRET=
 NEXT_PUBLIC_SITE_URL=
+MP_ACCESS_TOKEN=
+CRON_SECRET=
 ```
 
-`SUPABASE_SERVICE_ROLE_KEY` é usada apenas em API routes (server-side). As variáveis `NEXT_PUBLIC_*` ficam expostas no cliente.
+`SUPABASE_SERVICE_ROLE_KEY` é usada apenas em API routes (server-side). As variáveis `NEXT_PUBLIC_*` ficam expostas no cliente. `CRON_SECRET` protege `/api/cron/lembretes` (disparado pelo cron do `vercel.json` ou por um cron externo) contra chamadas não autorizadas.
 
 ## Important Conventions
 

@@ -97,6 +97,7 @@ export default function ResultadoPage() {
   const [retrying,   setRetrying]     = useState(false);
   const [pendingTimedOut, setPendingTimedOut] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(null);
+  const [statsCount, setStatsCount] = useState(null);
   const [ofertaExpirada, setOfertaExpirada] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false);
 
@@ -146,6 +147,16 @@ export default function ResultadoPage() {
     if (id) buscar();
     return () => { mounted = false; };
   }, [id]);
+
+  // contador real de análises geradas (prova social) — arredondado pra baixo, sem inventar número
+  useEffect(() => {
+    let mounted = true;
+    fetch('/api/stats')
+      .then((r) => r.json())
+      .then((data) => { if (mounted) setStatsCount(data?.count ?? null); })
+      .catch(() => {});
+    return () => { mounted = false; };
+  }, []);
 
   // polling de confirmação de pagamento — só ativa com ?pending=true (retorno do PIX/MP)
   useEffect(() => {
@@ -338,6 +349,13 @@ export default function ResultadoPage() {
   }, [analise]);
 
   // compra
+  const handleShareWhatsapp = () => {
+    try { window?.gtag?.('event', 'compartilhar_whatsapp', { event_category: 'engagement' }); } catch {}
+    const shareUrl = `${window.location.origin}/?utm_source=whatsapp_share&utm_medium=referral`;
+    const text = `Acabei de fazer uma análise espiritual personalizada (numerologia + astrologia) e o resultado foi certeiro ✨🔮 Faz a sua grátis aqui: ${shareUrl}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
+  };
+
   const handleComprar = async () => {
     setProcessando(true);
     try {
@@ -417,6 +435,8 @@ export default function ResultadoPage() {
   }
 
   const firstName = pickFirstName(analise.nome);
+  // "mais de X" sempre arredondado pra baixo (nunca infla o número real); só mostra a partir de um mínimo plausível
+  const roundedStatsCount = statsCount && statsCount >= 15 ? Math.floor(statsCount / 10) * 10 : null;
 
   return (
     <div className="wrap">
@@ -446,6 +466,10 @@ export default function ResultadoPage() {
             {analise.numero_expressao  && <span className="pill pill-numero">🔢 Expressão: {analise.numero_expressao}</span>}
             {analise.ano_pessoal       && <span className="pill pill-numero">📅 Ano Pessoal: {analise.ano_pessoal}</span>}
           </div>
+
+          <button className="share-whatsapp-btn" onClick={handleShareWhatsapp}>
+            📲 Mandar pra uma amiga no WhatsApp
+          </button>
         </div>
 
         {/* ══ BLOCO 2 — PREVIEW ══ */}
@@ -663,7 +687,11 @@ export default function ResultadoPage() {
 
         {/* ══ SOCIAL PROOF ══ */}
         <div className="section-card social-proof-card">
-          <p className="social-proof-text">✨ Mais de 25 análises geradas este mês</p>
+          <p className="social-proof-text">
+            {roundedStatsCount
+              ? `✨ Mais de ${roundedStatsCount} pessoas já geraram sua análise por aqui`
+              : '✨ Análise gerada com nosso método exclusivo de numerologia e astrologia'}
+          </p>
         </div>
 
         {/* ══ BLOCO C — O QUE TEM NO MANUAL ══ */}
@@ -707,6 +735,7 @@ export default function ResultadoPage() {
             <span className="price-old-sm">de R$ 97,00</span>
             <span className="price-now-sm">por R$ 47,00</span>
           </div>
+          <div className="pix-badge">⚡ Pague com Pix: aprovação na hora, manual liberado na mesma hora</div>
           <ul className="list-check compact offer-list">
             <li>✓ Diagnóstico profundo do seu padrão</li>
             <li>✓ Mapa do amor (seu padrão afetivo real)</li>
@@ -725,7 +754,7 @@ export default function ResultadoPage() {
             {processando ? '⏳ Abrindo…' : 'DESBLOQUEAR MEU MANUAL — R$ 47'}
           </button>
           <p className="pos-compra">
-            Após o pagamento, você receberá o link do seu manual por email em poucos minutos. Verifique também a caixa de spam.
+            Pix: acesso liberado na hora. Cartão: você recebe o link do manual por email em poucos minutos (verifique a caixa de spam).
           </p>
           <div className="garantia-nova">
             <div className="garantia-icon">🛡️</div>
@@ -876,6 +905,20 @@ const globalCss = `
     border: 1px solid rgba(245,158,11,0.3);
     color: rgba(253,230,138,0.85);
   }
+
+  .share-whatsapp-btn {
+    display: block;
+    margin: 18px auto 0;
+    padding: 10px 20px;
+    border-radius: 999px;
+    border: 1px solid rgba(37,211,102,0.4);
+    background: rgba(37,211,102,0.1);
+    color: rgba(167,243,208,0.95);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 15px; font-weight: 600;
+    cursor: pointer;
+  }
+  .share-whatsapp-btn:hover { background: rgba(37,211,102,0.18); }
 
   /* ── Preview card ── */
   .preview-card {
@@ -1198,6 +1241,15 @@ const globalCss = `
     border: 1px dashed rgba(139,92,246,0.4);
     border-radius: 12px; padding: 10px 14px;
     margin-top: 4px; text-align: center; line-height: 1.6;
+  }
+
+  .pix-badge {
+    font-size: 13px; font-weight: 600;
+    color: rgba(167,243,208,0.95);
+    background: rgba(16,185,129,0.1);
+    border: 1px solid rgba(16,185,129,0.3);
+    border-radius: 999px; padding: 6px 14px;
+    margin: 2px 0 4px; text-align: center;
   }
 
   /* Exit-intent modal */

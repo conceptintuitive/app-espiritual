@@ -72,7 +72,9 @@ export async function POST(request) {
         auto_return: "approved",
         external_reference: analiseId,
         payment_methods: {
-          excluded_payment_types: [],
+          // Exclui boleto ("ticket"): produto de acesso instantâneo não combina com
+          // um método que leva 1-3 dias úteis para compensar. Pix e cartão continuam liberados.
+          excluded_payment_types: [{ id: "ticket" }],
           installments: 1,
         },
       },
