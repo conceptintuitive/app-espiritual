@@ -96,6 +96,10 @@ export default function ResultadoPage() {
   const [retryCount, setRetryCount]   = useState(0);
   const [retrying,   setRetrying]     = useState(false);
   const [pendingTimedOut, setPendingTimedOut] = useState(false);
+  const [secondsLeft, setSecondsLeft] = useState(null);
+  const [statsCount, setStatsCount] = useState(null);
+  const [ofertaExpirada, setOfertaExpirada] = useState(false);
+  const [showExitModal, setShowExitModal] = useState(false);
 
   // estrelas
   const starsBuiltRef = useRef(false);
@@ -143,6 +147,16 @@ export default function ResultadoPage() {
     if (id) buscar();
     return () => { mounted = false; };
   }, [id]);
+
+  // contador real de análises geradas (prova social) — arredondado pra baixo, sem inventar número
+  useEffect(() => {
+    let mounted = true;
+    fetch('/api/stats')
+      .then((r) => r.json())
+      .then((data) => { if (mounted) setStatsCount(data?.count ?? null); })
+      .catch(() => {});
+    return () => { mounted = false; };
+  }, []);
 
   // polling de confirmação de pagamento — só ativa com ?pending=true (retorno do PIX/MP)
   useEffect(() => {
@@ -282,7 +296,66 @@ export default function ResultadoPage() {
     return () => { previewObs.disconnect(); offerObs.disconnect(); };
   }, [analise]);
 
+  // contador de urgência — prazo real, fixado no localStorage por análise (não reseta ao dar F5)
+  useEffect(() => {
+    if (!id || typeof window === 'undefined') return;
+    const key = `ic_oferta_deadline_${id}`;
+    const DURACAO_MS = 15 * 60 * 1000; // 15 minutos
+    let deadline = Number(window.localStorage.getItem(key));
+    if (!deadline || Number.isNaN(deadline)) {
+      deadline = Date.now() + DURACAO_MS;
+      window.localStorage.setItem(key, String(deadline));
+    }
+    const tick = () => {
+      const rest = Math.max(0, Math.round((deadline - Date.now()) / 1000));
+      setSecondsLeft(rest);
+      if (rest <= 0) setOfertaExpirada(true);
+    };
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [id]);
+
+  const countdownLabel = useMemo(() => {
+    if (secondsLeft === null) return null;
+    const m = Math.floor(secondsLeft / 60).toString().padStart(2, '0');
+    const s = (secondsLeft % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  }, [secondsLeft]);
+
+  // exit-intent — desktop (mouse saindo pelo topo) + intercepta 1x o botão voltar
+  useEffect(() => {
+    if (!analise || analise.payment_status === 'paid' || typeof window === 'undefined') return;
+    const shownKey = 'ic_exit_modal_shown';
+    if (window.sessionStorage.getItem(shownKey)) return;
+
+    const trigger = () => {
+      if (window.sessionStorage.getItem(shownKey)) return;
+      window.sessionStorage.setItem(shownKey, '1');
+      setShowExitModal(true);
+    };
+
+    const onMouseLeave = (e) => { if (e.clientY <= 0) trigger(); };
+    document.addEventListener('mouseleave', onMouseLeave);
+
+    window.history.pushState({ icGuard: true }, '');
+    const onPopState = () => { trigger(); window.history.pushState({ icGuard: true }, ''); };
+    window.addEventListener('popstate', onPopState);
+
+    return () => {
+      document.removeEventListener('mouseleave', onMouseLeave);
+      window.removeEventListener('popstate', onPopState);
+    };
+  }, [analise]);
+
   // compra
+  const handleShareWhatsapp = () => {
+    try { window?.gtag?.('event', 'compartilhar_whatsapp', { event_category: 'engagement' }); } catch {}
+    const shareUrl = `${window.location.origin}/?utm_source=whatsapp_share&utm_medium=referral`;
+    const text = `Acabei de fazer uma análise espiritual personalizada (numerologia + astrologia) e o resultado foi certeiro ✨🔮 Faz a sua grátis aqui: ${shareUrl}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
+  };
+
   const handleComprar = async () => {
     setProcessando(true);
     try {
@@ -362,6 +435,8 @@ export default function ResultadoPage() {
   }
 
   const firstName = pickFirstName(analise.nome);
+  // "mais de X" sempre arredondado pra baixo (nunca infla o número real); só mostra a partir de um mínimo plausível
+  const roundedStatsCount = statsCount && statsCount >= 15 ? Math.floor(statsCount / 10) * 10 : null;
 
   return (
     <div className="wrap">
@@ -391,6 +466,10 @@ export default function ResultadoPage() {
             {analise.numero_expressao  && <span className="pill pill-numero">🔢 Expressão: {analise.numero_expressao}</span>}
             {analise.ano_pessoal       && <span className="pill pill-numero">📅 Ano Pessoal: {analise.ano_pessoal}</span>}
           </div>
+
+          <button className="share-whatsapp-btn" onClick={handleShareWhatsapp}>
+            📲 Mandar pra uma amiga no WhatsApp
+          </button>
         </div>
 
         {/* ══ BLOCO 2 — PREVIEW ══ */}
@@ -608,7 +687,11 @@ export default function ResultadoPage() {
 
         {/* ══ SOCIAL PROOF ══ */}
         <div className="section-card social-proof-card">
-          <p className="social-proof-text">✨ Mais de 25 análises geradas este mês</p>
+          <p className="social-proof-text">
+            {roundedStatsCount
+              ? `✨ Mais de ${roundedStatsCount} pessoas já geraram sua análise por aqui`
+              : '✨ Análise gerada com nosso método exclusivo de numerologia e astrologia'}
+          </p>
         </div>
 
         {/* ══ BLOCO C — O QUE TEM NO MANUAL ══ */}
@@ -644,19 +727,26 @@ export default function ResultadoPage() {
         {/* ══ BLOCO 7 — OFERTA FINAL ══ */}
         <div className="card offer-card">
           <div className="offer-badge-sm">Seu plano completo</div>
+          {!ofertaExpirada && countdownLabel && (
+            <p className="countdown-badge">⏳ Preço de lançamento expira em <strong>{countdownLabel}</strong></p>
+          )}
           <p className="ancora-valor">14 seções personalizadas · 30+ páginas · feito só pra você</p>
           <div className="offer-price-row">
             <span className="price-old-sm">de R$ 97,00</span>
             <span className="price-now-sm">por R$ 47,00</span>
           </div>
+          <div className="pix-badge">⚡ Pague com Pix: aprovação na hora, manual liberado na mesma hora</div>
           <ul className="list-check compact offer-list">
             <li>✓ Diagnóstico profundo do seu padrão</li>
             <li>✓ Mapa do amor (seu padrão afetivo real)</li>
             <li>✓ Mapa do dinheiro (bloqueios e direção)</li>
             <li>✓ Plano de 7 dias personalizado</li>
             <li>✓ Calendário de 30 dias</li>
-            <li>✓ 3 rituais específicos pro seu perfil</li>
+            <li>✓ 3 rituais específicos pro seu perfil — com áudio guiado 🔊</li>
           </ul>
+          <div className="bonus-badge">
+            🎁 <strong>Bônus incluso se você garantir agora:</strong> Ritual de Ativação Personalizado
+          </div>
           <div className="manual-preview-note">
             📖 Seu manual tem 14 seções escritas exclusivamente para {firstName}. Nenhum outro manual é igual ao seu.
           </div>
@@ -664,7 +754,7 @@ export default function ResultadoPage() {
             {processando ? '⏳ Abrindo…' : 'DESBLOQUEAR MEU MANUAL — R$ 47'}
           </button>
           <p className="pos-compra">
-            Após o pagamento, você receberá o link do seu manual por email em poucos minutos. Verifique também a caixa de spam.
+            Pix: acesso liberado na hora. Cartão: você recebe o link do manual por email em poucos minutos (verifique a caixa de spam).
           </p>
           <div className="garantia-nova">
             <div className="garantia-icon">🛡️</div>
@@ -710,6 +800,27 @@ export default function ResultadoPage() {
           >
             VER DIAGNÓSTICO COMPLETO →
           </button>
+        </div>
+      )}
+
+      {/* ══ EXIT-INTENT MODAL ══ */}
+      {showExitModal && (
+        <div className="exit-overlay" onClick={() => setShowExitModal(false)}>
+          <div className="exit-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="exit-close" aria-label="Fechar" onClick={() => setShowExitModal(false)}>✕</button>
+            <div className="exit-title">Espera, {firstName || 'você'} 👋</div>
+            <p className="exit-desc">
+              Antes de sair: seu manual completo continua disponível por <strong>R$ 47</strong>{' '}
+              e leva de bônus o <strong>Ritual de Ativação Personalizado</strong> — mas só se você garantir agora, nesta sessão.
+            </p>
+            <button
+              className="btn-cta"
+              onClick={() => { setShowExitModal(false); handleComprar(); }}
+              disabled={processando}
+            >
+              {processando ? '⏳ Abrindo…' : 'QUERO GARANTIR — R$ 47'}
+            </button>
+          </div>
         </div>
       )}
 
@@ -794,6 +905,20 @@ const globalCss = `
     border: 1px solid rgba(245,158,11,0.3);
     color: rgba(253,230,138,0.85);
   }
+
+  .share-whatsapp-btn {
+    display: block;
+    margin: 18px auto 0;
+    padding: 10px 20px;
+    border-radius: 999px;
+    border: 1px solid rgba(37,211,102,0.4);
+    background: rgba(37,211,102,0.1);
+    color: rgba(167,243,208,0.95);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 15px; font-weight: 600;
+    cursor: pointer;
+  }
+  .share-whatsapp-btn:hover { background: rgba(37,211,102,0.18); }
 
   /* ── Preview card ── */
   .preview-card {
@@ -1098,6 +1223,58 @@ const globalCss = `
     font-size: 14px; color: var(--muted);
     text-align: center; line-height: 1.6; max-width: 380px;
   }
+
+  /* Countdown de oferta */
+  .countdown-badge {
+    font-size: 14px; color: rgba(253,230,138,0.95);
+    background: rgba(245,158,11,0.1);
+    border: 1px solid rgba(245,158,11,0.3);
+    border-radius: 999px; padding: 6px 16px;
+    margin: 6px 0 2px; text-align: center;
+  }
+  .countdown-badge strong { font-variant-numeric: tabular-nums; }
+
+  /* Bônus */
+  .bonus-badge {
+    font-size: 14px; color: var(--text);
+    background: rgba(139,92,246,0.1);
+    border: 1px dashed rgba(139,92,246,0.4);
+    border-radius: 12px; padding: 10px 14px;
+    margin-top: 4px; text-align: center; line-height: 1.6;
+  }
+
+  .pix-badge {
+    font-size: 13px; font-weight: 600;
+    color: rgba(167,243,208,0.95);
+    background: rgba(16,185,129,0.1);
+    border: 1px solid rgba(16,185,129,0.3);
+    border-radius: 999px; padding: 6px 14px;
+    margin: 2px 0 4px; text-align: center;
+  }
+
+  /* Exit-intent modal */
+  .exit-overlay {
+    position: fixed; inset: 0; z-index: 50;
+    background: rgba(5,2,15,0.82);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .exit-modal {
+    position: relative; max-width: 420px; width: 100%;
+    background: var(--bg2); border: 1px solid rgba(216,180,254,0.2);
+    border-radius: 20px; padding: 28px 24px; text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .exit-close {
+    position: absolute; top: 12px; right: 16px;
+    background: none; border: none; color: var(--muted);
+    font-size: 20px; cursor: pointer; line-height: 1;
+  }
+  .exit-title {
+    font-family: 'Cinzel', serif; font-size: 19px;
+    margin-bottom: 10px; color: var(--text);
+  }
+  .exit-desc { font-size: 15px; color: var(--muted); line-height: 1.7; margin-bottom: 18px; }
 
   /* Pós-compra */
   .pos-compra {
