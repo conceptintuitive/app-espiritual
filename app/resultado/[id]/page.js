@@ -341,7 +341,7 @@ export default function ResultadoPage() {
   const handleComprar = async () => {
     setProcessando(true);
     try {
-      try { window?.gtag?.('event', 'clique_comprar', { event_category: 'conversion', value: 29.9, currency: 'BRL' }); } catch {}
+      try { window?.gtag?.('event', 'clique_comprar', { event_category: 'conversion', value: 47, currency: 'BRL' }); } catch {}
       const response = await fetch('/api/criar-checkout-mp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -490,7 +490,7 @@ export default function ResultadoPage() {
                 O mecanismo que mantém esse ciclo rodando e o ajuste que muda o resultado estão no diagnóstico completo.
               </p>
               <button className="btn-cta" onClick={handleComprar} disabled={processando}>
-                {processando ? '⏳ Abrindo…' : 'DESBLOQUEAR MEU MANUAL — R$ 29,90'}
+                {processando ? '⏳ Abrindo…' : 'DESBLOQUEAR MEU MANUAL — R$ 47'}
               </button>
               <p className="pos-compra" style={{ marginTop: 10 }}>
                 Após o pagamento, você receberá o link do seu manual por email em poucos minutos. Verifique também a caixa de spam.
@@ -570,7 +570,7 @@ export default function ResultadoPage() {
                 Seus bloqueios financeiros e o caminho para destravar estão no manual completo.
               </p>
               <button className="btn-cta" onClick={handleComprar} disabled={processando}>
-                {processando ? '⏳ Abrindo…' : 'DESBLOQUEAR MEU MANUAL — R$ 29,90'}
+                {processando ? '⏳ Abrindo…' : 'DESBLOQUEAR MEU MANUAL — R$ 47'}
               </button>
             </div>
           </div>
@@ -639,7 +639,7 @@ export default function ResultadoPage() {
                 A interpretação completa de como {cartaTarot.nome}{cartaTarot.invertida ? ' Invertida' : ''} se conecta ao seu perfil e objetivo está no manual completo.
               </p>
               <button className="btn-cta" onClick={handleComprar} disabled={processando}>
-                {processando ? '⏳ Abrindo…' : 'DESBLOQUEAR MEU MANUAL — R$ 29,90'}
+                {processando ? '⏳ Abrindo…' : 'DESBLOQUEAR MEU MANUAL — R$ 47'}
               </button>
             </div>
           </div>
@@ -705,7 +705,7 @@ export default function ResultadoPage() {
           <p className="ancora-valor">14 seções personalizadas · 30+ páginas · feito só pra você</p>
           <div className="offer-price-row">
             <span className="price-old-sm">de R$ 97,00</span>
-            <span className="price-now-sm">por R$ 29,90</span>
+            <span className="price-now-sm">por R$ 47,00</span>
           </div>
           <ul className="list-check compact offer-list">
             <li>✓ Diagnóstico profundo do seu padrão</li>
@@ -722,7 +722,7 @@ export default function ResultadoPage() {
             📖 Seu manual tem 14 seções escritas exclusivamente para {firstName}. Nenhum outro manual é igual ao seu.
           </div>
           <button className="btn-cta" onClick={handleComprar} disabled={processando}>
-            {processando ? '⏳ Abrindo…' : 'DESBLOQUEAR MEU MANUAL — R$ 29,90'}
+            {processando ? '⏳ Abrindo…' : 'DESBLOQUEAR MEU MANUAL — R$ 47'}
           </button>
           <p className="pos-compra">
             Após o pagamento, você receberá o link do seu manual por email em poucos minutos. Verifique também a caixa de spam.
@@ -749,7 +749,7 @@ export default function ResultadoPage() {
         <div className="reforco-block">
           <p className="reforco-text">Se as 3 primeiras frases já te descreveram, imagina o diagnóstico completo.</p>
           <button className="btn-cta btn-cta-sm" onClick={handleComprar} disabled={processando}>
-            {processando ? '⏳ Abrindo…' : 'DESBLOQUEAR MEU MANUAL — R$ 29,90'}
+            {processando ? '⏳ Abrindo…' : 'DESBLOQUEAR MEU MANUAL — R$ 47'}
           </button>
           <p className="pos-compra" style={{ marginTop: 10 }}>
             Após o pagamento, você receberá o link do seu manual por email em poucos minutos. Verifique também a caixa de spam.
@@ -781,7 +781,7 @@ export default function ResultadoPage() {
             <button className="exit-close" aria-label="Fechar" onClick={() => setShowExitModal(false)}>✕</button>
             <div className="exit-title">Espera, {firstName || 'você'} 👋</div>
             <p className="exit-desc">
-              Antes de sair: seu manual completo continua disponível por <strong>R$ 29,90</strong>{' '}
+              Antes de sair: seu manual completo continua disponível por <strong>R$ 47</strong>{' '}
               e leva de bônus o <strong>Ritual de Ativação Personalizado</strong> — mas só se você garantir agora, nesta sessão.
             </p>
             <button
@@ -789,7 +789,7 @@ export default function ResultadoPage() {
               onClick={() => { setShowExitModal(false); handleComprar(); }}
               disabled={processando}
             >
-              {processando ? '⏳ Abrindo…' : 'QUERO GARANTIR — R$ 29,90'}
+              {processando ? '⏳ Abrindo…' : 'QUERO GARANTIR — R$ 47'}
             </button>
           </div>
         </div>
