@@ -71,6 +71,8 @@ GA4_API_SECRET=
 NEXT_PUBLIC_SITE_URL=
 MP_ACCESS_TOKEN=
 CRON_SECRET=
+TIKTOK_ACCESS_TOKEN=
+META_CAPI_ACCESS_TOKEN=
 ```
 
 `SUPABASE_SERVICE_ROLE_KEY` é usada apenas em API routes (server-side). As variáveis `NEXT_PUBLIC_*` ficam expostas no cliente. `CRON_SECRET` protege `/api/cron/lembretes` contra chamadas não autorizadas — o disparo é feito por um cron externo (ex: cron-job.org), já que o plano Vercel Hobby não permite cron com intervalo menor que 1x/dia.

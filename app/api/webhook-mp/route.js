@@ -14,6 +14,7 @@ import {
 } from "@/lib/ia";
 import { sendGA4Purchase } from "@/lib/ga4";
 import { sendTikTokPurchase } from "@/lib/tiktok";
+import { sendMetaPurchase } from "@/lib/metaCapi";
 
 export const runtime = "nodejs";
 
@@ -178,6 +179,15 @@ export async function POST(request) {
 
       // TikTok CompletePayment ─────────────────────────────────────────────────
       await sendTikTokPurchase({
+        transactionId: paymentId.toString(),
+        value: payment.transaction_amount ?? 0,
+        currency: (payment.currency_id || "BRL").toUpperCase(),
+        email: analiseData?.email,
+        analiseId,
+      });
+
+      // Meta Purchase (Conversions API) ───────────────────────────────────────
+      await sendMetaPurchase({
         transactionId: paymentId.toString(),
         value: payment.transaction_amount ?? 0,
         currency: (payment.currency_id || "BRL").toUpperCase(),
