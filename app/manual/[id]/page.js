@@ -62,6 +62,54 @@ function firstSentences(text, maxSentences = 1) {
 }
 
 // ==============================================
+// MARKDOWN LEVE (**negrito** / *itálico*) → React nodes, sem dangerouslySetInnerHTML
+// ==============================================
+function renderInline(text) {
+  const str = String(text ?? '');
+  const parts = str.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g);
+  return parts.map((part, i) => {
+    if (/^\*\*[^*]+\*\*$/.test(part)) return <strong key={i}>{part.slice(2, -2)}</strong>;
+    if (/^\*[^*]+\*$/.test(part)) return <em key={i}>{part.slice(1, -1)}</em>;
+    return part;
+  });
+}
+
+// ==============================================
+// QUEBRA UM TEXTO CORRIDO EM PARÁGRAFOS + DESTACA A FRASE FINAL ENTRE ASPAS (PULL-QUOTE)
+// ==============================================
+function splitBodyIntoParasAndQuote(body) {
+  const raw = String(body ?? '').replace(/\r\n/g, '\n').trim();
+  if (!raw) return { paragraphs: [], quote: null };
+  const chunks = raw.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+  if (!chunks.length) return { paragraphs: [], quote: null };
+  const last = chunks[chunks.length - 1];
+  const quoteMatch = last.match(/^["“](.+)["”]$/s);
+  if (quoteMatch && chunks.length > 1 && quoteMatch[1].length <= 260) {
+    return { paragraphs: chunks.slice(0, -1), quote: quoteMatch[1].trim() };
+  }
+  return { paragraphs: chunks, quote: null };
+}
+
+// ==============================================
+// ITEM DE CHECKLIST INTERATIVO (Plano 7 dias / Rituais / Calendário 30 dias)
+// ==============================================
+function CheckItem({ itemKey, checked, onToggle, children }) {
+  return (
+    <li
+      className={`check-item${checked ? ' is-checked' : ''}`}
+      onClick={() => onToggle(itemKey)}
+      role="checkbox"
+      aria-checked={checked}
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle(itemKey); } }}
+    >
+      <span className="check-box">{checked ? '✅' : '⬜'}</span>
+      <span className="check-label">{children}</span>
+    </li>
+  );
+}
+
+// ==============================================
 // VERIFICA SE O PAGAMENTO FOI CONFIRMADO
 // ==============================================
 function isPaid(row) {
@@ -207,6 +255,42 @@ export default function ManualPage() {
   // VERIFICAR SE ESTÁ PAGO
   // ==============================================
   const hasPaid = useMemo(() => isPaid(row), [row]);
+
+  // ==============================================
+  // BARRA DE PROGRESSO DE LEITURA
+  // ==============================================
+  const [readProgress, setReadProgress] = useState(0);
+  useEffect(() => {
+    const onScroll = () => {
+      const doc = document.documentElement;
+      const scrollable = (doc.scrollHeight || 0) - doc.clientHeight;
+      const pct = scrollable > 0 ? Math.min(100, Math.max(0, (window.scrollY / scrollable) * 100)) : 0;
+      setReadProgress(pct);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  // ==============================================
+  // CHECKLIST INTERATIVO (Plano 7 dias, Rituais, Calendário) — persiste por análise
+  // ==============================================
+  const [checks, setChecks] = useState({});
+  useEffect(() => {
+    if (!id || typeof window === 'undefined') return;
+    try {
+      const raw = window.localStorage.getItem(`ic_manual_checks_${id}`);
+      if (raw) setChecks(JSON.parse(raw));
+    } catch {}
+  }, [id]);
+
+  const toggleCheck = (key) => {
+    setChecks((prev) => {
+      const next = { ...prev, [key]: !prev[key] };
+      try { window.localStorage.setItem(`ic_manual_checks_${id}`, JSON.stringify(next)); } catch {}
+      return next;
+    });
+  };
 
   // ==============================================
   // EFEITO: GERAÇÃO SOB DEMANDA
@@ -480,6 +564,11 @@ export default function ManualPage() {
 
       {/* ESTRELAS */}
       <div id="stars" className="stars" />
+
+      {/* BARRA DE PROGRESSO DE LEITURA */}
+      <div className="reading-progress-track">
+        <div className="reading-progress-fill" style={{ width: `${readProgress}%` }} />
+      </div>
 
       {/* CONTEÚDO */}
       <div className="container">
@@ -775,10 +864,77 @@ e mostrar como sair dele.
 
                 // TIPO: TEXT
                 if (section.type === 'text') {
+                  const { paragraphs, quote } = splitBodyIntoParasAndQuote(section.body);
                   return (
                     <div key={anchor} id={anchor} className="card premium">
                       <h2 className="h2">{section.title}</h2>
-                      <div className="richText">{section.body}</div>
+                      {paragraphs.map((p, i) => (
+                        <p key={i} className="richText-p">{renderInline(p)}</p>
+                      ))}
+                      {quote && <blockquote className="pullQuote">"{renderInline(quote)}"</blockquote>}
+                    </div>
+                  );
+                }
+
+                // TIPO: DIAGNÓSTICO (blocos com subtítulo + pull-quote)
+                if (section.type === 'diagnostico') {
+                  return (
+                    <div key={anchor} id={anchor} className="card premium">
+                      <h2 className="h2">{section.title}</h2>
+                      {Array.isArray(section.blocks) && section.blocks.map((b, i) => (
+                        <div key={i} className="diag-block">
+                          <div className="diag-block-label">{b.label}</div>
+                          {splitBodyIntoParasAndQuote(b.text).paragraphs.map((p, j) => (
+                            <p key={j} className="richText-p">{renderInline(p)}</p>
+                          ))}
+                        </div>
+                      ))}
+                      {section.quote && <blockquote className="pullQuote">"{renderInline(section.quote)}"</blockquote>}
+                    </div>
+                  );
+                }
+
+                // TIPO: ARQUÉTIPOS (cards)
+                if (section.type === 'archetypes') {
+                  return (
+                    <div key={anchor} id={anchor} className="card premium">
+                      <h2 className="h2">{section.title}</h2>
+                      {Array.isArray(section.items) && section.items.map((it, i) => (
+                        <div key={i} className="subcard archetype-card">
+                          <div className="subttl">{it.icon} {it.label} — {it.nome}</div>
+                          <p className="richText-p" style={{ marginTop: 8 }}>{renderInline(it.descricao)}</p>
+                          {it.frase && <blockquote className="pullQuote small">"{renderInline(it.frase)}"</blockquote>}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                }
+
+                // TIPO: RITUAIS (cards com passos numerados e checkbox de prática)
+                if (section.type === 'rituals') {
+                  return (
+                    <div key={anchor} id={anchor} className="card premium">
+                      <h2 className="h2">{section.title}</h2>
+                      {Array.isArray(section.items) && section.items.map((r, i) => {
+                        const ck = `rituals_${i}`;
+                        return (
+                          <div key={i} className="subcard ritual-card">
+                            <div className="subttl">🕯️ Ritual {i + 1} — {r.nome}</div>
+                            {r.quando && <div className="muted" style={{ marginTop: 6 }}>Quando usar: {renderInline(r.quando)}</div>}
+                            {Array.isArray(r.passos) && r.passos.length > 0 && (
+                              <ol className="ritual-steps">
+                                {r.passos.map((p, j) => <li key={j}>{renderInline(p)}</li>)}
+                              </ol>
+                            )}
+                            {r.frase && <blockquote className="pullQuote small">"{renderInline(r.frase)}"</blockquote>}
+                            <ul className="list-check compact" style={{ marginTop: 6 }}>
+                              <CheckItem itemKey={ck} checked={!!checks[ck]} onToggle={toggleCheck}>
+                                Já pratiquei este ritual
+                              </CheckItem>
+                            </ul>
+                          </div>
+                        );
+                      })}
                     </div>
                   );
                 }
@@ -790,9 +946,9 @@ e mostrar como sair dele.
                       <h2 className="h2">{section.title}</h2>
                       {section.note && <div className="note">{section.note}</div>}
                       <ul className="list-check">
-                        {Array.isArray(section.items) && 
+                        {Array.isArray(section.items) &&
                           section.items.map((item, i) => (
-                            <li key={i}>✓ {item}</li>
+                            <li key={i}>✓ {renderInline(item)}</li>
                           ))}
                       </ul>
                     </div>
@@ -813,9 +969,14 @@ e mostrar como sair dele.
                         <div className="subttl">📍 Passo a passo (7 dias)</div>
                         <ul className="list-check compact" style={{ marginTop: 8 }}>
                           {Array.isArray(section.days) &&
-                            section.days.map((day, i) => (
-                              <li key={i}>✓ {day}</li>
-                            ))}
+                            section.days.map((day, i) => {
+                              const ck = `plan7_${i}`;
+                              return (
+                                <CheckItem key={i} itemKey={ck} checked={!!checks[ck]} onToggle={toggleCheck}>
+                                  {renderInline(day)}
+                                </CheckItem>
+                              );
+                            })}
                         </ul>
                       </div>
                     </div>
@@ -938,10 +1099,15 @@ e mostrar como sair dele.
                               <b>{week.focus}</b>
                             </div>
                             <ul className="list-check compact" style={{ marginTop: 10 }}>
-                              {Array.isArray(week.days) && 
-                                week.days.map((day, j) => (
-                                  <li key={j}>✓ {day}</li>
-                                ))}
+                              {Array.isArray(week.days) &&
+                                week.days.map((day, j) => {
+                                  const ck = `calendar30_w${i}d${j}`;
+                                  return (
+                                    <CheckItem key={j} itemKey={ck} checked={!!checks[ck]} onToggle={toggleCheck}>
+                                      {renderInline(day)}
+                                    </CheckItem>
+                                  );
+                                })}
                             </ul>
                           </div>
                         ))}
@@ -951,11 +1117,15 @@ e mostrar como sair dele.
 
                 // TIPO: CLOSING
                 if (section.type === 'closing') {
+                  const { paragraphs: closingParas, quote: closingQuote } = splitBodyIntoParasAndQuote(section.body);
                   return (
                     <div key={anchor} id={anchor} className="card premium closing">
                       <h2 className="h2">{section.title}</h2>
-                      <div className="richText">{section.body}</div>
-                      
+                      {closingParas.map((p, i) => (
+                        <p key={i} className="richText-p">{renderInline(p)}</p>
+                      ))}
+                      {closingQuote && <blockquote className="pullQuote">"{renderInline(closingQuote)}"</blockquote>}
+
                       {section.mantra && (
                         <div className="note-mantra" style={{ marginTop: 14 }}>
                           <b>Mantra:</b> {section.mantra}
@@ -1197,6 +1367,103 @@ const globalCss = `
     color: var(--text);
     line-height: 1.8;
     margin-top: 10px;
+  }
+
+  .richText-p {
+    white-space: pre-wrap;
+    font-size: 18px;
+    color: var(--text);
+    line-height: 1.8;
+    margin-top: 14px;
+  }
+  .richText-p:first-of-type { margin-top: 10px; }
+
+  /* ========== PULL-QUOTE ========== */
+  .pullQuote {
+    margin: 20px 0 6px;
+    padding: 14px 20px;
+    border-left: 3px solid var(--secondary);
+    background: rgba(139, 92, 246, 0.08);
+    border-radius: 0 14px 14px 0;
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 21px;
+    line-height: 1.6;
+    color: rgba(216, 180, 254, 0.98);
+  }
+  .pullQuote.small { font-size: 18px; margin: 14px 0 4px; }
+
+  /* ========== DIAGNÓSTICO: blocos com subtítulo ========== */
+  .diag-block { margin-top: 18px; }
+  .diag-block:first-of-type { margin-top: 6px; }
+  .diag-block-label {
+    font-family: 'Cinzel', serif;
+    font-size: 14px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--secondary);
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  /* ========== ARQUÉTIPOS / RITUAIS: cards ========== */
+  .archetype-card, .ritual-card { margin-top: 14px; }
+  .ritual-steps {
+    list-style: none;
+    counter-reset: step;
+    padding: 0;
+    margin: 10px 0 0;
+  }
+  .ritual-steps li {
+    counter-increment: step;
+    padding: 8px 0 8px 34px;
+    position: relative;
+    font-size: 17px;
+    color: var(--text);
+    line-height: 1.6;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .ritual-steps li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0; top: 8px;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: rgba(139, 92, 246, 0.25);
+    color: rgba(216, 180, 254, 0.98);
+    font-size: 13px;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* ========== READING PROGRESS BAR ========== */
+  .reading-progress-track {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: rgba(255,255,255,0.06);
+    z-index: 100;
+  }
+  .reading-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--secondary), var(--warning));
+    transition: width 0.15s ease-out;
+  }
+
+  /* ========== CHECKLIST INTERATIVO ========== */
+  .check-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .check-item .check-box { flex-shrink: 0; font-size: 16px; margin-top: 2px; }
+  .check-item .check-label { flex: 1; }
+  .check-item.is-checked .check-label {
+    color: var(--muted);
+    text-decoration: line-through;
+    text-decoration-color: rgba(233, 213, 255, 0.35);
   }
 
   /* ========== LISTS ========== */
