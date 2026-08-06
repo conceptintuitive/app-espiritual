@@ -110,6 +110,72 @@ function CheckItem({ itemKey, checked, onToggle, children }) {
 }
 
 // ==============================================
+// ROTEIRO FALADO DE UM RITUAL (texto puro, sem markdown, pra narração)
+// ==============================================
+function buildRitualNarration(r) {
+  const clean = (s) => String(s ?? '').replace(/\*\*/g, '').replace(/\*/g, '');
+  const parts = [
+    `Ritual: ${clean(r.nome)}.`,
+    r.quando ? `Use quando: ${clean(r.quando)}.` : '',
+    ...(Array.isArray(r.passos) ? r.passos.map((p, i) => `Passo ${i + 1}: ${clean(p)}.`) : []),
+    r.frase ? `Para fechar: ${clean(r.frase)}` : '',
+  ];
+  return parts.filter(Boolean).join(' ');
+}
+
+// ==============================================
+// BOTÃO "OUVIR" — narração 100% no navegador (Web Speech API), sem custo e sem API externa
+// ==============================================
+function ListenButton({ text }) {
+  const [playing, setPlaying] = useState(false);
+  const [supported, setSupported] = useState(false);
+
+  useEffect(() => {
+    setSupported(typeof window !== 'undefined' && 'speechSynthesis' in window);
+    return () => {
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
+  if (!supported) return null;
+
+  const pickVoice = () => {
+    const voices = window.speechSynthesis.getVoices() || [];
+    return (
+      voices.find((v) => v.lang?.toLowerCase() === 'pt-br') ||
+      voices.find((v) => v.lang?.toLowerCase().startsWith('pt')) ||
+      null
+    );
+  };
+
+  const handleToggle = () => {
+    if (playing) {
+      window.speechSynthesis.cancel();
+      setPlaying(false);
+      return;
+    }
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    const voice = pickVoice();
+    if (voice) utterance.voice = voice;
+    utterance.lang = voice?.lang || 'pt-BR';
+    utterance.rate = 0.95;
+    utterance.onend = () => setPlaying(false);
+    utterance.onerror = () => setPlaying(false);
+    window.speechSynthesis.speak(utterance);
+    setPlaying(true);
+  };
+
+  return (
+    <button type="button" className="listen-btn" onClick={handleToggle}>
+      {playing ? '⏸️ Pausar áudio' : '🔊 Ouvir este ritual guiado'}
+    </button>
+  );
+}
+
+// ==============================================
 // VERIFICA SE O PAGAMENTO FOI CONFIRMADO
 // ==============================================
 function isPaid(row) {
@@ -927,6 +993,7 @@ e mostrar como sair dele.
                               </ol>
                             )}
                             {r.frase && <blockquote className="pullQuote small">"{renderInline(r.frase)}"</blockquote>}
+                            <ListenButton text={buildRitualNarration(r)} />
                             <ul className="list-check compact" style={{ marginTop: 6 }}>
                               <CheckItem itemKey={ck} checked={!!checks[ck]} onToggle={toggleCheck}>
                                 Já pratiquei este ritual
@@ -1408,6 +1475,23 @@ const globalCss = `
 
   /* ========== ARQUÉTIPOS / RITUAIS: cards ========== */
   .archetype-card, .ritual-card { margin-top: 14px; }
+
+  .listen-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 12px;
+    padding: 8px 16px;
+    border-radius: 999px;
+    border: 1px solid rgba(139, 92, 246, 0.4);
+    background: rgba(139, 92, 246, 0.1);
+    color: rgba(216, 180, 254, 0.98);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .listen-btn:hover { background: rgba(139, 92, 246, 0.18); }
   .ritual-steps {
     list-style: none;
     counter-reset: step;

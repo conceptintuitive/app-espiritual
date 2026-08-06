@@ -742,7 +742,7 @@ export default function ResultadoPage() {
             <li>✓ Mapa do dinheiro (bloqueios e direção)</li>
             <li>✓ Plano de 7 dias personalizado</li>
             <li>✓ Calendário de 30 dias</li>
-            <li>✓ 3 rituais específicos pro seu perfil</li>
+            <li>✓ 3 rituais específicos pro seu perfil — com áudio guiado 🔊</li>
           </ul>
           <div className="bonus-badge">
             🎁 <strong>Bônus incluso se você garantir agora:</strong> Ritual de Ativação Personalizado
