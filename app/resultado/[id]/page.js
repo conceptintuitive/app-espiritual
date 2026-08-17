@@ -360,6 +360,7 @@ export default function ResultadoPage() {
     setProcessando(true);
     try {
       try { window?.gtag?.('event', 'clique_comprar', { event_category: 'conversion', value: 47, currency: 'BRL' }); } catch {}
+      try { window?.fbq?.('track', 'InitiateCheckout', { value: 47, currency: 'BRL' }); } catch {}
       const response = await fetch('/api/criar-checkout-mp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
