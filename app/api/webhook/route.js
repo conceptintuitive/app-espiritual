@@ -16,6 +16,7 @@ import {
 } from "@/lib/ia";
 import { sendGA4Purchase } from "@/lib/ga4";
 import { sendTikTokPurchase } from "@/lib/tiktok";
+import { sendMetaPurchase } from "@/lib/meta";
 
 // ─── Lógica compartilhada entre pagamento síncrono e assíncrono (boleto) ──────
 async function handlePaymentSuccess(session, supabase) {
@@ -129,6 +130,15 @@ async function handlePaymentSuccess(session, supabase) {
 
     // TikTok CompletePayment ───────────────────────────────────────────────────
     await sendTikTokPurchase({
+      transactionId: session.id,
+      value: (session.amount_total ?? 0) / 100,
+      currency: (session.currency || "brl").toUpperCase(),
+      email,
+      analiseId,
+    });
+
+    // Meta Purchase ────────────────────────────────────────────────────────────
+    await sendMetaPurchase({
       transactionId: session.id,
       value: (session.amount_total ?? 0) / 100,
       currency: (session.currency || "brl").toUpperCase(),
