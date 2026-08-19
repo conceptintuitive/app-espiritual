@@ -136,6 +136,7 @@ export default function ResultadoPage() {
         if (!mounted) return;
         setAnalise(data);
         try { window?.gtag?.('event', 'visualizou_resultado', { event_category: 'engagement', value: 1 }); } catch {}
+        try { window.localStorage.setItem('ic_ultima_analise_id', id); } catch {}
       } catch (e) {
         if (!mounted) return;
         setErro(e?.message || 'Erro ao carregar');
