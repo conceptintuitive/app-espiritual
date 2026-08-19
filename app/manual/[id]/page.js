@@ -6,6 +6,7 @@ import { createClient } from '@supabase/supabase-js';
 
 // ✅ IMPORT do gerador de manual
 import { generateManual, renderManualMarkdown } from '@/lib/manualgenerator';
+import { getTopMatches } from '@/lib/compatibilidade';
 
 // ==============================================
 // SUPABASE CLIENT
@@ -314,6 +315,7 @@ export default function ManualPage() {
 
         if (!mounted) return;
         setRow(data);
+        try { window.localStorage.setItem('ic_ultima_analise_id', id); } catch {}
         console.log('OBJETIVO DO BANCO:', data.objetivo_principal);
       } catch (e) {
         if (!mounted) return;
@@ -1246,6 +1248,40 @@ e mostrar como sair dele.
                   </div>
                 );
               })}
+
+            {/* ========== COMPATIBILIDADE ASTRAL (5 pontos) ========== */}
+            {row && (
+              <div className="card premium" id="compatibilidade-astral">
+                <h2 className="h2"> Compatibilidade Astral</h2>
+                <p className="richText-p" style={{ marginTop: 4, marginBottom: 4 }}>
+                  Com quem cada parte do seu mapa combina — calculado a partir do seu Sol, Lua, Ascendente, Vênus e Marte.
+                </p>
+                {[
+                  { chave: 'signo',            rotulo: 'Sol · Identidade' },
+                  { chave: 'signo_lua',        rotulo: 'Lua · Emoção' },
+                  { chave: 'signo_ascendente', rotulo: 'Ascendente · Máscara social' },
+                  { chave: 'signo_venus',      rotulo: 'Vênus · Amor' },
+                  { chave: 'signo_marte',      rotulo: 'Marte · Ação' },
+                ].map(({ chave, rotulo }) => {
+                  const signoPonto = row[chave];
+                  if (!signoPonto) return null;
+                  const matches = getTopMatches(signoPonto, 3);
+                  if (!matches.length) return null;
+                  return (
+                    <div key={chave} className="diag-block">
+                      <div className="diag-block-label">{rotulo} — {signoPonto}</div>
+                      <ul className="list-check compact" style={{ marginTop: 8 }}>
+                        {matches.map((m) => (
+                          <li key={m.signo.nome}>
+                            {m.signo.simbolo} <strong>{m.signo.nome}</strong> — {m.headline} ({m.score}%)
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
 
             {/* FOOTER */}
             <div className="footer-note">
