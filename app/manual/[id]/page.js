@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 
@@ -1081,7 +1081,8 @@ e mostrar como sair dele.
   }
 
   return (
-    <div key={anchor} id={anchor} className="card premium">
+    <Fragment key={anchor}>
+    <div id={anchor} className="card premium">
       <h2 className="h2">{section.title}</h2>
 
       <div className="note noteLove">
@@ -1099,7 +1100,7 @@ e mostrar como sair dele.
                         <div className="subcard danger">
                           <div className="subttl">🚫 Pare de fazer isso</div>
                           <ul className="list-check compact">
-                            {Array.isArray(section.whatToStop) && 
+                            {Array.isArray(section.whatToStop) &&
                               section.whatToStop.map((item, i) => (
                                 <li key={i}>✓ {item}</li>
                               ))}
@@ -1109,7 +1110,7 @@ e mostrar como sair dele.
                         <div className="subcard highlight">
                           <div className="subttl">✅ Comece a fazer isso</div>
                           <ul className="list-check compact">
-                            {Array.isArray(section.whatToStart) && 
+                            {Array.isArray(section.whatToStart) &&
                               section.whatToStart.map((item, i) => (
                                 <li key={i}>✓ {item}</li>
                               ))}
@@ -1121,7 +1122,7 @@ e mostrar como sair dele.
                         <b>Frases prontas (sem joguinho):</b>
                         <div style={{ marginTop: 10, textAlign: 'left' }}>
                           <ul className="list-check compact">
-                            {Array.isArray(section.microScript) && 
+                            {Array.isArray(section.microScript) &&
                               section.microScript.map((script, i) => (
                                 <li key={i}>✓ {script}</li>
                               ))}
@@ -1129,6 +1130,46 @@ e mostrar como sair dele.
                         </div>
                       </div>
                     </div>
+
+                    {/* ========== COMPATIBILIDADE ASTRAL (5 pontos) ========== */}
+                    {row && (
+                      <div className="card premium" id="compatibilidade-astral">
+                        <h2 className="h2">Compatibilidade Astral</h2>
+                        <p className="richText-p" style={{ marginTop: 4, marginBottom: 4 }}>
+                          Com quem cada parte do seu mapa combina — calculado a partir do seu Sol, Lua, Ascendente, Vênus e Marte.
+                        </p>
+                        {[
+                          { chave: 'signo',            rotulo: 'Sol · Identidade' },
+                          { chave: 'signo_lua',        rotulo: 'Lua · Emoção' },
+                          { chave: 'signo_ascendente', rotulo: 'Ascendente · Máscara social' },
+                          { chave: 'signo_venus',      rotulo: 'Vênus · Amor' },
+                          { chave: 'signo_marte',      rotulo: 'Marte · Ação' },
+                        ].map(({ chave, rotulo }) => {
+                          const signoPonto = row[chave];
+                          if (!signoPonto) return null;
+                          const matches = getTopMatches(signoPonto, 3);
+                          if (!matches.length) return null;
+                          return (
+                            <div key={chave} className="diag-block">
+                              <div className="diag-block-label">{rotulo} — {signoPonto}</div>
+                              {matches.map((m) => (
+                                <div key={m.signo.nome} className="compat-match">
+                                  <div className="compat-match-top">
+                                    <span className="compat-match-name">{m.signo.simbolo} {m.signo.nome}</span>
+                                    <span className="compat-match-score">{m.score}%</span>
+                                  </div>
+                                  <div className="compat-track">
+                                    <div className="compat-fill" style={{ width: `${m.score}%` }} />
+                                  </div>
+                                  <p className="compat-match-text">{m.headline}</p>
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                    </Fragment>
                   );
                 }
 
@@ -1248,40 +1289,6 @@ e mostrar como sair dele.
                   </div>
                 );
               })}
-
-            {/* ========== COMPATIBILIDADE ASTRAL (5 pontos) ========== */}
-            {row && (
-              <div className="card premium" id="compatibilidade-astral">
-                <h2 className="h2"> Compatibilidade Astral</h2>
-                <p className="richText-p" style={{ marginTop: 4, marginBottom: 4 }}>
-                  Com quem cada parte do seu mapa combina — calculado a partir do seu Sol, Lua, Ascendente, Vênus e Marte.
-                </p>
-                {[
-                  { chave: 'signo',            rotulo: 'Sol · Identidade' },
-                  { chave: 'signo_lua',        rotulo: 'Lua · Emoção' },
-                  { chave: 'signo_ascendente', rotulo: 'Ascendente · Máscara social' },
-                  { chave: 'signo_venus',      rotulo: 'Vênus · Amor' },
-                  { chave: 'signo_marte',      rotulo: 'Marte · Ação' },
-                ].map(({ chave, rotulo }) => {
-                  const signoPonto = row[chave];
-                  if (!signoPonto) return null;
-                  const matches = getTopMatches(signoPonto, 3);
-                  if (!matches.length) return null;
-                  return (
-                    <div key={chave} className="diag-block">
-                      <div className="diag-block-label">{rotulo} — {signoPonto}</div>
-                      <ul className="list-check compact" style={{ marginTop: 8 }}>
-                        {matches.map((m) => (
-                          <li key={m.signo.nome}>
-                            {m.signo.simbolo} <strong>{m.signo.nome}</strong> — {m.headline} ({m.score}%)
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
 
             {/* FOOTER */}
             <div className="footer-note">
@@ -1529,6 +1536,45 @@ const globalCss = `
     color: var(--secondary);
     font-weight: 700;
     margin-bottom: 4px;
+  }
+
+  /* ========== COMPATIBILIDADE ASTRAL: barras de score ========== */
+  .compat-match { margin-top: 12px; }
+  .compat-match-top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+  .compat-match-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: rgba(250, 245, 255, 0.95);
+  }
+  .compat-match-score {
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    color: var(--warning);
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+  }
+  .compat-track {
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.06);
+    overflow: hidden;
+  }
+  .compat-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--secondary), var(--primary));
+  }
+  .compat-match-text {
+    margin-top: 6px;
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.55;
   }
 
   /* ========== ARQUÉTIPOS / RITUAIS: cards ========== */
