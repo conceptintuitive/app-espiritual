@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 // ── FAQ accordion ─────────────────────────────────────────────────────────────
 function FaqItem({ q, a }) {
@@ -617,6 +618,19 @@ export default function Home() {
 
       {/* Quiz overlay */}
       {quizOpen && <QuizOverlay onClose={closeQuiz} />}
+
+      {/* Link discreto pro blog — visível antes do quiz, não compete com o CTA principal */}
+      <div style={{ position: 'relative', zIndex: 10, textAlign: 'center', padding: '14px 16px 0' }}>
+        <Link
+          href="/blog"
+          style={{
+            fontFamily: 'var(--F)', fontSize: 13, letterSpacing: '0.04em',
+            color: 'var(--t2)', textDecoration: 'none',
+          }}
+        >
+          ✎ Ler o blog
+        </Link>
+      </div>
 
       {/* ═══════════════ HERO ═══════════════════════════════════════════════ */}
       <section className="sec" style={{ minHeight: '88vh', display: 'flex', alignItems: 'center', paddingBottom: 'clamp(32px,5vh,56px)' }}>
