@@ -4,6 +4,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
+import { getTopMatches } from '@/lib/compatibilidade';
 
 // ── Supabase ──────────────────────────────────────────────────────────────────
 function getSupabaseClient() {
@@ -260,6 +261,12 @@ export default function ResultadoPage() {
   const iaCompleta = Boolean(
     analise?.diagnostico_gerado && analise?.amor_gerado && analise?.arquetipos_gerado
   );
+
+  const compatTeaser = useMemo(() => {
+    if (!signoFinal) return null;
+    const matches = getTopMatches(signoFinal, 1);
+    return matches[0] || null;
+  }, [signoFinal]);
 
   // polling — refetch até diagnostico + amor + arquetipos chegarem (até 10 tentativas × 4s = 40s)
   useEffect(() => {
@@ -647,6 +654,25 @@ export default function ResultadoPage() {
           </div>
         )}
 
+        {/* ══ BLOCO — COMPATIBILIDADE ASTRAL (teaser) ══ */}
+        {compatTeaser && (
+          <div className="section-card">
+            <div className="section-label">Compatibilidade Astral</div>
+            <p className="amor-headline">
+              {compatTeaser.signo.simbolo} {signoFinal} + {compatTeaser.signo.simbolo} {compatTeaser.signo.nome}
+            </p>
+            <div className="arq-desc-wrap" style={{ marginTop: 4 }}>
+              <p className="arq-desc blur-content" style={{ fontSize: 15 }}>{compatTeaser.headline} ({compatTeaser.score}%)</p>
+              <div className="arq-overlay">Desbloqueie no manual</div>
+            </div>
+            <div className="locked-card locked-card-quiet" style={{ marginTop: 16 }}>
+              <p className="locked-text">
+                No manual completo: sua compatibilidade cruzando Sol, Lua, Ascendente, Vênus e Marte — os 5 pontos que mais importam.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* ══ BLOCO TAROT — teaser carta ══ */}
         {cartaTarot && (
           <div className="section-card" style={{ background: 'linear-gradient(135deg, rgba(17,7,32,0.85) 0%, rgba(55,15,90,0.3) 100%)', borderColor: 'rgba(212,168,83,0.25)' }}>
@@ -713,6 +739,7 @@ export default function ResultadoPage() {
               { check: true,  label: '3 Rituais Personalizados' },
               { check: true,  label: 'Padrão no Amor (com "pare de fazer" e "comece a fazer")' },
               { check: true,  label: 'Mapa do Dinheiro (bloqueios e ações práticas)' },
+              { check: true,  label: 'Compatibilidade Astral (Sol, Lua, Ascendente, Vênus, Marte)' },
               { check: false, label: 'Calendário de 30 Dias (dia a dia detalhado)' },
               { check: false, label: 'Fechamento e Mantra Pessoal' },
             ].map(({ check, label }) => (
