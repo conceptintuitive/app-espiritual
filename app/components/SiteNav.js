@@ -16,13 +16,10 @@ export default function SiteNav({ active }) {
   }, []);
 
   const meuMapaHref = ultimaAnaliseId ? `/resultado/${ultimaAnaliseId}` : '/';
-  // Chat vive dentro de /resultado ou /manual (precisa do contexto do mapa da pessoa) —
-  // aqui só levamos pra lá com ?chat=1, que faz o widget já abrir sozinho.
-  const chatHref = ultimaAnaliseId ? `/resultado/${ultimaAnaliseId}?chat=1` : '/';
 
   const items = [
     { href: meuMapaHref, label: 'Meu Mapa', key: 'meu-mapa' },
-    { href: chatHref, label: 'Chat', key: 'chat' },
+    { href: '/oraculo', label: 'Oráculo', key: 'oraculo' },
     { href: '/explorar', label: 'Explorar', key: 'explorar' },
     { href: '/compatibilidade', label: 'Compatibilidade', key: 'compatibilidade' },
     { href: '/blog', label: 'Blog', key: 'blog' },

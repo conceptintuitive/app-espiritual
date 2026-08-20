@@ -73,7 +73,7 @@ export default function ChatAssistente({ analiseId, isPaid, firstName, autoOpen 
       {open && (
         <div className="chat-panel">
           <div className="chat-header">
-            <span>✦ Assistente do seu mapa</span>
+            <span>✦ Oráculo do seu mapa</span>
             {!isPaid && (
               <span className="chat-counter">
                 {perguntasRestantes} pergunta{perguntasRestantes === 1 ? '' : 's'} grátis
