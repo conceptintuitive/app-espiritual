@@ -49,10 +49,11 @@ export default function SiteNav({ active }) {
           grid-template-columns: 1fr auto 1fr;
           align-items: center;
           gap: 16px;
-          padding: 20px 24px;
-          background: rgba(10, 1, 24, 0.85);
-          backdrop-filter: blur(10px);
-          border-bottom: 1px solid rgba(216, 180, 254, 0.15);
+          padding: 22px 24px;
+          background: rgba(10, 1, 24, 0.92);
+          backdrop-filter: blur(14px);
+          border-bottom: 1px solid rgba(216, 180, 254, 0.22);
+          box-shadow: 0 4px 30px rgba(0, 0, 0, 0.25);
         }
         .site-nav-brand {
           font-family: 'Cinzel', serif;
@@ -68,7 +69,8 @@ export default function SiteNav({ active }) {
           display: flex;
           flex-wrap: wrap;
           justify-content: center;
-          gap: 28px;
+          align-items: center;
+          gap: 10px;
           justify-self: center;
         }
         .site-nav-spacer {
@@ -76,21 +78,25 @@ export default function SiteNav({ active }) {
         }
         .site-nav-link {
           font-family: 'Cinzel', serif;
-          font-size: 18px;
-          font-weight: 600;
+          font-size: 19px;
+          font-weight: 700;
           letter-spacing: 0.02em;
-          color: rgba(233, 213, 255, 0.72);
+          color: rgba(233, 213, 255, 0.8);
           text-decoration: none;
-          padding-bottom: 4px;
-          border-bottom: 2px solid transparent;
           white-space: nowrap;
+          padding: 9px 20px;
+          border-radius: 999px;
+          border: 1px solid transparent;
+          transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
         }
         .site-nav-link.is-active {
           color: #faf5ff;
-          border-bottom-color: #ec4899;
+          background: linear-gradient(135deg, rgba(236, 72, 153, 0.22), rgba(139, 92, 246, 0.22));
+          border-color: rgba(236, 72, 153, 0.45);
         }
         .site-nav-link:hover {
           color: #faf5ff;
+          background: rgba(139, 92, 246, 0.12);
         }
         @media (max-width: 640px) {
           .site-nav {
@@ -100,7 +106,8 @@ export default function SiteNav({ active }) {
             padding: 18px 20px;
           }
           .site-nav-brand { justify-self: center; }
-          .site-nav-links { gap: 24px; }
+          .site-nav-links { gap: 8px; }
+          .site-nav-link { font-size: 16px; padding: 8px 16px; }
           .site-nav-spacer { display: none; }
         }
       `}</style>
