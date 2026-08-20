@@ -62,10 +62,10 @@ export async function POST(request) {
           {
             id: `${analiseId}-tier2`,
             title: "Projeção de 12 Meses — Upsell",
-            description: `Projeção numerológica mês a mês para ${analise.nome ?? "você"}`,
+            description: `Projeção numerológica mês a mês para ${analise.nome ?? "você"} (complemento do manual, já com desconto por quem já comprou)`,
             quantity: 1,
             currency_id: "BRL",
-            unit_price: 97,
+            unit_price: 50,
           },
         ],
         payer: {

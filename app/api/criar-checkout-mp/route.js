@@ -27,6 +27,7 @@ export async function POST(request) {
 
     const body = await request.json().catch(() => null);
     const analiseId = body?.analiseId;
+    const incluirTier2 = Boolean(body?.incluirTier2);
 
     if (!analiseId) {
       return NextResponse.json({ error: "ID da análise é obrigatório" }, { status: 400 });
@@ -48,19 +49,32 @@ export async function POST(request) {
 
     const baseUrl = getBaseUrl();
 
+    const items = [
+      {
+        id: analiseId,
+        title: "Manual Premium Personalizado",
+        description: `Relatório personalizado completo para ${analise.nome ?? "você"}`,
+        quantity: 1,
+        currency_id: "BRL",
+        unit_price: 47,
+      },
+    ];
+
+    if (incluirTier2) {
+      items.push({
+        id: `${analiseId}-tier2`,
+        title: "Projeção de 12 Meses (complemento)",
+        description: `Projeção numerológica mês a mês para ${analise.nome ?? "você"}`,
+        quantity: 1,
+        currency_id: "BRL",
+        unit_price: 50,
+      });
+    }
+
     const preference = new Preference(client);
     const result = await preference.create({
       body: {
-        items: [
-          {
-            id: analiseId,
-            title: "Manual Premium Personalizado",
-            description: `Relatório personalizado completo para ${analise.nome ?? "você"}`,
-            quantity: 1,
-            currency_id: "BRL",
-            unit_price: 47,
-          },
-        ],
+        items,
         payer: {
           email: analise.email || undefined,
         },
@@ -71,6 +85,9 @@ export async function POST(request) {
         },
         auto_return: "approved",
         external_reference: analiseId,
+        // Propaga pro objeto de pagamento no webhook, pra saber se esse
+        // checkout já incluía o upsell (Projeção de 12 Meses) junto.
+        metadata: { includes_tier2: incluirTier2 },
         payment_methods: {
           excluded_payment_types: [],
           installments: 1,
