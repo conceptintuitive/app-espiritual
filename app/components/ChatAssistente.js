@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 
 const LIMITE_GRATIS = 3;
 
-export default function ChatAssistente({ analiseId, isPaid, firstName }) {
-  const [open, setOpen] = useState(false);
+export default function ChatAssistente({ analiseId, isPaid, firstName, autoOpen }) {
+  const [open, setOpen] = useState(Boolean(autoOpen));
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);

@@ -90,6 +90,7 @@ export default function ResultadoPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isPending = searchParams.get('pending') === 'true';
+  const abrirChat = searchParams.get('chat') === '1';
 
   const [analise, setAnalise] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -833,7 +834,7 @@ export default function ResultadoPage() {
       </div>
 
       {/* ══ ASSISTENTE DE IA — 3 perguntas grátis na prévia ══ */}
-      <ChatAssistente analiseId={id} isPaid={false} firstName={firstName} />
+      <ChatAssistente analiseId={id} isPaid={false} firstName={firstName} autoOpen={abrirChat} />
 
       {/* ══ STICKY CTA — mobile only ══ */}
       {showSticky && (
