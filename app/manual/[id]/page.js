@@ -1,7 +1,7 @@
 'use client';
 
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 
 // ✅ IMPORT do gerador de manual
@@ -240,6 +240,8 @@ function isPaid(row) {
 export default function ManualPage() {
   const { id } = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const abrirChat = searchParams.get('chat') === '1';
 
   const [row, setRow] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -1304,7 +1306,7 @@ e mostrar como sair dele.
       </div>
 
       {/* ══ ASSISTENTE DE IA — livre (com teto diário) pra quem já comprou ══ */}
-      {hasPaid && <ChatAssistente analiseId={id} isPaid firstName={firstName} />}
+      {hasPaid && <ChatAssistente analiseId={id} isPaid firstName={firstName} autoOpen={abrirChat} />}
     </div>
   );
 }
