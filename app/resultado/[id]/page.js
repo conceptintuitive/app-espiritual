@@ -475,10 +475,6 @@ export default function ResultadoPage() {
             {analise.numero_expressao  && <span className="pill pill-numero">🔢 Expressão: {analise.numero_expressao}</span>}
             {analise.ano_pessoal       && <span className="pill pill-numero">📅 Ano Pessoal: {analise.ano_pessoal}</span>}
           </div>
-
-          <button className="share-whatsapp-btn" onClick={handleShareWhatsapp}>
-            📲 Mandar pra uma amiga no WhatsApp
-          </button>
         </div>
 
         {/* ══ BLOCO 2 — PREVIEW ══ */}
@@ -814,6 +810,10 @@ export default function ResultadoPage() {
           </p>
         </div>
 
+        <button className="share-whatsapp-btn" onClick={handleShareWhatsapp}>
+          📲 Mandar pra uma amiga no WhatsApp
+        </button>
+
         <div className="footer-note">
           <div className="muted">Precisa de ajuda? Email: <strong>conceptintuitive@gmail.com</strong></div>
         </div>
@@ -937,7 +937,7 @@ const globalCss = `
 
   .share-whatsapp-btn {
     display: block;
-    margin: 18px auto 0;
+    margin: 32px auto 0;
     padding: 10px 20px;
     border-radius: 999px;
     border: 1px solid rgba(37,211,102,0.4);
