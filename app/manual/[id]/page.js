@@ -7,6 +7,7 @@ import { createClient } from '@supabase/supabase-js';
 // ✅ IMPORT do gerador de manual
 import { generateManual, renderManualMarkdown } from '@/lib/manualgenerator';
 import { getTopMatches } from '@/lib/compatibilidade';
+import { gerarProjecao12Meses } from '@/lib/transitos12meses';
 import ChatAssistente from '@/app/components/ChatAssistente';
 
 // ==============================================
@@ -540,6 +541,31 @@ export default function ManualPage() {
       alert(e?.message || 'Erro ao processar pagamento. Tente novamente.');
     } finally {
       setProcessando(false);
+    }
+  }
+
+  // ==============================================
+  // HANDLER: CHECKOUT DO TIER 2 (Projeção de 12 Meses — R$97, upsell via MP)
+  // ==============================================
+  const [processandoTier2, setProcessandoTier2] = useState(false);
+
+  async function handleComprarTier2() {
+    setProcessandoTier2(true);
+    try {
+      const response = await fetch('/api/criar-checkout-tier2-mp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ analiseId: id }),
+      });
+      const data = await response.json().catch(() => ({}));
+      const checkoutUrl = data?.url || data?.sandbox_url;
+      if (checkoutUrl) { window.location.href = checkoutUrl; return; }
+      throw new Error(data?.error || 'Erro ao criar checkout');
+    } catch (e) {
+      console.error('Erro ao abrir checkout do tier 2:', e);
+      alert(e?.message || 'Erro ao processar pagamento. Tente novamente.');
+    } finally {
+      setProcessandoTier2(false);
     }
   }
 
@@ -1292,6 +1318,50 @@ e mostrar como sair dele.
                   </div>
                 );
               })}
+
+            {/* ========== TIER 2 — PROJEÇÃO DE 12 MESES (upsell R$97) ========== */}
+            {row && (
+              <div className="card premium" id="projecao-12-meses">
+                <h2 className="h2">🔮 Projeção dos Próximos 12 Meses</h2>
+
+                {row.tier2_payment_status === 'paid' ? (
+                  <>
+                    <p className="richText-p" style={{ marginTop: 4, marginBottom: 4 }}>
+                      Seu Ano Pessoal e Mês Pessoal, mês a mês, a partir de agora.
+                    </p>
+                    {gerarProjecao12Meses(row.data_nascimento).map((m) => (
+                      <div key={`${m.ano}-${m.mes}`} className="diag-block">
+                        <div className="diag-block-label">{m.label} — Mês Pessoal {m.mesPessoal}</div>
+                        <p className="richText-p" style={{ marginTop: 4 }}>
+                          <strong>{m.titulo}.</strong> {m.texto}
+                        </p>
+                      </div>
+                    ))}
+                  </>
+                ) : (
+                  <div className="offer-mini">
+                    <p className="p">
+                      Além do seu diagnóstico atual, dá pra saber o que cada um dos próximos 12 meses
+                      pede de você — mês a mês, com o Ano Pessoal e o Mês Pessoal calculados a partir
+                      da sua data de nascimento.
+                    </p>
+                    <ul className="list-check compact">
+                      <li>✓ 12 meses, um por um, a partir de hoje</li>
+                      <li>✓ Vira o ano com você — sem "esquecer" de recalcular</li>
+                      <li>✓ Tema prático de cada mês (o que favorece, o que evitar)</li>
+                    </ul>
+                    <button
+                      className="btnMedium pulse"
+                      onClick={handleComprarTier2}
+                      disabled={processandoTier2}
+                      style={{ marginTop: 12 }}
+                    >
+                      {processandoTier2 ? '⏳ Abrindo…' : '🔓 Desbloquear Projeção de 12 Meses — R$ 97'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* FOOTER */}
             <div className="footer-note">
