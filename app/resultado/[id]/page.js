@@ -752,6 +752,18 @@ export default function ResultadoPage() {
           <p className="manual-index-footer">Você viu fragmentos de 7 seções. Seu manual completo tem 14 seções e 30+ páginas escritas só pra você.</p>
         </div>
 
+        {/* ══ DEPOIMENTOS — logo antes da oferta ══ */}
+        <div className="testi-block">
+          <div className="testi-item">
+            <p className="testi-text">"Comprei o manual completo e valeu cada centavo. A parte do ano pessoal mudou completamente como eu tô planejando 2026."</p>
+            <span className="testi-author">Fernanda L. — Curitiba</span>
+          </div>
+          <div className="testi-item">
+            <p className="testi-text">"Eu chorei lendo meu mapa. Parecia que alguém finalmente colocou em palavras o que eu sinto há anos mas não conseguia explicar."</p>
+            <span className="testi-author">Mariana S. — São Paulo</span>
+          </div>
+        </div>
+
         {/* ══ BLOCO 7 — OFERTA FINAL ══ */}
         <div className="card offer-card">
           <div className="offer-badge-sm">Seu plano completo</div>
@@ -1412,6 +1424,15 @@ const globalCss = `
     padding: 16px 22px; text-align: center;
   }
   .social-proof-text { font-size: 14px; color: var(--muted); letter-spacing: 0.04em; }
+
+  /* ── Depoimentos ── */
+  .testi-block { margin-top: 28px; display: flex; flex-direction: column; gap: 14px; }
+  .testi-item {
+    padding: 18px 20px; border-radius: 16px;
+    background: rgba(139,92,246,0.05); border-left: 2px solid rgba(139,92,246,0.4);
+  }
+  .testi-text { font-size: 16px; font-style: italic; color: var(--text); line-height: 1.65; margin: 0 0 8px; }
+  .testi-author { font-size: 13px; color: var(--muted); font-weight: 600; letter-spacing: 0.02em; }
 
   /* ── Índice do manual ── */
   .manual-index-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; }
