@@ -104,6 +104,7 @@ export default function ResultadoPage() {
   const [statsCount, setStatsCount] = useState(null);
   const [ofertaExpirada, setOfertaExpirada] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false);
+  const [nudgeChat, setNudgeChat] = useState(false);
 
   // estrelas
   const starsBuiltRef = useRef(false);
@@ -357,6 +358,29 @@ export default function ResultadoPage() {
       document.removeEventListener('mouseleave', onMouseLeave);
       window.removeEventListener('popstate', onPopState);
     };
+  }, [analise]);
+
+  // Oráculo proativo — abre sozinho (1x por sessão) se a pessoa rolar até
+  // perto do fim (bloco de reforço) sem comprar, com sugestões de pergunta.
+  useEffect(() => {
+    if (!analise || analise.payment_status === 'paid' || typeof window === 'undefined') return;
+    const shownKey = 'ic_oraculo_nudge_shown';
+    if (window.sessionStorage.getItem(shownKey)) return;
+    const el = document.querySelector('.reforco-block');
+    if (!el) return;
+
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          window.sessionStorage.setItem(shownKey, '1');
+          setNudgeChat(true);
+          obs.disconnect();
+        }
+      },
+      { threshold: 0.4 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
   }, [analise]);
 
   // compra
@@ -846,7 +870,7 @@ export default function ResultadoPage() {
       </div>
 
       {/* ══ ASSISTENTE DE IA — 3 perguntas grátis na prévia ══ */}
-      <ChatAssistente analiseId={id} isPaid={false} firstName={firstName} autoOpen={abrirChat} />
+      <ChatAssistente analiseId={id} isPaid={false} firstName={firstName} autoOpen={abrirChat} nudge={nudgeChat} />
 
       {/* ══ STICKY CTA — mobile only ══ */}
       {showSticky && (

@@ -61,6 +61,14 @@ export default function ExplorarPage() {
           <span className="cta">{meuMapaCta}</span>
         </Link>
 
+        <Link href="/oraculo" className="card quaternary">
+          <div className="icon-badge">✦</div>
+          <span className="tag">Grátis · 3 perguntas</span>
+          <h3>Oráculo</h3>
+          <p>Pergunta qualquer coisa sobre o seu mapa — ele já conhece seu Sol, Lua e seus números, e responde na hora.</p>
+          <span className="cta">Perguntar agora →</span>
+        </Link>
+
         <Link href="/compatibilidade" className="card secondary">
           <div className="icon-badge">♡</div>
           <span className="tag">Grátis · sem cadastro</span>
@@ -107,7 +115,8 @@ export default function ExplorarPage() {
           max-width: 980px; margin: 0 auto; padding: 0 20px 80px;
           display: grid; grid-template-columns: 1fr; gap: 16px;
         }
-        @media (min-width: 720px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (min-width: 720px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (min-width: 1180px) { .grid { grid-template-columns: repeat(4, 1fr); } }
 
         .card {
           position: relative; border-radius: 22px; border: 1px solid var(--border);
@@ -120,6 +129,7 @@ export default function ExplorarPage() {
         .card.primary::before { background: radial-gradient(circle at 20% 0%, rgba(236,72,153,0.24), rgba(19,8,40,0.95) 70%); }
         .card.secondary::before { background: radial-gradient(circle at 20% 0%, rgba(139,92,246,0.24), rgba(19,8,40,0.95) 70%); }
         .card.tertiary::before { background: radial-gradient(circle at 20% 0%, rgba(245,158,11,0.18), rgba(19,8,40,0.95) 70%); }
+        .card.quaternary::before { background: radial-gradient(circle at 20% 0%, rgba(236,72,153,0.16), rgba(139,92,246,0.16), rgba(19,8,40,0.95) 70%); }
 
         .icon-badge { width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; background: rgba(255,255,255,0.06); border: 1px solid var(--border-strong); }
         .tag { font-family: 'Cinzel', serif; font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--warning); }
