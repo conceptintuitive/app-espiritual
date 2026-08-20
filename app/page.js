@@ -439,11 +439,28 @@ function QuizOverlay({ onClose }) {
 }
 
 // ── Main page ──────────────────────────────────────────────────────────────────
+const MENU_ITEMS = [
+  { href: '/explorar', icon: '🔮', label: 'Explorar' },
+  { href: '/compatibilidade', icon: '♡', label: 'Compatibilidade' },
+  { href: '/blog', icon: '✎', label: 'Blog' },
+];
+
 export default function Home() {
   const [quizOpen, setQuizOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
 
   const openQuiz = () => setQuizOpen(true);
   const closeQuiz = () => setQuizOpen(false);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false);
+    };
+    document.addEventListener('mousedown', onClickOutside);
+    return () => document.removeEventListener('mousedown', onClickOutside);
+  }, [menuOpen]);
 
   // Orbs ref
   const orbsBuilt = useRef(false);
@@ -619,9 +636,9 @@ export default function Home() {
       {/* Quiz overlay */}
       {quizOpen && <QuizOverlay onClose={closeQuiz} />}
 
-      {/* Barra de topo — visível antes do quiz, aba clicável pro blog (/blog → /blog/[slug]) */}
+      {/* Barra de topo — visível antes do quiz. Botão de menu abre Explorar / Compatibilidade / Blog */}
       <div style={{
-        position: 'relative', zIndex: 10,
+        position: 'relative', zIndex: 20,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         maxWidth: 1100, margin: '0 auto', padding: '18px clamp(16px,4vw,28px) 0',
       }}>
@@ -631,18 +648,46 @@ export default function Home() {
         }}>
           ✦ Intuitive Concept
         </span>
-        <Link
-          href="/blog"
-          style={{
-            display: 'inline-flex', alignItems: 'center', gap: 6,
-            padding: '8px 18px', borderRadius: 999,
-            border: '1px solid rgba(139,92,246,.3)', background: 'rgba(139,92,246,.08)',
-            fontFamily: 'var(--F)', fontWeight: 500, fontSize: 14,
-            color: 'var(--t1)', textDecoration: 'none',
-          }}
-        >
-          ✎ Blog
-        </Link>
+
+        <div ref={menuRef} style={{ position: 'relative' }}>
+          <button
+            onClick={() => setMenuOpen(o => !o)}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              padding: '9px 18px', borderRadius: 999, border: 'none', cursor: 'pointer',
+              background: 'linear-gradient(90deg,#7c3aed,#8b5cf6)',
+              boxShadow: '0 8px 26px rgba(139,92,246,.4)',
+              fontFamily: 'var(--F)', fontWeight: 600, fontSize: 14, color: '#fff',
+            }}
+          >
+            ☰ Explorar
+          </button>
+
+          {menuOpen && (
+            <div style={{
+              position: 'absolute', top: 'calc(100% + 10px)', right: 0, zIndex: 30,
+              minWidth: 210, borderRadius: 16, overflow: 'hidden',
+              border: '1px solid rgba(139,92,246,.25)', background: 'var(--card)',
+              boxShadow: '0 24px 60px rgba(0,0,0,.5)',
+            }}>
+              {MENU_ITEMS.map(({ href, icon, label }, i) => (
+                <Link
+                  key={href}
+                  href={href}
+                  onClick={() => setMenuOpen(false)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '14px 18px', fontFamily: 'var(--F)', fontSize: 15,
+                    color: 'var(--t1)', textDecoration: 'none',
+                    borderBottom: i < MENU_ITEMS.length - 1 ? '1px solid rgba(255,255,255,.05)' : 'none',
+                  }}
+                >
+                  <span>{icon}</span>{label}
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ═══════════════ HERO ═══════════════════════════════════════════════ */}
