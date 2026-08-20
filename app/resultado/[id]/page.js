@@ -6,6 +6,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
 import { getTopMatches } from '@/lib/compatibilidade';
+import ChatAssistente from '@/app/components/ChatAssistente';
 
 // ── Supabase ──────────────────────────────────────────────────────────────────
 function getSupabaseClient() {
@@ -827,7 +828,12 @@ export default function ResultadoPage() {
           <div className="muted">Precisa de ajuda? Email: <strong>conceptintuitive@gmail.com</strong></div>
         </div>
 
+        <a href="/?refazer=1" className="refazer-link">↺ Refazer minha análise com outros dados</a>
+
       </div>
+
+      {/* ══ ASSISTENTE DE IA — 3 perguntas grátis na prévia ══ */}
+      <ChatAssistente analiseId={id} isPaid={false} firstName={firstName} />
 
       {/* ══ STICKY CTA — mobile only ══ */}
       {showSticky && (
@@ -1219,6 +1225,13 @@ const globalCss = `
   .footer-links a { color: var(--muted); text-decoration: none; }
   .footer-links a:hover { color: var(--text); }
   .footer-links-dot { color: rgba(216,180,254,0.3); }
+
+  .refazer-link {
+    display: block; margin-top: 18px; text-align: center;
+    font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 0.06em;
+    color: var(--muted); text-decoration: none;
+  }
+  .refazer-link:hover { color: var(--text); }
 
   /* Spinner de polling */
   .gerando-card {

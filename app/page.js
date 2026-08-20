@@ -453,6 +453,13 @@ export default function Home() {
   const openQuiz = () => setQuizOpen(true);
   const closeQuiz = () => setQuizOpen(false);
 
+  // Vindo de "Refazer minha análise" no /resultado — abre o quiz já limpo
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('refazer') === '1') setQuizOpen(true);
+  }, []);
+
   useEffect(() => {
     if (!menuOpen) return;
     const onClickOutside = (e) => {

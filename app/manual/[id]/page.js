@@ -7,6 +7,7 @@ import { createClient } from '@supabase/supabase-js';
 // ✅ IMPORT do gerador de manual
 import { generateManual, renderManualMarkdown } from '@/lib/manualgenerator';
 import { getTopMatches } from '@/lib/compatibilidade';
+import ChatAssistente from '@/app/components/ChatAssistente';
 
 // ==============================================
 // SUPABASE CLIENT
@@ -1301,6 +1302,9 @@ e mostrar como sair dele.
         </>
         )}
       </div>
+
+      {/* ══ ASSISTENTE DE IA — livre (com teto diário) pra quem já comprou ══ */}
+      {hasPaid && <ChatAssistente analiseId={id} isPaid firstName={firstName} />}
     </div>
   );
 }
