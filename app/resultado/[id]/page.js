@@ -84,6 +84,20 @@ function firstSentences(text, n = 2) {
   return result || text;
 }
 
+// Checkbox de add-on do tier2 (Projeção de 12 Meses) — reaproveitado em cada
+// CTA de compra da página, não só na oferta final, pra dar a opção de bundle
+// assim que a pessoa vê o primeiro botão de comprar.
+function Tier2AddonToggle({ checked, onChange }) {
+  return (
+    <label className="tier2-addon">
+      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+      <span>
+        🔮 Incluir também a <strong>Projeção dos Próximos 12 Meses</strong> (+R$ 50 — R$ 97 no total)
+      </span>
+    </label>
+  );
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function ResultadoPage() {
   const { id } = useParams();
@@ -548,6 +562,7 @@ export default function ResultadoPage() {
               <p className="locked-text">
                 O mecanismo que mantém esse ciclo rodando e o ajuste que muda o resultado estão no diagnóstico completo.
               </p>
+              <Tier2AddonToggle checked={incluirTier2} onChange={setIncluirTier2} />
               <button className="btn-cta" onClick={handleComprar} disabled={processando}>
                 {processando ? '⏳ Abrindo…' : cargoLabel}
               </button>
@@ -628,6 +643,7 @@ export default function ResultadoPage() {
               <p className="locked-text">
                 Seus bloqueios financeiros e o caminho para destravar estão no manual completo.
               </p>
+              <Tier2AddonToggle checked={incluirTier2} onChange={setIncluirTier2} />
               <button className="btn-cta" onClick={handleComprar} disabled={processando}>
                 {processando ? '⏳ Abrindo…' : cargoLabel}
               </button>
@@ -716,6 +732,7 @@ export default function ResultadoPage() {
               <p className="locked-text">
                 A interpretação completa de como {cartaTarot.nome}{cartaTarot.invertida ? ' Invertida' : ''} se conecta ao seu perfil e objetivo está no manual completo.
               </p>
+              <Tier2AddonToggle checked={incluirTier2} onChange={setIncluirTier2} />
               <button className="btn-cta" onClick={handleComprar} disabled={processando}>
                 {processando ? '⏳ Abrindo…' : cargoLabel}
               </button>
@@ -804,16 +821,7 @@ export default function ResultadoPage() {
           </div>
           <div className="pix-badge">⚡ Pague com Pix: aprovação na hora, manual liberado na mesma hora</div>
 
-          <label className="tier2-addon">
-            <input
-              type="checkbox"
-              checked={incluirTier2}
-              onChange={(e) => setIncluirTier2(e.target.checked)}
-            />
-            <span>
-              🔮 Incluir também a <strong>Projeção dos Próximos 12 Meses</strong> (+R$ 50 — R$ 97 no total)
-            </span>
-          </label>
+          <Tier2AddonToggle checked={incluirTier2} onChange={setIncluirTier2} />
 
           <ul className="list-check compact offer-list">
             <li>✓ Diagnóstico profundo do seu padrão</li>
