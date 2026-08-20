@@ -3,6 +3,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
 import { getTopMatches } from '@/lib/compatibilidade';
 
@@ -814,6 +815,14 @@ export default function ResultadoPage() {
           📲 Mandar pra uma amiga no WhatsApp
         </button>
 
+        <div className="footer-links">
+          <Link href="/explorar">Explorar</Link>
+          <span className="footer-links-dot">·</span>
+          <Link href="/compatibilidade">Compatibilidade</Link>
+          <span className="footer-links-dot">·</span>
+          <Link href="/blog">Blog</Link>
+        </div>
+
         <div className="footer-note">
           <div className="muted">Precisa de ajuda? Email: <strong>conceptintuitive@gmail.com</strong></div>
         </div>
@@ -1201,6 +1210,15 @@ const globalCss = `
 
   .muted { color: var(--muted); }
   .footer-note { margin-top: 32px; text-align: center; font-size: 14px; }
+
+  .footer-links {
+    margin-top: 40px;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    font-family: 'Cinzel', serif; font-size: 12.5px; letter-spacing: 0.06em;
+  }
+  .footer-links a { color: var(--muted); text-decoration: none; }
+  .footer-links a:hover { color: var(--text); }
+  .footer-links-dot { color: rgba(216,180,254,0.3); }
 
   /* Spinner de polling */
   .gerando-card {
