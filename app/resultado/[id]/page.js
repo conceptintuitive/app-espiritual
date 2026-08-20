@@ -89,10 +89,10 @@ function firstSentences(text, n = 2) {
 // assim que a pessoa vê o primeiro botão de comprar.
 function Tier2AddonToggle({ checked, onChange }) {
   return (
-    <label className="tier2-addon">
+    <label className={`tier2-addon${checked ? ' is-checked' : ''}`}>
       <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
       <span>
-        🔮 Incluir também a <strong>Projeção dos Próximos 12 Meses</strong> (+R$ 50 — R$ 97 no total)
+        {checked ? '✅' : '🔮'} Incluir também a <strong>Projeção dos Próximos 12 Meses</strong> (+R$ 50 — R$ 97 no total)
       </span>
     </label>
   );
@@ -562,10 +562,10 @@ export default function ResultadoPage() {
               <p className="locked-text">
                 O mecanismo que mantém esse ciclo rodando e o ajuste que muda o resultado estão no diagnóstico completo.
               </p>
-              <Tier2AddonToggle checked={incluirTier2} onChange={setIncluirTier2} />
               <button className="btn-cta" onClick={handleComprar} disabled={processando}>
                 {processando ? '⏳ Abrindo…' : cargoLabel}
               </button>
+              <Tier2AddonToggle checked={incluirTier2} onChange={setIncluirTier2} />
               <p className="pos-compra" style={{ marginTop: 10 }}>
                 Após o pagamento, você receberá o link do seu manual por email em poucos minutos. Verifique também a caixa de spam.
               </p>
@@ -643,10 +643,10 @@ export default function ResultadoPage() {
               <p className="locked-text">
                 Seus bloqueios financeiros e o caminho para destravar estão no manual completo.
               </p>
-              <Tier2AddonToggle checked={incluirTier2} onChange={setIncluirTier2} />
               <button className="btn-cta" onClick={handleComprar} disabled={processando}>
                 {processando ? '⏳ Abrindo…' : cargoLabel}
               </button>
+              <Tier2AddonToggle checked={incluirTier2} onChange={setIncluirTier2} />
             </div>
           </div>
         )}
@@ -732,10 +732,10 @@ export default function ResultadoPage() {
               <p className="locked-text">
                 A interpretação completa de como {cartaTarot.nome}{cartaTarot.invertida ? ' Invertida' : ''} se conecta ao seu perfil e objetivo está no manual completo.
               </p>
-              <Tier2AddonToggle checked={incluirTier2} onChange={setIncluirTier2} />
               <button className="btn-cta" onClick={handleComprar} disabled={processando}>
                 {processando ? '⏳ Abrindo…' : cargoLabel}
               </button>
+              <Tier2AddonToggle checked={incluirTier2} onChange={setIncluirTier2} />
             </div>
           </div>
         )}
@@ -821,8 +821,6 @@ export default function ResultadoPage() {
           </div>
           <div className="pix-badge">⚡ Pague com Pix: aprovação na hora, manual liberado na mesma hora</div>
 
-          <Tier2AddonToggle checked={incluirTier2} onChange={setIncluirTier2} />
-
           <ul className="list-check compact offer-list">
             <li>✓ Diagnóstico profundo do seu padrão</li>
             <li>✓ Mapa do amor (seu padrão afetivo real)</li>
@@ -840,6 +838,7 @@ export default function ResultadoPage() {
           <button className="btn-cta" onClick={handleComprar} disabled={processando}>
             {processando ? '⏳ Abrindo…' : cargoLabel}
           </button>
+          <Tier2AddonToggle checked={incluirTier2} onChange={setIncluirTier2} />
           <p className="pos-compra">
             Pix: acesso liberado na hora. Cartão: você recebe o link do manual por email em poucos minutos (verifique a caixa de spam).
           </p>
@@ -1373,15 +1372,28 @@ const globalCss = `
   }
 
   .tier2-addon {
-    display: flex; align-items: flex-start; gap: 10px;
-    width: 100%; max-width: 380px;
-    padding: 12px 14px; border-radius: 14px;
-    background: rgba(139,92,246,0.07);
-    border: 1px dashed rgba(139,92,246,0.35);
-    text-align: left; cursor: pointer;
-    font-size: 14px; color: var(--text); line-height: 1.5;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    width: 100%; max-width: 420px;
+    margin: 14px auto 0;
+    padding: 14px 20px; border-radius: 999px;
+    background: linear-gradient(135deg, rgba(139,92,246,0.16), rgba(236,72,153,0.12));
+    border: 1.5px solid rgba(139,92,246,0.55);
+    box-shadow: 0 6px 20px rgba(139,92,246,0.18);
+    text-align: center; cursor: pointer;
+    font-size: 14.5px; color: var(--text); line-height: 1.45;
+    transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
   }
-  .tier2-addon input { margin-top: 3px; flex-shrink: 0; accent-color: var(--secondary); width: 16px; height: 16px; }
+  .tier2-addon:hover {
+    border-color: rgba(139,92,246,0.8);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 26px rgba(139,92,246,0.28);
+  }
+  .tier2-addon.is-checked {
+    background: linear-gradient(135deg, rgba(139,92,246,0.32), rgba(236,72,153,0.24));
+    border-color: rgba(16,185,129,0.6);
+    box-shadow: 0 6px 22px rgba(16,185,129,0.2);
+  }
+  .tier2-addon input { flex-shrink: 0; accent-color: var(--secondary); width: 17px; height: 17px; cursor: pointer; }
 
   /* Exit-intent modal */
   .exit-overlay {
