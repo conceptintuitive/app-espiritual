@@ -3,8 +3,13 @@
 import { useEffect, useRef, useState } from 'react';
 
 const LIMITE_GRATIS = 3;
+const SUGESTOES = [
+  'Por que eu travo tanto no amor?',
+  'Qual é o meu maior bloqueio agora?',
+  'O que o meu Ano Pessoal está pedindo de mim?',
+];
 
-export default function ChatAssistente({ analiseId, isPaid, firstName, autoOpen }) {
+export default function ChatAssistente({ analiseId, isPaid, firstName, autoOpen, nudge }) {
   const [open, setOpen] = useState(Boolean(autoOpen));
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
@@ -16,6 +21,12 @@ export default function ChatAssistente({ analiseId, isPaid, firstName, autoOpen 
   useEffect(() => {
     if (open) bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, open]);
+
+  // Oráculo proativo: abre sozinho se a pessoa rolar quase até o fim sem
+  // comprar — só quando ainda não abriu nem conversou, pra não interromper.
+  useEffect(() => {
+    if (nudge && !open && messages.length === 0) setOpen(true);
+  }, [nudge]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const irParaOferta = () => {
     setOpen(false);
@@ -83,10 +94,19 @@ export default function ChatAssistente({ analiseId, isPaid, firstName, autoOpen 
 
           <div className="chat-body">
             {messages.length === 0 && (
-              <p className="chat-empty">
-                {firstName ? `Oi, ${firstName}! ` : 'Oi! '}
-                Pergunta algo sobre o seu mapa — tipo "por que eu travo tanto no amor?"
-              </p>
+              <>
+                <p className="chat-empty">
+                  {firstName ? `Oi, ${firstName}! ` : 'Oi! '}
+                  Pergunta algo sobre o seu mapa, ou escolhe uma sugestão:
+                </p>
+                <div className="chat-suggestions">
+                  {SUGESTOES.map((s) => (
+                    <button key={s} className="chat-suggestion-chip" onClick={() => setInput(s)}>
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </>
             )}
             {messages.map((m, i) => (
               <div key={i} className={`chat-msg chat-msg-${m.role}`}>{m.content}</div>
@@ -153,6 +173,14 @@ export default function ChatAssistente({ analiseId, isPaid, firstName, autoOpen 
           display: flex; flex-direction: column; gap: 10px;
         }
         .chat-empty { font-size: 14px; color: rgba(233, 213, 255, 0.7); line-height: 1.6; }
+        .chat-suggestions { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+        .chat-suggestion-chip {
+          text-align: left; font-family: 'Cormorant Garamond', serif; font-size: 13.5px; font-style: italic;
+          color: rgba(216, 180, 254, 0.9); background: rgba(139, 92, 246, 0.08);
+          border: 1px solid rgba(216, 180, 254, 0.18); border-radius: 12px;
+          padding: 9px 12px; cursor: pointer;
+        }
+        .chat-suggestion-chip:hover { background: rgba(139, 92, 246, 0.16); color: #faf5ff; }
         .chat-msg { font-size: 14.5px; line-height: 1.55; padding: 10px 13px; border-radius: 14px; max-width: 88%; }
         .chat-msg-user { align-self: flex-end; background: linear-gradient(135deg, var(--primary), #be185d); color: #fff; }
         .chat-msg-assistant { align-self: flex-start; background: rgba(139, 92, 246, 0.12); color: #faf5ff; }

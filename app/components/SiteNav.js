@@ -79,25 +79,31 @@ export default function SiteNav({ active }) {
         }
         .site-nav-link {
           font-family: 'Cinzel', serif;
-          font-size: 19px;
+          font-size: 21px;
           font-weight: 700;
           letter-spacing: 0.02em;
-          color: rgba(233, 213, 255, 0.8);
+          color: rgba(233, 213, 255, 0.88);
           text-decoration: none;
           white-space: nowrap;
-          padding: 9px 20px;
+          padding: 12px 26px;
           border-radius: 999px;
-          border: 1px solid transparent;
-          transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+          background: rgba(139, 92, 246, 0.08);
+          border: 1px solid rgba(216, 180, 254, 0.18);
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+          transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
         }
         .site-nav-link.is-active {
           color: #faf5ff;
-          background: linear-gradient(135deg, rgba(236, 72, 153, 0.22), rgba(139, 92, 246, 0.22));
-          border-color: rgba(236, 72, 153, 0.45);
+          background: linear-gradient(135deg, rgba(236, 72, 153, 0.3), rgba(139, 92, 246, 0.3));
+          border-color: rgba(236, 72, 153, 0.55);
+          box-shadow: 0 6px 20px rgba(236, 72, 153, 0.22);
         }
         .site-nav-link:hover {
           color: #faf5ff;
-          background: rgba(139, 92, 246, 0.12);
+          background: rgba(139, 92, 246, 0.18);
+          border-color: rgba(216, 180, 254, 0.35);
+          transform: translateY(-1px);
+          box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
         }
         @media (max-width: 640px) {
           .site-nav {
@@ -107,8 +113,8 @@ export default function SiteNav({ active }) {
             padding: 18px 20px;
           }
           .site-nav-brand { justify-self: center; }
-          .site-nav-links { gap: 8px; }
-          .site-nav-link { font-size: 16px; padding: 8px 16px; }
+          .site-nav-links { gap: 10px; }
+          .site-nav-link { font-size: 17px; padding: 10px 20px; }
           .site-nav-spacer { display: none; }
         }
       `}</style>
