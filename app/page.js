@@ -619,16 +619,29 @@ export default function Home() {
       {/* Quiz overlay */}
       {quizOpen && <QuizOverlay onClose={closeQuiz} />}
 
-      {/* Link discreto pro blog — visível antes do quiz, não compete com o CTA principal */}
-      <div style={{ position: 'relative', zIndex: 10, textAlign: 'center', padding: '14px 16px 0' }}>
+      {/* Barra de topo — visível antes do quiz, aba clicável pro blog (/blog → /blog/[slug]) */}
+      <div style={{
+        position: 'relative', zIndex: 10,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        maxWidth: 1100, margin: '0 auto', padding: '18px clamp(16px,4vw,28px) 0',
+      }}>
+        <span style={{
+          fontFamily: 'var(--T)', fontWeight: 700, fontSize: 15,
+          letterSpacing: '0.04em', color: 'var(--t1)',
+        }}>
+          ✦ Intuitive Concept
+        </span>
         <Link
           href="/blog"
           style={{
-            fontFamily: 'var(--F)', fontSize: 13, letterSpacing: '0.04em',
-            color: 'var(--t2)', textDecoration: 'none',
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            padding: '8px 18px', borderRadius: 999,
+            border: '1px solid rgba(139,92,246,.3)', background: 'rgba(139,92,246,.08)',
+            fontFamily: 'var(--F)', fontWeight: 500, fontSize: 14,
+            color: 'var(--t1)', textDecoration: 'none',
           }}
         >
-          ✎ Ler o blog
+          ✎ Blog
         </Link>
       </div>
 
