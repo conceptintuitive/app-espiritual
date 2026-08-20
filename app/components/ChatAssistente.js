@@ -116,14 +116,14 @@ export default function ChatAssistente({ analiseId, isPaid, firstName }) {
 
       <style jsx>{`
         .chat-fab {
-          position: fixed; bottom: 20px; right: 20px; z-index: 60;
+          position: fixed; bottom: 20px; right: 20px; z-index: 110;
           width: 56px; height: 56px; border-radius: 50%; border: none; cursor: pointer;
           background: linear-gradient(135deg, var(--primary), var(--secondary));
           color: #fff; font-size: 22px;
           box-shadow: 0 10px 30px rgba(139, 92, 246, 0.5);
         }
         .chat-panel {
-          position: fixed; bottom: 88px; right: 20px; z-index: 60;
+          position: fixed; bottom: 88px; right: 20px; z-index: 110;
           width: min(360px, calc(100vw - 32px));
           max-height: min(520px, calc(100vh - 140px));
           display: flex; flex-direction: column;
@@ -133,6 +133,12 @@ export default function ChatAssistente({ analiseId, isPaid, firstName }) {
           border-radius: 20px;
           box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
           overflow: hidden;
+        }
+        /* Em mobile o /resultado tem uma barra fixa de CTA no rodapé (64px, z-index 100) —
+           sobe o botão/painel do chat pra não ficar coberto por ela. */
+        @media (max-width: 767px) {
+          .chat-fab { bottom: 92px; }
+          .chat-panel { bottom: 160px; max-height: min(460px, calc(100vh - 212px)); }
         }
         .chat-header {
           display: flex; align-items: center; justify-content: space-between; gap: 10px;
