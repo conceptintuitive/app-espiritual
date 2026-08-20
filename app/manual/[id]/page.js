@@ -1350,13 +1350,16 @@ e mostrar como sair dele.
                       <li>✓ Vira o ano com você — sem "esquecer" de recalcular</li>
                       <li>✓ Tema prático de cada mês (o que favorece, o que evitar)</li>
                     </ul>
+                    <p className="muted" style={{ marginTop: 10, marginBottom: 0, fontSize: 13 }}>
+                      Você já investiu R$47 no manual. Complementa por só mais R$50 — R$97 no total.
+                    </p>
                     <button
                       className="btnMedium pulse"
                       onClick={handleComprarTier2}
                       disabled={processandoTier2}
-                      style={{ marginTop: 12 }}
+                      style={{ marginTop: 10 }}
                     >
-                      {processandoTier2 ? '⏳ Abrindo…' : '🔓 Desbloquear Projeção de 12 Meses — R$ 97'}
+                      {processandoTier2 ? '⏳ Abrindo…' : '🔓 Desbloquear Projeção de 12 Meses — R$ 50'}
                     </button>
                   </div>
                 )}

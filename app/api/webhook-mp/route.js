@@ -101,12 +101,21 @@ export async function POST(request) {
       return NextResponse.json({ success: true, tier2: true });
     }
 
+    // Se o checkout foi feito com o upsell junto (opção "incluir tier2" no
+    // /resultado), o metadata da preferência carrega isso até o pagamento.
+    const includesTier2 = payment.metadata?.includes_tier2 === true || payment.metadata?.includes_tier2 === "true";
+
     const { error: updateError } = await supabase
       .from("analises")
       .update({
         payment_status: "paid",
         mp_payment_id: paymentId.toString(),
         updated_at: new Date().toISOString(),
+        ...(includesTier2 && {
+          tier2_payment_status: "paid",
+          tier2_mp_payment_id: paymentId.toString(),
+          tier2_paid_at: new Date().toISOString(),
+        }),
       })
       .eq("id", analiseId);
 

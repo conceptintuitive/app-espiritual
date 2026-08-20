@@ -104,6 +104,7 @@ export default function ResultadoPage() {
   const [statsCount, setStatsCount] = useState(null);
   const [ofertaExpirada, setOfertaExpirada] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false);
+  const [incluirTier2, setIncluirTier2] = useState(false);
   const [nudgeChat, setNudgeChat] = useState(false);
 
   // estrelas
@@ -393,13 +394,14 @@ export default function ResultadoPage() {
 
   const handleComprar = async () => {
     setProcessando(true);
+    const valorTotal = incluirTier2 ? 97 : 47;
     try {
-      try { window?.gtag?.('event', 'clique_comprar', { event_category: 'conversion', value: 47, currency: 'BRL' }); } catch {}
-      try { window?.fbq?.('track', 'InitiateCheckout', { value: 47, currency: 'BRL' }); } catch {}
+      try { window?.gtag?.('event', 'clique_comprar', { event_category: 'conversion', value: valorTotal, currency: 'BRL' }); } catch {}
+      try { window?.fbq?.('track', 'InitiateCheckout', { value: valorTotal, currency: 'BRL' }); } catch {}
       const response = await fetch('/api/criar-checkout-mp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ analiseId: id }),
+        body: JSON.stringify({ analiseId: id, incluirTier2 }),
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data?.details || data?.error || 'Erro ao abrir checkout');
@@ -473,6 +475,7 @@ export default function ResultadoPage() {
   const firstName = pickFirstName(analise.nome);
   // "mais de X" sempre arredondado pra baixo (nunca infla o número real); só mostra a partir de um mínimo plausível
   const roundedStatsCount = statsCount && statsCount >= 15 ? Math.floor(statsCount / 10) * 10 : null;
+  const cargoLabel = incluirTier2 ? 'DESBLOQUEAR MANUAL + PROJEÇÃO 12 MESES — R$ 97' : 'DESBLOQUEAR MEU MANUAL — R$ 47';
 
   return (
     <div className="wrap">
@@ -546,7 +549,7 @@ export default function ResultadoPage() {
                 O mecanismo que mantém esse ciclo rodando e o ajuste que muda o resultado estão no diagnóstico completo.
               </p>
               <button className="btn-cta" onClick={handleComprar} disabled={processando}>
-                {processando ? '⏳ Abrindo…' : 'DESBLOQUEAR MEU MANUAL — R$ 47'}
+                {processando ? '⏳ Abrindo…' : cargoLabel}
               </button>
               <p className="pos-compra" style={{ marginTop: 10 }}>
                 Após o pagamento, você receberá o link do seu manual por email em poucos minutos. Verifique também a caixa de spam.
@@ -626,7 +629,7 @@ export default function ResultadoPage() {
                 Seus bloqueios financeiros e o caminho para destravar estão no manual completo.
               </p>
               <button className="btn-cta" onClick={handleComprar} disabled={processando}>
-                {processando ? '⏳ Abrindo…' : 'DESBLOQUEAR MEU MANUAL — R$ 47'}
+                {processando ? '⏳ Abrindo…' : cargoLabel}
               </button>
             </div>
           </div>
@@ -714,7 +717,7 @@ export default function ResultadoPage() {
                 A interpretação completa de como {cartaTarot.nome}{cartaTarot.invertida ? ' Invertida' : ''} se conecta ao seu perfil e objetivo está no manual completo.
               </p>
               <button className="btn-cta" onClick={handleComprar} disabled={processando}>
-                {processando ? '⏳ Abrindo…' : 'DESBLOQUEAR MEU MANUAL — R$ 47'}
+                {processando ? '⏳ Abrindo…' : cargoLabel}
               </button>
             </div>
           </div>
@@ -800,6 +803,18 @@ export default function ResultadoPage() {
             <span className="price-now-sm">por R$ 47,00</span>
           </div>
           <div className="pix-badge">⚡ Pague com Pix: aprovação na hora, manual liberado na mesma hora</div>
+
+          <label className="tier2-addon">
+            <input
+              type="checkbox"
+              checked={incluirTier2}
+              onChange={(e) => setIncluirTier2(e.target.checked)}
+            />
+            <span>
+              🔮 Incluir também a <strong>Projeção dos Próximos 12 Meses</strong> (+R$ 50 — R$ 97 no total)
+            </span>
+          </label>
+
           <ul className="list-check compact offer-list">
             <li>✓ Diagnóstico profundo do seu padrão</li>
             <li>✓ Mapa do amor (seu padrão afetivo real)</li>
@@ -815,7 +830,7 @@ export default function ResultadoPage() {
             📖 Seu manual tem 14 seções escritas exclusivamente para {firstName}. Nenhum outro manual é igual ao seu.
           </div>
           <button className="btn-cta" onClick={handleComprar} disabled={processando}>
-            {processando ? '⏳ Abrindo…' : 'DESBLOQUEAR MEU MANUAL — R$ 47'}
+            {processando ? '⏳ Abrindo…' : cargoLabel}
           </button>
           <p className="pos-compra">
             Pix: acesso liberado na hora. Cartão: você recebe o link do manual por email em poucos minutos (verifique a caixa de spam).
@@ -842,7 +857,7 @@ export default function ResultadoPage() {
         <div className="reforco-block">
           <p className="reforco-text">Se as 3 primeiras frases já te descreveram, imagina o diagnóstico completo.</p>
           <button className="btn-cta btn-cta-sm" onClick={handleComprar} disabled={processando}>
-            {processando ? '⏳ Abrindo…' : 'DESBLOQUEAR MEU MANUAL — R$ 47'}
+            {processando ? '⏳ Abrindo…' : cargoLabel}
           </button>
           <p className="pos-compra" style={{ marginTop: 10 }}>
             Após o pagamento, você receberá o link do seu manual por email em poucos minutos. Verifique também a caixa de spam.
@@ -1348,6 +1363,17 @@ const globalCss = `
     border-radius: 999px; padding: 6px 14px;
     margin: 2px 0 4px; text-align: center;
   }
+
+  .tier2-addon {
+    display: flex; align-items: flex-start; gap: 10px;
+    width: 100%; max-width: 380px;
+    padding: 12px 14px; border-radius: 14px;
+    background: rgba(139,92,246,0.07);
+    border: 1px dashed rgba(139,92,246,0.35);
+    text-align: left; cursor: pointer;
+    font-size: 14px; color: var(--text); line-height: 1.5;
+  }
+  .tier2-addon input { margin-top: 3px; flex-shrink: 0; accent-color: var(--secondary); width: 16px; height: 16px; }
 
   /* Exit-intent modal */
   .exit-overlay {
