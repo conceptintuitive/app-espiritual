@@ -55,18 +55,51 @@ export async function POST(request) {
       return NextResponse.json({ received: true, status: payment.status });
     }
 
-    // external_reference = analiseId (definido na criação da preferência)
-    const analiseId = payment.external_reference;
-    if (!analiseId) {
+    // external_reference = analiseId (definido na criação da preferência), ou
+    // "analiseId__tier2" pra compra do upsell (Projeção de 12 Meses).
+    const rawReference = payment.external_reference;
+    if (!rawReference) {
       console.error("Pagamento aprovado mas sem external_reference");
       return NextResponse.json({ error: "Sem referência" }, { status: 400 });
     }
+
+    const isTier2 = rawReference.endsWith("__tier2");
+    const analiseId = isTier2 ? rawReference.slice(0, -"__tier2".length) : rawReference;
 
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL,
       process.env.SUPABASE_SERVICE_ROLE_KEY,
       { auth: { persistSession: false } }
     );
+
+    if (isTier2) {
+      const { error: tier2UpdateError } = await supabase
+        .from("analises")
+        .update({
+          tier2_payment_status: "paid",
+          tier2_mp_payment_id: paymentId.toString(),
+          tier2_paid_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", analiseId);
+
+      if (tier2UpdateError) {
+        console.error("Erro ao atualizar tier2 no Supabase:", tier2UpdateError);
+        return NextResponse.json({ error: "Erro ao atualizar" }, { status: 500 });
+      }
+
+      after(async () => {
+        await sendGA4Purchase({
+          transactionId: paymentId.toString(),
+          value: payment.transaction_amount ?? 0,
+          currency: (payment.currency_id || "BRL").toUpperCase(),
+          clientId: `server.${paymentId}`,
+        });
+      });
+
+      console.log("✅ Tier 2 (Projeção de 12 Meses) da análise", analiseId, "marcado como pago via MP");
+      return NextResponse.json({ success: true, tier2: true });
+    }
 
     const { error: updateError } = await supabase
       .from("analises")
