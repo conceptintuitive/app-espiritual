@@ -24,6 +24,15 @@ const PRODUTOS = {
   },
 };
 
+// Pra onde voltar depois do pagamento — cada produto tem sua própria página
+// de prévia/desbloqueio, além do manual completo. Lista fechada, pra não
+// virar um open redirect.
+const REDIRECT_PATHS = {
+  manual: (id) => `/manual/${id}`,
+  previsao: (id) => `/previsao-do-ano/${id}`,
+  humandesign: (id) => `/human-design/${id}`,
+};
+
 function getBaseUrl() {
   if (process.env.NEXT_PUBLIC_BASE_URL) return process.env.NEXT_PUBLIC_BASE_URL;
   if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
@@ -50,6 +59,7 @@ export async function POST(request) {
     const produtos = Array.isArray(body?.produtos)
       ? body.produtos.filter((p) => PRODUTOS[p])
       : [];
+    const redirectTo = REDIRECT_PATHS[body?.redirectTo] ? body.redirectTo : "manual";
 
     if (!analiseId) {
       return NextResponse.json({ error: "ID da análise é obrigatório" }, { status: 400 });
@@ -99,9 +109,9 @@ export async function POST(request) {
           email: analise.email || undefined,
         },
         back_urls: {
-          success: `${baseUrl}/manual/${analiseId}`,
-          failure: `${baseUrl}/manual/${analiseId}`,
-          pending: `${baseUrl}/manual/${analiseId}`,
+          success: `${baseUrl}${REDIRECT_PATHS[redirectTo](analiseId)}`,
+          failure: `${baseUrl}${REDIRECT_PATHS[redirectTo](analiseId)}`,
+          pending: `${baseUrl}${REDIRECT_PATHS[redirectTo](analiseId)}`,
         },
         auto_return: "approved",
         external_reference: `${analiseId}__upsell`,

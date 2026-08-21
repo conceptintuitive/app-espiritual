@@ -429,15 +429,17 @@ export default function ResultadoPage() {
   };
 
   // Compra avulsa de um bônus (Previsão do Ano ou Human Design), sem
-  // precisar do manual completo — R$29,90 cada, direto no /manual/[id].
+  // precisar do manual completo — R$29,90 cada, cada um com sua própria
+  // página de prévia/desbloqueio.
   const [processandoAvulso, setProcessandoAvulso] = useState(null);
   const handleComprarAvulso = async (produto) => {
     setProcessandoAvulso(produto);
     try {
+      const redirectTo = produto === 'projecao12m' ? 'previsao' : 'humandesign';
       const response = await fetch('/api/criar-checkout-upsell-mp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ analiseId: id, produtos: [produto] }),
+        body: JSON.stringify({ analiseId: id, produtos: [produto], redirectTo }),
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data?.error || 'Erro ao abrir checkout');
