@@ -92,7 +92,7 @@ function Tier2AddonToggle({ checked, onChange }) {
     <label className={`tier2-addon${checked ? ' is-checked' : ''}`}>
       <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
       <span>
-        {checked ? '✅' : '🔮'} Incluir também a <strong>Projeção dos Próximos 12 Meses</strong> (+R$ 50 — R$ 97 no total)
+        {checked ? '✅' : '🔮'} Incluir também <strong>Projeção de 12 Meses + Mapa de Human Design</strong> (+R$ 50 — R$ 97 no total)
       </span>
     </label>
   );

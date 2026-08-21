@@ -63,8 +63,8 @@ export async function POST(request) {
     if (incluirTier2) {
       items.push({
         id: `${analiseId}-tier2`,
-        title: "Projeção de 12 Meses (complemento)",
-        description: `Projeção numerológica mês a mês para ${analise.nome ?? "você"}`,
+        title: "Projeção de 12 Meses + Mapa de Human Design (bônus)",
+        description: `Projeção numerológica mês a mês e Mapa de Human Design para ${analise.nome ?? "você"} — preço combo dos dois bônus`,
         quantity: 1,
         currency_id: "BRL",
         unit_price: 50,
@@ -86,8 +86,9 @@ export async function POST(request) {
         auto_return: "approved",
         external_reference: analiseId,
         // Propaga pro objeto de pagamento no webhook, pra saber se esse
-        // checkout já incluía o upsell (Projeção de 12 Meses) junto.
-        metadata: { includes_tier2: incluirTier2 },
+        // checkout já incluía os bônus (Projeção de 12 Meses + Human Design,
+        // R$50 combo) junto — o mesmo preço do combo comprado avulso depois.
+        metadata: { includes_tier2: incluirTier2, includes_hd: incluirTier2 },
         payment_methods: {
           excluded_payment_types: [],
           installments: 1,
