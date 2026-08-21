@@ -439,16 +439,27 @@ function QuizOverlay({ onClose }) {
 }
 
 // ── Main page ──────────────────────────────────────────────────────────────────
-const MENU_ITEMS = [
-  { href: '/explorar', icon: '🔮', label: 'Explorar' },
-  { href: '/compatibilidade', icon: '♡', label: 'Compatibilidade' },
-  { href: '/blog', icon: '✎', label: 'Blog' },
-];
-
 export default function Home() {
   const [quizOpen, setQuizOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
+  const [ultimaAnaliseId, setUltimaAnaliseId] = useState(null);
+
+  useEffect(() => {
+    try {
+      setUltimaAnaliseId(window.localStorage.getItem('ic_ultima_analise_id'));
+    } catch {}
+  }, []);
+
+  const menuItems = [
+    { href: ultimaAnaliseId ? `/resultado/${ultimaAnaliseId}` : '/', icon: '🔮', label: 'Meu Mapa' },
+    { href: '/oraculo', icon: '✦', label: 'Oráculo' },
+    { href: '/explorar', icon: '🔮', label: 'Explorar' },
+    { href: '/compatibilidade', icon: '♡', label: 'Compatibilidade' },
+    { href: ultimaAnaliseId ? `/previsao-do-ano/${ultimaAnaliseId}` : '/', icon: '🔮', label: 'Previsão do Ano' },
+    { href: ultimaAnaliseId ? `/human-design/${ultimaAnaliseId}` : '/', icon: '🧬', label: 'Human Design' },
+    { href: '/blog', icon: '✎', label: 'Blog' },
+  ];
 
   const openQuiz = () => setQuizOpen(true);
   const closeQuiz = () => setQuizOpen(false);
@@ -677,16 +688,16 @@ export default function Home() {
               border: '1px solid rgba(139,92,246,.25)', background: 'var(--card)',
               boxShadow: '0 24px 60px rgba(0,0,0,.5)',
             }}>
-              {MENU_ITEMS.map(({ href, icon, label }, i) => (
+              {menuItems.map(({ href, icon, label }, i) => (
                 <Link
-                  key={href}
+                  key={label}
                   href={href}
                   onClick={() => setMenuOpen(false)}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 10,
                     padding: '14px 18px', fontFamily: 'var(--F)', fontSize: 15,
                     color: 'var(--t1)', textDecoration: 'none',
-                    borderBottom: i < MENU_ITEMS.length - 1 ? '1px solid rgba(255,255,255,.05)' : 'none',
+                    borderBottom: i < menuItems.length - 1 ? '1px solid rgba(255,255,255,.05)' : 'none',
                   }}
                 >
                   <span>{icon}</span>{label}
