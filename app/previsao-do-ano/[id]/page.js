@@ -18,6 +18,12 @@ function pickFirstName(fullName) {
   return text.split(' ').filter(Boolean)[0] || 'Você';
 }
 
+function firstSentence(text) {
+  const clean = String(text ?? '').trim();
+  const match = clean.match(/^.*?[.!?](\s|$)/);
+  return match ? match[0].trim() : clean;
+}
+
 function MesCard({ m, i }) {
   return (
     <div className="mes-card">
@@ -35,6 +41,25 @@ function MesCard({ m, i }) {
           <div className="subttl">⚠️ Cuidado com</div>
           <ul className="list-check">{m.atencao.map((a, ai) => <li key={ai}>✓ {a}</li>)}</ul>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// Prévia do mês atual — só o gancho (tema + 1 frase), sem o conteúdo
+// completo. O resto fica indicado como bloqueado, não revelado.
+function MesCardTeaser({ m }) {
+  return (
+    <div className="mes-card">
+      <div className="mes-card-label">
+        {m.label} <span className="mes-card-agora">📍 mês atual</span>
+      </div>
+      <div className="mes-card-title">{m.titulo} <span className="mes-card-numero">— Mês Pessoal {m.mesPessoal}</span></div>
+      <p className="p">{firstSentence(m.texto)}</p>
+      <div className="locked-list">
+        <div className="locked-row">🔒 O que favorece este mês ({m.foco.length} pontos)</div>
+        <div className="locked-row">🔒 Cuidado com... ({m.atencao.length} ponto{m.atencao.length > 1 ? 's' : ''})</div>
+        <div className="locked-row">🔒 + os outros 11 meses, completos</div>
       </div>
     </div>
   );
@@ -127,12 +152,12 @@ export default function PrevisaoDoAnoPage() {
                 projecao.map((m, i) => <MesCard key={`${m.ano}-${m.mes}`} m={m} i={i} />)
               ) : (
                 <>
-                  <MesCard m={projecao[0]} i={0} />
+                  <MesCardTeaser m={projecao[0]} />
                   <div className="card paywall">
                     <h2 className="h2">🔒 Mais 11 meses bloqueados</h2>
                     <p className="p">
-                      {pickFirstName(row.nome)}, esse foi só o mês atual. Desbloqueie pra ver o tema,
-                      o que favorece e o que pede cuidado em cada um dos próximos 12 meses.
+                      {pickFirstName(row.nome)}, esse foi só o gancho do mês atual. Desbloqueie pra ver o
+                      texto completo, o que favorece e o que pede cuidado em cada um dos próximos 12 meses.
                     </p>
                     {row.hd_payment_status !== 'paid' && (
                       <label className={`combo${combo ? ' is-checked' : ''}`}>
@@ -187,6 +212,8 @@ const globalCss = `
   .mes-card-agora { color: var(--warning); margin-left: 8px; }
   .mes-card-title { font-family: 'Cinzel', serif; font-size: 19px; margin: 6px 0 10px; }
   .mes-card-numero { font-size: 13px; color: var(--muted); font-family: 'Cormorant Garamond', serif; }
+  .locked-list { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+  .locked-row { font-size: 14px; color: var(--muted); padding: 10px 14px; border-radius: 10px; border: 1px dashed var(--border-strong); background: rgba(255,255,255,0.02); }
   .grid2 { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 14px; }
   @media (min-width: 560px) { .grid2 { grid-template-columns: 1fr 1fr; } }
   .subcard { border-radius: 14px; padding: 14px 16px; border: 1px solid var(--border); }
