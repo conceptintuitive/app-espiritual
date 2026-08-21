@@ -127,9 +127,11 @@ export async function POST(request) {
       return NextResponse.json({ success: true, upsell: true, incluiProjecao, incluiHumanDesign });
     }
 
-    // Se o checkout foi feito com o upsell junto (opção "incluir tier2" no
-    // /resultado), o metadata da preferência carrega isso até o pagamento.
+    // Se o checkout foi feito com o bônus junto (opção "incluir tier2" no
+    // /resultado, +R$50 = preço combo), o metadata da preferência carrega
+    // isso até o pagamento — desbloqueia os dois bônus, não só um.
     const includesTier2 = payment.metadata?.includes_tier2 === true || payment.metadata?.includes_tier2 === "true";
+    const includesHd = payment.metadata?.includes_hd === true || payment.metadata?.includes_hd === "true";
 
     const { error: updateError } = await supabase
       .from("analises")
@@ -141,6 +143,11 @@ export async function POST(request) {
           tier2_payment_status: "paid",
           tier2_mp_payment_id: paymentId.toString(),
           tier2_paid_at: new Date().toISOString(),
+        }),
+        ...(includesHd && {
+          hd_payment_status: "paid",
+          hd_mp_payment_id: paymentId.toString(),
+          hd_paid_at: new Date().toISOString(),
         }),
       })
       .eq("id", analiseId);
