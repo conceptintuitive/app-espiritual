@@ -4,6 +4,11 @@ import { createClient } from "@supabase/supabase-js";
 
 export const runtime = "nodejs";
 
+const BONUS_TITULOS = {
+  projecao12m: "Projeção de 12 Meses",
+  humandesign: "Mapa de Human Design",
+};
+
 function getBaseUrl() {
   if (process.env.NEXT_PUBLIC_BASE_URL) return process.env.NEXT_PUBLIC_BASE_URL;
   if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
@@ -27,7 +32,14 @@ export async function POST(request) {
 
     const body = await request.json().catch(() => null);
     const analiseId = body?.analiseId;
-    const incluirTier2 = Boolean(body?.incluirTier2);
+    // bonusProdutos é o formato novo (subconjunto de ['projecao12m','humandesign']);
+    // incluirTier2 continua funcionando como antes (todo-ou-nada, usado pelo
+    // checkbox de bundle do /resultado) pra não quebrar quem já chama assim.
+    const bonusProdutos = Array.isArray(body?.bonusProdutos)
+      ? body.bonusProdutos.filter((p) => BONUS_TITULOS[p])
+      : body?.incluirTier2
+      ? ["projecao12m", "humandesign"]
+      : [];
 
     if (!analiseId) {
       return NextResponse.json({ error: "ID da análise é obrigatório" }, { status: 400 });
@@ -60,14 +72,18 @@ export async function POST(request) {
       },
     ];
 
-    if (incluirTier2) {
+    if (bonusProdutos.length > 0) {
+      // R$50 é o preço combo (só quando os dois vêm juntos) — R$29,90 é o
+      // preço de um bônus avulso adicionado ao manual, sem o desconto do combo.
+      const preco = bonusProdutos.length === 2 ? 50 : 29.9;
+      const titulo = bonusProdutos.map((p) => BONUS_TITULOS[p]).join(" + ");
       items.push({
-        id: `${analiseId}-tier2`,
-        title: "Projeção de 12 Meses + Mapa de Human Design (bônus)",
-        description: `Projeção numerológica mês a mês e Mapa de Human Design para ${analise.nome ?? "você"} — preço combo dos dois bônus`,
+        id: `${analiseId}-bonus-${bonusProdutos.join("-")}`,
+        title: `${titulo} (bônus)`,
+        description: `${titulo} para ${analise.nome ?? "você"}`,
         quantity: 1,
         currency_id: "BRL",
-        unit_price: 50,
+        unit_price: preco,
       });
     }
 
@@ -85,10 +101,12 @@ export async function POST(request) {
         },
         auto_return: "approved",
         external_reference: analiseId,
-        // Propaga pro objeto de pagamento no webhook, pra saber se esse
-        // checkout já incluía os bônus (Projeção de 12 Meses + Human Design,
-        // R$50 combo) junto — o mesmo preço do combo comprado avulso depois.
-        metadata: { includes_tier2: incluirTier2, includes_hd: incluirTier2 },
+        // Propaga pro objeto de pagamento no webhook, pra saber quais bônus
+        // esse checkout já incluía junto com o manual.
+        metadata: {
+          includes_tier2: bonusProdutos.includes("projecao12m"),
+          includes_hd: bonusProdutos.includes("humandesign"),
+        },
         payment_methods: {
           excluded_payment_types: [],
           installments: 1,
