@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
 import { calcularHumanDesign, CENTRO_NOME_AMIGAVEL } from '@/lib/humanDesign';
-import { TIPO_DESCRICAO, AUTORIDADE_DESCRICAO } from '@/lib/humanDesignTextos';
+import { TIPO_DESCRICAO, AUTORIDADE_DESCRICAO, gerarIntegracaoHumanDesign } from '@/lib/humanDesignTextos';
 
 function getSupabaseClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -32,7 +32,7 @@ export default function HumanDesignPage() {
     if (!supabase || !id) { setErro(true); setLoading(false); return; }
     supabase
       .from('analises')
-      .select('id,nome,data_nascimento,hora_nascimento,payment_status,tier2_payment_status,hd_payment_status')
+      .select('id,nome,data_nascimento,hora_nascimento,signo,numero_vida,objetivo_principal,payment_status,tier2_payment_status,hd_payment_status')
       .eq('id', id)
       .single()
       .then(({ data, error }) => {
@@ -104,6 +104,12 @@ export default function HumanDesignPage() {
           const desbloqueado = row.hd_payment_status === 'paid';
           const tipoInfo = TIPO_DESCRICAO[hd.tipo];
           const autoridadeInfo = AUTORIDADE_DESCRICAO[hd.autoridade];
+          const integracao = gerarIntegracaoHumanDesign({
+            tipo: hd.tipo,
+            signo: row.signo,
+            numeroVida: row.numero_vida,
+            objetivoPrincipal: row.objetivo_principal,
+          });
 
           return (
             <>
@@ -158,6 +164,22 @@ export default function HumanDesignPage() {
                       <p className="p" style={{ margin: 0 }}>
                         {hd.canaisDefinidos.map((c) => `${c[0]}-${c[1]}`).join(' · ')}
                       </p>
+                    </div>
+                  )}
+
+                  {integracao?.textoIntegracao && (
+                    <div className="mes-card">
+                      <div className="mes-card-label">🧩 Seu Human Design + seu mapa</div>
+                      <p className="p">{integracao.textoIntegracao}</p>
+                    </div>
+                  )}
+
+                  {integracao?.planoAcao?.length > 0 && (
+                    <div className="subcard highlight">
+                      <div className="subttl">🎯 Pra {row.objetivo_principal}</div>
+                      <ul className="list-check">
+                        {integracao.planoAcao.map((a, ai) => <li key={ai}>✓ {a}</li>)}
+                      </ul>
                     </div>
                   )}
 
