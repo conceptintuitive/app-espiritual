@@ -9,7 +9,7 @@ import { generateManual, renderManualMarkdown } from '@/lib/manualgenerator';
 import { getTopMatches } from '@/lib/compatibilidade';
 import { gerarProjecao12Meses } from '@/lib/transitos12meses';
 import { calcularHumanDesign, CENTRO_NOME_AMIGAVEL } from '@/lib/humanDesign';
-import { TIPO_DESCRICAO, AUTORIDADE_DESCRICAO, narracaoHumanDesign } from '@/lib/humanDesignTextos';
+import { TIPO_DESCRICAO, AUTORIDADE_DESCRICAO, narracaoHumanDesign, gerarIntegracaoHumanDesign } from '@/lib/humanDesignTextos';
 import ChatAssistente from '@/app/components/ChatAssistente';
 
 // ==============================================
@@ -1451,6 +1451,12 @@ e mostrar como sair dele.
           if (!hd) return null;
           const tipoInfo = TIPO_DESCRICAO[hd.tipo];
           const autoridadeInfo = AUTORIDADE_DESCRICAO[hd.autoridade];
+          const integracao = gerarIntegracaoHumanDesign({
+            tipo: hd.tipo,
+            signo: row.signo,
+            numeroVida: row.numero_vida,
+            objetivoPrincipal: row.objetivo_principal,
+          });
           return (
             <div className="card premium" id="human-design">
               {row.hd_payment_status === 'paid' && (
@@ -1510,6 +1516,22 @@ e mostrar como sair dele.
                         <p className="richText-p" style={{ margin: 0 }}>
                           {hd.canaisDefinidos.map((c) => `${c[0]}-${c[1]}`).join(' · ')}
                         </p>
+                      </div>
+                    )}
+
+                    {integracao?.textoIntegracao && (
+                      <div className="subcard" style={{ marginTop: 12 }}>
+                        <div className="subttl">🧩 Seu Human Design + seu mapa</div>
+                        <p className="richText-p" style={{ margin: 0 }}>{integracao.textoIntegracao}</p>
+                      </div>
+                    )}
+
+                    {integracao?.planoAcao?.length > 0 && (
+                      <div className="subcard highlight" style={{ marginTop: 12 }}>
+                        <div className="subttl">🎯 Pra {row.objetivo_principal}</div>
+                        <ul className="list-check compact">
+                          {integracao.planoAcao.map((a, ai) => <li key={ai}>✓ {a}</li>)}
+                        </ul>
                       </div>
                     )}
 
