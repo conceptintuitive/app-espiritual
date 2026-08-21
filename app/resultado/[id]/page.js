@@ -428,6 +428,28 @@ export default function ResultadoPage() {
     } finally { setProcessando(false); }
   };
 
+  // Compra avulsa de um bônus (Previsão do Ano ou Human Design), sem
+  // precisar do manual completo — R$29,90 cada, direto no /manual/[id].
+  const [processandoAvulso, setProcessandoAvulso] = useState(null);
+  const handleComprarAvulso = async (produto) => {
+    setProcessandoAvulso(produto);
+    try {
+      const response = await fetch('/api/criar-checkout-upsell-mp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ analiseId: id, produtos: [produto] }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data?.error || 'Erro ao abrir checkout');
+      const checkoutUrl = data?.url || data?.sandbox_url;
+      if (checkoutUrl) { window.location.href = checkoutUrl; return; }
+      throw new Error('Checkout sem URL');
+    } catch (e) {
+      console.error('Erro no checkout avulso:', e);
+      alert(e?.message || 'Erro. Tente novamente.');
+    } finally { setProcessandoAvulso(null); }
+  };
+
   // loading / erro
   if (loading) {
     return (
@@ -871,6 +893,29 @@ export default function ResultadoPage() {
           </p>
         </div>
 
+        {/* ══ BÔNUS AVULSOS — sem precisar do manual completo ══ */}
+        {analise.payment_status !== 'paid' &&
+          (analise.tier2_payment_status !== 'paid' || analise.hd_payment_status !== 'paid') && (
+          <div className="avulso-block">
+            <p className="avulso-titulo">Prefere só um bônus específico?</p>
+            <p className="avulso-desc">
+              Dá pra levar só a Previsão do Ano ou só o Mapa de Human Design, sem o manual completo — R$ 29,90 cada.
+            </p>
+            <div className="avulso-botoes">
+              {analise.tier2_payment_status !== 'paid' && (
+                <button className="btn-avulso" onClick={() => handleComprarAvulso('projecao12m')} disabled={!!processandoAvulso}>
+                  {processandoAvulso === 'projecao12m' ? '⏳ Abrindo…' : '🔮 Só a Previsão do Ano — R$ 29,90'}
+                </button>
+              )}
+              {analise.hd_payment_status !== 'paid' && (
+                <button className="btn-avulso" onClick={() => handleComprarAvulso('humandesign')} disabled={!!processandoAvulso}>
+                  {processandoAvulso === 'humandesign' ? '⏳ Abrindo…' : '🧬 Só o Human Design — R$ 29,90'}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
         <button className="share-whatsapp-btn" onClick={handleShareWhatsapp}>
           📲 Mandar pra uma amiga no WhatsApp
         </button>
@@ -1251,6 +1296,26 @@ const globalCss = `
     text-align: center;
   }
   .reforco-text { font-size: 17px; color: var(--muted); max-width: 420px; line-height: 1.7; font-style: italic; }
+
+  /* ── Bônus avulsos ── */
+  .avulso-block {
+    margin: 40px auto 0; padding: 24px 20px; max-width: 460px;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+    text-align: center; border-top: 1px solid var(--border);
+  }
+  .avulso-titulo { font-family: 'Cinzel', serif; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0; }
+  .avulso-desc { font-size: 15px; color: var(--muted); line-height: 1.6; margin: 0 0 6px; }
+  .avulso-botoes { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+  .btn-avulso {
+    padding: 13px 18px; border-radius: 999px;
+    border: 1.5px solid var(--border-strong);
+    background: rgba(255,255,255,0.03);
+    color: var(--text); font-family: 'Cormorant Garamond', serif;
+    font-size: 15px; font-weight: 600; cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
+  }
+  .btn-avulso:hover:not(:disabled) { border-color: var(--secondary); background: rgba(139,92,246,0.1); transform: translateY(-1px); }
+  .btn-avulso:disabled { opacity: 0.6; cursor: default; }
 
   /* ── Loading / erro ── */
   .center {
