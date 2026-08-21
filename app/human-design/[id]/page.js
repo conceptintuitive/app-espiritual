@@ -63,6 +63,29 @@ export default function HumanDesignPage() {
     }
   }
 
+  // Quem ainda não tem o manual base pode levar junto com o bônus, de dois
+  // jeitos: tudo (manual + Previsão + Human Design) por R$97, ou só o
+  // manual somado ao Human Design avulso, por +R$47 (R$76,90 no total).
+  const [processandoManual, setProcessandoManual] = useState(null);
+  async function handleComprarComManual(bonusProdutos) {
+    setProcessandoManual(bonusProdutos.join('-'));
+    try {
+      const response = await fetch('/api/criar-checkout-mp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ analiseId: id, bonusProdutos }),
+      });
+      const data = await response.json().catch(() => ({}));
+      const checkoutUrl = data?.url || data?.sandbox_url;
+      if (checkoutUrl) { window.location.href = checkoutUrl; return; }
+      throw new Error(data?.error || 'Erro ao criar checkout');
+    } catch (e) {
+      alert(e?.message || 'Erro ao processar pagamento. Tente novamente.');
+    } finally {
+      setProcessandoManual(null);
+    }
+  }
+
   return (
     <div className="wrap">
       <style jsx global>{globalCss}</style>
@@ -195,7 +218,9 @@ export default function HumanDesignPage() {
                     <div className="locked-row">🔒 O que o seu Tipo significa na prática</div>
                     <div className="locked-row">🔒 Sua Autoridade — como decidir certo</div>
                     <div className="locked-row">🔒 Seu Perfil e os centros/canais definidos</div>
-                    <div className="locked-row">🔒 Como seu Human Design conversa com seu Signo e Número de Vida</div>
+                    <div className="locked-row">
+                      🔒 Como seu Human Design conversa com seu Sol em {row.signo || 'seu Signo'} e seu Número de Vida
+                    </div>
                   </div>
                   {row.tier2_payment_status !== 'paid' && (
                     <label className={`combo${combo ? ' is-checked' : ''}`}>
@@ -206,6 +231,27 @@ export default function HumanDesignPage() {
                   <button className="btn btn-cta" onClick={handleComprar} disabled={processando}>
                     {processando ? '⏳ Abrindo…' : combo ? '🔓 Desbloquear os Dois — R$ 50' : '🔓 Desbloquear Human Design — R$ 29,90'}
                   </button>
+
+                  {row.payment_status !== 'paid' && (
+                    <>
+                      <div className="ou-divisor">ou</div>
+                      <button
+                        className="btn btn-cta btn-outline"
+                        onClick={() => handleComprarComManual(['projecao12m', 'humandesign'])}
+                        disabled={!!processandoManual}
+                      >
+                        {processandoManual === 'projecao12m-humandesign' ? '⏳ Abrindo…' : '✨ Quero Tudo — Manual + Previsão + Human Design — R$ 97'}
+                      </button>
+                      <button
+                        className="btn btn-cta btn-outline"
+                        style={{ marginTop: 10 }}
+                        onClick={() => handleComprarComManual(['humandesign'])}
+                        disabled={!!processandoManual}
+                      >
+                        {processandoManual === 'humandesign' ? '⏳ Abrindo…' : '📖 Incluir apenas o Manual — +R$ 47 (R$ 76,90 no total)'}
+                      </button>
+                    </>
+                  )}
                 </div>
               )}
             </>
@@ -249,6 +295,9 @@ const globalCss = `
   .mes-card-title { font-family: 'Cinzel', serif; font-size: 19px; margin: 6px 0 10px; }
   .locked-list { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
   .locked-row { font-size: 14px; color: var(--muted); padding: 10px 14px; border-radius: 10px; border: 1px dashed var(--border-strong); background: rgba(255,255,255,0.02); }
+  .ou-divisor { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin: 18px 0 10px; }
+  .btn-outline { background: transparent; border: 1.5px solid var(--border-strong); color: var(--text); }
+  .btn-outline:hover:not(:disabled) { border-color: var(--secondary); background: rgba(139,92,246,0.08); }
   .grid2 { display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 16px; }
   @media (min-width: 560px) { .grid2 { grid-template-columns: 1fr 1fr; } }
   .subcard { border-radius: 14px; padding: 14px 16px; border: 1px solid var(--border); }

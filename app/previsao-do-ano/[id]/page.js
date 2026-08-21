@@ -18,12 +18,6 @@ function pickFirstName(fullName) {
   return text.split(' ').filter(Boolean)[0] || 'Você';
 }
 
-function firstSentence(text) {
-  const clean = String(text ?? '').trim();
-  const match = clean.match(/^.*?[.!?](\s|$)/);
-  return match ? match[0].trim() : clean;
-}
-
 function MesCard({ m, i }) {
   return (
     <div className="mes-card">
@@ -46,21 +40,15 @@ function MesCard({ m, i }) {
   );
 }
 
-// Prévia do mês atual — só o gancho (tema + 1 frase), sem o conteúdo
-// completo. O resto fica indicado como bloqueado, não revelado.
-function MesCardTeaser({ m }) {
+// Prévia dos próximos 3 meses — só o tema de cada um (nome + rótulo), sem
+// nenhum parágrafo real. Muda todo mês (é sempre "os 3 a partir de hoje"),
+// então quem volta depois não vê o mesmo gancho repetido.
+function MesChip({ m, i }) {
   return (
-    <div className="mes-card">
-      <div className="mes-card-label">
-        {m.label} <span className="mes-card-agora">📍 mês atual</span>
-      </div>
-      <div className="mes-card-title">{m.titulo} <span className="mes-card-numero">— Mês Pessoal {m.mesPessoal}</span></div>
-      <p className="p">{firstSentence(m.texto)}</p>
-      <div className="locked-list">
-        <div className="locked-row">🔒 O que favorece este mês ({m.foco.length} pontos)</div>
-        <div className="locked-row">🔒 Cuidado com... ({m.atencao.length} ponto{m.atencao.length > 1 ? 's' : ''})</div>
-        <div className="locked-row">🔒 + os outros 11 meses, completos</div>
-      </div>
+    <div className="mes-chip">
+      <div className="mes-chip-label">{m.label} {i === 0 && <span className="mes-card-agora">📍 atual</span>}</div>
+      <div className="mes-chip-tema">{m.titulo}</div>
+      <div className="mes-chip-numero">Mês Pessoal {m.mesPessoal}</div>
     </div>
   );
 }
@@ -109,6 +97,29 @@ export default function PrevisaoDoAnoPage() {
     }
   }
 
+  // Quem ainda não tem o manual base pode levar junto com o bônus, de dois
+  // jeitos: tudo (manual + Previsão + Human Design) por R$97, ou só o
+  // manual somado à Previsão avulsa, por +R$47 (R$76,90 no total).
+  const [processandoManual, setProcessandoManual] = useState(null);
+  async function handleComprarComManual(bonusProdutos) {
+    setProcessandoManual(bonusProdutos.join('-'));
+    try {
+      const response = await fetch('/api/criar-checkout-mp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ analiseId: id, bonusProdutos }),
+      });
+      const data = await response.json().catch(() => ({}));
+      const checkoutUrl = data?.url || data?.sandbox_url;
+      if (checkoutUrl) { window.location.href = checkoutUrl; return; }
+      throw new Error(data?.error || 'Erro ao criar checkout');
+    } catch (e) {
+      alert(e?.message || 'Erro ao processar pagamento. Tente novamente.');
+    } finally {
+      setProcessandoManual(null);
+    }
+  }
+
   return (
     <div className="wrap">
       <style jsx global>{globalCss}</style>
@@ -152,12 +163,14 @@ export default function PrevisaoDoAnoPage() {
                 projecao.map((m, i) => <MesCard key={`${m.ano}-${m.mes}`} m={m} i={i} />)
               ) : (
                 <>
-                  <MesCardTeaser m={projecao[0]} />
+                  <div className="mes-chip-row">
+                    {projecao.slice(0, 3).map((m, i) => <MesChip key={`${m.ano}-${m.mes}`} m={m} i={i} />)}
+                  </div>
                   <div className="card paywall">
-                    <h2 className="h2">🔒 Mais 11 meses bloqueados</h2>
+                    <h2 className="h2">🔒 Descubra o que vem por aí</h2>
                     <p className="p">
-                      {pickFirstName(row.nome)}, esse foi só o gancho do mês atual. Desbloqueie pra ver o
-                      texto completo, o que favorece e o que pede cuidado em cada um dos próximos 12 meses.
+                      {pickFirstName(row.nome)}, isso foi só o tema de 3 dos 12 meses. Desbloqueie pra ver
+                      o texto completo, o que favorece e o que pede cuidado em cada um dos próximos 12 meses.
                     </p>
                     {row.hd_payment_status !== 'paid' && (
                       <label className={`combo${combo ? ' is-checked' : ''}`}>
@@ -168,6 +181,31 @@ export default function PrevisaoDoAnoPage() {
                     <button className="btn btn-cta" onClick={handleComprar} disabled={processando}>
                       {processando ? '⏳ Abrindo…' : combo ? '🔓 Desbloquear os Dois — R$ 50' : '🔓 Desbloquear Previsão do Ano — R$ 29,90'}
                     </button>
+
+                    {row.payment_status !== 'paid' && (
+                      <>
+                        <div className="ou-divisor">ou</div>
+                        <p className="p" style={{ fontSize: 14 }}>
+                          Ainda não tem o Manual Premium? Leve tudo junto — Manual completo + Previsão do
+                          Ano + Human Design — por <strong>R$ 97</strong> (em vez de R$ 47 + R$ 50 + R$ 29,90 avulsos).
+                        </p>
+                        <button
+                          className="btn btn-cta btn-outline"
+                          onClick={() => handleComprarComManual(['projecao12m', 'humandesign'])}
+                          disabled={!!processandoManual}
+                        >
+                          {processandoManual === 'projecao12m-humandesign' ? '⏳ Abrindo…' : '✨ Quero Tudo — R$ 97'}
+                        </button>
+                        <button
+                          className="btn btn-cta btn-outline"
+                          style={{ marginTop: 10 }}
+                          onClick={() => handleComprarComManual(['projecao12m'])}
+                          disabled={!!processandoManual}
+                        >
+                          {processandoManual === 'projecao12m' ? '⏳ Abrindo…' : '📖 Incluir apenas o Manual — +R$ 47 (R$ 76,90 no total)'}
+                        </button>
+                      </>
+                    )}
                   </div>
                 </>
               )}
@@ -214,6 +252,15 @@ const globalCss = `
   .mes-card-numero { font-size: 13px; color: var(--muted); font-family: 'Cormorant Garamond', serif; }
   .locked-list { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
   .locked-row { font-size: 14px; color: var(--muted); padding: 10px 14px; border-radius: 10px; border: 1px dashed var(--border-strong); background: rgba(255,255,255,0.02); }
+  .mes-chip-row { display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 18px; }
+  @media (min-width: 560px) { .mes-chip-row { grid-template-columns: repeat(3, 1fr); } }
+  .mes-chip { border-radius: 16px; border: 1px solid var(--border); padding: 16px 14px; text-align: center; background: rgba(255,255,255,0.02); }
+  .mes-chip-label { font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  .mes-chip-tema { font-family: 'Cinzel', serif; font-size: 17px; margin-top: 6px; }
+  .mes-chip-numero { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .ou-divisor { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin: 18px 0 10px; }
+  .btn-outline { background: transparent; border: 1.5px solid var(--border-strong); color: var(--text); }
+  .btn-outline:hover:not(:disabled) { border-color: var(--secondary); background: rgba(139,92,246,0.08); }
   .grid2 { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 14px; }
   @media (min-width: 560px) { .grid2 { grid-template-columns: 1fr 1fr; } }
   .subcard { border-radius: 14px; padding: 14px 16px; border: 1px solid var(--border); }
