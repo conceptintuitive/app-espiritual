@@ -1353,215 +1353,215 @@ e mostrar como sair dele.
                 );
               })}
 
-            {/* ========== TIER 2 — PROJEÇÃO DE 12 MESES (upsell R$97) ========== */}
-            {row && (
-              <div className="card premium" id="projecao-12-meses">
-                {row.tier2_payment_status === 'paid' && (
-                  <div className="tier2-bonus-tag">🎁 Bônus Desbloqueado</div>
-                )}
-                <h2 className="h2">🔮 Projeção dos Próximos 12 Meses</h2>
-
-                {row.tier2_payment_status === 'paid' ? (
-                  <>
-                    <p className="richText-p" style={{ marginTop: 4, marginBottom: 18 }}>
-                      Seu Ano Pessoal e Mês Pessoal, mês a mês, a partir de agora — com o que cada
-                      ciclo favorece, o que pede cuidado, e espaço pra marcar o que já foi vivido.
-                    </p>
-                    {gerarProjecao12Meses(row.data_nascimento).map((m, i) => {
-                      const ck = `tier2_mes_${m.ano}_${m.mes}`;
-                      return (
-                        <div key={`${m.ano}-${m.mes}`} className="mes-card">
-                          <div className="mes-card-header">
-                            <div>
-                              <div className="mes-card-label">
-                                {m.label} {i === 0 && <span className="mes-card-agora">📍 mês atual</span>}
-                              </div>
-                              <div className="mes-card-title">{m.titulo} <span className="mes-card-numero">— Mês Pessoal {m.mesPessoal}</span></div>
-                            </div>
-                            <ListenButton text={buildProjecaoMesNarration(m)} label="Ouvir" pauseLabel="Pausar" />
-                          </div>
-
-                          <p className="richText-p" style={{ marginTop: 10 }}>{m.texto}</p>
-
-                          <div className="grid2" style={{ marginTop: 12 }}>
-                            <div className="subcard highlight">
-                              <div className="subttl">✅ O que favorece</div>
-                              <ul className="list-check compact">
-                                {m.foco.map((f, fi) => <li key={fi}>✓ {f}</li>)}
-                              </ul>
-                            </div>
-                            <div className="subcard danger">
-                              <div className="subttl">⚠️ Cuidado com</div>
-                              <ul className="list-check compact">
-                                {m.atencao.map((a, ai) => <li key={ai}>✓ {a}</li>)}
-                              </ul>
-                            </div>
-                          </div>
-
-                          <ul className="list-check compact" style={{ marginTop: 10 }}>
-                            <CheckItem itemKey={ck} checked={!!checks[ck]} onToggle={toggleCheck}>
-                              Já vivenciei este mês
-                            </CheckItem>
-                          </ul>
-                        </div>
-                      );
-                    })}
-                  </>
-                ) : (
-                  <div className="offer-mini">
-                    <p className="p">
-                      Além do seu diagnóstico atual, dá pra saber o que cada um dos próximos 12 meses
-                      pede de você — mês a mês, com o Ano Pessoal e o Mês Pessoal calculados a partir
-                      da sua data de nascimento.
-                    </p>
-                    <ul className="list-check compact">
-                      <li>✓ 12 meses, um por um, a partir de hoje</li>
-                      <li>✓ Vira o ano com você — sem "esquecer" de recalcular</li>
-                      <li>✓ Tema prático de cada mês (o que favorece, o que evitar)</li>
-                    </ul>
-                    {row.hd_payment_status !== 'paid' && (
-                      <ComboUpsellToggle
-                        label="o Mapa de Human Design"
-                        checked={comboProjecao}
-                        onChange={setComboProjecao}
-                      />
-                    )}
-                    <button
-                      className="btnMedium pulse"
-                      onClick={() => handleComprarUpsell('projecao12m', comboProjecao)}
-                      disabled={processandoUpsell}
-                      style={{ marginTop: 10 }}
-                    >
-                      {processandoUpsell
-                        ? '⏳ Abrindo…'
-                        : comboProjecao
-                        ? '🔓 Desbloquear os Dois — R$ 50'
-                        : '🔓 Desbloquear Projeção de 12 Meses — R$ 29,90'}
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* ========== UPSELL — MAPA DE HUMAN DESIGN (R$29,90, ou combo R$50) ========== */}
-            {row && (() => {
-              const hd = calcularHumanDesign(row.data_nascimento, row.hora_nascimento);
-              if (!hd) return null;
-              const tipoInfo = TIPO_DESCRICAO[hd.tipo];
-              const autoridadeInfo = AUTORIDADE_DESCRICAO[hd.autoridade];
-              return (
-                <div className="card premium" id="human-design">
-                  {row.hd_payment_status === 'paid' && (
-                    <div className="tier2-bonus-tag">🎁 Bônus Desbloqueado</div>
-                  )}
-                  <h2 className="h2">🧬 Mapa de Human Design</h2>
-
-                  {row.hd_payment_status === 'paid' ? (
-                    <>
-                      <div className="mes-card">
-                        <div className="mes-card-header">
-                          <div>
-                            <div className="mes-card-label">Tipo · Autoridade · Perfil</div>
-                            <div className="mes-card-title">
-                              {tipoInfo?.titulo ?? hd.tipo} <span className="mes-card-numero">— Perfil {hd.perfil}</span>
-                            </div>
-                          </div>
-                          <ListenButton text={narracaoHumanDesign(hd)} label="Ouvir" pauseLabel="Pausar" />
-                        </div>
-
-                        <p className="richText-p" style={{ marginTop: 10 }}>{tipoInfo?.texto}</p>
-                        <div className="subcard highlight" style={{ marginTop: 12 }}>
-                          <div className="subttl">Como agir</div>
-                          <p className="richText-p" style={{ margin: 0 }}>{tipoInfo?.comoAgir}</p>
-                        </div>
-
-                        <p className="richText-p" style={{ marginTop: 16 }}>
-                          <strong>Autoridade: {autoridadeInfo?.titulo ?? hd.autoridade}.</strong> {autoridadeInfo?.texto}
-                        </p>
-                        <div className="subcard highlight" style={{ marginTop: 12 }}>
-                          <div className="subttl">Como decidir</div>
-                          <p className="richText-p" style={{ margin: 0 }}>{autoridadeInfo?.comoAgir}</p>
-                        </div>
-
-                        <div className="grid2" style={{ marginTop: 16 }}>
-                          <div className="subcard highlight">
-                            <div className="subttl">✅ Centros definidos</div>
-                            <ul className="list-check compact">
-                              {hd.centrosDefinidos.length ? (
-                                hd.centrosDefinidos.map((c) => <li key={c}>✓ {CENTRO_NOME_AMIGAVEL[c]}</li>)
-                              ) : (
-                                <li>Nenhum — mapa de Refletor</li>
-                              )}
-                            </ul>
-                          </div>
-                          <div className="subcard">
-                            <div className="subttl">〰️ Centros abertos</div>
-                            <ul className="list-check compact">
-                              {hd.centrosIndefinidos.map((c) => <li key={c}>· {CENTRO_NOME_AMIGAVEL[c]}</li>)}
-                            </ul>
-                          </div>
-                        </div>
-
-                        {hd.canaisDefinidos.length > 0 && (
-                          <div className="subcard" style={{ marginTop: 12 }}>
-                            <div className="subttl">Canais definidos</div>
-                            <p className="richText-p" style={{ margin: 0 }}>
-                              {hd.canaisDefinidos.map((c) => `${c[0]}-${c[1]}`).join(' · ')}
-                            </p>
-                          </div>
-                        )}
-
-                        <p className="muted" style={{ marginTop: 14, marginBottom: 0, fontSize: 12 }}>
-                          {hd.avisoPrecisao}
-                        </p>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="offer-mini">
-                      <p className="p">
-                        Além do seu diagnóstico numerológico e astrológico, existe um outro sistema —
-                        o Human Design — que cruza sua data, hora e local de nascimento pra revelar como
-                        sua energia funciona de verdade: seu Tipo, sua Autoridade (como tomar decisões
-                        certas) e seu Perfil.
-                      </p>
-                      <ul className="list-check compact">
-                        <li>✓ Seu Tipo energético (Gerador, Manifestador, Projetor...)</li>
-                        <li>✓ Sua Autoridade — a forma mais confiável de decidir</li>
-                        <li>✓ Seu Perfil e os centros definidos do seu mapa</li>
-                      </ul>
-                      {row.tier2_payment_status !== 'paid' && (
-                        <ComboUpsellToggle
-                          label="a Projeção de 12 Meses"
-                          checked={comboHumanDesign}
-                          onChange={setComboHumanDesign}
-                        />
-                      )}
-                      <button
-                        className="btnMedium pulse"
-                        onClick={() => handleComprarUpsell('humandesign', comboHumanDesign)}
-                        disabled={processandoUpsell}
-                        style={{ marginTop: 10 }}
-                      >
-                        {processandoUpsell
-                          ? '⏳ Abrindo…'
-                          : comboHumanDesign
-                          ? '🔓 Desbloquear os Dois — R$ 50'
-                          : '🔓 Desbloquear Mapa de Human Design — R$ 29,90'}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
-
-            {/* FOOTER */}
-            <div className="footer-note">
-              <div className="muted">
-                Precisa de ajuda? Email: <strong>conceptintuitive@gmail.com</strong>
-              </div>
-            </div>
           </>
         )}
+        {/* ========== TIER 2 — PROJEÇÃO DE 12 MESES (upsell R$97) ========== */}
+        {row && (
+          <div className="card premium" id="projecao-12-meses">
+            {row.tier2_payment_status === 'paid' && (
+              <div className="tier2-bonus-tag">🎁 Bônus Desbloqueado</div>
+            )}
+            <h2 className="h2">🔮 Projeção dos Próximos 12 Meses</h2>
+
+            {row.tier2_payment_status === 'paid' ? (
+              <>
+                <p className="richText-p" style={{ marginTop: 4, marginBottom: 18 }}>
+                  Seu Ano Pessoal e Mês Pessoal, mês a mês, a partir de agora — com o que cada
+                  ciclo favorece, o que pede cuidado, e espaço pra marcar o que já foi vivido.
+                </p>
+                {gerarProjecao12Meses(row.data_nascimento).map((m, i) => {
+                  const ck = `tier2_mes_${m.ano}_${m.mes}`;
+                  return (
+                    <div key={`${m.ano}-${m.mes}`} className="mes-card">
+                      <div className="mes-card-header">
+                        <div>
+                          <div className="mes-card-label">
+                            {m.label} {i === 0 && <span className="mes-card-agora">📍 mês atual</span>}
+                          </div>
+                          <div className="mes-card-title">{m.titulo} <span className="mes-card-numero">— Mês Pessoal {m.mesPessoal}</span></div>
+                        </div>
+                        <ListenButton text={buildProjecaoMesNarration(m)} label="Ouvir" pauseLabel="Pausar" />
+                      </div>
+
+                      <p className="richText-p" style={{ marginTop: 10 }}>{m.texto}</p>
+
+                      <div className="grid2" style={{ marginTop: 12 }}>
+                        <div className="subcard highlight">
+                          <div className="subttl">✅ O que favorece</div>
+                          <ul className="list-check compact">
+                            {m.foco.map((f, fi) => <li key={fi}>✓ {f}</li>)}
+                          </ul>
+                        </div>
+                        <div className="subcard danger">
+                          <div className="subttl">⚠️ Cuidado com</div>
+                          <ul className="list-check compact">
+                            {m.atencao.map((a, ai) => <li key={ai}>✓ {a}</li>)}
+                          </ul>
+                        </div>
+                      </div>
+
+                      <ul className="list-check compact" style={{ marginTop: 10 }}>
+                        <CheckItem itemKey={ck} checked={!!checks[ck]} onToggle={toggleCheck}>
+                          Já vivenciei este mês
+                        </CheckItem>
+                      </ul>
+                    </div>
+                  );
+                })}
+              </>
+            ) : (
+              <div className="offer-mini">
+                <p className="p">
+                  Além do seu diagnóstico atual, dá pra saber o que cada um dos próximos 12 meses
+                  pede de você — mês a mês, com o Ano Pessoal e o Mês Pessoal calculados a partir
+                  da sua data de nascimento.
+                </p>
+                <ul className="list-check compact">
+                  <li>✓ 12 meses, um por um, a partir de hoje</li>
+                  <li>✓ Vira o ano com você — sem "esquecer" de recalcular</li>
+                  <li>✓ Tema prático de cada mês (o que favorece, o que evitar)</li>
+                </ul>
+                {row.hd_payment_status !== 'paid' && (
+                  <ComboUpsellToggle
+                    label="o Mapa de Human Design"
+                    checked={comboProjecao}
+                    onChange={setComboProjecao}
+                  />
+                )}
+                <button
+                  className="btnMedium pulse"
+                  onClick={() => handleComprarUpsell('projecao12m', comboProjecao)}
+                  disabled={processandoUpsell}
+                  style={{ marginTop: 10 }}
+                >
+                  {processandoUpsell
+                    ? '⏳ Abrindo…'
+                    : comboProjecao
+                    ? '🔓 Desbloquear os Dois — R$ 50'
+                    : '🔓 Desbloquear Projeção de 12 Meses — R$ 29,90'}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ========== UPSELL — MAPA DE HUMAN DESIGN (R$29,90, ou combo R$50) ========== */}
+        {row && (() => {
+          const hd = calcularHumanDesign(row.data_nascimento, row.hora_nascimento);
+          if (!hd) return null;
+          const tipoInfo = TIPO_DESCRICAO[hd.tipo];
+          const autoridadeInfo = AUTORIDADE_DESCRICAO[hd.autoridade];
+          return (
+            <div className="card premium" id="human-design">
+              {row.hd_payment_status === 'paid' && (
+                <div className="tier2-bonus-tag">🎁 Bônus Desbloqueado</div>
+              )}
+              <h2 className="h2">🧬 Mapa de Human Design</h2>
+
+              {row.hd_payment_status === 'paid' ? (
+                <>
+                  <div className="mes-card">
+                    <div className="mes-card-header">
+                      <div>
+                        <div className="mes-card-label">Tipo · Autoridade · Perfil</div>
+                        <div className="mes-card-title">
+                          {tipoInfo?.titulo ?? hd.tipo} <span className="mes-card-numero">— Perfil {hd.perfil}</span>
+                        </div>
+                      </div>
+                      <ListenButton text={narracaoHumanDesign(hd)} label="Ouvir" pauseLabel="Pausar" />
+                    </div>
+
+                    <p className="richText-p" style={{ marginTop: 10 }}>{tipoInfo?.texto}</p>
+                    <div className="subcard highlight" style={{ marginTop: 12 }}>
+                      <div className="subttl">Como agir</div>
+                      <p className="richText-p" style={{ margin: 0 }}>{tipoInfo?.comoAgir}</p>
+                    </div>
+
+                    <p className="richText-p" style={{ marginTop: 16 }}>
+                      <strong>Autoridade: {autoridadeInfo?.titulo ?? hd.autoridade}.</strong> {autoridadeInfo?.texto}
+                    </p>
+                    <div className="subcard highlight" style={{ marginTop: 12 }}>
+                      <div className="subttl">Como decidir</div>
+                      <p className="richText-p" style={{ margin: 0 }}>{autoridadeInfo?.comoAgir}</p>
+                    </div>
+
+                    <div className="grid2" style={{ marginTop: 16 }}>
+                      <div className="subcard highlight">
+                        <div className="subttl">✅ Centros definidos</div>
+                        <ul className="list-check compact">
+                          {hd.centrosDefinidos.length ? (
+                            hd.centrosDefinidos.map((c) => <li key={c}>✓ {CENTRO_NOME_AMIGAVEL[c]}</li>)
+                          ) : (
+                            <li>Nenhum — mapa de Refletor</li>
+                          )}
+                        </ul>
+                      </div>
+                      <div className="subcard">
+                        <div className="subttl">〰️ Centros abertos</div>
+                        <ul className="list-check compact">
+                          {hd.centrosIndefinidos.map((c) => <li key={c}>· {CENTRO_NOME_AMIGAVEL[c]}</li>)}
+                        </ul>
+                      </div>
+                    </div>
+
+                    {hd.canaisDefinidos.length > 0 && (
+                      <div className="subcard" style={{ marginTop: 12 }}>
+                        <div className="subttl">Canais definidos</div>
+                        <p className="richText-p" style={{ margin: 0 }}>
+                          {hd.canaisDefinidos.map((c) => `${c[0]}-${c[1]}`).join(' · ')}
+                        </p>
+                      </div>
+                    )}
+
+                    <p className="muted" style={{ marginTop: 14, marginBottom: 0, fontSize: 12 }}>
+                      {hd.avisoPrecisao}
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <div className="offer-mini">
+                  <p className="p">
+                    Além do seu diagnóstico numerológico e astrológico, existe um outro sistema —
+                    o Human Design — que cruza sua data, hora e local de nascimento pra revelar como
+                    sua energia funciona de verdade: seu Tipo, sua Autoridade (como tomar decisões
+                    certas) e seu Perfil.
+                  </p>
+                  <ul className="list-check compact">
+                    <li>✓ Seu Tipo energético (Gerador, Manifestador, Projetor...)</li>
+                    <li>✓ Sua Autoridade — a forma mais confiável de decidir</li>
+                    <li>✓ Seu Perfil e os centros definidos do seu mapa</li>
+                  </ul>
+                  {row.tier2_payment_status !== 'paid' && (
+                    <ComboUpsellToggle
+                      label="a Projeção de 12 Meses"
+                      checked={comboHumanDesign}
+                      onChange={setComboHumanDesign}
+                    />
+                  )}
+                  <button
+                    className="btnMedium pulse"
+                    onClick={() => handleComprarUpsell('humandesign', comboHumanDesign)}
+                    disabled={processandoUpsell}
+                    style={{ marginTop: 10 }}
+                  >
+                    {processandoUpsell
+                      ? '⏳ Abrindo…'
+                      : comboHumanDesign
+                      ? '🔓 Desbloquear os Dois — R$ 50'
+                      : '🔓 Desbloquear Mapa de Human Design — R$ 29,90'}
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* FOOTER */}
+        <div className="footer-note">
+          <div className="muted">
+            Precisa de ajuda? Email: <strong>conceptintuitive@gmail.com</strong>
+          </div>
+        </div>
         </>
         )}
       </div>

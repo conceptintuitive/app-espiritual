@@ -37,6 +37,11 @@ export default function ExplorarPage() {
     : 'Numerologia e astrologia personalizadas a partir da sua data de nascimento — sua análise gratuita em poucos minutos.';
   const meuMapaTag = ultimaAnaliseId ? 'Já está pronto' : 'Comece por aqui';
 
+  // Previsão do Ano e Human Design são bônus avulsos (R$29,90 cada) — se já
+  // existe uma análise, manda direto pro resultado dela (onde dá pra comprar
+  // avulso); senão, começa pelo formulário, igual o Meu Mapa.
+  const bonusHref = ultimaAnaliseId ? `/resultado/${ultimaAnaliseId}` : '/';
+
   return (
     <div className="wrap">
       <link
@@ -75,6 +80,22 @@ export default function ExplorarPage() {
           <h3>Compatibilidade Astral</h3>
           <p>Escolhe dois signos e veja como eles se encontram no amor, na comunicação e no dia a dia.</p>
           <span className="cta">Testar compatibilidade →</span>
+        </Link>
+
+        <Link href={bonusHref} className="card quinary">
+          <div className="icon-badge">🔮</div>
+          <span className="tag">A partir de R$ 29,90</span>
+          <h3>Previsão do Ano</h3>
+          <p>Os próximos 12 meses, um a um, com o que cada ciclo favorece e o que pede cuidado — a partir da sua data de nascimento.</p>
+          <span className="cta">Ver minha previsão →</span>
+        </Link>
+
+        <Link href={bonusHref} className="card senary">
+          <div className="icon-badge">🧬</div>
+          <span className="tag">A partir de R$ 29,90</span>
+          <h3>Human Design</h3>
+          <p>Seu Tipo, sua Autoridade e seu Perfil — como sua energia funciona de verdade, a partir da data, hora e local de nascimento.</p>
+          <span className="cta">Descobrir meu Human Design →</span>
         </Link>
 
         <Link href="/blog" className="card tertiary">
@@ -116,7 +137,7 @@ export default function ExplorarPage() {
           display: grid; grid-template-columns: 1fr; gap: 16px;
         }
         @media (min-width: 720px) { .grid { grid-template-columns: repeat(2, 1fr); } }
-        @media (min-width: 1180px) { .grid { grid-template-columns: repeat(4, 1fr); } }
+        @media (min-width: 1180px) { .grid { grid-template-columns: repeat(3, 1fr); } }
 
         .card {
           position: relative; border-radius: 22px; border: 1px solid var(--border);
@@ -130,6 +151,8 @@ export default function ExplorarPage() {
         .card.secondary::before { background: radial-gradient(circle at 20% 0%, rgba(139,92,246,0.24), rgba(19,8,40,0.95) 70%); }
         .card.tertiary::before { background: radial-gradient(circle at 20% 0%, rgba(245,158,11,0.18), rgba(19,8,40,0.95) 70%); }
         .card.quaternary::before { background: radial-gradient(circle at 20% 0%, rgba(236,72,153,0.16), rgba(139,92,246,0.16), rgba(19,8,40,0.95) 70%); }
+        .card.quinary::before { background: radial-gradient(circle at 20% 0%, rgba(139,92,246,0.22), rgba(19,8,40,0.95) 70%); }
+        .card.senary::before { background: radial-gradient(circle at 20% 0%, rgba(16,185,129,0.18), rgba(19,8,40,0.95) 70%); }
 
         .icon-badge { width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; background: rgba(255,255,255,0.06); border: 1px solid var(--border-strong); }
         .tag { font-family: 'Cinzel', serif; font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--warning); }

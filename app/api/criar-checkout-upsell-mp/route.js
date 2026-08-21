@@ -68,13 +68,8 @@ export async function POST(request) {
       return NextResponse.json({ error: "Análise não encontrada" }, { status: 404 });
     }
 
-    if (analise.payment_status !== "paid") {
-      return NextResponse.json(
-        { error: "É preciso comprar o manual completo antes de desbloquear esse bônus" },
-        { status: 400 }
-      );
-    }
-
+    // Não exige mais o manual base pago — esses bônus também podem ser
+    // comprados avulsos, direto do /resultado, sem o manual completo.
     const jaPago = produtos.filter((p) => analise[PRODUTOS[p].statusCol] === "paid");
     if (jaPago.length > 0) {
       return NextResponse.json(
@@ -94,7 +89,7 @@ export async function POST(request) {
           {
             id: `${analiseId}-upsell-${produtos.join("-")}`,
             title: `${titulo} — Upsell`,
-            description: `${titulo} para ${analise.nome ?? "você"} (complemento do manual)`,
+            description: `${titulo} para ${analise.nome ?? "você"}`,
             quantity: 1,
             currency_id: "BRL",
             unit_price: preco,
