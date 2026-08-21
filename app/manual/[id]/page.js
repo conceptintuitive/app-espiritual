@@ -146,6 +146,16 @@ function buildArchetypeNarration(item) {
   return parts.filter(Boolean).join(' ');
 }
 
+function buildProjecaoMesNarration(m) {
+  const parts = [
+    `${stripMarkdown(m?.label)}. Mês Pessoal ${m?.mesPessoal}: ${stripMarkdown(m?.titulo)}.`,
+    stripMarkdown(m?.texto),
+    Array.isArray(m?.foco) && m.foco.length ? `O que favorece: ${m.foco.map(stripMarkdown).join('. ')}.` : '',
+    Array.isArray(m?.atencao) && m.atencao.length ? `Cuidado com: ${m.atencao.map(stripMarkdown).join('. ')}.` : '',
+  ];
+  return parts.filter(Boolean).join(' ');
+}
+
 // ==============================================
 // BOTÃO "OUVIR" — narração 100% no navegador (Web Speech API), sem custo e sem API externa
 // ==============================================
@@ -1322,21 +1332,56 @@ e mostrar como sair dele.
             {/* ========== TIER 2 — PROJEÇÃO DE 12 MESES (upsell R$97) ========== */}
             {row && (
               <div className="card premium" id="projecao-12-meses">
+                {row.tier2_payment_status === 'paid' && (
+                  <div className="tier2-bonus-tag">🎁 Bônus Desbloqueado</div>
+                )}
                 <h2 className="h2">🔮 Projeção dos Próximos 12 Meses</h2>
 
                 {row.tier2_payment_status === 'paid' ? (
                   <>
-                    <p className="richText-p" style={{ marginTop: 4, marginBottom: 4 }}>
-                      Seu Ano Pessoal e Mês Pessoal, mês a mês, a partir de agora.
+                    <p className="richText-p" style={{ marginTop: 4, marginBottom: 18 }}>
+                      Seu Ano Pessoal e Mês Pessoal, mês a mês, a partir de agora — com o que cada
+                      ciclo favorece, o que pede cuidado, e espaço pra marcar o que já foi vivido.
                     </p>
-                    {gerarProjecao12Meses(row.data_nascimento).map((m) => (
-                      <div key={`${m.ano}-${m.mes}`} className="diag-block">
-                        <div className="diag-block-label">{m.label} — Mês Pessoal {m.mesPessoal}</div>
-                        <p className="richText-p" style={{ marginTop: 4 }}>
-                          <strong>{m.titulo}.</strong> {m.texto}
-                        </p>
-                      </div>
-                    ))}
+                    {gerarProjecao12Meses(row.data_nascimento).map((m, i) => {
+                      const ck = `tier2_mes_${m.ano}_${m.mes}`;
+                      return (
+                        <div key={`${m.ano}-${m.mes}`} className="mes-card">
+                          <div className="mes-card-header">
+                            <div>
+                              <div className="mes-card-label">
+                                {m.label} {i === 0 && <span className="mes-card-agora">📍 mês atual</span>}
+                              </div>
+                              <div className="mes-card-title">{m.titulo} <span className="mes-card-numero">— Mês Pessoal {m.mesPessoal}</span></div>
+                            </div>
+                            <ListenButton text={buildProjecaoMesNarration(m)} label="Ouvir" pauseLabel="Pausar" />
+                          </div>
+
+                          <p className="richText-p" style={{ marginTop: 10 }}>{m.texto}</p>
+
+                          <div className="grid2" style={{ marginTop: 12 }}>
+                            <div className="subcard highlight">
+                              <div className="subttl">✅ O que favorece</div>
+                              <ul className="list-check compact">
+                                {m.foco.map((f, fi) => <li key={fi}>✓ {f}</li>)}
+                              </ul>
+                            </div>
+                            <div className="subcard danger">
+                              <div className="subttl">⚠️ Cuidado com</div>
+                              <ul className="list-check compact">
+                                {m.atencao.map((a, ai) => <li key={ai}>✓ {a}</li>)}
+                              </ul>
+                            </div>
+                          </div>
+
+                          <ul className="list-check compact" style={{ marginTop: 10 }}>
+                            <CheckItem itemKey={ck} checked={!!checks[ck]} onToggle={toggleCheck}>
+                              Já vivenciei este mês
+                            </CheckItem>
+                          </ul>
+                        </div>
+                      );
+                    })}
                   </>
                 ) : (
                   <div className="offer-mini">
@@ -1615,6 +1660,68 @@ const globalCss = `
     color: var(--secondary);
     font-weight: 700;
     margin-bottom: 4px;
+  }
+
+  /* ========== PROJEÇÃO DE 12 MESES: tag de bônus + cards por mês ========== */
+  .tier2-bonus-tag {
+    display: inline-block;
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #1a1206;
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    padding: 6px 16px;
+    border-radius: 999px;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+  .mes-card {
+    margin-top: 18px;
+    padding: 20px 20px 16px;
+    border-radius: 18px;
+    background: rgba(139, 92, 246, 0.06);
+    border: 1px solid rgba(216, 180, 254, 0.15);
+  }
+  .mes-card:first-of-type { margin-top: 10px; }
+  .mes-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .mes-card-label {
+    font-family: 'Cinzel', serif;
+    font-size: 12.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--warning);
+  }
+  .mes-card-agora {
+    display: inline-block;
+    margin-left: 8px;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    color: rgba(167, 243, 208, 0.95);
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    padding: 2px 9px;
+    border-radius: 999px;
+    text-transform: none;
+  }
+  .mes-card-title {
+    font-family: 'Cinzel', serif;
+    font-size: 19px;
+    font-weight: 700;
+    color: rgba(250, 245, 255, 0.98);
+    margin-top: 4px;
+  }
+  .mes-card-numero {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--muted);
   }
 
   /* ========== COMPATIBILIDADE ASTRAL: barras de score ========== */
