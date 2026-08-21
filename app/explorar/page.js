@@ -37,10 +37,11 @@ export default function ExplorarPage() {
     : 'Numerologia e astrologia personalizadas a partir da sua data de nascimento — sua análise gratuita em poucos minutos.';
   const meuMapaTag = ultimaAnaliseId ? 'Já está pronto' : 'Comece por aqui';
 
-  // Previsão do Ano e Human Design são bônus avulsos (R$29,90 cada) — se já
-  // existe uma análise, manda direto pro resultado dela (onde dá pra comprar
-  // avulso); senão, começa pelo formulário, igual o Meu Mapa.
-  const bonusHref = ultimaAnaliseId ? `/resultado/${ultimaAnaliseId}` : '/';
+  // Previsão do Ano e Human Design são bônus avulsos (R$29,90 cada), cada um
+  // com sua própria página de prévia + desbloqueio. Se já existe uma análise,
+  // manda direto pra lá; senão, começa pelo formulário, igual o Meu Mapa.
+  const previsaoHref = ultimaAnaliseId ? `/previsao-do-ano/${ultimaAnaliseId}` : '/';
+  const humanDesignHref = ultimaAnaliseId ? `/human-design/${ultimaAnaliseId}` : '/';
 
   return (
     <div className="wrap">
@@ -82,7 +83,7 @@ export default function ExplorarPage() {
           <span className="cta">Testar compatibilidade →</span>
         </Link>
 
-        <Link href={bonusHref} className="card quinary">
+        <Link href={previsaoHref} className="card quinary">
           <div className="icon-badge">🔮</div>
           <span className="tag">A partir de R$ 29,90</span>
           <h3>Previsão do Ano</h3>
@@ -90,7 +91,7 @@ export default function ExplorarPage() {
           <span className="cta">Ver minha previsão →</span>
         </Link>
 
-        <Link href={bonusHref} className="card senary">
+        <Link href={humanDesignHref} className="card senary">
           <div className="icon-badge">🧬</div>
           <span className="tag">A partir de R$ 29,90</span>
           <h3>Human Design</h3>
