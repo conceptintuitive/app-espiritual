@@ -189,9 +189,14 @@ export default function HumanDesignPage() {
                 <div className="card paywall">
                   <h2 className="h2">🔒 Autoridade, Perfil e mais</h2>
                   <p className="p">
-                    {pickFirstName(row.nome)}, seu Tipo já apareceu acima. Desbloqueie pra ver sua
-                    Autoridade (como decidir certo), seu Perfil e os centros/canais definidos do seu mapa.
+                    {pickFirstName(row.nome)}, esse foi só o gancho: o seu Tipo. Desbloqueie pra ver o resto.
                   </p>
+                  <div className="locked-list">
+                    <div className="locked-row">🔒 O que o seu Tipo significa na prática</div>
+                    <div className="locked-row">🔒 Sua Autoridade — como decidir certo</div>
+                    <div className="locked-row">🔒 Seu Perfil e os centros/canais definidos</div>
+                    <div className="locked-row">🔒 Como seu Human Design conversa com seu Signo e Número de Vida</div>
+                  </div>
                   {row.tier2_payment_status !== 'paid' && (
                     <label className={`combo${combo ? ' is-checked' : ''}`}>
                       <input type="checkbox" checked={combo} onChange={(e) => setCombo(e.target.checked)} />
@@ -242,6 +247,8 @@ const globalCss = `
   .mes-card { border-radius: 18px; border: 1px solid var(--border); padding: 22px 20px; margin-bottom: 16px; }
   .mes-card-label { font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
   .mes-card-title { font-family: 'Cinzel', serif; font-size: 19px; margin: 6px 0 10px; }
+  .locked-list { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+  .locked-row { font-size: 14px; color: var(--muted); padding: 10px 14px; border-radius: 10px; border: 1px dashed var(--border-strong); background: rgba(255,255,255,0.02); }
   .grid2 { display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 16px; }
   @media (min-width: 560px) { .grid2 { grid-template-columns: 1fr 1fr; } }
   .subcard { border-radius: 14px; padding: 14px 16px; border: 1px solid var(--border); }
