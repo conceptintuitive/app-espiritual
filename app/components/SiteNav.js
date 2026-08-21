@@ -16,12 +16,16 @@ export default function SiteNav({ active }) {
   }, []);
 
   const meuMapaHref = ultimaAnaliseId ? `/resultado/${ultimaAnaliseId}` : '/';
+  const previsaoHref = ultimaAnaliseId ? `/previsao-do-ano/${ultimaAnaliseId}` : '/';
+  const humanDesignHref = ultimaAnaliseId ? `/human-design/${ultimaAnaliseId}` : '/';
 
   const items = [
     { href: meuMapaHref, label: 'Meu Mapa', key: 'meu-mapa' },
     { href: '/oraculo', label: 'Oráculo', key: 'oraculo' },
     { href: '/explorar', label: 'Explorar', key: 'explorar' },
     { href: '/compatibilidade', label: 'Compatibilidade', key: 'compatibilidade' },
+    { href: previsaoHref, label: 'Previsão do Ano', key: 'previsao' },
+    { href: humanDesignHref, label: 'Human Design', key: 'human-design' },
     { href: '/blog', label: 'Blog', key: 'blog' },
   ];
 
