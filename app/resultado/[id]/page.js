@@ -489,7 +489,7 @@ export default function ResultadoPage() {
   const firstName = pickFirstName(analise.nome);
   // "mais de X" sempre arredondado pra baixo (nunca infla o número real); só mostra a partir de um mínimo plausível
   const roundedStatsCount = statsCount && statsCount >= 15 ? Math.floor(statsCount / 10) * 10 : null;
-  const cargoLabel = incluirTier2 ? 'DESBLOQUEAR MANUAL + PROJEÇÃO 12 MESES — R$ 97' : 'DESBLOQUEAR MEU MANUAL — R$ 47';
+  const cargoLabel = incluirTier2 ? 'DESBLOQUEAR MANUAL + PROJEÇÃO 12 MESES + HUMAN DESIGN — R$ 97' : 'DESBLOQUEAR MEU MANUAL — R$ 47';
 
   return (
     <div className="wrap">
