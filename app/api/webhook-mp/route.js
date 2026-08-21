@@ -56,15 +56,23 @@ export async function POST(request) {
     }
 
     // external_reference = analiseId (definido na criação da preferência), ou
-    // "analiseId__tier2" pra compra do upsell (Projeção de 12 Meses).
+    // "analiseId__upsell" pra compra de um ou mais bônus (Projeção de 12
+    // Meses e/ou Human Design) — qual(is) produto(s) vem do metadata.
+    // "analiseId__tier2" é o formato legado (só Projeção de 12 Meses),
+    // mantido pra não quebrar preferências já criadas antes dessa mudança.
     const rawReference = payment.external_reference;
     if (!rawReference) {
       console.error("Pagamento aprovado mas sem external_reference");
       return NextResponse.json({ error: "Sem referência" }, { status: 400 });
     }
 
-    const isTier2 = rawReference.endsWith("__tier2");
-    const analiseId = isTier2 ? rawReference.slice(0, -"__tier2".length) : rawReference;
+    const isUpsell = rawReference.endsWith("__upsell");
+    const isTier2Legado = rawReference.endsWith("__tier2");
+    const analiseId = isUpsell
+      ? rawReference.slice(0, -"__upsell".length)
+      : isTier2Legado
+      ? rawReference.slice(0, -"__tier2".length)
+      : rawReference;
 
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -72,19 +80,34 @@ export async function POST(request) {
       { auth: { persistSession: false } }
     );
 
-    if (isTier2) {
-      const { error: tier2UpdateError } = await supabase
+    if (isUpsell || isTier2Legado) {
+      const incluiProjecao =
+        isTier2Legado ||
+        payment.metadata?.inclui_projecao12m === true ||
+        payment.metadata?.inclui_projecao12m === "true";
+      const incluiHumanDesign =
+        payment.metadata?.inclui_humandesign === true ||
+        payment.metadata?.inclui_humandesign === "true";
+
+      const updates = { updated_at: new Date().toISOString() };
+      if (incluiProjecao) {
+        updates.tier2_payment_status = "paid";
+        updates.tier2_mp_payment_id = paymentId.toString();
+        updates.tier2_paid_at = new Date().toISOString();
+      }
+      if (incluiHumanDesign) {
+        updates.hd_payment_status = "paid";
+        updates.hd_mp_payment_id = paymentId.toString();
+        updates.hd_paid_at = new Date().toISOString();
+      }
+
+      const { error: upsellUpdateError } = await supabase
         .from("analises")
-        .update({
-          tier2_payment_status: "paid",
-          tier2_mp_payment_id: paymentId.toString(),
-          tier2_paid_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
+        .update(updates)
         .eq("id", analiseId);
 
-      if (tier2UpdateError) {
-        console.error("Erro ao atualizar tier2 no Supabase:", tier2UpdateError);
+      if (upsellUpdateError) {
+        console.error("Erro ao atualizar upsell no Supabase:", upsellUpdateError);
         return NextResponse.json({ error: "Erro ao atualizar" }, { status: 500 });
       }
 
@@ -97,8 +120,11 @@ export async function POST(request) {
         });
       });
 
-      console.log("✅ Tier 2 (Projeção de 12 Meses) da análise", analiseId, "marcado como pago via MP");
-      return NextResponse.json({ success: true, tier2: true });
+      console.log(
+        "✅ Upsell da análise", analiseId, "marcado como pago via MP —",
+        [incluiProjecao && "Projeção de 12 Meses", incluiHumanDesign && "Human Design"].filter(Boolean).join(", ")
+      );
+      return NextResponse.json({ success: true, upsell: true, incluiProjecao, incluiHumanDesign });
     }
 
     // Se o checkout foi feito com o upsell junto (opção "incluir tier2" no

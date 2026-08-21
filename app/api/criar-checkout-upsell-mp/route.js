@@ -4,6 +4,26 @@ import { createClient } from "@supabase/supabase-js";
 
 export const runtime = "nodejs";
 
+// Cada upsell custa R$29,90 avulso, ou R$50 os dois juntos (economia de
+// R$9,80) — preço combo definido explicitamente, não é soma dos avulsos.
+const PRECO_AVULSO = 29.9;
+const PRECO_COMBO = 50;
+
+const PRODUTOS = {
+  projecao12m: {
+    titulo: "Projeção de 12 Meses",
+    statusCol: "tier2_payment_status",
+    paymentIdCol: "tier2_mp_payment_id",
+    preferenceIdCol: "tier2_mp_preference_id",
+  },
+  humandesign: {
+    titulo: "Mapa de Human Design",
+    statusCol: "hd_payment_status",
+    paymentIdCol: "hd_mp_payment_id",
+    preferenceIdCol: "hd_mp_preference_id",
+  },
+};
+
 function getBaseUrl() {
   if (process.env.NEXT_PUBLIC_BASE_URL) return process.env.NEXT_PUBLIC_BASE_URL;
   if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
@@ -27,14 +47,20 @@ export async function POST(request) {
 
     const body = await request.json().catch(() => null);
     const analiseId = body?.analiseId;
+    const produtos = Array.isArray(body?.produtos)
+      ? body.produtos.filter((p) => PRODUTOS[p])
+      : [];
 
     if (!analiseId) {
       return NextResponse.json({ error: "ID da análise é obrigatório" }, { status: 400 });
     }
+    if (produtos.length === 0) {
+      return NextResponse.json({ error: "Nenhum produto válido selecionado" }, { status: 400 });
+    }
 
     const { data: analise, error: analiseError } = await supabase
       .from("analises")
-      .select("id,nome,email,payment_status,tier2_payment_status")
+      .select("id,nome,email,payment_status,tier2_payment_status,hd_payment_status")
       .eq("id", analiseId)
       .single();
 
@@ -44,15 +70,21 @@ export async function POST(request) {
 
     if (analise.payment_status !== "paid") {
       return NextResponse.json(
-        { error: "É preciso comprar o manual completo antes de desbloquear a Projeção de 12 Meses" },
+        { error: "É preciso comprar o manual completo antes de desbloquear esse bônus" },
         { status: 400 }
       );
     }
 
-    if (analise.tier2_payment_status === "paid") {
-      return NextResponse.json({ error: "A Projeção de 12 Meses já foi paga" }, { status: 400 });
+    const jaPago = produtos.filter((p) => analise[PRODUTOS[p].statusCol] === "paid");
+    if (jaPago.length > 0) {
+      return NextResponse.json(
+        { error: `Já pago: ${jaPago.map((p) => PRODUTOS[p].titulo).join(", ")}` },
+        { status: 400 }
+      );
     }
 
+    const preco = produtos.length === 2 ? PRECO_COMBO : PRECO_AVULSO;
+    const titulo = produtos.map((p) => PRODUTOS[p].titulo).join(" + ");
     const baseUrl = getBaseUrl();
 
     const preference = new Preference(client);
@@ -60,12 +92,12 @@ export async function POST(request) {
       body: {
         items: [
           {
-            id: `${analiseId}-tier2`,
-            title: "Projeção de 12 Meses — Upsell",
-            description: `Projeção numerológica mês a mês para ${analise.nome ?? "você"} (complemento do manual, já com desconto por quem já comprou)`,
+            id: `${analiseId}-upsell-${produtos.join("-")}`,
+            title: `${titulo} — Upsell`,
+            description: `${titulo} para ${analise.nome ?? "você"} (complemento do manual)`,
             quantity: 1,
             currency_id: "BRL",
-            unit_price: 50,
+            unit_price: preco,
           },
         ],
         payer: {
@@ -77,9 +109,11 @@ export async function POST(request) {
           pending: `${baseUrl}/manual/${analiseId}`,
         },
         auto_return: "approved",
-        // Sufixo "__tier2" distingue esse pagamento do manual base no webhook,
-        // que usa o mesmo external_reference pattern pra ambos os produtos.
-        external_reference: `${analiseId}__tier2`,
+        external_reference: `${analiseId}__upsell`,
+        metadata: {
+          inclui_projecao12m: produtos.includes("projecao12m"),
+          inclui_humandesign: produtos.includes("humandesign"),
+        },
         payment_methods: {
           excluded_payment_types: [],
           installments: 1,
@@ -87,13 +121,11 @@ export async function POST(request) {
       },
     });
 
-    await supabase
-      .from("analises")
-      .update({
-        tier2_mp_preference_id: result.id,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", analiseId);
+    const updates = { updated_at: new Date().toISOString() };
+    produtos.forEach((p) => {
+      updates[PRODUTOS[p].preferenceIdCol] = result.id;
+    });
+    await supabase.from("analises").update(updates).eq("id", analiseId);
 
     return NextResponse.json({
       success: true,
@@ -101,9 +133,9 @@ export async function POST(request) {
       sandbox_url: result.sandbox_init_point,
     });
   } catch (error) {
-    console.error("❌ Erro Mercado Pago (tier2):", error);
+    console.error("❌ Erro Mercado Pago (upsell):", error);
     return NextResponse.json(
-      { error: "Erro ao criar checkout do tier 2", details: error?.message || String(error) },
+      { error: "Erro ao criar checkout do upsell", details: error?.message || String(error) },
       { status: 500 }
     );
   }

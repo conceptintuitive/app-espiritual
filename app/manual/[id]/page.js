@@ -8,6 +8,8 @@ import { createClient } from '@supabase/supabase-js';
 import { generateManual, renderManualMarkdown } from '@/lib/manualgenerator';
 import { getTopMatches } from '@/lib/compatibilidade';
 import { gerarProjecao12Meses } from '@/lib/transitos12meses';
+import { calcularHumanDesign, CENTRO_NOME_AMIGAVEL } from '@/lib/humanDesign';
+import { TIPO_DESCRICAO, AUTORIDADE_DESCRICAO, narracaoHumanDesign } from '@/lib/humanDesignTextos';
 import ChatAssistente from '@/app/components/ChatAssistente';
 
 // ==============================================
@@ -205,6 +207,22 @@ function ListenButton({ text, label = 'Ouvir', pauseLabel = 'Pausar áudio' }) {
     <button type="button" className="listen-btn" onClick={handleToggle}>
       {playing ? `⏸️ ${pauseLabel}` : `🔊 ${label}`}
     </button>
+  );
+}
+
+// ==============================================
+// TOGGLE DE COMBO — oferece incluir o outro upsell junto, por R$50 no total
+// em vez de R$29,90 avulso (economia de R$9,80). Só aparece se o outro
+// produto ainda não tiver sido comprado.
+// ==============================================
+function ComboUpsellToggle({ label, checked, onChange }) {
+  return (
+    <label className={`combo-upsell${checked ? ' is-checked' : ''}`}>
+      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+      <span>
+        {checked ? '✅' : '➕'} Incluir também {label} — os dois por <strong>R$ 50</strong> (economize R$ 9,80)
+      </span>
+    </label>
   );
 }
 
@@ -555,27 +573,33 @@ export default function ManualPage() {
   }
 
   // ==============================================
-  // HANDLER: CHECKOUT DO TIER 2 (Projeção de 12 Meses — R$97, upsell via MP)
+  // HANDLER: CHECKOUT DOS UPSELLS (Projeção de 12 Meses e/ou Human Design —
+  // R$29,90 avulso cada, R$50 os dois juntos, via MP)
   // ==============================================
-  const [processandoTier2, setProcessandoTier2] = useState(false);
+  const [processandoUpsell, setProcessandoUpsell] = useState(false);
+  const [comboProjecao, setComboProjecao] = useState(false);
+  const [comboHumanDesign, setComboHumanDesign] = useState(false);
 
-  async function handleComprarTier2() {
-    setProcessandoTier2(true);
+  async function handleComprarUpsell(produtoPrincipal, incluirCombo) {
+    const produtos = incluirCombo
+      ? ['projecao12m', 'humandesign']
+      : [produtoPrincipal];
+    setProcessandoUpsell(true);
     try {
-      const response = await fetch('/api/criar-checkout-tier2-mp', {
+      const response = await fetch('/api/criar-checkout-upsell-mp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ analiseId: id }),
+        body: JSON.stringify({ analiseId: id, produtos }),
       });
       const data = await response.json().catch(() => ({}));
       const checkoutUrl = data?.url || data?.sandbox_url;
       if (checkoutUrl) { window.location.href = checkoutUrl; return; }
       throw new Error(data?.error || 'Erro ao criar checkout');
     } catch (e) {
-      console.error('Erro ao abrir checkout do tier 2:', e);
+      console.error('Erro ao abrir checkout do upsell:', e);
       alert(e?.message || 'Erro ao processar pagamento. Tente novamente.');
     } finally {
-      setProcessandoTier2(false);
+      setProcessandoUpsell(false);
     }
   }
 
@@ -1395,21 +1419,140 @@ e mostrar como sair dele.
                       <li>✓ Vira o ano com você — sem "esquecer" de recalcular</li>
                       <li>✓ Tema prático de cada mês (o que favorece, o que evitar)</li>
                     </ul>
-                    <p className="muted" style={{ marginTop: 10, marginBottom: 0, fontSize: 13 }}>
-                      Você já investiu R$47 no manual. Complementa por só mais R$50 — R$97 no total.
-                    </p>
+                    {row.hd_payment_status !== 'paid' && (
+                      <ComboUpsellToggle
+                        label="o Mapa de Human Design"
+                        checked={comboProjecao}
+                        onChange={setComboProjecao}
+                      />
+                    )}
                     <button
                       className="btnMedium pulse"
-                      onClick={handleComprarTier2}
-                      disabled={processandoTier2}
+                      onClick={() => handleComprarUpsell('projecao12m', comboProjecao)}
+                      disabled={processandoUpsell}
                       style={{ marginTop: 10 }}
                     >
-                      {processandoTier2 ? '⏳ Abrindo…' : '🔓 Desbloquear Projeção de 12 Meses — R$ 50'}
+                      {processandoUpsell
+                        ? '⏳ Abrindo…'
+                        : comboProjecao
+                        ? '🔓 Desbloquear os Dois — R$ 50'
+                        : '🔓 Desbloquear Projeção de 12 Meses — R$ 29,90'}
                     </button>
                   </div>
                 )}
               </div>
             )}
+
+            {/* ========== UPSELL — MAPA DE HUMAN DESIGN (R$29,90, ou combo R$50) ========== */}
+            {row && (() => {
+              const hd = calcularHumanDesign(row.data_nascimento, row.hora_nascimento);
+              if (!hd) return null;
+              const tipoInfo = TIPO_DESCRICAO[hd.tipo];
+              const autoridadeInfo = AUTORIDADE_DESCRICAO[hd.autoridade];
+              return (
+                <div className="card premium" id="human-design">
+                  {row.hd_payment_status === 'paid' && (
+                    <div className="tier2-bonus-tag">🎁 Bônus Desbloqueado</div>
+                  )}
+                  <h2 className="h2">🧬 Mapa de Human Design</h2>
+
+                  {row.hd_payment_status === 'paid' ? (
+                    <>
+                      <div className="mes-card">
+                        <div className="mes-card-header">
+                          <div>
+                            <div className="mes-card-label">Tipo · Autoridade · Perfil</div>
+                            <div className="mes-card-title">
+                              {tipoInfo?.titulo ?? hd.tipo} <span className="mes-card-numero">— Perfil {hd.perfil}</span>
+                            </div>
+                          </div>
+                          <ListenButton text={narracaoHumanDesign(hd)} label="Ouvir" pauseLabel="Pausar" />
+                        </div>
+
+                        <p className="richText-p" style={{ marginTop: 10 }}>{tipoInfo?.texto}</p>
+                        <div className="subcard highlight" style={{ marginTop: 12 }}>
+                          <div className="subttl">Como agir</div>
+                          <p className="richText-p" style={{ margin: 0 }}>{tipoInfo?.comoAgir}</p>
+                        </div>
+
+                        <p className="richText-p" style={{ marginTop: 16 }}>
+                          <strong>Autoridade: {autoridadeInfo?.titulo ?? hd.autoridade}.</strong> {autoridadeInfo?.texto}
+                        </p>
+                        <div className="subcard highlight" style={{ marginTop: 12 }}>
+                          <div className="subttl">Como decidir</div>
+                          <p className="richText-p" style={{ margin: 0 }}>{autoridadeInfo?.comoAgir}</p>
+                        </div>
+
+                        <div className="grid2" style={{ marginTop: 16 }}>
+                          <div className="subcard highlight">
+                            <div className="subttl">✅ Centros definidos</div>
+                            <ul className="list-check compact">
+                              {hd.centrosDefinidos.length ? (
+                                hd.centrosDefinidos.map((c) => <li key={c}>✓ {CENTRO_NOME_AMIGAVEL[c]}</li>)
+                              ) : (
+                                <li>Nenhum — mapa de Refletor</li>
+                              )}
+                            </ul>
+                          </div>
+                          <div className="subcard">
+                            <div className="subttl">〰️ Centros abertos</div>
+                            <ul className="list-check compact">
+                              {hd.centrosIndefinidos.map((c) => <li key={c}>· {CENTRO_NOME_AMIGAVEL[c]}</li>)}
+                            </ul>
+                          </div>
+                        </div>
+
+                        {hd.canaisDefinidos.length > 0 && (
+                          <div className="subcard" style={{ marginTop: 12 }}>
+                            <div className="subttl">Canais definidos</div>
+                            <p className="richText-p" style={{ margin: 0 }}>
+                              {hd.canaisDefinidos.map((c) => `${c[0]}-${c[1]}`).join(' · ')}
+                            </p>
+                          </div>
+                        )}
+
+                        <p className="muted" style={{ marginTop: 14, marginBottom: 0, fontSize: 12 }}>
+                          {hd.avisoPrecisao}
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="offer-mini">
+                      <p className="p">
+                        Além do seu diagnóstico numerológico e astrológico, existe um outro sistema —
+                        o Human Design — que cruza sua data, hora e local de nascimento pra revelar como
+                        sua energia funciona de verdade: seu Tipo, sua Autoridade (como tomar decisões
+                        certas) e seu Perfil.
+                      </p>
+                      <ul className="list-check compact">
+                        <li>✓ Seu Tipo energético (Gerador, Manifestador, Projetor...)</li>
+                        <li>✓ Sua Autoridade — a forma mais confiável de decidir</li>
+                        <li>✓ Seu Perfil e os centros definidos do seu mapa</li>
+                      </ul>
+                      {row.tier2_payment_status !== 'paid' && (
+                        <ComboUpsellToggle
+                          label="a Projeção de 12 Meses"
+                          checked={comboHumanDesign}
+                          onChange={setComboHumanDesign}
+                        />
+                      )}
+                      <button
+                        className="btnMedium pulse"
+                        onClick={() => handleComprarUpsell('humandesign', comboHumanDesign)}
+                        disabled={processandoUpsell}
+                        style={{ marginTop: 10 }}
+                      >
+                        {processandoUpsell
+                          ? '⏳ Abrindo…'
+                          : comboHumanDesign
+                          ? '🔓 Desbloquear os Dois — R$ 50'
+                          : '🔓 Desbloquear Mapa de Human Design — R$ 29,90'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* FOOTER */}
             <div className="footer-note">
@@ -1676,6 +1819,29 @@ const globalCss = `
     font-weight: 700;
     margin-bottom: 12px;
   }
+  .combo-upsell {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    width: 100%; max-width: 460px;
+    margin: 14px auto 0;
+    padding: 12px 18px; border-radius: 999px;
+    background: linear-gradient(135deg, rgba(139,92,246,0.16), rgba(236,72,153,0.12));
+    border: 1.5px solid rgba(139,92,246,0.55);
+    box-shadow: 0 6px 20px rgba(139,92,246,0.18);
+    text-align: center; cursor: pointer;
+    font-size: 14px; color: var(--text); line-height: 1.45;
+    transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+  }
+  .combo-upsell:hover {
+    border-color: rgba(139,92,246,0.8);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 26px rgba(139,92,246,0.28);
+  }
+  .combo-upsell.is-checked {
+    background: linear-gradient(135deg, rgba(139,92,246,0.32), rgba(236,72,153,0.24));
+    border-color: rgba(16,185,129,0.6);
+    box-shadow: 0 6px 22px rgba(16,185,129,0.2);
+  }
+  .combo-upsell input { flex-shrink: 0; accent-color: var(--secondary); width: 17px; height: 17px; cursor: pointer; }
   .mes-card {
     margin-top: 18px;
     padding: 20px 20px 16px;
