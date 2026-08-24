@@ -33,7 +33,7 @@ export default function CompatibilidadeCompletaPage() {
     if (!supabase || !id) { setErro(true); setLoading(false); return; }
     supabase
       .from('analises')
-      .select('id,nome,data_nascimento,hora_nascimento,compat_payment_status,compat_pessoa2_nome,compat_pessoa2_data_nascimento')
+      .select('id,nome,data_nascimento,hora_nascimento,payment_status,compat_payment_status,compat_pessoa2_nome,compat_pessoa2_data_nascimento')
       .eq('id', id)
       .single()
       .then(({ data, error }) => {
@@ -84,7 +84,26 @@ export default function CompatibilidadeCompletaPage() {
     }
   }
 
-  const desbloqueado = row?.compat_payment_status === 'paid';
+  const manualPago = row?.payment_status === 'paid';
+  const desbloqueado = manualPago || row?.compat_payment_status === 'paid';
+
+  // Quem já tem o manual ganha esse bônus de graça — salva em segundo plano
+  // assim que nome + data válidos forem preenchidos, sem checkout.
+  useEffect(() => {
+    if (!manualPago) return;
+    const nome = pessoa2Nome.trim();
+    if (!nome || !/^\d{4}-\d{2}-\d{2}$/.test(pessoa2Data)) return;
+    if (row?.compat_pessoa2_nome === nome && row?.compat_pessoa2_data_nascimento === pessoa2Data) return;
+
+    const t = setTimeout(() => {
+      fetch('/api/salvar-compat-pessoa2', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ analiseId: id, pessoa2Nome: nome, pessoa2DataNascimento: pessoa2Data }),
+      }).catch((e) => console.error('Erro ao salvar compatibilidade grátis:', e));
+    }, 600);
+    return () => clearTimeout(t);
+  }, [manualPago, pessoa2Nome, pessoa2Data, row, id]);
 
   return (
     <div className="wrap">
@@ -97,7 +116,7 @@ export default function CompatibilidadeCompletaPage() {
 
       <div className="container">
         <div className="hero">
-          <div className="badge">💞 Compatibilidade Completa</div>
+          <div className="badge">{manualPago ? '🎁 Bônus Grátis do seu Manual' : '💞 Compatibilidade Completa'}</div>
           <h1 className="h1">Como seu mapa conversa com o de outra pessoa</h1>
           <p className="lead">
             Sol, Lua, Vênus e Marte dos dois, comparados ponto a ponto — diferente da compatibilidade
@@ -134,14 +153,14 @@ export default function CompatibilidadeCompletaPage() {
                   placeholder="Nome da pessoa"
                   value={pessoa2Nome}
                   onChange={(e) => setPessoa2Nome(e.target.value)}
-                  disabled={desbloqueado}
+                  disabled={desbloqueado && !manualPago}
                 />
                 <input
                   className="input"
                   type="date"
                   value={pessoa2Data}
                   onChange={(e) => setPessoa2Data(e.target.value)}
-                  disabled={desbloqueado}
+                  disabled={desbloqueado && !manualPago}
                 />
               </div>
             </div>
