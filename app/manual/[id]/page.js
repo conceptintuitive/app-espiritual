@@ -10,6 +10,7 @@ import { getTopMatches } from '@/lib/compatibilidade';
 import { gerarProjecao12Meses } from '@/lib/transitos12meses';
 import { calcularHumanDesign, CENTRO_NOME_AMIGAVEL } from '@/lib/humanDesign';
 import { TIPO_DESCRICAO, AUTORIDADE_DESCRICAO, narracaoHumanDesign, gerarIntegracaoHumanDesign } from '@/lib/humanDesignTextos';
+import { calcularSignosPessoa, gerarCompatibilidadeCompleta } from '@/lib/compatibilidadeCompleta';
 import ChatAssistente from '@/app/components/ChatAssistente';
 
 // ==============================================
@@ -600,6 +601,59 @@ export default function ManualPage() {
       alert(e?.message || 'Erro ao processar pagamento. Tente novamente.');
     } finally {
       setProcessandoUpsell(false);
+    }
+  }
+
+  // ==============================================
+  // HANDLER: COMPATIBILIDADE COMPLETA (R$29,90 — cruza o mapa com o de
+  // uma segunda pessoa, nome + data de nascimento)
+  // ==============================================
+  const [processandoCompat, setProcessandoCompat] = useState(false);
+  const [pessoa2Nome, setPessoa2Nome] = useState('');
+  const [pessoa2Data, setPessoa2Data] = useState('');
+
+  useEffect(() => {
+    if (row?.compat_pessoa2_nome && !pessoa2Nome) setPessoa2Nome(row.compat_pessoa2_nome);
+    if (row?.compat_pessoa2_data_nascimento && !pessoa2Data) setPessoa2Data(row.compat_pessoa2_data_nascimento);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [row]);
+
+  const compatMinhasSignos = useMemo(() => {
+    if (!row?.data_nascimento) return null;
+    return calcularSignosPessoa(row.data_nascimento, row.hora_nascimento);
+  }, [row]);
+
+  const compatPessoa2Signos = useMemo(() => {
+    if (!pessoa2Data || !/^\d{4}-\d{2}-\d{2}$/.test(pessoa2Data)) return null;
+    return calcularSignosPessoa(pessoa2Data, null);
+  }, [pessoa2Data]);
+
+  const compatResultado = useMemo(() => {
+    if (!compatMinhasSignos || !compatPessoa2Signos) return null;
+    return gerarCompatibilidadeCompleta(compatMinhasSignos, compatPessoa2Signos);
+  }, [compatMinhasSignos, compatPessoa2Signos]);
+
+  async function handleComprarCompat() {
+    if (!pessoa2Nome.trim() || !pessoa2Data) {
+      alert('Preencha o nome e a data de nascimento da segunda pessoa.');
+      return;
+    }
+    setProcessandoCompat(true);
+    try {
+      const response = await fetch('/api/criar-checkout-compat-mp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ analiseId: id, pessoa2Nome: pessoa2Nome.trim(), pessoa2DataNascimento: pessoa2Data }),
+      });
+      const data = await response.json().catch(() => ({}));
+      const checkoutUrl = data?.url || data?.sandbox_url;
+      if (checkoutUrl) { window.location.href = checkoutUrl; return; }
+      throw new Error(data?.error || 'Erro ao criar checkout');
+    } catch (e) {
+      console.error('Erro ao abrir checkout da compatibilidade:', e);
+      alert(e?.message || 'Erro ao processar pagamento. Tente novamente.');
+    } finally {
+      setProcessandoCompat(false);
     }
   }
 
@@ -1577,6 +1631,70 @@ e mostrar como sair dele.
             </div>
           );
         })()}
+
+        {/* ========== UPSELL — COMPATIBILIDADE COMPLETA (R$29,90) ========== */}
+        {row && (
+          <div className="card premium" id="compatibilidade-completa">
+            {row.compat_payment_status === 'paid' && (
+              <div className="tier2-bonus-tag">🎁 Bônus Desbloqueado</div>
+            )}
+            <h2 className="h2">💞 Compatibilidade Completa</h2>
+
+            {row.compat_payment_status === 'paid' ? (
+              compatResultado && compatResultado.eixos.length > 0 ? (
+                <>
+                  <p className="richText-p" style={{ marginTop: 4, marginBottom: 4 }}>
+                    Com <strong>{row.compat_pessoa2_nome}</strong> — compatibilidade geral: <strong>{compatResultado.scoreGeral}%</strong>
+                  </p>
+                  {compatResultado.eixos.map((e) => (
+                    <div key={e.chave} className="subcard highlight" style={{ marginTop: 12 }}>
+                      <div className="subttl">{e.emoji} {e.rotulo} — {e.score}%</div>
+                      <p className="richText-p" style={{ margin: '6px 0 4px' }}><strong>{e.headline}</strong></p>
+                      <p className="richText-p" style={{ margin: 0 }}>{e.corpo}</p>
+                    </div>
+                  ))}
+                </>
+              ) : (
+                <p className="p">Não foi possível calcular — confira a data de nascimento da segunda pessoa.</p>
+              )
+            ) : (
+              <div className="offer-mini">
+                <p className="p">
+                  Cruze seu mapa de verdade com o de outra pessoa específica — Sol, Lua, Vênus e Marte
+                  dos dois, ponto a ponto. Diferente da compatibilidade genérica de signo com signo.
+                </p>
+                <ul className="list-check compact">
+                  <li>✓ Só precisa do nome e da data de nascimento da outra pessoa</li>
+                  <li>✓ 4 pontos comparados: Sol, Lua, Vênus e Marte</li>
+                  <li>✓ Compatibilidade geral + leitura de cada ponto</li>
+                </ul>
+                <div className="form-row-compat" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 12 }}>
+                  <input
+                    type="text"
+                    placeholder="Nome da pessoa"
+                    value={pessoa2Nome}
+                    onChange={(e) => setPessoa2Nome(e.target.value)}
+                    style={{ flex: 1, minWidth: 160, padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border-strong, rgba(216,180,254,0.3))', background: 'rgba(255,255,255,0.03)', color: 'var(--text)', fontFamily: 'inherit', fontSize: 15 }}
+                  />
+                  <input
+                    type="date"
+                    value={pessoa2Data}
+                    onChange={(e) => setPessoa2Data(e.target.value)}
+                    style={{ flex: 1, minWidth: 140, padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border-strong, rgba(216,180,254,0.3))', background: 'rgba(255,255,255,0.03)', color: 'var(--text)', fontFamily: 'inherit', fontSize: 15 }}
+                  />
+                </div>
+                <button
+                  className="btnMedium pulse"
+                  onClick={handleComprarCompat}
+                  disabled={processandoCompat}
+                  style={{ marginTop: 12 }}
+                >
+                  {processandoCompat ? '⏳ Abrindo…' : '🔓 Ver Compatibilidade Completa — R$ 29,90'}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* FOOTER */}
         <div className="footer-note">
