@@ -121,6 +121,9 @@ export default function ResultadoPage() {
   const [showExitModal, setShowExitModal] = useState(false);
   const [incluirTier2, setIncluirTier2] = useState(false);
   const [nudgeChat, setNudgeChat] = useState(false);
+  const [ehPresente, setEhPresente] = useState(false);
+  const [presenteEmail, setPresenteEmail] = useState('');
+  const [presenteDe, setPresenteDe] = useState('');
 
   // estrelas
   const starsBuiltRef = useRef(false);
@@ -408,6 +411,10 @@ export default function ResultadoPage() {
   };
 
   const handleComprar = async () => {
+    if (ehPresente && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(presenteEmail)) {
+      alert('Digite um email válido pra quem vai receber o presente.');
+      return;
+    }
     setProcessando(true);
     const valorTotal = incluirTier2 ? 97 : 47;
     try {
@@ -416,7 +423,11 @@ export default function ResultadoPage() {
       const response = await fetch('/api/criar-checkout-mp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ analiseId: id, incluirTier2 }),
+        body: JSON.stringify({
+          analiseId: id,
+          incluirTier2,
+          ...(ehPresente && { presenteEmail: presenteEmail.trim(), presenteDe: presenteDe.trim() }),
+        }),
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data?.details || data?.error || 'Erro ao abrir checkout');
@@ -865,6 +876,33 @@ export default function ResultadoPage() {
             {processando ? '⏳ Abrindo…' : cargoLabel}
           </button>
           <Tier2AddonToggle checked={incluirTier2} onChange={setIncluirTier2} />
+
+          <label className={`presente-toggle${ehPresente ? ' is-checked' : ''}`}>
+            <input type="checkbox" checked={ehPresente} onChange={(e) => setEhPresente(e.target.checked)} />
+            <span>{ehPresente ? '✅' : '🎁'} Isso é um presente pra outra pessoa?</span>
+          </label>
+          {ehPresente && (
+            <div className="presente-campos">
+              <input
+                type="email"
+                className="presente-input"
+                placeholder="Email de quem vai receber"
+                value={presenteEmail}
+                onChange={(e) => setPresenteEmail(e.target.value)}
+              />
+              <input
+                type="text"
+                className="presente-input"
+                placeholder="Seu nome (aparece no email, opcional)"
+                value={presenteDe}
+                onChange={(e) => setPresenteDe(e.target.value)}
+              />
+              <p className="pos-compra" style={{ marginTop: 6 }}>
+                O manual continua sendo sobre os dados que você preencheu — só o acesso vai direto pro email acima, com uma mensagem de presente.
+              </p>
+            </div>
+          )}
+
           <p className="pos-compra">
             Pix: acesso liberado na hora. Cartão: você recebe o link do manual por email em poucos minutos (verifique a caixa de spam).
           </p>
@@ -1463,6 +1501,27 @@ const globalCss = `
     box-shadow: 0 6px 22px rgba(16,185,129,0.2);
   }
   .tier2-addon input { flex-shrink: 0; accent-color: var(--secondary); width: 17px; height: 17px; cursor: pointer; }
+
+  .presente-toggle {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    width: 100%; max-width: 420px;
+    margin: 12px auto 0;
+    padding: 12px 18px; border-radius: 999px;
+    background: rgba(245,158,11,0.08);
+    border: 1.5px solid rgba(245,158,11,0.4);
+    text-align: center; cursor: pointer;
+    font-size: 14px; color: var(--text); line-height: 1.4;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+  .presente-toggle:hover { border-color: rgba(245,158,11,0.7); }
+  .presente-toggle.is-checked { background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.5); }
+  .presente-toggle input { flex-shrink: 0; accent-color: var(--warning); width: 16px; height: 16px; cursor: pointer; }
+  .presente-campos { max-width: 420px; margin: 10px auto 0; display: flex; flex-direction: column; gap: 8px; }
+  .presente-input {
+    width: 100%; box-sizing: border-box; padding: 11px 14px; border-radius: 10px;
+    border: 1px solid rgba(216,180,254,0.3); background: rgba(255,255,255,0.03);
+    color: var(--text); font-family: inherit; font-size: 14.5px;
+  }
 
   /* Exit-intent modal */
   .exit-overlay {
