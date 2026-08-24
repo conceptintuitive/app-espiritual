@@ -251,13 +251,16 @@ function emailLeadSemanalTemplate({ nome, mes, link, unsubUrl }) {
   };
 }
 
-// Nutrição semanal pra quem fez a prévia grátis mas não comprou — usa o Mês
+// Nutrição quinzenal pra quem fez a prévia grátis mas não comprou — usa o Mês
 // Pessoal de cada um (já calculado, sem escrever nada novo) como gancho de
 // curiosidade. Só entra na régua depois de alguns dias (pra não se sobrepor
-// aos lembretes de 1h/24h), e no máximo uma vez a cada ~7 dias por pessoa,
-// controlado por lead_ultima_semana_email (bucket de dias desde epoch / 7).
+// aos lembretes de 1h/24h), e no máximo uma vez a cada ~15 dias por pessoa
+// (o Mês Pessoal só muda uma vez por mês — semanal repetiria o mesmo tema
+// 4x seguidas antes de mudar, o que parece falha, não nutrição). Controlado
+// por lead_ultima_semana_email (bucket de dias desde epoch / 15 — nome da
+// coluna ficou de quando era semanal, não vale a pena migrar só por isso).
 async function processarLoteLeadsSemanal({ supabase, resend, baseUrl }) {
-  const semanaAtual = String(Math.floor(Date.now() / (7 * 24 * 60 * 60 * 1000)));
+  const semanaAtual = String(Math.floor(Date.now() / (15 * 24 * 60 * 60 * 1000)));
   const tresDiasAtras = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
 
   const { data: candidatos, error } = await supabase
