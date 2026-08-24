@@ -865,6 +865,8 @@ export default function ResultadoPage() {
             <li>✓ Plano de 7 dias personalizado</li>
             <li>✓ Calendário de 30 dias</li>
             <li>✓ 3 rituais específicos pro seu perfil — com áudio guiado 🔊</li>
+            <li>✓ 🎁 Compatibilidade Astral (Sol, Lua, Ascendente, Vênus e Marte)</li>
+            <li>✓ 🎁 Compatibilidade Completa com uma pessoa específica — grátis</li>
           </ul>
           <div className="bonus-badge">
             🎁 <strong>Bônus incluso se você garantir agora:</strong> Ritual de Ativação Personalizado
