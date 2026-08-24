@@ -21,6 +21,29 @@ function unsubscribeFooterText(unsubUrl) {
   return `\n\nNão quer mais receber esses emails? Cancele aqui: ${unsubUrl}`;
 }
 
+// A mesma pessoa pode ter várias linhas em "analises" (cada vez que preenche
+// o formulário de novo cria uma nova, mesmo com o mesmo email). Sem isso, o
+// cron manda um email POR LINHA em vez de um por pessoa — foi exatamente o
+// bug que inundou a caixa de entrada de alguém que testou o formulário
+// várias vezes. Agrupa por email, manda um email usando a linha mais
+// recente como referência, e marca TODAS as linhas daquele email como
+// processadas (senão as linhas mais antigas voltam a aparecer no próximo run).
+function agruparPorEmailMaisRecente(candidatos) {
+  const porEmail = new Map();
+  for (const row of candidatos || []) {
+    const chave = (row.email || "").trim().toLowerCase();
+    if (!chave) continue;
+    if (!porEmail.has(chave)) porEmail.set(chave, []);
+    porEmail.get(chave).push(row);
+  }
+  const grupos = [];
+  for (const rows of porEmail.values()) {
+    rows.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    grupos.push({ representante: rows[0], todosIds: rows.map((r) => r.id) });
+  }
+  return grupos;
+}
+
 function emailTemplate({ nome, link, variant, unsubUrl }) {
   const primeiroNome = (nome || "").toString().trim().split(" ")[0] || "você";
 
@@ -80,7 +103,7 @@ async function processarLote({ supabase, resend, baseUrl, variant, coluna, desde
 
   const { data: candidatos, error } = await supabase
     .from("analises")
-    .select("id,nome,email")
+    .select("id,nome,email,created_at")
     .neq("payment_status", "paid")
     .is(coluna, null)
     .not("email", "is", null)
@@ -91,9 +114,9 @@ async function processarLote({ supabase, resend, baseUrl, variant, coluna, desde
 
   if (error) throw error;
 
+  const grupos = agruparPorEmailMaisRecente(candidatos);
   let enviados = 0;
-  for (const row of candidatos || []) {
-    if (!row.email) continue;
+  for (const { representante: row, todosIds } of grupos) {
     const link = `${baseUrl}/resultado/${row.id}`;
     const unsubUrl = `${baseUrl}/api/unsubscribe?id=${row.id}`;
     const { subject, html, text } = emailTemplate({ nome: row.nome, link, variant, unsubUrl });
@@ -109,14 +132,14 @@ async function processarLote({ supabase, resend, baseUrl, variant, coluna, desde
       await supabase
         .from("analises")
         .update({ [coluna]: new Date().toISOString() })
-        .eq("id", row.id);
+        .in("id", todosIds);
       enviados += 1;
     } catch (sendError) {
       console.error(`❌ Falha ao enviar lembrete ${variant} para ${row.id}:`, sendError?.message || sendError);
     }
   }
 
-  return { candidatos: candidatos?.length || 0, enviados };
+  return { candidatos: candidatos?.length || 0, pessoas: grupos.length, enviados };
 }
 
 function emailMesPessoalTemplate({ nome, mes, link, unsubUrl }) {
@@ -158,7 +181,7 @@ async function processarLoteMesPessoal({ supabase, resend, baseUrl }) {
 
   const { data: candidatos, error } = await supabase
     .from("analises")
-    .select("id,nome,email,data_nascimento,tier2_ultimo_email_mes")
+    .select("id,nome,email,data_nascimento,tier2_ultimo_email_mes,created_at")
     .eq("tier2_payment_status", "paid")
     .not("email", "is", null)
     .not("data_nascimento", "is", null)
@@ -168,10 +191,9 @@ async function processarLoteMesPessoal({ supabase, resend, baseUrl }) {
 
   if (error) throw error;
 
+  const grupos = agruparPorEmailMaisRecente(candidatos);
   let enviados = 0;
-  for (const row of candidatos || []) {
-    if (row.tier2_ultimo_email_mes === mesAtualLabel) continue;
-
+  for (const { representante: row, todosIds } of grupos) {
     const projecao = gerarProjecao12Meses(row.data_nascimento, hoje);
     const mesAtual = projecao[0];
     if (!mesAtual) continue;
@@ -191,14 +213,14 @@ async function processarLoteMesPessoal({ supabase, resend, baseUrl }) {
       await supabase
         .from("analises")
         .update({ tier2_ultimo_email_mes: mesAtualLabel })
-        .eq("id", row.id);
+        .in("id", todosIds);
       enviados += 1;
     } catch (sendError) {
       console.error(`❌ Falha ao enviar email de mês pessoal para ${row.id}:`, sendError?.message || sendError);
     }
   }
 
-  return { candidatos: candidatos?.length || 0, enviados };
+  return { candidatos: candidatos?.length || 0, pessoas: grupos.length, enviados };
 }
 
 function emailLeadSemanalTemplate({ nome, mes, link, unsubUrl }) {
@@ -240,21 +262,20 @@ async function processarLoteLeadsSemanal({ supabase, resend, baseUrl }) {
 
   const { data: candidatos, error } = await supabase
     .from("analises")
-    .select("id,nome,email,data_nascimento,lead_ultima_semana_email")
+    .select("id,nome,email,data_nascimento,lead_ultima_semana_email,created_at")
     .neq("payment_status", "paid")
     .not("email", "is", null)
     .not("data_nascimento", "is", null)
     .or("unsubscribed.is.null,unsubscribed.eq.false")
     .or(`lead_ultima_semana_email.is.null,lead_ultima_semana_email.neq.${semanaAtual}`)
     .lte("created_at", tresDiasAtras)
-    .limit(200);
+    .limit(500);
 
   if (error) throw error;
 
+  const grupos = agruparPorEmailMaisRecente(candidatos);
   let enviados = 0;
-  for (const row of candidatos || []) {
-    if (row.lead_ultima_semana_email === semanaAtual) continue;
-
+  for (const { representante: row, todosIds } of grupos) {
     const projecao = gerarProjecao12Meses(row.data_nascimento, new Date());
     const mesAtual = projecao[0];
     if (!mesAtual) continue;
@@ -274,14 +295,14 @@ async function processarLoteLeadsSemanal({ supabase, resend, baseUrl }) {
       await supabase
         .from("analises")
         .update({ lead_ultima_semana_email: semanaAtual })
-        .eq("id", row.id);
+        .in("id", todosIds);
       enviados += 1;
     } catch (sendError) {
       console.error(`❌ Falha ao enviar nutrição semanal para ${row.id}:`, sendError?.message || sendError);
     }
   }
 
-  return { candidatos: candidatos?.length || 0, enviados };
+  return { candidatos: candidatos?.length || 0, pessoas: grupos.length, enviados };
 }
 
 export async function GET(request) {
