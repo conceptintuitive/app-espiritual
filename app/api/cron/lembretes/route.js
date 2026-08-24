@@ -11,7 +11,17 @@ function getBaseUrl() {
   return "http://localhost:3000";
 }
 
-function emailTemplate({ nome, link, variant }) {
+// Rodapé de descadastro — obrigatório em todo email de marketing/nutrição
+// (não nos emails transacionais de "seu acesso está liberado", que a pessoa
+// pediu ao comprar). unsubUrl já vem pronta com o id da análise.
+function unsubscribeFooterHtml(unsubUrl) {
+  return `<p style="margin:18px 0 0;font-size:11px;color:#555;">Não quer mais receber esses emails? <a href="${unsubUrl}" style="color:#888;">Cancelar inscrição</a></p>`;
+}
+function unsubscribeFooterText(unsubUrl) {
+  return `\n\nNão quer mais receber esses emails? Cancele aqui: ${unsubUrl}`;
+}
+
+function emailTemplate({ nome, link, variant, unsubUrl }) {
   const primeiroNome = (nome || "").toString().trim().split(" ")[0] || "você";
 
   if (variant === "1h") {
@@ -31,10 +41,11 @@ function emailTemplate({ nome, link, variant }) {
       Se o botão não funcionar, copie e cole no navegador:<br/>
       <span style="color:#a855f7;">${link}</span>
     </p>
+    ${unsubscribeFooterHtml(unsubUrl)}
   </div>
   <p style="text-align:center;font-size:12px;color:#666;margin-top:24px;">Com carinho,<br/>Equipe Intuitive ✨</p>
 </div>`.trim(),
-      text: `${primeiroNome}, sua análise ainda está aberta.\n\nVeja seu resultado aqui: ${link}`,
+      text: `${primeiroNome}, sua análise ainda está aberta.\n\nVeja seu resultado aqui: ${link}${unsubscribeFooterText(unsubUrl)}`,
     };
   }
 
@@ -54,10 +65,11 @@ function emailTemplate({ nome, link, variant }) {
       Se o botão não funcionar, copie e cole no navegador:<br/>
       <span style="color:#a855f7;">${link}</span>
     </p>
+    ${unsubscribeFooterHtml(unsubUrl)}
   </div>
   <p style="text-align:center;font-size:12px;color:#666;margin-top:24px;">Com carinho,<br/>Equipe Intuitive ✨</p>
 </div>`.trim(),
-    text: `${primeiroNome}, seu diagnóstico completo ainda está esperando por você: ${link}`,
+    text: `${primeiroNome}, seu diagnóstico completo ainda está esperando por você: ${link}${unsubscribeFooterText(unsubUrl)}`,
   };
 }
 
@@ -72,6 +84,7 @@ async function processarLote({ supabase, resend, baseUrl, variant, coluna, desde
     .neq("payment_status", "paid")
     .is(coluna, null)
     .not("email", "is", null)
+    .or("unsubscribed.is.null,unsubscribed.eq.false")
     .gte("created_at", desde)
     .lte("created_at", ate)
     .limit(200);
@@ -82,7 +95,8 @@ async function processarLote({ supabase, resend, baseUrl, variant, coluna, desde
   for (const row of candidatos || []) {
     if (!row.email) continue;
     const link = `${baseUrl}/resultado/${row.id}`;
-    const { subject, html, text } = emailTemplate({ nome: row.nome, link, variant });
+    const unsubUrl = `${baseUrl}/api/unsubscribe?id=${row.id}`;
+    const { subject, html, text } = emailTemplate({ nome: row.nome, link, variant, unsubUrl });
 
     try {
       await resend.emails.send({
@@ -105,7 +119,7 @@ async function processarLote({ supabase, resend, baseUrl, variant, coluna, desde
   return { candidatos: candidatos?.length || 0, enviados };
 }
 
-function emailMesPessoalTemplate({ nome, mes, link }) {
+function emailMesPessoalTemplate({ nome, mes, link, unsubUrl }) {
   const primeiroNome = (nome || "").toString().trim().split(" ")[0] || "você";
 
   return {
@@ -125,10 +139,11 @@ function emailMesPessoalTemplate({ nome, mes, link }) {
       Se o botão não funcionar, copie e cole no navegador:<br/>
       <span style="color:#a855f7;">${link}</span>
     </p>
+    ${unsubscribeFooterHtml(unsubUrl)}
   </div>
   <p style="text-align:center;font-size:12px;color:#666;margin-top:24px;">Com carinho,<br/>Equipe Intuitive ✨</p>
 </div>`.trim(),
-    text: `${primeiroNome}, seu Mês Pessoal de ${mes.label} chegou. ${mes.texto}\n\nVeja seu mês completo: ${link}`,
+    text: `${primeiroNome}, seu Mês Pessoal de ${mes.label} chegou. ${mes.texto}\n\nVeja seu mês completo: ${link}${unsubscribeFooterText(unsubUrl)}`,
   };
 }
 
@@ -147,6 +162,7 @@ async function processarLoteMesPessoal({ supabase, resend, baseUrl }) {
     .eq("tier2_payment_status", "paid")
     .not("email", "is", null)
     .not("data_nascimento", "is", null)
+    .or("unsubscribed.is.null,unsubscribed.eq.false")
     .or(`tier2_ultimo_email_mes.is.null,tier2_ultimo_email_mes.neq.${mesAtualLabel}`)
     .limit(200);
 
@@ -161,7 +177,8 @@ async function processarLoteMesPessoal({ supabase, resend, baseUrl }) {
     if (!mesAtual) continue;
 
     const link = `${baseUrl}/manual/${row.id}#projecao-12-meses`;
-    const { subject, html, text } = emailMesPessoalTemplate({ nome: row.nome, mes: mesAtual, link });
+    const unsubUrl = `${baseUrl}/api/unsubscribe?id=${row.id}`;
+    const { subject, html, text } = emailMesPessoalTemplate({ nome: row.nome, mes: mesAtual, link, unsubUrl });
 
     try {
       await resend.emails.send({
@@ -178,6 +195,89 @@ async function processarLoteMesPessoal({ supabase, resend, baseUrl }) {
       enviados += 1;
     } catch (sendError) {
       console.error(`❌ Falha ao enviar email de mês pessoal para ${row.id}:`, sendError?.message || sendError);
+    }
+  }
+
+  return { candidatos: candidatos?.length || 0, enviados };
+}
+
+function emailLeadSemanalTemplate({ nome, mes, link, unsubUrl }) {
+  const primeiroNome = (nome || "").toString().trim().split(" ")[0] || "você";
+
+  return {
+    subject: `${primeiroNome}, essa semana o seu ciclo é sobre ${mes.titulo.toLowerCase()} 🔮`,
+    html: `
+<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;background:#0f0f14;padding:40px 20px;">
+  <div style="max-width:520px;margin:0 auto;background:#1a1a24;border-radius:18px;padding:32px;color:#fff;text-align:center;">
+    <p style="margin:0 0 8px;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#d4a853;">Mês Pessoal ${mes.mesPessoal} · ${mes.label}</p>
+    <h1 style="margin:0 0 12px;font-size:22px;font-weight:600;">${primeiroNome}, seu ciclo atual é sobre ${mes.titulo.toLowerCase()}</h1>
+    <p style="color:#bbb;font-size:14px;margin:0 0 20px;line-height:1.6;">
+      Isso é só o começo do que o seu mapa mostra pra esse momento. O diagnóstico completo — com seus bloqueios, plano de 7 dias e rituais — ainda está esperando por você.
+    </p>
+    <a href="${link}" style="display:inline-block;padding:14px 24px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;text-decoration:none;border-radius:12px;font-weight:600;font-size:14px;">
+      Ver meu diagnóstico completo
+    </a>
+    <p style="margin:28px 0 0;font-size:12px;color:#777;">
+      Se o botão não funcionar, copie e cole no navegador:<br/>
+      <span style="color:#a855f7;">${link}</span>
+    </p>
+    ${unsubscribeFooterHtml(unsubUrl)}
+  </div>
+  <p style="text-align:center;font-size:12px;color:#666;margin-top:24px;">Com carinho,<br/>Equipe Intuitive ✨</p>
+</div>`.trim(),
+    text: `${primeiroNome}, seu ciclo atual (Mês Pessoal ${mes.mesPessoal}) é sobre ${mes.titulo}. Veja seu diagnóstico completo: ${link}${unsubscribeFooterText(unsubUrl)}`,
+  };
+}
+
+// Nutrição semanal pra quem fez a prévia grátis mas não comprou — usa o Mês
+// Pessoal de cada um (já calculado, sem escrever nada novo) como gancho de
+// curiosidade. Só entra na régua depois de alguns dias (pra não se sobrepor
+// aos lembretes de 1h/24h), e no máximo uma vez a cada ~7 dias por pessoa,
+// controlado por lead_ultima_semana_email (bucket de dias desde epoch / 7).
+async function processarLoteLeadsSemanal({ supabase, resend, baseUrl }) {
+  const semanaAtual = String(Math.floor(Date.now() / (7 * 24 * 60 * 60 * 1000)));
+  const tresDiasAtras = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+
+  const { data: candidatos, error } = await supabase
+    .from("analises")
+    .select("id,nome,email,data_nascimento,lead_ultima_semana_email")
+    .neq("payment_status", "paid")
+    .not("email", "is", null)
+    .not("data_nascimento", "is", null)
+    .or("unsubscribed.is.null,unsubscribed.eq.false")
+    .or(`lead_ultima_semana_email.is.null,lead_ultima_semana_email.neq.${semanaAtual}`)
+    .lte("created_at", tresDiasAtras)
+    .limit(200);
+
+  if (error) throw error;
+
+  let enviados = 0;
+  for (const row of candidatos || []) {
+    if (row.lead_ultima_semana_email === semanaAtual) continue;
+
+    const projecao = gerarProjecao12Meses(row.data_nascimento, new Date());
+    const mesAtual = projecao[0];
+    if (!mesAtual) continue;
+
+    const link = `${baseUrl}/resultado/${row.id}`;
+    const unsubUrl = `${baseUrl}/api/unsubscribe?id=${row.id}`;
+    const { subject, html, text } = emailLeadSemanalTemplate({ nome: row.nome, mes: mesAtual, link, unsubUrl });
+
+    try {
+      await resend.emails.send({
+        from: "acesso@intuitiveconcept.com.br",
+        to: row.email,
+        subject,
+        html,
+        text,
+      });
+      await supabase
+        .from("analises")
+        .update({ lead_ultima_semana_email: semanaAtual })
+        .eq("id", row.id);
+      enviados += 1;
+    } catch (sendError) {
+      console.error(`❌ Falha ao enviar nutrição semanal para ${row.id}:`, sendError?.message || sendError);
     }
   }
 
@@ -218,8 +318,9 @@ export async function GET(request) {
     });
 
     const loteMesPessoal = await processarLoteMesPessoal({ supabase, resend, baseUrl });
+    const loteLeadsSemanal = await processarLoteLeadsSemanal({ supabase, resend, baseUrl });
 
-    return NextResponse.json({ ok: true, lote1h, lote24h, loteMesPessoal });
+    return NextResponse.json({ ok: true, lote1h, lote24h, loteMesPessoal, loteLeadsSemanal });
   } catch (error) {
     console.error("❌ Erro no cron de lembretes:", error);
     return NextResponse.json(
