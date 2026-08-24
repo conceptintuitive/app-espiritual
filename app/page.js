@@ -459,6 +459,7 @@ export default function Home() {
     { href: '/compatibilidade', icon: '♡', label: 'Compatibilidade' },
     { href: ultimaAnaliseId ? `/previsao-do-ano/${ultimaAnaliseId}` : '/', icon: '🔮', label: 'Previsão do Ano' },
     { href: ultimaAnaliseId ? `/human-design/${ultimaAnaliseId}` : '/', icon: '🧬', label: 'Human Design' },
+    { href: ultimaAnaliseId ? `/compatibilidade-completa/${ultimaAnaliseId}` : '/', icon: '💞', label: 'Compatibilidade Completa' },
     { href: '/blog', icon: '✎', label: 'Blog' },
   ];
 

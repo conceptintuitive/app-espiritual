@@ -58,6 +58,7 @@ export async function POST(request) {
     // external_reference = analiseId (definido na criação da preferência), ou
     // "analiseId__upsell" pra compra de um ou mais bônus (Projeção de 12
     // Meses e/ou Human Design) — qual(is) produto(s) vem do metadata.
+    // "analiseId__compat" é a Compatibilidade Completa (produto único).
     // "analiseId__tier2" é o formato legado (só Projeção de 12 Meses),
     // mantido pra não quebrar preferências já criadas antes dessa mudança.
     const rawReference = payment.external_reference;
@@ -67,9 +68,12 @@ export async function POST(request) {
     }
 
     const isUpsell = rawReference.endsWith("__upsell");
+    const isCompat = rawReference.endsWith("__compat");
     const isTier2Legado = rawReference.endsWith("__tier2");
     const analiseId = isUpsell
       ? rawReference.slice(0, -"__upsell".length)
+      : isCompat
+      ? rawReference.slice(0, -"__compat".length)
       : isTier2Legado
       ? rawReference.slice(0, -"__tier2".length)
       : rawReference;
@@ -125,6 +129,35 @@ export async function POST(request) {
         [incluiProjecao && "Projeção de 12 Meses", incluiHumanDesign && "Human Design"].filter(Boolean).join(", ")
       );
       return NextResponse.json({ success: true, upsell: true, incluiProjecao, incluiHumanDesign });
+    }
+
+    if (isCompat) {
+      const { error: compatUpdateError } = await supabase
+        .from("analises")
+        .update({
+          compat_payment_status: "paid",
+          compat_mp_payment_id: paymentId.toString(),
+          compat_paid_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", analiseId);
+
+      if (compatUpdateError) {
+        console.error("Erro ao atualizar compatibilidade no Supabase:", compatUpdateError);
+        return NextResponse.json({ error: "Erro ao atualizar" }, { status: 500 });
+      }
+
+      after(async () => {
+        await sendGA4Purchase({
+          transactionId: paymentId.toString(),
+          value: payment.transaction_amount ?? 0,
+          currency: (payment.currency_id || "BRL").toUpperCase(),
+          clientId: `server.${paymentId}`,
+        });
+      });
+
+      console.log("✅ Compatibilidade Completa da análise", analiseId, "marcada como paga via MP");
+      return NextResponse.json({ success: true, compat: true });
     }
 
     // Se o checkout foi feito com o bônus junto (opção "incluir tier2" no
