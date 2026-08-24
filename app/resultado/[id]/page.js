@@ -6,6 +6,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
 import { getTopMatches } from '@/lib/compatibilidade';
+import { TESTIMONIALS } from '@/lib/testimonials';
 import ChatAssistente from '@/app/components/ChatAssistente';
 
 // ── Supabase ──────────────────────────────────────────────────────────────────
@@ -820,17 +821,18 @@ export default function ResultadoPage() {
           <p className="manual-index-footer">Você viu fragmentos de 7 seções. Seu manual completo tem 14 seções e 30+ páginas escritas só pra você.</p>
         </div>
 
-        {/* ══ DEPOIMENTOS — logo antes da oferta ══ */}
-        <div className="testi-block">
-          <div className="testi-item">
-            <p className="testi-text">"Comprei o manual completo e valeu cada centavo. A parte do ano pessoal mudou completamente como eu tô planejando 2026."</p>
-            <span className="testi-author">Fernanda L. — Curitiba</span>
+        {/* ══ DEPOIMENTOS — logo antes da oferta. Só aparece com conteúdo
+             real em lib/testimonials.js (nunca invente um depoimento). ══ */}
+        {TESTIMONIALS.length > 0 && (
+          <div className="testi-block">
+            {TESTIMONIALS.slice(0, 3).map((t, i) => (
+              <div key={i} className="testi-item">
+                <p className="testi-text">"{t.texto}"</p>
+                <span className="testi-author">{t.nome}{t.cidade ? ` — ${t.cidade}` : ''}</span>
+              </div>
+            ))}
           </div>
-          <div className="testi-item">
-            <p className="testi-text">"Eu chorei lendo meu mapa. Parecia que alguém finalmente colocou em palavras o que eu sinto há anos mas não conseguia explicar."</p>
-            <span className="testi-author">Mariana S. — São Paulo</span>
-          </div>
-        </div>
+        )}
 
         {/* ══ BLOCO 7 — OFERTA FINAL ══ */}
         <div className="card offer-card">
