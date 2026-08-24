@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
 import { gerarProjecao12Meses } from "@/lib/transitos12meses";
+import { gerarGanchoNutricaoLead } from "@/lib/nutricaoLeadTextos";
 
 export const runtime = "nodejs";
 
@@ -223,8 +224,11 @@ async function processarLoteMesPessoal({ supabase, resend, baseUrl }) {
   return { candidatos: candidatos?.length || 0, pessoas: grupos.length, enviados };
 }
 
-function emailLeadSemanalTemplate({ nome, mes, link, unsubUrl }) {
+function emailLeadSemanalTemplate({ nome, mes, gancho, link, unsubUrl }) {
   const primeiroNome = (nome || "").toString().trim().split(" ")[0] || "você";
+  const ganchoParagrafo = gancho
+    ? `<p style="color:#ddd;font-size:14.5px;margin:0 0 16px;line-height:1.6;">${gancho}</p>`
+    : "";
 
   return {
     subject: `${primeiroNome}, essa semana o seu ciclo é sobre ${mes.titulo.toLowerCase()} 🔮`,
@@ -233,6 +237,7 @@ function emailLeadSemanalTemplate({ nome, mes, link, unsubUrl }) {
   <div style="max-width:520px;margin:0 auto;background:#1a1a24;border-radius:18px;padding:32px;color:#fff;text-align:center;">
     <p style="margin:0 0 8px;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#d4a853;">Mês Pessoal ${mes.mesPessoal} · ${mes.label}</p>
     <h1 style="margin:0 0 12px;font-size:22px;font-weight:600;">${primeiroNome}, seu ciclo atual é sobre ${mes.titulo.toLowerCase()}</h1>
+    ${ganchoParagrafo}
     <p style="color:#bbb;font-size:14px;margin:0 0 20px;line-height:1.6;">
       Isso é só o começo do que o seu mapa mostra pra esse momento. O diagnóstico completo — com seus bloqueios, plano de 7 dias e rituais — ainda está esperando por você.
     </p>
@@ -247,7 +252,7 @@ function emailLeadSemanalTemplate({ nome, mes, link, unsubUrl }) {
   </div>
   <p style="text-align:center;font-size:12px;color:#666;margin-top:24px;">Com carinho,<br/>Equipe Intuitive ✨</p>
 </div>`.trim(),
-    text: `${primeiroNome}, seu ciclo atual (Mês Pessoal ${mes.mesPessoal}) é sobre ${mes.titulo}. Veja seu diagnóstico completo: ${link}${unsubscribeFooterText(unsubUrl)}`,
+    text: `${primeiroNome}, seu ciclo atual (Mês Pessoal ${mes.mesPessoal}) é sobre ${mes.titulo}.${gancho ? ` ${gancho}` : ""} Veja seu diagnóstico completo: ${link}${unsubscribeFooterText(unsubUrl)}`,
   };
 }
 
@@ -265,7 +270,7 @@ async function processarLoteLeadsSemanal({ supabase, resend, baseUrl }) {
 
   const { data: candidatos, error } = await supabase
     .from("analises")
-    .select("id,nome,email,data_nascimento,lead_ultima_semana_email,created_at")
+    .select("id,nome,email,data_nascimento,lead_ultima_semana_email,created_at,signo,numero_vida,objetivo_principal")
     .neq("payment_status", "paid")
     .not("email", "is", null)
     .not("data_nascimento", "is", null)
@@ -283,9 +288,14 @@ async function processarLoteLeadsSemanal({ supabase, resend, baseUrl }) {
     const mesAtual = projecao[0];
     if (!mesAtual) continue;
 
+    const gancho = gerarGanchoNutricaoLead({
+      signo: row.signo,
+      numeroVida: row.numero_vida,
+      objetivoPrincipal: row.objetivo_principal,
+    });
     const link = `${baseUrl}/resultado/${row.id}`;
     const unsubUrl = `${baseUrl}/api/unsubscribe?id=${row.id}`;
-    const { subject, html, text } = emailLeadSemanalTemplate({ nome: row.nome, mes: mesAtual, link, unsubUrl });
+    const { subject, html, text } = emailLeadSemanalTemplate({ nome: row.nome, mes: mesAtual, gancho, link, unsubUrl });
 
     try {
       await resend.emails.send({
