@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { TESTIMONIALS } from '@/lib/testimonials';
 
 // ── FAQ accordion ─────────────────────────────────────────────────────────────
 function FaqItem({ q, a }) {
@@ -495,12 +496,6 @@ export default function Home() {
     { n: '04', title: 'Direção Prática', desc: 'Não só o diagnóstico — o que fazer agora, com plano de ação e rituais personalizados.' },
   ];
 
-  const TESTIMONIALS = [
-    { init: 'M', name: 'Mariana S.', city: 'São Paulo', text: '"Eu chorei lendo meu mapa. Parecia que alguém finalmente colocou em palavras o que eu sinto há anos mas não conseguia explicar."' },
-    { init: 'R', name: 'Rafael T.', city: 'Belo Horizonte', text: '"Sou cético, mas o nível de detalhe me impressionou. Acertou coisas sobre minha carreira que nem meu terapeuta tinha percebido."' },
-    { init: 'F', name: 'Fernanda L.', city: 'Curitiba', text: '"Comprei o manual completo e valeu cada centavo. A parte do ano pessoal mudou completamente como eu tô planejando 2026."' },
-  ];
-
   const FAQS = [
     { q: 'Como funciona o mapa espiritual?', a: 'Combinamos Numerologia e análise de padrões comportamentais para revelar o que se repete na sua vida, o que te trava e qual é o próximo passo mais alinhado. Sem misticismo — só clareza.' },
     { q: 'O que eu recebo de graça?', a: 'Um diagnóstico completo do seu padrão central, seu arquétipo, seus principais bloqueios e uma direção prática. Tudo personalizado com sua data de nascimento.' },
@@ -790,37 +785,42 @@ export default function Home() {
 
       <div className="divider" />
 
-      {/* ═══════════════ DEPOIMENTOS ════════════════════════════════════════ */}
-      <section className="sec">
-        <div className="ctr">
-          <h2 className="sec-title">Relatos de quem já fez o mapa</h2>
-          <p className="sec-sub">Pessoas reais. Clareza real.</p>
-          <div className="grid-3" style={{ maxWidth: 1000, margin: '0 auto' }}>
-            {TESTIMONIALS.map(({ init, name, city, text }) => (
-              <div key={name} className="testi">
-                <p style={{
-                  fontSize: 16, fontStyle: 'italic', color: 'rgba(240,239,244,.92)',
-                  fontFamily: 'var(--F)', lineHeight: 1.7, marginBottom: 18,
-                }}>{text}</p>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{
-                    width: 38, height: 38, borderRadius: '50%',
-                    background: 'linear-gradient(135deg,#7c3aed,#8b5cf6)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontWeight: 700, fontSize: 14, color: '#fff', fontFamily: 'var(--T)', flexShrink: 0,
-                  }}>{init}</div>
-                  <div>
-                    <p style={{ fontWeight: 600, color: 'var(--gold)', fontSize: 14, fontFamily: 'var(--F)' }}>{name}</p>
-                    <p style={{ fontSize: 13, color: 'var(--t3)', fontFamily: 'var(--F)' }}>{city} · ⭐⭐⭐⭐⭐</p>
+      {/* ═══════════════ DEPOIMENTOS — só aparece com conteúdo real em
+          lib/testimonials.js. Nunca inventar um depoimento aqui. ════════════ */}
+      {TESTIMONIALS.length > 0 && (
+        <>
+          <section className="sec">
+            <div className="ctr">
+              <h2 className="sec-title">Relatos de quem já fez o mapa</h2>
+              <p className="sec-sub">Pessoas reais. Clareza real.</p>
+              <div className="grid-3" style={{ maxWidth: 1000, margin: '0 auto' }}>
+                {TESTIMONIALS.map(({ nome, cidade, texto }) => (
+                  <div key={nome} className="testi">
+                    <p style={{
+                      fontSize: 16, fontStyle: 'italic', color: 'rgba(240,239,244,.92)',
+                      fontFamily: 'var(--F)', lineHeight: 1.7, marginBottom: 18,
+                    }}>"{texto}"</p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div style={{
+                        width: 38, height: 38, borderRadius: '50%',
+                        background: 'linear-gradient(135deg,#7c3aed,#8b5cf6)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontWeight: 700, fontSize: 14, color: '#fff', fontFamily: 'var(--T)', flexShrink: 0,
+                      }}>{nome.charAt(0)}</div>
+                      <div>
+                        <p style={{ fontWeight: 600, color: 'var(--gold)', fontSize: 14, fontFamily: 'var(--F)' }}>{nome}</p>
+                        {cidade && <p style={{ fontSize: 13, color: 'var(--t3)', fontFamily: 'var(--F)' }}>{cidade}</p>}
+                      </div>
+                    </div>
                   </div>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
+            </div>
+          </section>
 
-      <div className="divider" />
+          <div className="divider" />
+        </>
+      )}
 
       {/* ═══════════════ FAQ ════════════════════════════════════════════════ */}
       <section className="sec sec-alt">
