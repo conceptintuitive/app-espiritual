@@ -7,6 +7,7 @@ export async function POST(req) {
 
     const email = body?.email;
     const manualId = body?.manualId || body?.id || body?.manual_id;
+    const presenteDe = (body?.presenteDe || "").toString().trim();
 
     if (!email) {
       return Response.json(
@@ -27,14 +28,23 @@ export async function POST(req) {
     }
 
     const link = `https://intuitiveconcept.com.br/manual/${manualId}`;
+    const ehPresente = Boolean(presenteDe);
+
+    const titulo = ehPresente ? `Você recebeu um presente ${presenteDe ? `de ${presenteDe} ` : ""}🎁` : "Seu acesso está liberado ✨";
+    const corpo = ehPresente
+      ? `${presenteDe || "Alguém"} preparou um Manual dos Poderes Ocultos personalizado pra você. Já está disponível.`
+      : "O seu Manual dos Poderes Ocultos já está disponível.";
+    const subject = ehPresente
+      ? `🎁 Você recebeu um presente${presenteDe ? ` de ${presenteDe}` : ""}!`
+      : "Seu acesso ao Manual dos Poderes Ocultos 🔮";
 
     const html = `
 <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;background:#0f0f14;padding:40px 20px;">
   <div style="max-width:520px;margin:0 auto;background:#1a1a24;border-radius:18px;padding:32px;color:#fff;text-align:center;">
-    <h1 style="margin:0 0 12px;font-size:22px;font-weight:600;">Seu acesso está liberado ✨</h1>
+    <h1 style="margin:0 0 12px;font-size:22px;font-weight:600;">${titulo}</h1>
 
     <p style="color:#bbb;font-size:14px;margin:0 0 24px;">
-      O seu Manual dos Poderes Ocultos já está disponível.
+      ${corpo}
     </p>
 
     <a href="${link}"
@@ -58,9 +68,9 @@ export async function POST(req) {
     const data = await resend.emails.send({
       from: "acesso@intuitiveconcept.com.br",
       to: email,
-      subject: "Seu acesso ao Manual dos Poderes Ocultos 🔮",
+      subject,
       html,
-      text: `Seu acesso está liberado!\n\nAcesse aqui: ${link}\n\nSe você não solicitou, ignore esta mensagem.`,
+      text: `${titulo}\n\nAcesse aqui: ${link}\n\nSe você não solicitou, ignore esta mensagem.`,
     });
 
     return Response.json({ success: true, data, link });

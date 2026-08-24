@@ -40,6 +40,11 @@ export async function POST(request) {
       : body?.incluirTier2
       ? ["projecao12m", "humandesign"]
       : [];
+    const presenteEmail = String(body?.presenteEmail || "").trim();
+    const presenteDe = String(body?.presenteDe || "").trim();
+    if (presenteEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(presenteEmail)) {
+      return NextResponse.json({ error: "Email de presente inválido" }, { status: 400 });
+    }
 
     if (!analiseId) {
       return NextResponse.json({ error: "ID da análise é obrigatório" }, { status: 400 });
@@ -114,12 +119,14 @@ export async function POST(request) {
       },
     });
 
-    // Salva o ID da preferência no Supabase
+    // Salva o ID da preferência no Supabase, e os dados do presente (se houver)
+    // — já ficam prontos pro webhook mandar o acesso pro destinatário certo.
     await supabase
       .from("analises")
       .update({
         mp_preference_id: result.id,
         updated_at: new Date().toISOString(),
+        ...(presenteEmail && { presente_email: presenteEmail, presente_de: presenteDe || null }),
       })
       .eq("id", analiseId);
 

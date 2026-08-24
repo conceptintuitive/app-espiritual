@@ -157,21 +157,27 @@ export async function POST(request) {
       return NextResponse.json({ error: "Erro ao atualizar" }, { status: 500 });
     }
 
-    // Busca o email da análise pra enviar o link do manual
+    // Busca o email da análise pra enviar o link do manual — se for presente,
+    // manda pro destinatário (presente_email), não pra quem pagou.
     const { data: analiseData } = await supabase
       .from("analises")
-      .select("email")
+      .select("email,presente_email,presente_de")
       .eq("id", analiseId)
       .single();
 
-    if (analiseData?.email) {
+    const emailDestino = analiseData?.presente_email || analiseData?.email;
+    if (emailDestino) {
       try {
         await fetch("https://intuitiveconcept.com.br/api/send", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: analiseData.email, manualId: analiseId }),
+          body: JSON.stringify({
+            email: emailDestino,
+            manualId: analiseId,
+            ...(analiseData?.presente_email && { presenteDe: analiseData?.presente_de || "" }),
+          }),
         });
-        console.log("📧 Email enviado para", analiseData.email);
+        console.log("📧 Email enviado para", emailDestino, analiseData?.presente_email ? "(presente)" : "");
       } catch (emailErr) {
         console.error("Erro ao enviar email:", emailErr);
       }
