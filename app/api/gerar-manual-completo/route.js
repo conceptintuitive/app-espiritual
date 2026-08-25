@@ -16,9 +16,16 @@ import {
 export const runtime = 'nodejs';
 export const maxDuration = 300;
 
-const CAMPOS = [
+// Onda 1: Síntese + Diagnóstico geram primeiro. Delas extraímos um resumo do
+// insight central já dito, que alimenta a Onda 2 — assim as 12 seções
+// restantes sabem o que já foi coberto e não convergem todas pro mesmo
+// padrão óbvio (ex: "racionaliza em vez de sentir") derivado dos mesmos dados.
+const CAMPOS_ONDA1 = [
   { col: 'sintese_gerada',     build: buildMapaCtx,        gerar: gerarSinteseIA },
   { col: 'diagnostico_gerado', build: buildDiagnosticoCtx, gerar: gerarDiagnosticoIA },
+];
+
+const CAMPOS_ONDA2 = [
   { col: 'tipo_pessoa_gerado', build: buildTipoPessoaCtx,  gerar: gerarTipoPessoaIA },
   { col: 'arquetipos_gerado',  build: buildArquetiposCtx,  gerar: gerarArquetiposIA },
   { col: 'amor_gerado',        build: buildAmorCtx,        gerar: gerarAmorIA },
@@ -32,6 +39,27 @@ const CAMPOS = [
   { col: 'calendario_gerado',  build: buildCalendarioCtx,  gerar: gerarCalendarioIA },
   { col: 'fechamento_gerado',  build: buildFechamentoCtx,  gerar: gerarFechamentoIA },
 ];
+
+const CAMPOS = [...CAMPOS_ONDA1, ...CAMPOS_ONDA2];
+
+function truncar(texto, maxChars) {
+  const t = (texto || '').toString().trim();
+  if (t.length <= maxChars) return t;
+  const cut = t.slice(0, maxChars);
+  const lastSpace = cut.lastIndexOf(' ');
+  return (lastSpace > 0 ? cut.slice(0, lastSpace) : cut) + '…';
+}
+
+// Monta o "já foi dito" a partir do que Síntese + Diagnóstico realmente
+// geraram (ou do que já estava salvo, se essas duas já existiam antes desta
+// rodada) — nunca uma chamada de IA extra só para resumir.
+function montarResumoAnterior({ sintese, diagnostico }) {
+  return [
+    sintese?.body ? truncar(sintese.body, 220) : null,
+    diagnostico?.frase_diagnostico || null,
+    diagnostico?.conflito_central ? truncar(diagnostico.conflito_central, 220) : null,
+  ].filter(Boolean).join(' ');
+}
 
 export async function POST(request) {
   try {
@@ -68,7 +96,9 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Pagamento não confirmado' }, { status: 403 });
     }
 
-    const faltando = CAMPOS.filter(({ col }) => !analise[col]);
+    const faltandoOnda1 = CAMPOS_ONDA1.filter(({ col }) => !analise[col]);
+    const faltandoOnda2 = CAMPOS_ONDA2.filter(({ col }) => !analise[col]);
+    const faltando = [...faltandoOnda1, ...faltandoOnda2];
     if (faltando.length === 0) {
       return NextResponse.json({ success: true, generated: [] });
     }
@@ -76,31 +106,60 @@ export async function POST(request) {
     console.log(`[gerar-manual-completo] ${analiseId} — gerando ${faltando.length} seções: ${faltando.map(f => f.col).join(', ')}`);
 
     const generated = [];
+    const resultadosOnda1 = {};
 
-    // Cada tarefa gera e salva independentemente assim que termina
-    await Promise.all(
-      faltando.map(async ({ col, build, gerar }) => {
-        try {
-          const result = await gerar(build(analise));
-          if (!result) {
-            console.warn(`[gerar-manual-completo] ${col} retornou null`);
-            return;
-          }
-          const { error: saveErr } = await supabase
-            .from('analises')
-            .update({ [col]: JSON.stringify(result) })
-            .eq('id', analiseId);
-          if (saveErr) {
-            console.error(`[gerar-manual-completo] falha ao salvar ${col}:`, saveErr.message);
-            return;
-          }
-          generated.push(col);
-          console.log(`[gerar-manual-completo] ✅ ${col} salvo`);
-        } catch (err) {
-          console.error(`[gerar-manual-completo] ${col} erro:`, err?.message);
+    // Gera e salva uma seção; devolve o resultado (ou null em falha) pra
+    // quem precisar reaproveitar (só a Onda 1 é reaproveitada, na Onda 2).
+    async function gerarESalvar({ col, build, gerar }, ctxRow) {
+      try {
+        const result = await gerar(build(ctxRow));
+        if (!result) {
+          console.warn(`[gerar-manual-completo] ${col} retornou null`);
+          return null;
         }
-      })
-    );
+        const { error: saveErr } = await supabase
+          .from('analises')
+          .update({ [col]: JSON.stringify(result) })
+          .eq('id', analiseId);
+        if (saveErr) {
+          console.error(`[gerar-manual-completo] falha ao salvar ${col}:`, saveErr.message);
+          return null;
+        }
+        generated.push(col);
+        console.log(`[gerar-manual-completo] ✅ ${col} salvo`);
+        return result;
+      } catch (err) {
+        console.error(`[gerar-manual-completo] ${col} erro:`, err?.message);
+        return null;
+      }
+    }
+
+    function parseSalvo(raw) {
+      if (!raw) return null;
+      try { return JSON.parse(raw); } catch { return null; }
+    }
+
+    // Onda 1 — Síntese + Diagnóstico primeiro, em paralelo entre si
+    if (faltandoOnda1.length > 0) {
+      await Promise.all(
+        faltandoOnda1.map((campo) =>
+          gerarESalvar(campo, analise).then((result) => { resultadosOnda1[campo.col] = result; })
+        )
+      );
+    }
+
+    // As outras 12 seções recebem um resumo do que a Onda 1 já disse (recém
+    // gerado agora, ou já salvo de uma rodada anterior) pra não convergir
+    // todas no mesmo insight central.
+    const sintese = resultadosOnda1['sintese_gerada'] ?? parseSalvo(analise.sintese_gerada);
+    const diagnostico = resultadosOnda1['diagnostico_gerado'] ?? parseSalvo(analise.diagnostico_gerado);
+    const resumoAnterior = montarResumoAnterior({ sintese, diagnostico });
+
+    // Onda 2 — as 12 seções restantes, em paralelo entre si
+    if (faltandoOnda2.length > 0) {
+      const analiseComResumo = { ...analise, __resumoAnterior: resumoAnterior };
+      await Promise.all(faltandoOnda2.map((campo) => gerarESalvar(campo, analiseComResumo)));
+    }
 
     console.log(`[gerar-manual-completo] concluído — ${generated.length}/${faltando.length} gerados`);
     return NextResponse.json({ success: true, generated });
