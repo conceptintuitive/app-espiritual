@@ -5,7 +5,7 @@ import { NUMEROS_VIDA, dadosDoNumero } from '@/lib/seoConteudo';
 export const metadata = {
   title: 'Números de Vida na Numerologia: significado de 1 a 33 | Intuitive Concept',
   description: 'O significado de cada Número de Vida na numerologia — essência, força, sombra e caminho de cura, dos números de 1 a 9 até os Números Mestres 11, 22 e 33.',
-  alternates: { canonical: 'https://app-espiritual-psi.vercel.app/numerologia' },
+  alternates: { canonical: 'https://intuitiveconcept.com.br/numerologia' },
 };
 
 export default function NumerologiaHubPage() {

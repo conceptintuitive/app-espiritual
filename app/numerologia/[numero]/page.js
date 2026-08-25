@@ -22,7 +22,7 @@ export async function generateMetadata({ params }) {
   return {
     title,
     description,
-    alternates: { canonical: `https://app-espiritual-psi.vercel.app/numerologia/numero-${numero}` },
+    alternates: { canonical: `https://intuitiveconcept.com.br/numerologia/numero-${numero}` },
     openGraph: { title, description, locale: 'pt_BR', type: 'article' },
   };
 }

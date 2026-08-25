@@ -1,7 +1,7 @@
 import { BLOG_POSTS } from '@/lib/blogPosts';
 import { SIGNOS, signoSlug, NUMEROS_VIDA } from '@/lib/seoConteudo';
 
-const BASE_URL = 'https://app-espiritual-psi.vercel.app';
+const BASE_URL = 'https://intuitiveconcept.com.br';
 
 export default function sitemap() {
   const estaticas = [

@@ -5,7 +5,7 @@ import { SIGNOS, signoSlug, dadosDoSigno } from '@/lib/seoConteudo';
 export const metadata = {
   title: 'Os 12 Signos do Zodíaco: o que cada um revela | Intuitive Concept',
   description: 'Áries, Touro, Gêmeos, Câncer, Leão, Virgem, Libra, Escorpião, Sagitário, Capricórnio, Aquário e Peixes — motor, riscos, amor e dinheiro de cada signo.',
-  alternates: { canonical: 'https://app-espiritual-psi.vercel.app/signos' },
+  alternates: { canonical: 'https://intuitiveconcept.com.br/signos' },
 };
 
 export default function SignosHubPage() {
