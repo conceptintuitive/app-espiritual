@@ -53,12 +53,33 @@ function truncar(texto, maxChars) {
 // Monta o "já foi dito" a partir do que Síntese + Diagnóstico realmente
 // geraram (ou do que já estava salvo, se essas duas já existiam antes desta
 // rodada) — nunca uma chamada de IA extra só para resumir.
+//
+// Testado na prática: só CITAR o texto já escrito (ex: "racionalização",
+// "blindagem analítica") não afasta a IA do tema — ela continua girando em
+// torno da mesma palavra-chave, porque é o insight mais óbvio que os dados
+// sugerem. O que funciona melhor é isolar o TEMA CENTRAL (a frase_diagnostico,
+// que já é uma constatação de 1 linha) e proibir explicitamente que ele seja
+// o ângulo principal de novo, sugerindo mecanismos alternativos — separado do
+// contexto de fundo, que só serve pra não repetir os mesmos exemplos.
 function montarResumoAnterior({ sintese, diagnostico }) {
-  return [
-    sintese?.body ? truncar(sintese.body, 220) : null,
-    diagnostico?.frase_diagnostico || null,
-    diagnostico?.conflito_central ? truncar(diagnostico.conflito_central, 220) : null,
+  const tema = diagnostico?.frase_diagnostico || '';
+  const contexto = [
+    sintese?.body ? truncar(sintese.body, 200) : null,
+    diagnostico?.conflito_central ? truncar(diagnostico.conflito_central, 200) : null,
   ].filter(Boolean).join(' ');
+
+  if (!tema && !contexto) return '';
+
+  const partes = [];
+  if (tema) {
+    partes.push(
+      `TEMA CENTRAL JÁ USADO em outra seção deste manual (PROIBIDO usar como ângulo principal aqui): "${tema}". Se a primeira ideia que vier for uma variação disso, descarte e escolha um mecanismo psicológico estruturalmente diferente — por exemplo idealização, evitação por dispersão, necessidade de controle externo, busca por protagonismo, medo de estagnação, dependência de validação externa, ou outro que não seja o tema acima.`
+    );
+  }
+  if (contexto) {
+    partes.push(`Contexto de fundo já coberto (não repetir os mesmos exemplos concretos): "${contexto}"`);
+  }
+  return partes.join('\n');
 }
 
 export async function POST(request) {
