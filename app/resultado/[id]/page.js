@@ -8,6 +8,7 @@ import { createClient } from '@supabase/supabase-js';
 import { getTopMatches } from '@/lib/compatibilidade';
 import { TESTIMONIALS } from '@/lib/testimonials';
 import ChatAssistente from '@/app/components/ChatAssistente';
+import SeloArquetipo from '@/app/components/SeloArquetipo';
 
 // ── Supabase ──────────────────────────────────────────────────────────────────
 function getSupabaseClient() {
@@ -556,6 +557,14 @@ export default function ResultadoPage() {
             {analise.ano_pessoal       && <span className="pill pill-numero">📅 Ano Pessoal: {analise.ano_pessoal}</span>}
           </div>
         </div>
+
+        {/* ══ SELO DO ARQUÉTIPO — cartão compartilhável ══ */}
+        <SeloArquetipo
+          firstName={firstName}
+          signo={signoFinal}
+          numeroVida={numeroVidaFinal}
+          objetivoPrincipal={analise.objetivo_principal}
+        />
 
         {/* ══ BLOCO 2 — PREVIEW ══ */}
         {analise.preview_gerado && (
