@@ -25,11 +25,11 @@ export const metadata = {
   openGraph: {
     title: 'Manual dos Poderes Ocultos | Descubra Seu Mapa Espiritual',
     description: 'Análise completa de Numerologia + Astrologia + Previsões personalizadas. Descubra os segredos da sua alma.',
-    url: 'https://app-espiritual-psi.vercel.app',
+    url: 'https://intuitiveconcept.com.br',
     siteName: 'Manual dos Poderes Ocultos',
     images: [
       {
-        url: 'https://app-espiritual-psi.vercel.app/og-image.jpg',
+        url: 'https://intuitiveconcept.com.br/og-image.jpg',
         width: 1200,
         height: 630,
         alt: 'Manual dos Poderes Ocultos - Mapa Espiritual',
@@ -43,7 +43,7 @@ export const metadata = {
     card: 'summary_large_image',
     title: 'Manual dos Poderes Ocultos',
     description: 'Descubra seu mapa espiritual completo com Numerologia e Astrologia',
-    images: ['https://app-espiritual-psi.vercel.app/og-image.jpg'],
+    images: ['https://intuitiveconcept.com.br/og-image.jpg'],
   },
 
   icons: {
@@ -64,7 +64,7 @@ export const metadata = {
   },
 
   alternates: {
-    canonical: 'https://app-espiritual-psi.vercel.app',
+    canonical: 'https://intuitiveconcept.com.br',
   },
 };
 
@@ -146,7 +146,7 @@ export default function RootLayout({ children }) {
               '@type': 'WebApplication',
               name: 'Manual dos Poderes Ocultos',
               description: 'Análise espiritual completa com Numerologia e Astrologia',
-              url: 'https://app-espiritual-psi.vercel.app',
+              url: 'https://intuitiveconcept.com.br',
               applicationCategory: 'LifestyleApplication',
               offers: {
                 '@type': 'Offer',

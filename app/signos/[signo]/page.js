@@ -18,7 +18,7 @@ export async function generateMetadata({ params }) {
   return {
     title,
     description,
-    alternates: { canonical: `https://app-espiritual-psi.vercel.app/signos/${slug}` },
+    alternates: { canonical: `https://intuitiveconcept.com.br/signos/${slug}` },
     openGraph: { title, description, locale: 'pt_BR', type: 'article' },
   };
 }
