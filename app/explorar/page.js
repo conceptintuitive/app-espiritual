@@ -102,10 +102,10 @@ export default function ExplorarPage() {
 
         <Link href={compatCompletaHref} className="card septenary">
           <div className="icon-badge">💞</div>
-          <span className="tag">R$ 29,90</span>
+          <span className="tag">🎁 Bônus do Manual · prévia grátis</span>
           <h3>Compatibilidade Completa</h3>
-          <p>Seu mapa de verdade com o de outra pessoa — Sol, Lua, Vênus e Marte dos dois, ponto a ponto.</p>
-          <span className="cta">Comparar mapas →</span>
+          <p>Seu mapa de verdade com o de outra pessoa — Sol, Lua, Vênus e Marte dos dois, ponto a ponto. Completo é bônus de quem já tem o Manual.</p>
+          <span className="cta">Ver prévia grátis →</span>
         </Link>
 
         <Link href="/blog" className="card tertiary">
