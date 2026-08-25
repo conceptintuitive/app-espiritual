@@ -2,13 +2,17 @@ import Link from 'next/link';
 import SiteNav from '@/app/components/SiteNav';
 import { NUMEROS_VIDA, dadosDoNumero } from '@/lib/seoConteudo';
 
+function parseNumero(raw) {
+  return parseInt(String(raw || '').replace(/^numero-/, ''), 10);
+}
+
 export function generateStaticParams() {
-  return NUMEROS_VIDA.map((numero) => ({ numero: String(numero) }));
+  return NUMEROS_VIDA.map((numero) => ({ numero: `numero-${numero}` }));
 }
 
 export async function generateMetadata({ params }) {
   const { numero: raw } = await params;
-  const numero = parseInt(raw, 10);
+  const numero = parseNumero(raw);
   const dados = dadosDoNumero(numero);
   if (!dados) return { title: 'Número não encontrado | Intuitive Concept' };
 
@@ -25,7 +29,7 @@ export async function generateMetadata({ params }) {
 
 export default async function NumeroPage({ params }) {
   const { numero: raw } = await params;
-  const numero = parseInt(raw, 10);
+  const numero = parseNumero(raw);
   const dados = dadosDoNumero(numero);
 
   if (!dados) {
