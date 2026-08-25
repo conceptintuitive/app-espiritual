@@ -115,6 +115,22 @@ export default function ExplorarPage() {
           <p>Trânsitos, luas e numerologia do mês — conteúdo novo pra quem quer ir além do próprio mapa.</p>
           <span className="cta">Ler os posts →</span>
         </Link>
+
+        <Link href="/signos" className="card octonary">
+          <div className="icon-badge">♈</div>
+          <span className="tag">Grátis · consulta livre</span>
+          <h3>Os 12 Signos</h3>
+          <p>Motor, riscos, amor e dinheiro de cada signo do zodíaco, um por um.</p>
+          <span className="cta">Ver os signos →</span>
+        </Link>
+
+        <Link href="/numerologia" className="card nonary">
+          <div className="icon-badge">✧</div>
+          <span className="tag">Grátis · consulta livre</span>
+          <h3>Números de Vida</h3>
+          <p>Essência, força e sombra de cada Número de Vida, do 1 ao 9 e os Números Mestres.</p>
+          <span className="cta">Ver os números →</span>
+        </Link>
       </div>
 
       <style jsx global>{`
@@ -164,6 +180,8 @@ export default function ExplorarPage() {
         .card.quinary::before { background: radial-gradient(circle at 20% 0%, rgba(139,92,246,0.22), rgba(19,8,40,0.95) 70%); }
         .card.senary::before { background: radial-gradient(circle at 20% 0%, rgba(16,185,129,0.18), rgba(19,8,40,0.95) 70%); }
         .card.septenary::before { background: radial-gradient(circle at 20% 0%, rgba(236,72,153,0.2), rgba(139,92,246,0.12), rgba(19,8,40,0.95) 70%); }
+        .card.octonary::before { background: radial-gradient(circle at 20% 0%, rgba(245,158,11,0.2), rgba(19,8,40,0.95) 70%); }
+        .card.nonary::before { background: radial-gradient(circle at 20% 0%, rgba(139,92,246,0.2), rgba(236,72,153,0.1), rgba(19,8,40,0.95) 70%); }
 
         .icon-badge { width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; background: rgba(255,255,255,0.06); border: 1px solid var(--border-strong); }
         .tag { font-family: 'Cinzel', serif; font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--warning); }
