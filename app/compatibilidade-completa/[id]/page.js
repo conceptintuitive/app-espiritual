@@ -23,7 +23,6 @@ export default function CompatibilidadeCompletaPage() {
   const [row, setRow] = useState(null);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState(false);
-  const [processando, setProcessando] = useState(false);
 
   const [pessoa2Nome, setPessoa2Nome] = useState('');
   const [pessoa2Data, setPessoa2Data] = useState('');
@@ -60,29 +59,6 @@ export default function CompatibilidadeCompletaPage() {
     if (!minhasSignos || !pessoa2Signos) return null;
     return gerarCompatibilidadeCompleta(minhasSignos, pessoa2Signos);
   }, [minhasSignos, pessoa2Signos]);
-
-  async function handleComprar() {
-    if (!pessoa2Nome.trim() || !pessoa2Data) {
-      alert('Preencha o nome e a data de nascimento da segunda pessoa.');
-      return;
-    }
-    setProcessando(true);
-    try {
-      const response = await fetch('/api/criar-checkout-compat-mp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ analiseId: id, pessoa2Nome: pessoa2Nome.trim(), pessoa2DataNascimento: pessoa2Data }),
-      });
-      const data = await response.json().catch(() => ({}));
-      const checkoutUrl = data?.url || data?.sandbox_url;
-      if (checkoutUrl) { window.location.href = checkoutUrl; return; }
-      throw new Error(data?.error || 'Erro ao criar checkout');
-    } catch (e) {
-      alert(e?.message || 'Erro ao processar pagamento. Tente novamente.');
-    } finally {
-      setProcessando(false);
-    }
-  }
 
   const manualPago = row?.payment_status === 'paid';
   const desbloqueado = manualPago || row?.compat_payment_status === 'paid';
@@ -122,6 +98,11 @@ export default function CompatibilidadeCompletaPage() {
             Sol, Lua, Vênus e Marte dos dois, comparados ponto a ponto — diferente da compatibilidade
             genérica de signo com signo, aqui é o seu mapa de verdade com o de alguém específico.
           </p>
+          {!manualPago && (
+            <p className="lead" style={{ marginTop: 10, fontSize: 15 }}>
+              🎁 A Compatibilidade Completa é um bônus grátis pra quem já tem o Manual completo.
+            </p>
+          )}
         </div>
 
         {loading && <div className="center muted">Carregando…</div>}
@@ -192,9 +173,9 @@ export default function CompatibilidadeCompletaPage() {
                       <div className="locked-row">🔒 Marte · Ação — como conflitos e decisões acontecem entre vocês</div>
                       <div className="locked-row">🔒 Compatibilidade geral (média dos 4 pontos)</div>
                     </div>
-                    <button className="btn btn-cta" onClick={handleComprar} disabled={processando} style={{ marginTop: 16 }}>
-                      {processando ? '⏳ Abrindo…' : '🔓 Ver Compatibilidade Completa — R$ 29,90'}
-                    </button>
+                    <Link href={`/resultado/${id}`} className="btn btn-cta" style={{ marginTop: 16, textAlign: 'center' }}>
+                      🎁 Desbloquear com o Manual completo →
+                    </Link>
                   </>
                 )}
               </div>
