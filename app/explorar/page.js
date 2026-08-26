@@ -108,6 +108,14 @@ export default function ExplorarPage() {
           <span className="cta">Ver prévia grátis →</span>
         </Link>
 
+        <Link href="/hexagrama-do-dia" className="card denary">
+          <div className="icon-badge">☯</div>
+          <span className="tag">Grátis · muda todo dia</span>
+          <h3>Hexagrama do Dia</h3>
+          <p>Uma leitura do I Ching pro seu dia, com o que favorece e o que pede cuidado — a mesma pra todo mundo até a meia-noite.</p>
+          <span className="cta">Ver o hexagrama de hoje →</span>
+        </Link>
+
         <Link href="/blog" className="card tertiary">
           <div className="icon-badge">✎</div>
           <span className="tag">Toda semana</span>
@@ -182,6 +190,7 @@ export default function ExplorarPage() {
         .card.septenary::before { background: radial-gradient(circle at 20% 0%, rgba(236,72,153,0.2), rgba(139,92,246,0.12), rgba(19,8,40,0.95) 70%); }
         .card.octonary::before { background: radial-gradient(circle at 20% 0%, rgba(245,158,11,0.2), rgba(19,8,40,0.95) 70%); }
         .card.nonary::before { background: radial-gradient(circle at 20% 0%, rgba(139,92,246,0.2), rgba(236,72,153,0.1), rgba(19,8,40,0.95) 70%); }
+        .card.denary::before { background: radial-gradient(circle at 20% 0%, rgba(245,158,11,0.22), rgba(139,92,246,0.14), rgba(19,8,40,0.95) 70%); }
 
         .icon-badge { width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; background: rgba(255,255,255,0.06); border: 1px solid var(--border-strong); }
         .tag { font-family: 'Cinzel', serif; font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--warning); }
