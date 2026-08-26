@@ -90,29 +90,24 @@ export default function HexagramaDoDiaPage() {
               })}
             </div>
 
-            <h2 className="titulo-hexagrama">{hexagrama.superior.nome} sobre {hexagrama.inferior.nome}</h2>
-
-            <div className="trigramas">
-              <div className="trigrama-card">
-                <span className="trigrama-label">De cima · o que se expressa</span>
-                <strong>{hexagrama.superior.nome}</strong>
-                <p>{hexagrama.superior.essencia}</p>
+            <div className="hex-card">
+              <div className="hex-card-title">{hexagrama.superior.nome} sobre {hexagrama.inferior.nome}</div>
+              <p className="hex-card-texto">{hexagrama.texto}</p>
+              <div className="grid2">
+                <div className="subcard highlight">
+                  <div className="subttl">✅ O que favorece</div>
+                  <ul className="list-check">
+                    {hexagrama.favorece.map((f, i) => <li key={i}>✓ {f}</li>)}
+                  </ul>
+                </div>
+                <div className="subcard danger">
+                  <div className="subttl">⚠️ Cuidado com</div>
+                  <ul className="list-check">
+                    {hexagrama.cuidado.map((c, i) => <li key={i}>✓ {c}</li>)}
+                  </ul>
+                </div>
               </div>
-              <div className="trigrama-card">
-                <span className="trigrama-label">De baixo · o que sustenta</span>
-                <strong>{hexagrama.inferior.nome}</strong>
-                <p>{hexagrama.inferior.essencia}</p>
-              </div>
-            </div>
-
-            <p className="mutante-nota">{hexagrama.leituraMutante}</p>
-
-            <div className="convites">
-              <p className="convites-titulo">Na prática, isso sugere pra hoje:</p>
-              <ul>
-                <li>{hexagrama.superior.convite}</li>
-                <li>{hexagrama.inferior.convite}</li>
-              </ul>
+              <p className="mutante-nota">{hexagrama.leituraMutante}</p>
             </div>
           </div>
         ) : (
@@ -163,27 +158,22 @@ export default function HexagramaDoDiaPage() {
         .linha.yin .barra:last-child { flex: 0.42; }
         .linha.mutante .barra { background: var(--warning); box-shadow: 0 0 10px rgba(245,158,11,0.6); }
 
-        .titulo-hexagrama { font-family: 'Cinzel', serif; font-size: clamp(20px, 4vw, 26px); margin: 0 0 24px; }
-
-        .trigramas { display: flex; gap: 14px; margin-bottom: 24px; }
-        .trigrama-card {
-          flex: 1; background: rgba(139,92,246,0.08); border: 1px solid var(--border);
-          border-radius: 14px; padding: 16px; text-align: left;
+        .hex-card {
+          text-align: left; background: rgba(139,92,246,0.06); border: 1px solid var(--border);
+          border-radius: 18px; padding: 22px 20px; margin-bottom: 36px;
         }
-        .trigrama-label { font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--secondary); }
-        .trigrama-card strong { display: block; font-family: 'Cinzel', serif; font-size: 17px; margin: 4px 0 6px; }
-        .trigrama-card p { margin: 0; font-size: 15px; color: var(--muted); line-height: 1.6; }
+        .hex-card-title { font-family: 'Cinzel', serif; font-size: clamp(18px, 4vw, 22px); margin: 0 0 12px; }
+        .hex-card-texto { font-size: 16.5px; line-height: 1.75; color: var(--text); margin: 0; }
 
-        .mutante-nota { text-align: left; font-size: 15px; font-style: italic; color: var(--muted); margin: 0 0 24px; }
+        .grid2 { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 18px; }
+        @media (min-width: 560px) { .grid2 { grid-template-columns: 1fr 1fr; } }
+        .subcard { border-radius: 14px; padding: 14px 16px; border: 1px solid var(--border); }
+        .subcard.highlight { border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.05); }
+        .subcard.danger { border-color: rgba(236,72,153,0.3); background: rgba(236,72,153,0.05); }
+        .subttl { font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 0.04em; margin-bottom: 8px; }
+        .list-check { list-style: none; padding: 0; margin: 0; font-size: 14.5px; line-height: 1.7; color: var(--muted); }
 
-        .convites {
-          text-align: left; background: rgba(245,158,11,0.06); border: 1px solid rgba(245,158,11,0.2);
-          border-radius: 14px; padding: 18px 20px; margin-bottom: 36px;
-        }
-        .convites-titulo { font-family: 'Cinzel', serif; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--warning); margin: 0 0 10px; }
-        .convites ul { margin: 0; padding-left: 20px; }
-        .convites li { font-size: 16px; line-height: 1.6; color: var(--text); margin-bottom: 8px; }
-        .convites li:last-child { margin-bottom: 0; }
+        .mutante-nota { font-size: 14.5px; font-style: italic; color: var(--muted); margin: 18px 0 0; }
 
         .cta {
           display: inline-block; font-family: 'Cinzel', serif; font-size: 14px; letter-spacing: 0.06em;
@@ -192,9 +182,6 @@ export default function HexagramaDoDiaPage() {
           box-shadow: 0 12px 34px rgba(236,72,153,0.35);
         }
 
-        @media (max-width: 480px) {
-          .trigramas { flex-direction: column; }
-        }
       `}</style>
     </div>
   );
