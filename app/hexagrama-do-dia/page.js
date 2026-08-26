@@ -54,6 +54,26 @@ export default function HexagramaDoDiaPage() {
           construída a partir de dois trigramas: o que se expressa por cima e o que sustenta por baixo.
         </p>
 
+        <details className="explicacao">
+          <summary>O que é isso e como funciona?</summary>
+          <div className="explicacao-corpo">
+            <p>
+              O I Ching é um sistema chinês milenar de leitura simbólica. Ele parte de 8 padrões
+              básicos, os trigramas, cada um formado por 3 linhas cheias (yang) ou partidas (yin),
+              associadas a uma força da natureza: Céu, Terra, Fogo, Água, Trovão, Vento, Montanha e Lago.
+            </p>
+            <p>
+              Dois trigramas empilhados, um por cima e outro por baixo, formam um hexagrama de 6 linhas:
+              a leitura do dia. O de cima mostra o que se expressa, o movimento visível. O de baixo mostra
+              a base, o que sustenta essa expressão por dentro.
+            </p>
+            <p>
+              Quando uma linha aparece destacada em laranja, é uma "linha em movimento": um ponto
+              específico dessa configuração que já está em transição, mesmo que o resto pareça estável.
+            </p>
+          </div>
+        </details>
+
         {hexagrama ? (
           <div className="leitura">
             <div className="hexagrama-visual" aria-hidden="true">
@@ -77,19 +97,36 @@ export default function HexagramaDoDiaPage() {
 
             <div className="trigramas">
               <div className="trigrama-card">
-                <span className="trigrama-label">De cima</span>
+                <span className="trigrama-label">De cima · o que se expressa</span>
                 <strong>{hexagrama.superior.nome}</strong>
                 <p>{hexagrama.superior.chave}</p>
               </div>
               <div className="trigrama-card">
-                <span className="trigrama-label">De baixo</span>
+                <span className="trigrama-label">De baixo · o que sustenta</span>
                 <strong>{hexagrama.inferior.nome}</strong>
                 <p>{hexagrama.inferior.chave}</p>
               </div>
             </div>
 
-            <p className="significado">{hexagrama.significado}</p>
-            <p className="mutante-nota">{hexagrama.leituraMutante}</p>
+            <div className="analise">
+              <p>
+                <strong>{hexagrama.superior.nome}</strong> rege o que se expressa hoje, por cima:{' '}
+                {hexagrama.superior.essencia}
+              </p>
+              <p>
+                <strong>{hexagrama.inferior.nome}</strong> sustenta por baixo: {hexagrama.inferior.essencia}
+              </p>
+              <p className="significado">{hexagrama.significado}</p>
+              <p className="mutante-nota">{hexagrama.leituraMutante}</p>
+            </div>
+
+            <div className="convites">
+              <p className="convites-titulo">Pra hoje, a leitura favorece:</p>
+              <ul>
+                <li>{hexagrama.superior.convite}</li>
+                <li>{hexagrama.inferior.convite}</li>
+              </ul>
+            </div>
           </div>
         ) : (
           <div className="carregando">Consultando o hexagrama de hoje…</div>
@@ -119,6 +156,15 @@ export default function HexagramaDoDiaPage() {
 
         .carregando { color: var(--muted); font-size: 16px; margin-bottom: 36px; }
 
+        .explicacao {
+          text-align: left; margin: 0 0 36px; background: rgba(139,92,246,0.06);
+          border: 1px solid var(--border); border-radius: 14px; padding: 14px 18px;
+        }
+        .explicacao summary { cursor: pointer; font-family: 'Cinzel', serif; font-size: 14px; letter-spacing: 0.02em; color: var(--secondary); }
+        .explicacao-corpo { margin-top: 12px; }
+        .explicacao-corpo p { font-size: 15.5px; color: var(--muted); line-height: 1.7; margin: 0 0 12px; }
+        .explicacao-corpo p:last-child { margin-bottom: 0; }
+
         .leitura { margin-bottom: 40px; }
         .hexagrama-visual {
           display: flex; flex-direction: column-reverse; align-items: center; gap: 8px;
@@ -141,8 +187,20 @@ export default function HexagramaDoDiaPage() {
         .trigrama-card strong { display: block; font-family: 'Cinzel', serif; font-size: 17px; margin: 4px 0 6px; }
         .trigrama-card p { margin: 0; font-size: 14.5px; color: var(--muted); line-height: 1.5; }
 
-        .significado { font-size: 18px; line-height: 1.7; margin: 0 0 14px; }
-        .mutante-nota { font-size: 15px; font-style: italic; color: var(--muted); margin: 0; }
+        .analise { text-align: left; margin-bottom: 24px; }
+        .analise p { font-size: 17px; line-height: 1.75; margin: 0 0 14px; }
+        .analise strong { font-family: 'Cinzel', serif; font-weight: 700; font-size: 15px; }
+        .analise p.significado { font-size: 18px; font-style: italic; }
+        .analise p.mutante-nota { font-size: 15px; font-style: italic; color: var(--muted); margin: 0; }
+
+        .convites {
+          text-align: left; background: rgba(245,158,11,0.06); border: 1px solid rgba(245,158,11,0.2);
+          border-radius: 14px; padding: 18px 20px; margin-bottom: 36px;
+        }
+        .convites-titulo { font-family: 'Cinzel', serif; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--warning); margin: 0 0 10px; }
+        .convites ul { margin: 0; padding-left: 20px; }
+        .convites li { font-size: 16px; line-height: 1.6; color: var(--text); margin-bottom: 8px; }
+        .convites li:last-child { margin-bottom: 0; }
 
         .cta {
           display: inline-block; font-family: 'Cinzel', serif; font-size: 14px; letter-spacing: 0.06em;
