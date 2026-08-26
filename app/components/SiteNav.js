@@ -26,6 +26,7 @@ export default function SiteNav({ active }) {
   const itemsAntes = [
     { href: meuMapaHref, label: 'Meu Mapa', key: 'meu-mapa' },
     { href: '/oraculo', label: 'Oráculo', key: 'oraculo' },
+    { href: '/hexagrama-do-dia', label: 'Hexagrama do Dia', key: 'hexagrama' },
     { href: '/compatibilidade', label: 'Compatibilidade', key: 'compatibilidade' },
     { href: previsaoHref, label: 'Previsão do Ano', key: 'previsao' },
   ];
