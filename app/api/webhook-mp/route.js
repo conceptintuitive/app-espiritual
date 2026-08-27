@@ -194,7 +194,7 @@ export async function POST(request) {
     // manda pro destinatário (presente_email), não pra quem pagou.
     const { data: analiseData } = await supabase
       .from("analises")
-      .select("email,presente_email,presente_de,checkout_ip,checkout_user_agent")
+      .select("email,presente_email,presente_de")
       .eq("id", analiseId)
       .single();
 
@@ -218,6 +218,28 @@ export async function POST(request) {
 
     // Fire-and-forget: geração de IA após responder ao MP
     after(async () => {
+      // IP/user-agent do cliente, capturados na criação do checkout — select
+      // isolado e best-effort, de propósito: se a coluna ainda não existir
+      // no banco (deploy antes da migração rodar), essa falha não pode se
+      // propagar pro select de geração de IA logo abaixo.
+      let checkoutIp = null;
+      let checkoutUserAgent = null;
+      try {
+        const { data: trackingData, error: trackingErr } = await supabase
+          .from("analises")
+          .select("checkout_ip, checkout_user_agent")
+          .eq("id", analiseId)
+          .single();
+        if (trackingErr) {
+          console.error("⚠️ Não foi possível ler checkout_ip/checkout_user_agent (coluna existe?):", trackingErr.message);
+        } else {
+          checkoutIp = trackingData?.checkout_ip || null;
+          checkoutUserAgent = trackingData?.checkout_user_agent || null;
+        }
+      } catch (trackingCatchErr) {
+        console.error("⚠️ Erro ao ler checkout_ip/checkout_user_agent:", trackingCatchErr?.message || trackingCatchErr);
+      }
+
       try {
         const { data: analise, error: analiseErr } = await supabase
           .from("analises")
@@ -307,8 +329,8 @@ export async function POST(request) {
         currency: (payment.currency_id || "BRL").toUpperCase(),
         email: analiseData?.email,
         analiseId,
-        clientIp: analiseData?.checkout_ip || null,
-        userAgent: analiseData?.checkout_user_agent || null,
+        clientIp: checkoutIp,
+        userAgent: checkoutUserAgent,
       });
     });
 

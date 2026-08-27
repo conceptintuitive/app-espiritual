@@ -56,8 +56,26 @@ async function handlePaymentSuccess(session, supabase) {
   after(async () => {
     // IP/user-agent do cliente, capturados na criação do checkout (o webhook
     // em si não tem esse contexto) — usados no evento Purchase da Meta abaixo.
+    // Select isolado e best-effort, de propósito: se a coluna ainda não
+    // existir no banco (deploy antes da migração rodar), essa falha não pode
+    // se propagar pro select de geração de IA logo abaixo.
     let checkoutIp = null;
     let checkoutUserAgent = null;
+    try {
+      const { data: trackingData, error: trackingErr } = await supabase
+        .from("analises")
+        .select("checkout_ip, checkout_user_agent")
+        .eq("id", analiseId)
+        .single();
+      if (trackingErr) {
+        console.error("⚠️ Não foi possível ler checkout_ip/checkout_user_agent (coluna existe?):", trackingErr.message);
+      } else {
+        checkoutIp = trackingData?.checkout_ip || null;
+        checkoutUserAgent = trackingData?.checkout_user_agent || null;
+      }
+    } catch (trackingCatchErr) {
+      console.error("⚠️ Erro ao ler checkout_ip/checkout_user_agent:", trackingCatchErr?.message || trackingCatchErr);
+    }
 
     // Geração de IA ────────────────────────────────────────────────────────────
     try {
@@ -70,15 +88,12 @@ async function handlePaymentSuccess(session, supabase) {
           sintese_gerada, diagnostico_gerado, amor_gerado, tipo_pessoa_gerado,
           plano7_gerado, arquetipos_gerado, ponto_cego_gerado, bloqueios_gerado,
           dinheiro_gerado, rituais_gerado, objetivo_gerado, leitura_gerada,
-          calendario_gerado, fechamento_gerado, checkout_ip, checkout_user_agent
+          calendario_gerado, fechamento_gerado
         `)
         .eq("id", analiseId)
         .single();
 
       if (!analiseErr && analise) {
-        checkoutIp = analise.checkout_ip || null;
-        checkoutUserAgent = analise.checkout_user_agent || null;
-
         // Um único Promise.all — só gera seções que ainda estão null
         const [
           sintese, diagnostico, amor, tipoPessoa, plano7, arquetipos,

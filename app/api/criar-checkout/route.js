@@ -125,8 +125,6 @@ if (analise.payment_status === "paid") {
       .from("analises")
       .update({
         stripe_session_id: session.id,
-        checkout_ip: clientIp,
-        checkout_user_agent: userAgent,
         updated_at: new Date().toISOString(),
       })
       .eq("id", analiseId);
@@ -136,6 +134,18 @@ if (analise.payment_status === "paid") {
         { error: "Falha ao salvar session no Supabase", details: upErr.message },
         { status: 500 }
       );
+    }
+
+    // Melhor esforço, em update separado do crítico acima — se a coluna
+    // ainda não existir (deploy antes da migração rodar), isso não pode
+    // quebrar a criação do checkout. Sem isso salvo, o Purchase da Meta só
+    // sai sem IP/user-agent, exatamente como já era antes desta mudança.
+    const { error: trackingErr } = await supabase
+      .from("analises")
+      .update({ checkout_ip: clientIp, checkout_user_agent: userAgent })
+      .eq("id", analiseId);
+    if (trackingErr) {
+      console.error("⚠️ Não foi possível salvar checkout_ip/checkout_user_agent (coluna existe?):", trackingErr.message);
     }
 
     return NextResponse.json({
