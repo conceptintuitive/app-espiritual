@@ -98,7 +98,7 @@ export default function RootLayout({ children }) {
 
         <Script
           id="tiktok-pixel"
-          strategy="afterInteractive"
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `
               !function (w, d, t) {
@@ -112,7 +112,7 @@ export default function RootLayout({ children }) {
 
         <Script
           id="meta-pixel"
-          strategy="afterInteractive"
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `
               !function(f,b,e,v,n,t,s)
