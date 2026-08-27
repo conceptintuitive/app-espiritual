@@ -48,6 +48,13 @@ export async function POST(request) {
       auth: { persistSession: false },
     });
 
+  // Único ponto do fluxo de pagamento onde a requisição vem direto do
+  // navegador do cliente — o webhook (Stripe/MP chamando nosso servidor)
+  // nunca tem esse contexto, então guardamos aqui pra usar depois no evento
+  // Purchase da Meta Conversions API (client_ip_address/client_user_agent).
+  const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null;
+  const userAgent = request.headers.get("user-agent") || null;
+
   const body = await request.json().catch(() => null);
 const analiseId = body?.analiseId;
 
@@ -118,6 +125,8 @@ if (analise.payment_status === "paid") {
       .from("analises")
       .update({
         stripe_session_id: session.id,
+        checkout_ip: clientIp,
+        checkout_user_agent: userAgent,
         updated_at: new Date().toISOString(),
       })
       .eq("id", analiseId);

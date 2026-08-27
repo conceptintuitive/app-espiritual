@@ -30,6 +30,13 @@ export async function POST(request) {
       auth: { persistSession: false },
     });
 
+    // Único ponto do fluxo de pagamento onde a requisição vem direto do
+    // navegador do cliente — o webhook (MP chamando nosso servidor) nunca
+    // tem esse contexto, então guardamos aqui pra usar depois no evento
+    // Purchase da Meta Conversions API (client_ip_address/client_user_agent).
+    const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null;
+    const userAgent = request.headers.get("user-agent") || null;
+
     const body = await request.json().catch(() => null);
     const analiseId = body?.analiseId;
     // bonusProdutos é o formato novo (subconjunto de ['projecao12m','humandesign']);
@@ -125,6 +132,8 @@ export async function POST(request) {
       .from("analises")
       .update({
         mp_preference_id: result.id,
+        checkout_ip: clientIp,
+        checkout_user_agent: userAgent,
         updated_at: new Date().toISOString(),
         ...(presenteEmail && { presente_email: presenteEmail, presente_de: presenteDe || null }),
       })

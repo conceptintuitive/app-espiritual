@@ -194,7 +194,7 @@ export async function POST(request) {
     // manda pro destinatário (presente_email), não pra quem pagou.
     const { data: analiseData } = await supabase
       .from("analises")
-      .select("email,presente_email,presente_de")
+      .select("email,presente_email,presente_de,checkout_ip,checkout_user_agent")
       .eq("id", analiseId)
       .single();
 
@@ -307,6 +307,8 @@ export async function POST(request) {
         currency: (payment.currency_id || "BRL").toUpperCase(),
         email: analiseData?.email,
         analiseId,
+        clientIp: analiseData?.checkout_ip || null,
+        userAgent: analiseData?.checkout_user_agent || null,
       });
     });
 

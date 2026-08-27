@@ -54,6 +54,11 @@ async function handlePaymentSuccess(session, supabase) {
 
   // Fire-and-forget: roda após o 200 ser enviado ao Stripe
   after(async () => {
+    // IP/user-agent do cliente, capturados na criação do checkout (o webhook
+    // em si não tem esse contexto) — usados no evento Purchase da Meta abaixo.
+    let checkoutIp = null;
+    let checkoutUserAgent = null;
+
     // Geração de IA ────────────────────────────────────────────────────────────
     try {
       const { data: analise, error: analiseErr } = await supabase
@@ -65,12 +70,15 @@ async function handlePaymentSuccess(session, supabase) {
           sintese_gerada, diagnostico_gerado, amor_gerado, tipo_pessoa_gerado,
           plano7_gerado, arquetipos_gerado, ponto_cego_gerado, bloqueios_gerado,
           dinheiro_gerado, rituais_gerado, objetivo_gerado, leitura_gerada,
-          calendario_gerado, fechamento_gerado
+          calendario_gerado, fechamento_gerado, checkout_ip, checkout_user_agent
         `)
         .eq("id", analiseId)
         .single();
 
       if (!analiseErr && analise) {
+        checkoutIp = analise.checkout_ip || null;
+        checkoutUserAgent = analise.checkout_user_agent || null;
+
         // Um único Promise.all — só gera seções que ainda estão null
         const [
           sintese, diagnostico, amor, tipoPessoa, plano7, arquetipos,
@@ -144,6 +152,8 @@ async function handlePaymentSuccess(session, supabase) {
       currency: (session.currency || "brl").toUpperCase(),
       email,
       analiseId,
+      clientIp: checkoutIp,
+      userAgent: checkoutUserAgent,
     });
 
     // Email de acesso ──────────────────────────────────────────────────────────
