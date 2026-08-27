@@ -30,6 +30,13 @@ export async function POST(request) {
       auth: { persistSession: false },
     });
 
+    // Único ponto do fluxo de pagamento onde a requisição vem direto do
+    // navegador do cliente — o webhook (MP chamando nosso servidor) nunca
+    // tem esse contexto, então guardamos aqui pra usar depois no evento
+    // Purchase da Meta Conversions API (client_ip_address/client_user_agent).
+    const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null;
+    const userAgent = request.headers.get("user-agent") || null;
+
     const body = await request.json().catch(() => null);
     const analiseId = body?.analiseId;
     // bonusProdutos é o formato novo (subconjunto de ['projecao12m','humandesign']);
@@ -129,6 +136,18 @@ export async function POST(request) {
         ...(presenteEmail && { presente_email: presenteEmail, presente_de: presenteDe || null }),
       })
       .eq("id", analiseId);
+
+    // Melhor esforço, em update separado do crítico acima — se a coluna
+    // ainda não existir (deploy antes da migração rodar), isso não pode
+    // quebrar a criação do checkout. Sem isso salvo, o Purchase da Meta só
+    // sai sem IP/user-agent, exatamente como já era antes desta mudança.
+    const { error: trackingErr } = await supabase
+      .from("analises")
+      .update({ checkout_ip: clientIp, checkout_user_agent: userAgent })
+      .eq("id", analiseId);
+    if (trackingErr) {
+      console.error("⚠️ Não foi possível salvar checkout_ip/checkout_user_agent (coluna existe?):", trackingErr.message);
+    }
 
     return NextResponse.json({
       success: true,
