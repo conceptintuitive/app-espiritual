@@ -4,6 +4,7 @@ import { calcularPlanetas, calcularAscendente, calcularAnoPessoal, calcularNumer
 import { gerarPreviewIA, gerarDiagnosticoIA, gerarAmorIA, gerarArquetiposIA, gerarPlano7IA, gerarInterpretacaoTarotIA } from '@/lib/ia';
 import { buildDiagnosticoCtx, buildAmorCtx, buildArquetiposCtx, buildPlano7Ctx } from '@/lib/manualgenerator';
 import { sortearCarta, TAROT_PROMPTS_EN } from '@/lib/tarot';
+import { sendMetaLead } from '@/lib/meta';
 
 // Monta URL da Pollinations.ai a partir da carta sorteada.
 // A URL é estável e cacheada — o browser carrega direto, sem precisar de upload nem API key.
@@ -89,10 +90,16 @@ function calcularNumeroVida(dataISO) {
 
 export async function POST(request) {
   try {
+    // Único ponto do fluxo grátis onde a requisição vem direto do navegador
+    // do cliente — usado pro evento Lead da Meta Conversions API abaixo.
+    const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || null;
+    const userAgent = request.headers.get('user-agent') || null;
+
     const body = await request.json();
     const {
       nome,
       email,
+      telefone,
       data_nascimento,
       hora_nascimento,
       local_nascimento,
@@ -197,6 +204,31 @@ export async function POST(request) {
     // Geração de IA em background — roda após a resposta ser enviada ao cliente,
     // sem risco da Vercel encerrar a function no meio (after() garante a execução)
     after(async () => {
+      // Telefone fica de fora do insert crítico acima de propósito — um insert
+      // com coluna inexistente falha inteiro no Postgres, e essa é a rota que
+      // roda em toda submissão do formulário grátis. Update separado e best
+      // effort, então se a migração da coluna ainda não rodou, só o telefone
+      // fica sem salvar (e o Lead da Meta sai sem "ph"), nada mais quebra.
+      if (telefone?.trim()) {
+        const { error: telErr } = await supabase
+          .from('analises')
+          .update({ telefone: telefone.trim() })
+          .eq('id', analiseId);
+        if (telErr) {
+          console.error('⚠️ Não foi possível salvar telefone (coluna existe?):', telErr.message);
+        }
+      }
+
+      // Lead pra Meta Conversions API — mesmo padrão do Purchase nos webhooks
+      // de pagamento.
+      await sendMetaLead({
+        email: email.trim().toLowerCase(),
+        phone: telefone?.trim() || null,
+        analiseId,
+        clientIp,
+        userAgent,
+      });
+
       try {
         const [previewR, diagnosticoR, amorR, arquetiposR, plano7R, tarotR] = await Promise.allSettled([
           gerarPreviewIA({
