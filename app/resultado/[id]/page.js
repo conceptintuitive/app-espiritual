@@ -437,6 +437,11 @@ export default function ResultadoPage() {
       throw new Error('Checkout sem URL');
     } catch (e) {
       console.error('Erro no checkout:', e);
+      // 10 pessoas clicaram em comprar nos últimos 30 dias e nenhuma gerou
+      // mp_preference_id no banco — sem acesso a log de produção, esse evento
+      // é o único jeito de ver a mensagem de erro real na próxima vez que
+      // isso acontecer.
+      try { window?.gtag?.('event', 'erro_checkout', { event_category: 'error', erro: String(e?.message || e).slice(0, 100) }); } catch {}
       alert(e?.message || 'Erro. Tente novamente.');
     } finally { setProcessando(false); }
   };
@@ -461,6 +466,7 @@ export default function ResultadoPage() {
       throw new Error('Checkout sem URL');
     } catch (e) {
       console.error('Erro no checkout avulso:', e);
+      try { window?.gtag?.('event', 'erro_checkout', { event_category: 'error', erro: String(e?.message || e).slice(0, 100) }); } catch {}
       alert(e?.message || 'Erro. Tente novamente.');
     } finally { setProcessandoAvulso(null); }
   };
