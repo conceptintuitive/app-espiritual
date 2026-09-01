@@ -59,7 +59,7 @@ export async function POST(request) {
 
     const { data: analise, error: analiseError } = await supabase
       .from("analises")
-      .select("id,nome,email,payment_status")
+      .select("id,nome,email,payment_status,created_at")
       .eq("id", analiseId)
       .single();
 
@@ -73,6 +73,14 @@ export async function POST(request) {
 
     const baseUrl = getBaseUrl();
 
+    // Preço de lançamento (R$47) vale só nos 15min após a análise ser gerada
+    // — depois disso cobra o valor cheio (R$97). Mesmo cálculo do countdown
+    // exibido em /resultado, pra nunca cobrar diferente do que foi mostrado.
+    const JANELA_LANCAMENTO_MS = 15 * 60 * 1000;
+    const dentroDaJanela =
+      analise.created_at && Date.now() - new Date(analise.created_at).getTime() <= JANELA_LANCAMENTO_MS;
+    const precoManual = dentroDaJanela ? 47 : 97;
+
     const items = [
       {
         id: analiseId,
@@ -80,7 +88,7 @@ export async function POST(request) {
         description: `Relatório personalizado completo para ${analise.nome ?? "você"}`,
         quantity: 1,
         currency_id: "BRL",
-        unit_price: 47,
+        unit_price: precoManual,
       },
     ];
 

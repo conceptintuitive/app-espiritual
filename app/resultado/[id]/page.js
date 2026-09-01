@@ -89,12 +89,12 @@ function firstSentences(text, n = 2) {
 // Checkbox de add-on do tier2 (Projeção de 12 Meses) — reaproveitado em cada
 // CTA de compra da página, não só na oferta final, pra dar a opção de bundle
 // assim que a pessoa vê o primeiro botão de comprar.
-function Tier2AddonToggle({ checked, onChange }) {
+function Tier2AddonToggle({ checked, onChange, precoTotal }) {
   return (
     <label className={`tier2-addon${checked ? ' is-checked' : ''}`}>
       <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
       <span>
-        {checked ? '✅' : '🔮'} Incluir também <strong>Projeção de 12 Meses + Mapa de Human Design</strong> (+R$ 50 — R$ 97 no total)
+        {checked ? '✅' : '🔮'} Incluir também <strong>Projeção de 12 Meses + Mapa de Human Design</strong> (+R$ 50 — R$ {precoTotal} no total)
       </span>
     </label>
   );
@@ -328,16 +328,13 @@ export default function ResultadoPage() {
     return () => { previewObs.disconnect(); offerObs.disconnect(); };
   }, [analise]);
 
-  // contador de urgência — prazo real, fixado no localStorage por análise (não reseta ao dar F5)
+  // contador de urgência — ancorado no created_at real da análise (igual em
+  // qualquer aparelho/sessão) em vez de "15min a partir de quando abriu a
+  // página", que resetava sozinho e nunca mudava o preço de verdade.
   useEffect(() => {
-    if (!id || typeof window === 'undefined') return;
-    const key = `ic_oferta_deadline_${id}`;
+    if (!analise?.created_at || typeof window === 'undefined') return;
     const DURACAO_MS = 15 * 60 * 1000; // 15 minutos
-    let deadline = Number(window.localStorage.getItem(key));
-    if (!deadline || Number.isNaN(deadline)) {
-      deadline = Date.now() + DURACAO_MS;
-      window.localStorage.setItem(key, String(deadline));
-    }
+    const deadline = new Date(analise.created_at).getTime() + DURACAO_MS;
     const tick = () => {
       const rest = Math.max(0, Math.round((deadline - Date.now()) / 1000));
       setSecondsLeft(rest);
@@ -346,7 +343,7 @@ export default function ResultadoPage() {
     tick();
     const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
-  }, [id]);
+  }, [analise?.created_at]);
 
   const countdownLabel = useMemo(() => {
     if (secondsLeft === null) return null;
@@ -532,7 +529,14 @@ export default function ResultadoPage() {
   const firstName = pickFirstName(analise.nome);
   // "mais de X" sempre arredondado pra baixo (nunca infla o número real); só mostra a partir de um mínimo plausível
   const roundedStatsCount = statsCount && statsCount >= 15 ? Math.floor(statsCount / 10) * 10 : null;
-  const cargoLabel = incluirTier2 ? 'DESBLOQUEAR MANUAL + PROJEÇÃO 12 MESES + HUMAN DESIGN — R$ 97' : 'DESBLOQUEAR MEU MANUAL — R$ 47';
+  // Preço de verdade, não só visual: depois que a janela de 15min expira, o
+  // preço de lançamento acaba de fato — em /api/criar-checkout-mp e aqui usam
+  // o mesmo cálculo (created_at + 15min), então nunca fica um valor exibido
+  // diferente do que é cobrado.
+  const precoAtual = ofertaExpirada ? 97 : 47;
+  const cargoLabel = incluirTier2
+    ? `DESBLOQUEAR MANUAL + PROJEÇÃO 12 MESES + HUMAN DESIGN — R$ ${precoAtual + 50}`
+    : `DESBLOQUEAR MEU MANUAL — R$ ${precoAtual}`;
 
   return (
     <div className="wrap">
@@ -616,7 +620,7 @@ export default function ResultadoPage() {
               <button className="btn-cta" onClick={handleComprar} disabled={processando}>
                 {processando ? '⏳ Abrindo…' : cargoLabel}
               </button>
-              <Tier2AddonToggle checked={incluirTier2} onChange={setIncluirTier2} />
+              <Tier2AddonToggle checked={incluirTier2} onChange={setIncluirTier2} precoTotal={precoAtual + 50} />
               <p className="pos-compra" style={{ marginTop: 10 }}>
                 Após o pagamento, você receberá o link do seu manual por email em poucos minutos. Verifique também a caixa de spam.
               </p>
@@ -697,7 +701,7 @@ export default function ResultadoPage() {
               <button className="btn-cta" onClick={handleComprar} disabled={processando}>
                 {processando ? '⏳ Abrindo…' : cargoLabel}
               </button>
-              <Tier2AddonToggle checked={incluirTier2} onChange={setIncluirTier2} />
+              <Tier2AddonToggle checked={incluirTier2} onChange={setIncluirTier2} precoTotal={precoAtual + 50} />
             </div>
           </div>
         )}
@@ -786,7 +790,7 @@ export default function ResultadoPage() {
               <button className="btn-cta" onClick={handleComprar} disabled={processando}>
                 {processando ? '⏳ Abrindo…' : cargoLabel}
               </button>
-              <Tier2AddonToggle checked={incluirTier2} onChange={setIncluirTier2} />
+              <Tier2AddonToggle checked={incluirTier2} onChange={setIncluirTier2} precoTotal={precoAtual + 50} />
             </div>
           </div>
         )}
@@ -868,8 +872,14 @@ export default function ResultadoPage() {
           )}
           <p className="ancora-valor">14 seções personalizadas · 30+ páginas · feito só pra você</p>
           <div className="offer-price-row">
-            <span className="price-old-sm">de R$ 97,00</span>
-            <span className="price-now-sm">por R$ 47,00</span>
+            {ofertaExpirada ? (
+              <span className="price-now-sm">R$ 97,00</span>
+            ) : (
+              <>
+                <span className="price-old-sm">de R$ 97,00</span>
+                <span className="price-now-sm">por R$ 47,00</span>
+              </>
+            )}
           </div>
           <div className="pix-badge">⚡ Pague com Pix: aprovação na hora, manual liberado na mesma hora</div>
 
@@ -892,7 +902,7 @@ export default function ResultadoPage() {
           <button className="btn-cta" onClick={handleComprar} disabled={processando}>
             {processando ? '⏳ Abrindo…' : cargoLabel}
           </button>
-          <Tier2AddonToggle checked={incluirTier2} onChange={setIncluirTier2} />
+          <Tier2AddonToggle checked={incluirTier2} onChange={setIncluirTier2} precoTotal={precoAtual + 50} />
 
           <label className={`presente-toggle${ehPresente ? ' is-checked' : ''}`}>
             <input type="checkbox" checked={ehPresente} onChange={(e) => setEhPresente(e.target.checked)} />
@@ -1017,7 +1027,7 @@ export default function ResultadoPage() {
             <button className="exit-close" aria-label="Fechar" onClick={() => setShowExitModal(false)}>✕</button>
             <div className="exit-title">Espera, {firstName || 'você'} 👋</div>
             <p className="exit-desc">
-              Antes de sair: seu manual completo continua disponível por <strong>R$ 47</strong>{' '}
+              Antes de sair: seu manual completo continua disponível por <strong>R$ {precoAtual}</strong>{' '}
               e leva de bônus o <strong>Ritual de Ativação Personalizado</strong> — mas só se você garantir agora, nesta sessão.
             </p>
             <button
@@ -1025,7 +1035,7 @@ export default function ResultadoPage() {
               onClick={() => { setShowExitModal(false); handleComprar(); }}
               disabled={processando}
             >
-              {processando ? '⏳ Abrindo…' : 'QUERO GARANTIR — R$ 47'}
+              {processando ? '⏳ Abrindo…' : `QUERO GARANTIR — R$ ${precoAtual}`}
             </button>
           </div>
         </div>
