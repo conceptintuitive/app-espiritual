@@ -50,6 +50,7 @@ function QuizOverlay({ onClose }) {
   const [noSabeHora, setNoSabeHora] = useState(false);
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
+  const [telefone, setTelefone] = useState('');
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
   const [erro, setErro] = useState('');
@@ -88,6 +89,7 @@ function QuizOverlay({ onClose }) {
     const payload = {
       nome: nomeTrimmed,
       email: emailTrimmed,
+      telefone: telefone.trim() || null,
       data_nascimento: dataNasc,
       hora_nascimento: noSabeHora ? '' : horaNasc,
       local_nascimento: localNasc,
@@ -396,6 +398,23 @@ function QuizOverlay({ onClose }) {
                       value={email}
                       onChange={e => setEmail(e.target.value.replace(/\s/g, ''))}
                       placeholder="seu@email.com"
+                      style={{
+                        width: '100%', padding: '14px 16px', borderRadius: 14,
+                        border: '1px solid rgba(139,92,246,.3)', background: 'rgba(18,18,30,.9)',
+                        color: '#f0eff4', fontFamily: 'var(--F)', fontSize: 16,
+                        outline: 'none',
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 14, color: '#9896a8', fontFamily: 'var(--F)', marginBottom: 7 }}>
+                      Seu WhatsApp <span style={{ color: '#6b6980', fontWeight: 400 }}>(opcional)</span>
+                    </label>
+                    <input
+                      type="tel"
+                      value={telefone}
+                      onChange={e => setTelefone(e.target.value)}
+                      placeholder="(11) 99999-9999"
                       style={{
                         width: '100%', padding: '14px 16px', borderRadius: 14,
                         border: '1px solid rgba(139,92,246,.3)', background: 'rgba(18,18,30,.9)',
