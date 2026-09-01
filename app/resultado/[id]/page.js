@@ -333,7 +333,7 @@ export default function ResultadoPage() {
   // página", que resetava sozinho e nunca mudava o preço de verdade.
   useEffect(() => {
     if (!analise?.created_at || typeof window === 'undefined') return;
-    const DURACAO_MS = 15 * 60 * 1000; // 15 minutos
+    const DURACAO_MS = 24 * 60 * 60 * 1000; // 24 horas — preço vale só no dia em que a análise foi gerada
     const deadline = new Date(analise.created_at).getTime() + DURACAO_MS;
     const tick = () => {
       const rest = Math.max(0, Math.round((deadline - Date.now()) / 1000));
@@ -347,9 +347,10 @@ export default function ResultadoPage() {
 
   const countdownLabel = useMemo(() => {
     if (secondsLeft === null) return null;
-    const m = Math.floor(secondsLeft / 60).toString().padStart(2, '0');
+    const h = Math.floor(secondsLeft / 3600).toString().padStart(2, '0');
+    const m = Math.floor((secondsLeft % 3600) / 60).toString().padStart(2, '0');
     const s = (secondsLeft % 60).toString().padStart(2, '0');
-    return `${m}:${s}`;
+    return `${h}:${m}:${s}`;
   }, [secondsLeft]);
 
   // exit-intent — desktop (mouse saindo pelo topo) + intercepta 1x o botão voltar
@@ -868,7 +869,9 @@ export default function ResultadoPage() {
         <div className="card offer-card">
           <div className="offer-badge-sm">Seu plano completo</div>
           {!ofertaExpirada && countdownLabel && (
-            <p className="countdown-badge">⏳ Preço de lançamento expira em <strong>{countdownLabel}</strong></p>
+            <p className="countdown-badge">
+              🗓️ Esse preço é só de hoje — amanhã vira R$ 97,00 <strong>({countdownLabel})</strong>
+            </p>
           )}
           <p className="ancora-valor">14 seções personalizadas · 30+ páginas · feito só pra você</p>
           <div className="offer-price-row">

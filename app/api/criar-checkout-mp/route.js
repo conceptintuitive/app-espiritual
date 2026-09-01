@@ -73,10 +73,11 @@ export async function POST(request) {
 
     const baseUrl = getBaseUrl();
 
-    // Preço de lançamento (R$47) vale só nos 15min após a análise ser gerada
-    // — depois disso cobra o valor cheio (R$97). Mesmo cálculo do countdown
-    // exibido em /resultado, pra nunca cobrar diferente do que foi mostrado.
-    const JANELA_LANCAMENTO_MS = 15 * 60 * 1000;
+    // Preço de lançamento (R$47) vale só nas 24h após a análise ser gerada
+    // ("só hoje") — depois disso cobra o valor cheio (R$97). Mesmo cálculo
+    // do countdown exibido em /resultado, pra nunca cobrar diferente do que
+    // foi mostrado.
+    const JANELA_LANCAMENTO_MS = 24 * 60 * 60 * 1000;
     const dentroDaJanela =
       analise.created_at && Date.now() - new Date(analise.created_at).getTime() <= JANELA_LANCAMENTO_MS;
     const precoManual = dentroDaJanela ? 47 : 97;
