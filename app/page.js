@@ -762,7 +762,7 @@ export default function Home() {
               maxWidth: 580, margin: '0 auto 32px', fontFamily: 'var(--F)', lineHeight: 1.7,
             }}>
               Seu mapa revela o padrão que te trava — e o que fazer agora.{' '}
-              <strong style={{ color: 'var(--t1)' }}>Gratuito. Resultado na hora. Sem hora de nascimento.</strong>
+              <strong style={{ color: 'var(--t1)' }}>Gratuito. Resultado na hora. Funciona mesmo sem saber sua hora de nascimento.</strong>
             </p>
           </div>
 
