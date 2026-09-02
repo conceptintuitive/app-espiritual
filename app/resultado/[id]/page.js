@@ -901,9 +901,11 @@ export default function ResultadoPage() {
             <li>✓ 🎁 Compatibilidade Astral (Sol, Lua, Ascendente, Vênus e Marte)</li>
             <li>✓ 🎁 Compatibilidade Completa com uma pessoa específica — grátis</li>
           </ul>
-          <div className="bonus-badge">
-            🎁 <strong>Bônus incluso se você garantir agora:</strong> Ritual de Ativação Personalizado
-          </div>
+          {!ofertaExpirada && (
+            <div className="bonus-badge">
+              🎁 <strong>Bônus incluso enquanto esse preço estiver ativo:</strong> Ritual de Ativação Personalizado — some junto com o preço de hoje.
+            </div>
+          )}
           <div className="manual-preview-note">
             📖 Seu manual tem 14 seções escritas exclusivamente para {firstName}. Nenhum outro manual é igual ao seu.
           </div>
@@ -1035,8 +1037,10 @@ export default function ResultadoPage() {
             <button className="exit-close" aria-label="Fechar" onClick={() => setShowExitModal(false)}>✕</button>
             <div className="exit-title">Espera, {firstName || 'você'} 👋</div>
             <p className="exit-desc">
-              Antes de sair: seu manual completo continua disponível por <strong>R$ {precoAtual}</strong>{' '}
-              e leva de bônus o <strong>Ritual de Ativação Personalizado</strong> — mas só se você garantir agora, nesta sessão.
+              Antes de sair: seu manual completo continua disponível por <strong>R$ {precoAtual}</strong>
+              {!ofertaExpirada && (
+                <> e leva de bônus o <strong>Ritual de Ativação Personalizado</strong> — mas só se você garantir agora, nesta sessão.</>
+              )}
             </p>
             <button
               className="btn-cta"
