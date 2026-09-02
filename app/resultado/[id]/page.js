@@ -577,6 +577,11 @@ export default function ResultadoPage() {
           objetivoPrincipal={analise.objetivo_principal}
         />
 
+        {/* ══ ABERTURA — antes do conteúdo bloqueado ══ */}
+        <p style={{ textAlign: 'center', fontSize: 15, color: 'var(--muted)', lineHeight: 1.7, margin: '24px 0 0', padding: '0 8px' }}>
+          Você não caiu nessa página por acaso — seu mapa numerológico revelou um padrão pouco comum. A parte mais importante do seu resultado, o que isso significa pra sua fase atual, está logo abaixo.
+        </p>
+
         {/* ══ BLOCO 2 — PREVIEW ══ */}
         {analise.preview_gerado && (
           <div className="preview-card">
