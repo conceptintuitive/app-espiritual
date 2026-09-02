@@ -176,6 +176,11 @@ function QuizOverlay({ onClose }) {
           <p style={{ textAlign: 'center', marginTop: 10, fontSize: 13, color: '#6b6980', fontFamily: 'var(--F)' }}>
             Etapa {step} de 4
           </p>
+          {step < 4 && (
+            <p style={{ textAlign: 'center', marginTop: 6, fontSize: 13, color: '#9896a8', fontFamily: 'var(--F)' }}>
+              Faltam só {4 - step} pergunta{4 - step > 1 ? 's' : ''}. O que vem depois muda como você vê os próximos 12 meses.
+            </p>
+          )}
         </div>
 
         {loading ? (
@@ -207,8 +212,11 @@ function QuizOverlay({ onClose }) {
                 <h2 style={{ fontFamily: 'var(--T)', fontWeight: 800, fontSize: 'clamp(20px,4vw,26px)', color: '#f0eff4', marginBottom: 8, lineHeight: 1.25 }}>
                   Qual área da sua vida está mais travada agora?
                 </h2>
-                <p style={{ fontSize: 15, color: '#9896a8', fontFamily: 'var(--F)', marginBottom: 24 }}>
+                <p style={{ fontSize: 15, color: '#9896a8', fontFamily: 'var(--F)', marginBottom: 16 }}>
                   Escolha a que mais ressoa com você neste momento.
+                </p>
+                <p style={{ fontSize: 13, color: '#6b6980', fontFamily: 'var(--F)', marginBottom: 24, lineHeight: 1.5 }}>
+                  Seu mapa está sendo calculado com base exatamente nesses números — não existe combinação igual à sua. Se você sair agora, vai precisar recomeçar do zero e perder o alinhamento do dia de hoje.
                 </p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {AREAS.map(({ emoji, label }) => (
