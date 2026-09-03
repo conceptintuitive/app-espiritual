@@ -125,6 +125,11 @@ export default function ResultadoPage() {
   const [ehPresente, setEhPresente] = useState(false);
   const [presenteEmail, setPresenteEmail] = useState('');
   const [presenteDe, setPresenteDe] = useState('');
+  // Link manual de reserva: alguns navegadores internos (Instagram/Facebook)
+  // bloqueiam o redirecionamento automático pro Mercado Pago sem gerar erro
+  // de JS nenhum — a pessoa só fica parada na mesma página. Guardando a URL
+  // aqui garante que sempre exista um link real e clicável como alternativa.
+  const [checkoutUrl, setCheckoutUrl] = useState(null);
 
   // estrelas
   const starsBuiltRef = useRef(false);
@@ -430,9 +435,14 @@ export default function ResultadoPage() {
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data?.details || data?.error || 'Erro ao abrir checkout');
-      const checkoutUrl = data?.url || data?.sandbox_url;
-      if (checkoutUrl) { window.location.href = checkoutUrl; return; }
-      throw new Error('Checkout sem URL');
+      const url = data?.url || data?.sandbox_url;
+      if (!url) throw new Error('Checkout sem URL');
+      // Guarda a URL antes de tentar redirecionar: se o redirecionamento
+      // automático for bloqueado silenciosamente (sem lançar erro nenhum),
+      // o link manual abaixo continua disponível pra pessoa tocar.
+      setCheckoutUrl(url);
+      window.location.href = url;
+      return;
     } catch (e) {
       console.error('Erro no checkout:', e);
       // 10 pessoas clicaram em comprar nos últimos 30 dias e nenhuma gerou
@@ -459,9 +469,11 @@ export default function ResultadoPage() {
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data?.error || 'Erro ao abrir checkout');
-      const checkoutUrl = data?.url || data?.sandbox_url;
-      if (checkoutUrl) { window.location.href = checkoutUrl; return; }
-      throw new Error('Checkout sem URL');
+      const url = data?.url || data?.sandbox_url;
+      if (!url) throw new Error('Checkout sem URL');
+      setCheckoutUrl(url);
+      window.location.href = url;
+      return;
     } catch (e) {
       console.error('Erro no checkout avulso:', e);
       try { window?.gtag?.('event', 'erro_checkout', { event_category: 'error', erro: String(e?.message || e).slice(0, 100) }); } catch {}
@@ -1017,6 +1029,23 @@ export default function ResultadoPage() {
 
       {/* ══ ASSISTENTE DE IA — 3 perguntas grátis na prévia ══ */}
       <ChatAssistente analiseId={id} isPaid={false} firstName={firstName} autoOpen={abrirChat} nudge={nudgeChat} />
+
+      {/* ══ LINK MANUAL DE CHECKOUT — reserva pra quando o redirecionamento
+           automático é bloqueado silenciosamente (comum em navegadores
+           internos do Instagram/Facebook), sem gerar nenhum erro de JS. ══ */}
+      {checkoutUrl && (
+        <div className="checkout-fallback">
+          <p className="checkout-fallback-text">A tela de pagamento não abriu sozinha?</p>
+          <a
+            href={checkoutUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="checkout-fallback-link"
+          >
+            Abrir pagamento →
+          </a>
+        </div>
+      )}
 
       {/* ══ STICKY CTA — mobile only ══ */}
       {showSticky && (
@@ -1596,6 +1625,25 @@ const globalCss = `
   .transicao-text {
     text-align: center; font-size: 16px; color: var(--muted);
     margin: 24px 0; font-style: italic;
+  }
+
+  /* Link manual de checkout — reserva pro redirecionamento automático */
+  .checkout-fallback {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 110;
+    background: rgba(16,185,129,0.14);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid rgba(16,185,129,0.4);
+    padding: 14px 16px;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    text-align: center;
+  }
+  .checkout-fallback-text { margin: 0; font-size: 14px; color: var(--text); }
+  .checkout-fallback-link {
+    display: inline-block; font-family: 'Cinzel', serif; font-size: 14px; font-weight: 700;
+    letter-spacing: 0.04em; color: #fff;
+    background: linear-gradient(135deg, #10b981, #059669);
+    padding: 12px 26px; border-radius: 999px; text-decoration: none;
+    box-shadow: 0 8px 24px rgba(16,185,129,0.4);
   }
 
   /* Sticky CTA — mobile only */
