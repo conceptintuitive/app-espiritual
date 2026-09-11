@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { getArquetipoPrincipal, TOTAL_COMBINACOES } from '@/lib/arquetipoCard';
+import { getArquetipoPrincipal } from '@/lib/arquetipoCard';
 
 const MESTRES = new Set([11, 22, 33]);
 
@@ -64,7 +64,7 @@ export default function SeloArquetipo({ firstName, signo, numeroVida, objetivoPr
           <span>☀️ {signo}</span>
           <span>🔢 Número {numeroVida}{ehMestre ? ' · Mestre' : ''}</span>
         </div>
-        <p className="selo-raridade">1 em ~{TOTAL_COMBINACOES.toLocaleString('pt-BR')} combinações possíveis de Sol + Número + Arquétipo</p>
+        <p className="selo-raridade">Seu resultado cruza diferentes elementos do seu mapa para revelar uma leitura única do seu perfil.</p>
         <p className="selo-nome-pessoa">{nome}</p>
         <p className="selo-footer">descubra o seu em intuitiveconcept.com.br</p>
       </div>

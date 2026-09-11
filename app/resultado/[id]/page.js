@@ -86,20 +86,6 @@ function firstSentences(text, n = 2) {
   return result || text;
 }
 
-// Checkbox de add-on do tier2 (Projeção de 12 Meses) — reaproveitado em cada
-// CTA de compra da página, não só na oferta final, pra dar a opção de bundle
-// assim que a pessoa vê o primeiro botão de comprar.
-function Tier2AddonToggle({ checked, onChange, precoTotal }) {
-  return (
-    <label className={`tier2-addon${checked ? ' is-checked' : ''}`}>
-      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
-      <span>
-        {checked ? '✅' : '🔮'} Incluir também <strong>Projeção de 12 Meses + Mapa de Human Design</strong> (+R$ 50 — R$ {precoTotal} no total)
-      </span>
-    </label>
-  );
-}
-
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function ResultadoPage() {
   const { id } = useParams();
@@ -389,7 +375,7 @@ export default function ResultadoPage() {
     if (!analise || analise.payment_status === 'paid' || typeof window === 'undefined') return;
     const shownKey = 'ic_oraculo_nudge_shown';
     if (window.sessionStorage.getItem(shownKey)) return;
-    const el = document.querySelector('.reforco-block');
+    const el = document.querySelector('.offer-card');
     if (!el) return;
 
     const obs = new IntersectionObserver(
@@ -452,33 +438,6 @@ export default function ResultadoPage() {
       try { window?.gtag?.('event', 'erro_checkout', { event_category: 'error', erro: String(e?.message || e).slice(0, 100) }); } catch {}
       alert(e?.message || 'Erro. Tente novamente.');
     } finally { setProcessando(false); }
-  };
-
-  // Compra avulsa de um bônus (Previsão do Ano ou Human Design), sem
-  // precisar do manual completo — R$29,90 cada, cada um com sua própria
-  // página de prévia/desbloqueio.
-  const [processandoAvulso, setProcessandoAvulso] = useState(null);
-  const handleComprarAvulso = async (produto) => {
-    setProcessandoAvulso(produto);
-    try {
-      const redirectTo = produto === 'projecao12m' ? 'previsao' : 'humandesign';
-      const response = await fetch('/api/criar-checkout-upsell-mp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ analiseId: id, produtos: [produto], redirectTo }),
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data?.error || 'Erro ao abrir checkout');
-      const url = data?.url || data?.sandbox_url;
-      if (!url) throw new Error('Checkout sem URL');
-      setCheckoutUrl(url);
-      window.location.href = url;
-      return;
-    } catch (e) {
-      console.error('Erro no checkout avulso:', e);
-      try { window?.gtag?.('event', 'erro_checkout', { event_category: 'error', erro: String(e?.message || e).slice(0, 100) }); } catch {}
-      alert(e?.message || 'Erro. Tente novamente.');
-    } finally { setProcessandoAvulso(null); }
   };
 
   // loading / erro
@@ -548,8 +507,8 @@ export default function ResultadoPage() {
   // diferente do que é cobrado.
   const precoAtual = ofertaExpirada ? 97 : 47;
   const cargoLabel = incluirTier2
-    ? `DESBLOQUEAR MANUAL + PROJEÇÃO 12 MESES + HUMAN DESIGN — R$ ${precoAtual + 50}`
-    : `DESBLOQUEAR MEU MANUAL — R$ ${precoAtual}`;
+    ? `DESBLOQUEAR MAPA COMPLETO + PROJEÇÃO 12 MESES + HUMAN DESIGN — R$ ${precoAtual + 50}`
+    : `DESBLOQUEAR MEU MAPA COMPLETO — R$ ${precoAtual}`;
 
   return (
     <div className="wrap">
@@ -602,7 +561,7 @@ export default function ResultadoPage() {
             <p className="micro-pergunta">Isso te descreveu?</p>
           <button
             className="mini-cta-link"
-            onClick={() => document.querySelector('.offer-card')?.scrollIntoView({ behavior: 'smooth' })}
+            onClick={() => document.getElementById('primeira-oferta')?.scrollIntoView({ behavior: 'smooth' })}
           >
             Ver meu diagnóstico completo →
           </button>
@@ -618,7 +577,7 @@ export default function ResultadoPage() {
           </div>
         )}
 
-        {/* ══ BLOCO 3 — DIAGNÓSTICO (parcial) ══ */}
+        {/* ══ BLOCO 3 — DIAGNÓSTICO (parcial) + 1ª OFERTA ══ */}
         {diagnosticoParsed && (
           <div className="section-card">
             <div className="section-label">Seu Diagnóstico Profundo</div>
@@ -630,36 +589,25 @@ export default function ResultadoPage() {
                 <p className="body-text">{truncateAtWord(diagnosticoParsed.combinacao, 260)}</p>
               </div>
             )}
-            <div className="locked-card">
+            <div className="locked-card" id="primeira-oferta">
               <div className="locked-icon">🔒</div>
               <p className="locked-text">
                 O mecanismo que mantém esse ciclo rodando e o ajuste que muda o resultado estão no diagnóstico completo.
               </p>
+              <p className="reforco-text">Se as 3 primeiras frases já te descreveram, imagina o diagnóstico completo.</p>
               <button className="btn-cta" onClick={handleComprar} disabled={processando}>
                 {processando ? '⏳ Abrindo…' : cargoLabel}
               </button>
-              <Tier2AddonToggle checked={incluirTier2} onChange={setIncluirTier2} precoTotal={precoAtual + 50} />
+              <ul className="list-check compact" style={{ marginTop: 10 }}>
+                <li>✓ pagamento único</li>
+                <li>✓ acesso imediato no Pix</li>
+                <li>✓ garantia de 7 dias</li>
+              </ul>
               <p className="pos-compra" style={{ marginTop: 10 }}>
-                Após o pagamento, você receberá o link do seu manual por email em poucos minutos. Verifique também a caixa de spam.
+                Este não é um relatório pronto. Sua análise é construída a partir da combinação dos seus próprios dados.
               </p>
-            </div>
-          </div>
-        )}
-
-        {/* ══ IMAGEM IA (Pollinations) + fallback SVG ══ */}
-        {cartaTarot && (
-          <div style={{ position: 'relative', marginTop: 28, borderRadius: 16, overflow: 'hidden', border: '1px solid rgba(212,168,83,0.2)', aspectRatio: '1200/630', background: 'linear-gradient(135deg, #0a0118 0%, #2d0a4e 50%, #0d0125 100%)' }}>
-            {/* Imagem real ou fallback SVG enquanto gera */}
-            <img
-              src={analise.imagem_ia_url || `/api/og/${id}`}
-              alt=""
-              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-            />
-            {/* Overlay com nome + carta via HTML/CSS */}
-            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(5,0,15,0.85) 0%, rgba(5,0,15,0.05) 55%, rgba(5,0,15,0.4) 100%)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', padding: 28, gap: 8 }}>
-              <p style={{ fontFamily: 'Georgia, serif', fontSize: 22, fontWeight: 700, color: '#f0eff4', margin: 0, textAlign: 'center', textShadow: '0 2px 14px rgba(0,0,0,0.9)' }}>{firstName}</p>
-              <p style={{ fontSize: 13, color: 'rgba(240,200,112,0.85)', letterSpacing: '0.08em', textTransform: 'uppercase', margin: 0 }}>
-                {cartaTarot.simbolo} {cartaTarot.nome}{cartaTarot.invertida ? ' — Invertida' : ''}
+              <p className="pos-compra" style={{ marginTop: 6 }}>
+                Após o pagamento, você receberá o link do seu manual por email em poucos minutos. Verifique também a caixa de spam.
               </p>
             </div>
           </div>
@@ -711,18 +659,32 @@ export default function ResultadoPage() {
           <div className="section-card">
             <div className="section-label">Seu Mapa do Dinheiro</div>
             <p className="amor-headline">"Seus bloqueios financeiros ocultos"</p>
-            <div className="locked-card">
-              <div className="locked-icon">🔒</div>
+            <div className="locked-card locked-card-quiet">
               <p className="locked-text">
                 Seus bloqueios financeiros e o caminho para destravar estão no manual completo.
               </p>
-              <button className="btn-cta" onClick={handleComprar} disabled={processando}>
-                {processando ? '⏳ Abrindo…' : cargoLabel}
-              </button>
-              <Tier2AddonToggle checked={incluirTier2} onChange={setIncluirTier2} precoTotal={precoAtual + 50} />
             </div>
           </div>
         )}
+
+        {/* ══ BLOCO 6 — PLANO 7 DIAS (parcial) ══ */}
+        {plano7Parsed && plano7Parsed.days.length > 0 && (
+          <div className="section-card">
+            <div className="section-label">Seu Plano de 7 Dias</div>
+            {plano7Parsed.hook && <p className="plano-hook">{plano7Parsed.hook}</p>}
+            <ul className="days-list">
+              {plano7Parsed.days.map((day, i) => (
+                <li key={i} className={i >= 1 ? 'day-item day-blurred' : 'day-item'}>
+                  {day}
+                </li>
+              ))}
+            </ul>
+            <p className="plano-lock-note">Os 6 dias restantes estão no manual completo.</p>
+          </div>
+        )}
+
+        {/* ══ BLOCOS SECUNDÁRIOS — Rituais / Arquétipos / Compatibilidade / Carta do Dia.
+             Sem CTA próprio: são prévia, não uma nova oferta. ══ */}
 
         {/* ══ BLOCO B — RITUAIS ══ */}
         <div className="section-card">
@@ -788,6 +750,25 @@ export default function ResultadoPage() {
           </div>
         )}
 
+        {/* ══ IMAGEM IA (Pollinations) + fallback SVG ══ */}
+        {cartaTarot && (
+          <div style={{ position: 'relative', marginTop: 28, borderRadius: 16, overflow: 'hidden', border: '1px solid rgba(212,168,83,0.2)', aspectRatio: '1200/630', background: 'linear-gradient(135deg, #0a0118 0%, #2d0a4e 50%, #0d0125 100%)' }}>
+            {/* Imagem real ou fallback SVG enquanto gera */}
+            <img
+              src={analise.imagem_ia_url || `/api/og/${id}`}
+              alt=""
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            />
+            {/* Overlay com nome + carta via HTML/CSS */}
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(5,0,15,0.85) 0%, rgba(5,0,15,0.05) 55%, rgba(5,0,15,0.4) 100%)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', padding: 28, gap: 8 }}>
+              <p style={{ fontFamily: 'Georgia, serif', fontSize: 22, fontWeight: 700, color: '#f0eff4', margin: 0, textAlign: 'center', textShadow: '0 2px 14px rgba(0,0,0,0.9)' }}>{firstName}</p>
+              <p style={{ fontSize: 13, color: 'rgba(240,200,112,0.85)', letterSpacing: '0.08em', textTransform: 'uppercase', margin: 0 }}>
+                {cartaTarot.simbolo} {cartaTarot.nome}{cartaTarot.invertida ? ' — Invertida' : ''}
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* ══ BLOCO TAROT — teaser carta ══ */}
         {cartaTarot && (
           <div className="section-card" style={{ background: 'linear-gradient(135deg, rgba(17,7,32,0.85) 0%, rgba(55,15,90,0.3) 100%)', borderColor: 'rgba(212,168,83,0.25)' }}>
@@ -800,47 +781,17 @@ export default function ResultadoPage() {
                 <p className="body-text">{firstSentences(cartaTarotInterp.body, 2)}</p>
               </div>
             )}
-            <div className="locked-card" style={{ borderColor: 'rgba(212,168,83,0.25)' }}>
-              <div className="locked-icon">🔒</div>
+            <div className="locked-card locked-card-quiet" style={{ borderColor: 'rgba(212,168,83,0.25)' }}>
               <p className="locked-text">
                 A interpretação completa de como {cartaTarot.nome}{cartaTarot.invertida ? ' Invertida' : ''} se conecta ao seu perfil e objetivo está no manual completo.
               </p>
-              <button className="btn-cta" onClick={handleComprar} disabled={processando}>
-                {processando ? '⏳ Abrindo…' : cargoLabel}
-              </button>
-              <Tier2AddonToggle checked={incluirTier2} onChange={setIncluirTier2} precoTotal={precoAtual + 50} />
             </div>
           </div>
         )}
 
-        {/* ══ BLOCO 6 — PLANO 7 DIAS (parcial) ══ */}
-        {plano7Parsed && plano7Parsed.days.length > 0 && (
-          <div className="section-card">
-            <div className="section-label">Seu Plano de 7 Dias</div>
-            {plano7Parsed.hook && <p className="plano-hook">{plano7Parsed.hook}</p>}
-            <ul className="days-list">
-              {plano7Parsed.days.map((day, i) => (
-                <li key={i} className={i >= 1 ? 'day-item day-blurred' : 'day-item'}>
-                  {day}
-                </li>
-              ))}
-            </ul>
-            <p className="plano-lock-note">Os 6 dias restantes estão no manual completo.</p>
-          </div>
-        )}
-
-        {/* ══ SOCIAL PROOF ══ */}
-        <div className="section-card social-proof-card">
-          <p className="social-proof-text">
-            {roundedStatsCount
-              ? `✨ Mais de ${roundedStatsCount} pessoas já geraram sua análise por aqui`
-              : '✨ Análise gerada com nosso método exclusivo de numerologia e astrologia'}
-          </p>
-        </div>
-
-        {/* ══ BLOCO C — O QUE TEM NO MANUAL ══ */}
+        {/* ══ BLOCO C — O QUE TEM NO MAPA COMPLETO ══ */}
         <div className="section-card">
-          <div className="section-label">O Que Tem no Seu Manual</div>
+          <div className="section-label">O Que Tem no Seu Mapa Completo</div>
           <ul className="manual-index-list">
             {[
               { check: true,  label: 'Seu Mapa Completo' },
@@ -866,10 +817,19 @@ export default function ResultadoPage() {
               </li>
             ))}
           </ul>
-          <p className="manual-index-footer">Você viu fragmentos de 7 seções. Seu manual completo tem 14 seções e 30+ páginas escritas só pra você.</p>
+          <p className="manual-index-footer">Você viu fragmentos de 7 seções. Seu Mapa Pessoal Completo tem 14 seções e 30+ páginas escritas só pra você.</p>
         </div>
 
-        {/* ══ DEPOIMENTOS — logo antes da oferta. Só aparece com conteúdo
+        {/* ══ SOCIAL PROOF ══ */}
+        <div className="section-card social-proof-card">
+          <p className="social-proof-text">
+            {roundedStatsCount
+              ? `✨ Mais de ${roundedStatsCount} pessoas já geraram sua análise por aqui`
+              : '✨ Análise gerada com nosso método exclusivo de numerologia e astrologia'}
+          </p>
+        </div>
+
+        {/* ══ DEPOIMENTOS — antes do fechamento. Só aparece com conteúdo
              real em lib/testimonials.js (nunca invente um depoimento). ══ */}
         {TESTIMONIALS.length > 0 && (
           <div className="testi-block">
@@ -881,6 +841,20 @@ export default function ResultadoPage() {
             ))}
           </div>
         )}
+
+        {/* ══ AUTORIDADE ══ */}
+        <p className="autoridade-text">
+          Análise gerada combinando astrologia clássica, numerologia pitagórica e padrões comportamentais. Cada manual é único — gerado exclusivamente para o seu perfil.
+        </p>
+
+        {/* ══ GARANTIA — antes da oferta final ══ */}
+        <div className="card">
+          <div className="garantia-nova">
+            <div className="garantia-icon">🛡️</div>
+            <div className="garantia-titulo">Garantia de 7 dias sem risco</div>
+            <p className="garantia-desc">Se o manual não trouxer clareza real sobre seu padrão, devolvemos 100%. Sem perguntas, sem burocracia.</p>
+          </div>
+        </div>
 
         {/* ══ BLOCO 7 — OFERTA FINAL ══ */}
         <div className="card offer-card">
@@ -919,12 +893,11 @@ export default function ResultadoPage() {
             </div>
           )}
           <div className="manual-preview-note">
-            📖 Seu manual tem 14 seções escritas exclusivamente para {firstName}. Nenhum outro manual é igual ao seu.
+            📖 Seu Mapa Pessoal Completo tem 14 seções escritas exclusivamente para {firstName}. Nenhum outro é igual ao seu.
           </div>
           <button className="btn-cta" onClick={handleComprar} disabled={processando}>
             {processando ? '⏳ Abrindo…' : cargoLabel}
           </button>
-          <Tier2AddonToggle checked={incluirTier2} onChange={setIncluirTier2} precoTotal={precoAtual + 50} />
 
           <label className={`presente-toggle${ehPresente ? ' is-checked' : ''}`}>
             <input type="checkbox" checked={ehPresente} onChange={(e) => setEhPresente(e.target.checked)} />
@@ -955,57 +928,13 @@ export default function ResultadoPage() {
           <p className="pos-compra">
             Pix: acesso liberado na hora. Cartão: você recebe o link do manual por email em poucos minutos (verifique a caixa de spam).
           </p>
-          <div className="garantia-nova">
-            <div className="garantia-icon">🛡️</div>
-            <div className="garantia-titulo">Garantia de 7 dias sem risco</div>
-            <p className="garantia-desc">Se o manual não trouxer clareza real sobre seu padrão, devolvemos 100%. Sem perguntas, sem burocracia.</p>
-          </div>
           {analise.ano_pessoal && (
             <p className="countdown-real">
               ⏳ Seu Ano Pessoal é {analise.ano_pessoal}. Essa análise reflete seu ciclo atual — quanto antes aplicar, mais resultado no tempo certo.
             </p>
           )}
-          <p className="pos-compra">Após o pagamento, seu manual aparece na tela e você recebe o link por email. Verifique também sua caixa de spam.</p>
+          <p className="pos-compra">Após o pagamento, seu Mapa Pessoal Completo aparece na tela e você recebe o link por email. Verifique também sua caixa de spam.</p>
         </div>
-
-        {/* ══ AUTORIDADE ══ */}
-        <p className="autoridade-text">
-          Análise gerada combinando astrologia clássica, numerologia pitagórica e padrões comportamentais. Cada manual é único — gerado exclusivamente para o seu perfil.
-        </p>
-
-        {/* ══ BLOCO 8 — REFORÇO ══ */}
-        <div className="reforco-block">
-          <p className="reforco-text">Se as 3 primeiras frases já te descreveram, imagina o diagnóstico completo.</p>
-          <button className="btn-cta btn-cta-sm" onClick={handleComprar} disabled={processando}>
-            {processando ? '⏳ Abrindo…' : cargoLabel}
-          </button>
-          <p className="pos-compra" style={{ marginTop: 10 }}>
-            Após o pagamento, você receberá o link do seu manual por email em poucos minutos. Verifique também a caixa de spam.
-          </p>
-        </div>
-
-        {/* ══ BÔNUS AVULSOS — sem precisar do manual completo ══ */}
-        {analise.payment_status !== 'paid' &&
-          (analise.tier2_payment_status !== 'paid' || analise.hd_payment_status !== 'paid') && (
-          <div className="avulso-block">
-            <p className="avulso-titulo">Prefere só um bônus específico?</p>
-            <p className="avulso-desc">
-              Dá pra levar só a Previsão do Ano ou só o Mapa de Human Design, sem o manual completo — R$ 29,90 cada.
-            </p>
-            <div className="avulso-botoes">
-              {analise.tier2_payment_status !== 'paid' && (
-                <button className="btn-avulso" onClick={() => handleComprarAvulso('projecao12m')} disabled={!!processandoAvulso}>
-                  {processandoAvulso === 'projecao12m' ? '⏳ Abrindo…' : '🔮 Só a Previsão do Ano — R$ 29,90'}
-                </button>
-              )}
-              {analise.hd_payment_status !== 'paid' && (
-                <button className="btn-avulso" onClick={() => handleComprarAvulso('humandesign')} disabled={!!processandoAvulso}>
-                  {processandoAvulso === 'humandesign' ? '⏳ Abrindo…' : '🧬 Só o Human Design — R$ 29,90'}
-                </button>
-              )}
-            </div>
-          </div>
-        )}
 
         <button className="share-whatsapp-btn" onClick={handleShareWhatsapp}>
           📲 Mandar pra uma amiga no WhatsApp
