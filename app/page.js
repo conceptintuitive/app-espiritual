@@ -38,6 +38,14 @@ function FaqItem({ q, a }) {
 }
 
 // ── Quiz Overlay ──────────────────────────────────────────────────────────────
+// Identificador estável de cada etapa, usado no tracking de funil (quiz_step_view).
+const QUIZ_STEP_IDS = {
+  1: 'area_vida_travada',
+  2: 'repeticao_padrao',
+  3: 'data_nascimento',
+  4: 'nome_email',
+};
+
 function QuizOverlay({ onClose }) {
   const router = useRouter();
   const [step, setStep] = useState(1);
@@ -61,6 +69,20 @@ function QuizOverlay({ onClose }) {
     const t = setInterval(() => setLoadingStep(s => Math.min(s + 1, 4)), 3000);
     return () => clearInterval(t);
   }, [loading]);
+
+  // Dispara a cada mudança de etapa (abertura inicial na Etapa 1, avanço via
+  // goNext, retorno via goBack) — cobre as 4 etapas pra dar visibilidade de
+  // onde o funil está perdendo gente.
+  useEffect(() => {
+    try {
+      window?.gtag?.('event', 'quiz_step_view', {
+        event_category: 'quiz',
+        step_number: step,
+        step_id: QUIZ_STEP_IDS[step] || `step_${step}`,
+        timestamp: new Date().toISOString(),
+      });
+    } catch {}
+  }, [step]);
 
   const goNext = (newStep) => {
     setDirection('forward');
@@ -121,6 +143,22 @@ function QuizOverlay({ onClose }) {
       setErro(err?.message || 'Ops! Tivemos uma instabilidade. Tente novamente em instantes.');
       setLoading(false);
     }
+  };
+
+  // Lead parcial: captura silenciosa do e-mail da Etapa 4 ao perder foco, mesmo
+  // sem clicar em "Ver meu padrão agora". capturedPartialEmailRef evita reenviar
+  // o mesmo e-mail a cada blur repetido no mesmo campo.
+  const capturedPartialEmailRef = useRef('');
+  const handleEmailBlur = () => {
+    const trimmed = email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) return;
+    if (capturedPartialEmailRef.current === trimmed) return;
+    capturedPartialEmailRef.current = trimmed;
+    fetch('/api/lead-parcial', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: trimmed, nome: nome.trim() || null }),
+    }).catch(() => {});
   };
 
   const AREAS = [
@@ -403,6 +441,7 @@ function QuizOverlay({ onClose }) {
                       type="email"
                       value={email}
                       onChange={e => setEmail(e.target.value.replace(/\s/g, ''))}
+                      onBlur={handleEmailBlur}
                       placeholder="seu@email.com"
                       style={{
                         width: '100%', padding: '14px 16px', borderRadius: 14,
