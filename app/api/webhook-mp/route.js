@@ -115,6 +115,9 @@ export async function POST(request) {
         return NextResponse.json({ error: "Erro ao atualizar" }, { status: 500 });
       }
 
+      const produtosUpsellLabel =
+        [incluiProjecao && "Projeção de 12 Meses", incluiHumanDesign && "Human Design"].filter(Boolean).join(" + ");
+
       after(async () => {
         await sendGA4Purchase({
           transactionId: paymentId.toString(),
@@ -122,11 +125,36 @@ export async function POST(request) {
           currency: (payment.currency_id || "BRL").toUpperCase(),
           clientId: `server.${paymentId}`,
         });
+
+        // Meta e TikTok não recebiam Purchase nesse fluxo (só GA4) — mesmo
+        // padrão da compra principal, só que rotulado com o produto certo.
+        const { data: upsellAnaliseData } = await supabase
+          .from("analises")
+          .select("email")
+          .eq("id", analiseId)
+          .single();
+
+        await sendMetaPurchase({
+          transactionId: paymentId.toString(),
+          value: payment.transaction_amount ?? 0,
+          currency: (payment.currency_id || "BRL").toUpperCase(),
+          email: upsellAnaliseData?.email,
+          analiseId,
+          contentName: produtosUpsellLabel,
+        });
+
+        await sendTikTokPurchase({
+          transactionId: paymentId.toString(),
+          value: payment.transaction_amount ?? 0,
+          currency: (payment.currency_id || "BRL").toUpperCase(),
+          email: upsellAnaliseData?.email,
+          analiseId,
+          contentName: produtosUpsellLabel,
+        });
       });
 
       console.log(
-        "✅ Upsell da análise", analiseId, "marcado como pago via MP —",
-        [incluiProjecao && "Projeção de 12 Meses", incluiHumanDesign && "Human Design"].filter(Boolean).join(", ")
+        "✅ Upsell da análise", analiseId, "marcado como pago via MP —", produtosUpsellLabel
       );
       return NextResponse.json({ success: true, upsell: true, incluiProjecao, incluiHumanDesign });
     }
@@ -153,6 +181,31 @@ export async function POST(request) {
           value: payment.transaction_amount ?? 0,
           currency: (payment.currency_id || "BRL").toUpperCase(),
           clientId: `server.${paymentId}`,
+        });
+
+        // Meta e TikTok não recebiam Purchase nesse fluxo (só GA4).
+        const { data: compatAnaliseData } = await supabase
+          .from("analises")
+          .select("email")
+          .eq("id", analiseId)
+          .single();
+
+        await sendMetaPurchase({
+          transactionId: paymentId.toString(),
+          value: payment.transaction_amount ?? 0,
+          currency: (payment.currency_id || "BRL").toUpperCase(),
+          email: compatAnaliseData?.email,
+          analiseId,
+          contentName: "Compatibilidade Completa",
+        });
+
+        await sendTikTokPurchase({
+          transactionId: paymentId.toString(),
+          value: payment.transaction_amount ?? 0,
+          currency: (payment.currency_id || "BRL").toUpperCase(),
+          email: compatAnaliseData?.email,
+          analiseId,
+          contentName: "Compatibilidade Completa",
         });
       });
 

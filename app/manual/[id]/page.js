@@ -378,6 +378,42 @@ export default function ManualPage() {
   const hasPaid = useMemo(() => isPaid(row), [row]);
 
   // ==============================================
+  // PIXEL DO META — PURCHASE (client-side)
+  // Só dispara quando hasPaid já é true (mesma trava que libera o conteúdo).
+  // event_id = o mesmo transactionId que o Conversions API já usa no
+  // webhook (stripe_session_id ou mp_payment_id) — é isso que faz o Meta
+  // deduplicar o evento do navegador com o do servidor em vez de contar a
+  // compra duas vezes. Guarda em localStorage pra não reenviar se a pessoa
+  // reabrir a página do manual depois.
+  useEffect(() => {
+    if (!hasPaid || !row) return;
+    const transactionId = row.stripe_session_id || row.mp_payment_id;
+    if (!transactionId) return;
+
+    const storageKey = `ic_purchase_fired_${id}`;
+    try {
+      if (window.localStorage.getItem(storageKey)) return;
+    } catch {}
+
+    try {
+      window?.fbq?.(
+        'track',
+        'Purchase',
+        {
+          value: 47,
+          currency: 'BRL',
+          content_ids: [id],
+          content_type: 'product',
+          content_name: 'Manual Premium Personalizado',
+        },
+        { eventID: transactionId }
+      );
+    } catch {}
+
+    try { window.localStorage.setItem(storageKey, '1'); } catch {}
+  }, [hasPaid, row, id]);
+
+  // ==============================================
   // BARRA DE PROGRESSO DE LEITURA
   // ==============================================
   const [readProgress, setReadProgress] = useState(0);
