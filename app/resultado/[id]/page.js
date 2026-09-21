@@ -333,6 +333,54 @@ export default function ResultadoPage() {
     return () => { previewObs.disconnect(); offerObs.disconnect(); };
   }, [analise]);
 
+  // Instrumentação: primeira vez que a oferta final entra na tela — separa
+  // "não leu até lá" de "leu e não clicou". Dispara só 1x por visita.
+  useEffect(() => {
+    if (!analise) return;
+    const offerEl = document.querySelector('.offer-card');
+    if (!offerEl) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          try { window?.gtag?.('event', 'resultado_oferta_visivel', { event_category: 'engagement' }); } catch {}
+          obs.disconnect();
+        }
+      },
+      { threshold: 0.2 }
+    );
+    obs.observe(offerEl);
+    return () => obs.disconnect();
+  }, [analise]);
+
+  // Instrumentação: profundidade de rolagem — pra saber até onde a pessoa lê
+  // antes de desistir. Cada marco dispara só 1x por visita.
+  const firedDepthRef = useRef(new Set());
+  useEffect(() => {
+    if (!analise) return;
+    let ticking = false;
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const doc = document.documentElement;
+        const scrollable = (doc.scrollHeight || 0) - doc.clientHeight;
+        const percent = scrollable > 0 ? Math.min(100, Math.round((window.scrollY / scrollable) * 100)) : 0;
+        [25, 50, 75, 100].forEach((marco) => {
+          if (percent >= marco && !firedDepthRef.current.has(marco)) {
+            firedDepthRef.current.add(marco);
+            try {
+              window?.gtag?.('event', 'resultado_scroll_depth', { event_category: 'engagement', percent: marco });
+            } catch {}
+          }
+        });
+        ticking = false;
+      });
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [analise]);
+
   // contador de urgência — ancorado no created_at real da análise (igual em
   // qualquer aparelho/sessão) em vez de "15min a partir de quando abriu a
   // página", que resetava sozinho e nunca mudava o preço de verdade.
