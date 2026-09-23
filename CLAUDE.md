@@ -72,9 +72,16 @@ NEXT_PUBLIC_SITE_URL=
 MP_ACCESS_TOKEN=
 CRON_SECRET=
 META_ACCESS_TOKEN=
+TIKTOK_ACCESS_TOKEN=
+TIKTOK_CLIENT_KEY=
+TIKTOK_CLIENT_SECRET=
+TIKTOK_OAUTH_REDIRECT_URI=
+TIKTOK_OAUTH_SCOPES=
 ```
 
-`SUPABASE_SERVICE_ROLE_KEY` é usada apenas em API routes (server-side). As variáveis `NEXT_PUBLIC_*` ficam expostas no cliente. `CRON_SECRET` protege `/api/cron/lembretes` contra chamadas não autorizadas — o disparo é feito por um cron externo (ex: cron-job.org), já que o plano Vercel Hobby não permite cron com intervalo menor que 1x/dia.
+`SUPABASE_SERVICE_ROLE_KEY` é usada apenas em API routes (server-side). As variáveis `NEXT_PUBLIC_*` ficam expostas no cliente. `CRON_SECRET` protege `/api/cron/lembretes` e `/api/cron/tiktok-refresh` contra chamadas não autorizadas — o disparo é feito por um cron externo (ex: cron-job.org), já que o plano Vercel Hobby não permite cron com intervalo menor que 1x/dia.
+
+Duas integrações distintas com o TikTok, não confundir: `TIKTOK_ACCESS_TOKEN` é um token estático gerado manualmente no TikTok Ads Manager, usado só pela Events API (`lib/tiktok.js`, evento `CompletePayment` dos webhooks de pagamento). `TIKTOK_CLIENT_KEY`/`TIKTOK_CLIENT_SECRET` são do app cadastrado no TikTok for Developers, usados pelo fluxo OAuth do Login Kit (`lib/tiktokOAuth.js`, rotas `/api/tiktok/connect` e `/api/tiktok/callback`) — geram um access_token/refresh_token diferentes, guardados na tabela `tiktok_oauth_tokens`. `TIKTOK_OAUTH_REDIRECT_URI` e `TIKTOK_OAUTH_SCOPES` são opcionais (têm default no código).
 
 ## Important Conventions
 
