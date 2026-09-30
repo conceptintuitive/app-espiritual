@@ -11,8 +11,8 @@ import { gerarProjecao12Meses } from '@/lib/transitos12meses';
 import { calcularHumanDesign, CENTRO_NOME_AMIGAVEL } from '@/lib/humanDesign';
 import { TIPO_DESCRICAO, AUTORIDADE_DESCRICAO, narracaoHumanDesign, gerarIntegracaoHumanDesign } from '@/lib/humanDesignTextos';
 import { calcularSignosPessoa, gerarCompatibilidadeCompleta } from '@/lib/compatibilidadeCompleta';
-import ChatAssistente from '@/app/components/ChatAssistente';
 import FeedbackSecao, { chaveSecao } from '@/app/components/FeedbackSecao';
+import ChatAssistente from '@/app/components/ChatAssistente';
 
 // ==============================================
 // SUPABASE CLIENT
