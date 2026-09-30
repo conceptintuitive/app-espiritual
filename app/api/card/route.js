@@ -1,11 +1,17 @@
 import { ImageResponse } from 'next/og';
-import { numeroValido, limparFrase, SITE_HOST } from '@/lib/cardCompartilhar';
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { createClient } from '@supabase/supabase-js';
+import { idValido, dadosDoCard, SITE_HOST } from '@/lib/cardCompartilhar';
 
-export const runtime = 'edge';
+// Node (não edge): a rota importa o manualgenerator pra montar a frase e o
+// arquétipo, e ele é grande demais pra valer a pena num bundle edge.
+export const runtime = 'nodejs';
 
-// Card 1080x1920 pro story. Recebe só ?n=<número de vida>&frase=<até 60
-// caracteres> — nada de id da análise, então a imagem não tem como vazar
-// nome, data de nascimento ou qualquer outro dado da pessoa.
+// Card 1080x1920 pro story. Recebe só ?id=<uuid da análise>. Número,
+// arquétipo e frase são montados no servidor (lib/cardCompartilhar.js) —
+// nada da URL vira texto na imagem, e a imagem não carrega nome, data de
+// nascimento nem nenhum outro dado pessoal.
 
 const W = 1080;
 const H = 1920;
@@ -13,29 +19,58 @@ const H = 1920;
 // (~270px). Todo texto fica entre y=250 e y=1650.
 const SAFE_TOP = 250;
 const SAFE_BOTTOM = 1650;
+// Faixa vazia entre a frase e o rodapé, pro sticker de link do Instagram.
+const FAIXA_STICKER = 200;
 
-// Fontes embutidas no bundle (woff, subset latin — cobre acentos do PT-BR).
-// Sem elas o ImageResponse usa uma sans padrão, e a frase precisa ser
-// serifada. Promise no escopo do módulo = carrega uma vez por instância.
+// Fontes embutidas (woff, subset latin — cobre acentos do PT-BR). Sem elas o
+// ImageResponse usa uma sans padrão. Promise no escopo do módulo = lê do
+// disco uma vez por instância.
+// Frase em EB Garamond, não Cormorant: o renderizador do next/og desenha
+// errado os acentos compostos da Cormorant itálico (ê, ô, é saem deslocados).
+// A EB Garamond renderiza certo e tem o mesmo espírito.
+const dirFontes = join(process.cwd(), 'app/api/card/fonts');
 const fontes = Promise.all([
-  fetch(new URL('./fonts/cinzel-latin-700-normal.woff', import.meta.url)).then((r) => r.arrayBuffer()),
-  fetch(new URL('./fonts/cormorant-garamond-latin-500-italic.woff', import.meta.url)).then((r) => r.arrayBuffer()),
-  fetch(new URL('./fonts/cormorant-garamond-latin-600-normal.woff', import.meta.url)).then((r) => r.arrayBuffer()),
+  readFile(join(dirFontes, 'cinzel-latin-700-normal.woff')),
+  readFile(join(dirFontes, 'eb-garamond-latin-500-italic.woff')),
+  readFile(join(dirFontes, 'eb-garamond-latin-600-normal.woff')),
 ]);
 
 const GOLD = '#e8c47a';
 
-export async function GET(request) {
-  const { searchParams } = new URL(request.url);
-  const numero = numeroValido(searchParams.get('n'));
-  if (!numero) {
-    return new Response('Parâmetro n inválido', { status: 400 });
-  }
-  const frase = limparFrase(searchParams.get('frase')) || 'Nada no seu mapa é por acaso.';
-  const [cinzel, cormorantItalic, cormorant] = await fontes;
+async function buscarAnalise(id) {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) throw new Error('Supabase não configurado');
+  const supabase = createClient(url, key, { auth: { persistSession: false } });
+  const { data } = await supabase
+    .from('analises')
+    .select('nome, signo, numero_vida, data_nascimento, payment_status, sintese_gerada')
+    .eq('id', id)
+    .maybeSingle();
+  return data;
+}
 
-  // Número mestre (11/22/33) tem 2 dígitos — reduz a fonte pra não estourar.
-  const tamanhoNumero = numero > 9 ? 400 : 520;
+export async function GET(request) {
+  const id = new URL(request.url).searchParams.get('id');
+  if (!idValido(id)) {
+    return new Response('Parâmetro id inválido', { status: 400 });
+  }
+
+  let card;
+  try {
+    const row = await buscarAnalise(id);
+    card = row ? dadosDoCard(row) : null;
+  } catch (e) {
+    console.error('[card] falhou ao buscar análise:', e?.message);
+    return new Response('Erro ao gerar card', { status: 500 });
+  }
+  if (!card) return new Response('Análise não encontrada', { status: 404 });
+
+  const { numero, arquetipo, frase } = card;
+  const [cinzel, garamondItalic, garamond] = await fontes;
+
+  // Número mestre (11/22/33) tem 2 dígitos — fonte menor pra não estourar.
+  const tamanhoNumero = numero > 9 ? 300 : 390;
 
   return new ImageResponse(
     (
@@ -51,15 +86,15 @@ export async function GET(request) {
         {/* Decoração de fundo (pode passar da safe zone — não é texto) */}
         <svg width={W} height={H} style={{ position: 'absolute', top: 0, left: 0 }}>
           <defs>
-            <radialGradient id="halo" cx="50%" cy="42%" r="45%">
+            <radialGradient id="halo" cx="50%" cy="34%" r="42%">
               <stop offset="0%" stopColor="rgba(139,92,246,0.35)" />
               <stop offset="100%" stopColor="rgba(139,92,246,0)" />
             </radialGradient>
           </defs>
           <rect x="0" y="0" width={W} height={H} fill="url(#halo)" />
-          <circle cx="540" cy="790" r="420" fill="none" stroke="rgba(232,196,122,0.14)" strokeWidth="2" />
-          <circle cx="540" cy="790" r="340" fill="none" stroke="rgba(139,92,246,0.22)" strokeWidth="2" />
-          <circle cx="540" cy="790" r="490" fill="none" stroke="rgba(139,92,246,0.10)" strokeWidth="1" />
+          <circle cx="540" cy="640" r="300" fill="none" stroke="rgba(139,92,246,0.22)" strokeWidth="2" />
+          <circle cx="540" cy="640" r="370" fill="none" stroke="rgba(232,196,122,0.14)" strokeWidth="2" />
+          <circle cx="540" cy="640" r="440" fill="none" stroke="rgba(139,92,246,0.10)" strokeWidth="1" />
           {[
             [120, 160], [960, 120], [80, 980], [1000, 900], [180, 1780],
             [900, 1820], [300, 420], [800, 380], [540, 90], [540, 1860],
@@ -79,9 +114,9 @@ export async function GET(request) {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            justifyContent: 'space-between',
           }}
         >
+          {/* Topo: marca + rótulo */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             {/* Filetes em vez de ✦: a Cinzel não tem esse glifo (vira quadradinho) */}
             <div style={{ display: 'flex', alignItems: 'center', fontFamily: 'Cinzel', fontSize: 30, letterSpacing: 8, color: 'rgba(232,196,122,0.75)' }}>
@@ -89,34 +124,47 @@ export async function GET(request) {
               INTUITIVE CONCEPT
               <div style={{ width: 60, height: 1, background: 'rgba(232,196,122,0.5)', marginLeft: 16 }} />
             </div>
-            <div style={{ marginTop: 70, fontFamily: 'Cinzel', fontSize: 44, letterSpacing: 10, color: 'rgba(243,232,255,0.85)' }}>
+            <div style={{ marginTop: 60, fontFamily: 'Cinzel', fontSize: 40, letterSpacing: 10, color: 'rgba(243,232,255,0.85)' }}>
               NÚMERO DE VIDA
             </div>
           </div>
 
+          {/* Miolo: número + arquétipo + frase (a frase é o destaque) */}
           <div
             style={{
+              flex: 1,
               display: 'flex',
-              fontFamily: 'Cinzel',
-              fontSize: tamanhoNumero,
-              lineHeight: 1,
-              color: GOLD,
-              textShadow: '0 0 60px rgba(232,196,122,0.35)',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
-            {String(numero)}
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <div style={{ width: 120, height: 2, background: 'rgba(232,196,122,0.6)', marginBottom: 50 }} />
+            <div
+              style={{
+                display: 'flex',
+                fontFamily: 'Cinzel',
+                fontSize: tamanhoNumero,
+                lineHeight: 1,
+                color: GOLD,
+                textShadow: '0 0 60px rgba(232,196,122,0.35)',
+              }}
+            >
+              {String(numero)}
+            </div>
+            {arquetipo && (
+              <div style={{ marginTop: 18, fontFamily: 'Cinzel', fontSize: 42, letterSpacing: 3, color: 'rgba(232,196,122,0.9)' }}>
+                {`${numero} · ${arquetipo}`}
+              </div>
+            )}
+            <div style={{ width: 120, height: 2, background: 'rgba(232,196,122,0.6)', marginTop: 44, marginBottom: 40 }} />
             <div
               style={{
                 display: 'flex',
                 textAlign: 'center',
-                fontFamily: 'Cormorant Garamond',
+                fontFamily: 'EB Garamond',
                 fontStyle: 'italic',
-                fontSize: 76,
-                lineHeight: 1.2,
+                fontSize: 99,
+                lineHeight: 1.12,
                 color: '#f6ecff',
               }}
             >
@@ -124,11 +172,15 @@ export async function GET(request) {
             </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <div style={{ fontFamily: 'Cormorant Garamond', fontWeight: 600, fontSize: 44, color: 'rgba(243,232,255,0.8)' }}>
+          {/* Faixa vazia pro sticker de link */}
+          <div style={{ display: 'flex', height: FAIXA_STICKER, flexShrink: 0 }} />
+
+          {/* Rodapé */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
+            <div style={{ fontFamily: 'EB Garamond', fontWeight: 600, fontSize: 42, color: 'rgba(243,232,255,0.8)' }}>
               Descubra o seu:
             </div>
-            <div style={{ marginTop: 10, fontFamily: 'Cinzel', fontSize: 40, letterSpacing: 2, color: GOLD }}>
+            <div style={{ marginTop: 6, fontFamily: 'Cinzel', fontSize: 38, letterSpacing: 2, color: GOLD }}>
               {SITE_HOST}
             </div>
           </div>
@@ -140,11 +192,13 @@ export async function GET(request) {
       height: H,
       fonts: [
         { name: 'Cinzel', data: cinzel, weight: 700, style: 'normal' },
-        { name: 'Cormorant Garamond', data: cormorantItalic, weight: 500, style: 'italic' },
-        { name: 'Cormorant Garamond', data: cormorant, weight: 600, style: 'normal' },
+        { name: 'EB Garamond', data: garamondItalic, weight: 500, style: 'italic' },
+        { name: 'EB Garamond', data: garamond, weight: 600, style: 'normal' },
       ],
-      // Mesma URL = mesma imagem, então pode ficar no CDN pra sempre.
-      headers: { 'Cache-Control': 'public, max-age=31536000, immutable' },
+      // O conteúdo só muda quando o manual é pago, e aí a URL muda (v=p).
+      // Ainda assim, cache de 1 dia e não "immutable": se a Síntese for
+      // regenerada, o card se atualiza sozinho.
+      headers: { 'Cache-Control': 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800' },
     }
   );
 }

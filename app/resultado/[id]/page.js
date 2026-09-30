@@ -10,8 +10,6 @@ import { TESTIMONIALS } from '@/lib/testimonials';
 import ChatAssistente from '@/app/components/ChatAssistente';
 import SeloArquetipo from '@/app/components/SeloArquetipo';
 import BotaoCompartilharStory from '@/app/components/BotaoCompartilharStory';
-import { SIGNO_PROFUNDO } from '@/lib/manualgenerator';
-import { fraseParaCard } from '@/lib/cardCompartilhar';
 
 // ── Supabase ──────────────────────────────────────────────────────────────────
 function getSupabaseClient() {
@@ -244,19 +242,6 @@ export default function ResultadoPage() {
     if (!analise) return 0;
     return analise.numero_vida || calcularNumeroVida(analise.data_nascimento);
   }, [analise]);
-
-  // Frase do card de story. Na prévia a Síntese normalmente ainda não existe
-  // (é gerada no pagamento), então quase sempre cai na frase do signo.
-  const fraseCard = useMemo(() => {
-    if (!analise) return '';
-    let sintese = null;
-    try { sintese = JSON.parse(analise.sintese_gerada || 'null')?.body || null; } catch {}
-    return fraseParaCard({
-      sintese,
-      firstName: pickFirstName(analise.nome),
-      fallback: SIGNO_PROFUNDO[signoFinal]?.frase,
-    });
-  }, [analise, signoFinal]);
 
   const diagnosticoParsed = useMemo(() => {
     if (!analise?.diagnostico_gerado) return null;
@@ -1071,7 +1056,7 @@ export default function ResultadoPage() {
           </div>
         )}
 
-        <BotaoCompartilharStory numero={numeroVidaFinal} frase={fraseCard} origem="resultado" />
+        <BotaoCompartilharStory analiseId={id} pago={analise.payment_status === 'paid'} numero={numeroVidaFinal} origem="resultado" />
 
         <button className="share-whatsapp-btn" onClick={handleShareWhatsapp}>
           📲 Mandar pra uma amiga no WhatsApp

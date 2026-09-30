@@ -6,8 +6,10 @@ import { urlDoCard, LINK_QUIZ } from '@/lib/cardCompartilhar';
 // Botão "Compartilhar no story". No celular abre a folha de compartilhamento
 // nativa com o PNG (dá pra mandar direto pro story do Instagram); no desktop
 // baixa o PNG.
-export default function BotaoCompartilharStory({ numero, frase, origem, className, style }) {
-  const src = urlDoCard(numero, frase);
+// Recebe o id da análise: o servidor monta número, arquétipo e frase.
+// `numero` só dá nome ao arquivo baixado.
+export default function BotaoCompartilharStory({ analiseId, pago, numero, origem, className, style }) {
+  const src = urlDoCard(analiseId, pago);
   const btnRef = useRef(null);
   const arquivoRef = useRef(null);
   const [estado, setEstado] = useState('idle'); // idle | gerando | erro
@@ -98,7 +100,7 @@ async function baixarArquivo(src, numero) {
   const res = await fetch(src);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const blob = await res.blob();
-  return new File([blob], `meu-numero-${numero}.png`, { type: 'image/png' });
+  return new File([blob], numero ? `meu-numero-${numero}.png` : 'meu-numero.png', { type: 'image/png' });
 }
 
 function baixarPng(file) {
