@@ -5,13 +5,15 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 
 // ✅ IMPORT do gerador de manual
-import { generateManual, renderManualMarkdown } from '@/lib/manualgenerator';
+import { generateManual, renderManualMarkdown, SIGNO_PROFUNDO } from '@/lib/manualgenerator';
 import { getTopMatches } from '@/lib/compatibilidade';
 import { gerarProjecao12Meses } from '@/lib/transitos12meses';
 import { calcularHumanDesign, CENTRO_NOME_AMIGAVEL } from '@/lib/humanDesign';
 import { TIPO_DESCRICAO, AUTORIDADE_DESCRICAO, narracaoHumanDesign, gerarIntegracaoHumanDesign } from '@/lib/humanDesignTextos';
 import { calcularSignosPessoa, gerarCompatibilidadeCompleta } from '@/lib/compatibilidadeCompleta';
 import ChatAssistente from '@/app/components/ChatAssistente';
+import BotaoCompartilharStory from '@/app/components/BotaoCompartilharStory';
+import { fraseParaCard } from '@/lib/cardCompartilhar';
 
 // ==============================================
 // SUPABASE CLIENT
@@ -576,6 +578,19 @@ export default function ManualPage() {
     if (!Array.isArray(manual?.sections)) return [];
     return manual.sections.filter((s) => s?.type !== 'tarot');
   }, [manual]);
+
+  // Frase do card de story: tenta a Síntese Integrada (seção "mapa"),
+  // senão usa a frase curada do signo.
+  const fraseCard = useMemo(() => {
+    const mapa = Array.isArray(manual?.sections)
+      ? manual.sections.find((s) => s?.type === 'mapa')
+      : null;
+    return fraseParaCard({
+      sintese: mapa?.sintese,
+      firstName: pickFirstName(row?.nome),
+      fallback: SIGNO_PROFUNDO[row?.signo]?.frase,
+    });
+  }, [manual, row]);
 
   // ==============================================
   // HANDLER: ABRIR CHECKOUT
@@ -1478,6 +1493,14 @@ e mostrar como sair dele.
                 );
               })}
 
+            {/* ========== FIM DO MANUAL: CARD DE STORY ========== */}
+            <div className="card premium" style={{ textAlign: 'center' }}>
+              <h2 className="h2">Leve seu número pro story</h2>
+              <p className="muted" style={{ marginTop: 6 }}>
+                Um card só com seu número de vida e uma frase do seu mapa. Nenhum dado pessoal.
+              </p>
+              <BotaoCompartilharStory numero={row?.numero_vida} frase={fraseCard} origem="manual" />
+            </div>
           </>
         )}
         {/* ========== TIER 2 — PROJEÇÃO DE 12 MESES (upsell R$97) ========== */}
