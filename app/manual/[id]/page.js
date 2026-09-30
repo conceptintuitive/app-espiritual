@@ -12,6 +12,7 @@ import { calcularHumanDesign, CENTRO_NOME_AMIGAVEL } from '@/lib/humanDesign';
 import { TIPO_DESCRICAO, AUTORIDADE_DESCRICAO, narracaoHumanDesign, gerarIntegracaoHumanDesign } from '@/lib/humanDesignTextos';
 import { calcularSignosPessoa, gerarCompatibilidadeCompleta } from '@/lib/compatibilidadeCompleta';
 import ChatAssistente from '@/app/components/ChatAssistente';
+import FeedbackSecao, { chaveSecao } from '@/app/components/FeedbackSecao';
 
 // ==============================================
 // SUPABASE CLIENT
@@ -1035,6 +1036,9 @@ e mostrar como sair dele.
 
             {/* ========== RENDER DAS SEÇÕES ========== */}
             {visibleSections.map((section, idx) => {
+              // Renderiza a seção como antes e, se for seção de conteúdo,
+              // anexa o feedback no fim. Capa e sumário não levam feedback.
+              const conteudo = (() => {
                 const anchor = `sec_${idx}`;
 
 
@@ -1476,7 +1480,16 @@ e mostrar como sair dele.
                     </div>
                   </div>
                 );
-              })}
+              })();
+
+              if (!conteudo || section.type === 'cover' || section.type === 'toc') return conteudo;
+              return (
+                <Fragment key={`sec_${idx}`}>
+                  {conteudo}
+                  <FeedbackSecao manualId={id} secao={chaveSecao(section)} />
+                </Fragment>
+              );
+            })}
 
           </>
         )}
