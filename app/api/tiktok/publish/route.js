@@ -32,6 +32,28 @@ function isAuthorized(request) {
   return provided === secret;
 }
 
+// Limite do TikTok pro texto do post (post_info.title).
+const MAX_CAPTION = 2200;
+
+// Procura uma publicação anterior do mesmo vídeo que não tenha falhado.
+// Evita post duplicado quando o Make reexecuta o cenário (retry, timeout,
+// "Run once" manual) com o mesmo video_url.
+async function buscarPublicacaoExistente(supabase, videoUrl) {
+  const { data, error } = await supabase
+    .from("tiktok_publishes")
+    .select("publish_id, status")
+    .eq("video_url", videoUrl)
+    .not("status", "in", "(FAILED,UPLOAD_FAILED)")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) {
+    console.error("⚠️ Não foi possível checar duplicidade em tiktok_publishes:", error.message);
+    return null;
+  }
+  return data;
+}
+
 async function registrarPublicacao(supabase, row) {
   const { error } = await supabase
     .from("tiktok_publishes")
@@ -61,13 +83,28 @@ export async function POST(request) {
 
   const body = await request.json().catch(() => null);
   const videoUrl = body?.video_url;
-  const caption = typeof body?.caption === "string" ? body.caption : "";
+  const caption = typeof body?.caption === "string" ? body.caption.slice(0, MAX_CAPTION) : "";
 
   if (!videoUrl) {
     return NextResponse.json({ error: "video_url é obrigatório" }, { status: 400 });
   }
 
   const supabase = getSupabaseAdmin();
+
+  // 0) mesmo vídeo já enviado antes? devolve a publicação existente em vez
+  // de postar de novo. { "force": true } no body pula essa checagem.
+  if (body?.force !== true) {
+    const existente = await buscarPublicacaoExistente(supabase, videoUrl);
+    if (existente) {
+      console.log("↩️ video_url já publicado, não reenviando. publish_id:", existente.publish_id);
+      return NextResponse.json({
+        success: true,
+        duplicado: true,
+        publish_id: existente.publish_id,
+        status: existente.status,
+      });
+    }
+  }
 
   try {
     // 1) token válido (getValidAccessToken já renova sozinho se preciso)
@@ -97,17 +134,25 @@ export async function POST(request) {
       privacyLevel,
     });
 
-    // 5) upload binário do vídeo
-    await uploadVideoInChunks({ uploadUrl: upload_url, buffer: videoBuffer });
-
-    // 6) salva o publish_id assim que o upload for aceito
+    // 5) registra ANTES do upload: se o Make reenviar enquanto o upload
+    // ainda está rodando, a checagem de duplicidade (passo 0) já enxerga.
     await registrarPublicacao(supabase, {
       publish_id,
       video_url: videoUrl,
       caption,
-      status: "PROCESSING",
+      status: "UPLOADING",
       updated_at: new Date().toISOString(),
     });
+
+    // 6) upload binário do vídeo. Se falhar, marca UPLOAD_FAILED pra que uma
+    // nova tentativa com o mesmo video_url seja permitida.
+    try {
+      await uploadVideoInChunks({ uploadUrl: upload_url, buffer: videoBuffer });
+    } catch (uploadErr) {
+      await atualizarStatus(supabase, publish_id, { status: "UPLOAD_FAILED", erro: uploadErr.message });
+      throw uploadErr;
+    }
+    await atualizarStatus(supabase, publish_id, { status: "PROCESSING" });
 
     // 7) primeira checagem de status — logo após o upload, o TikTok quase
     // sempre ainda está processando; o Make pode consultar de novo depois
