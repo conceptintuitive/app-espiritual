@@ -174,6 +174,10 @@ function emailMesPessoalTemplate({ nome, mes, link, unsubUrl }) {
 // Reengajamento mensal pra quem já comprou a Projeção de 12 Meses — dispara
 // só nos primeiros dias do mês (evita mandar de novo se rodar todo dia) e só
 // uma vez por mês por pessoa, controlado por tier2_ultimo_email_mes.
+// Limit baixo de propósito: o Resend tem cota diária, e esse lote roda no
+// mesmo cron que o de nutrição quinzenal — se os dois tentarem estourar
+// junto, passa da cota e o restante nem sai. Quem não entrar hoje continua
+// candidato amanhã (tier2_ultimo_email_mes só bloqueia depois de enviado).
 async function processarLoteMesPessoal({ supabase, resend, baseUrl }) {
   const hoje = new Date();
   if (hoje.getDate() > 5) return { candidatos: 0, enviados: 0, motivo: "fora da janela do mês" };
@@ -188,7 +192,7 @@ async function processarLoteMesPessoal({ supabase, resend, baseUrl }) {
     .not("data_nascimento", "is", null)
     .or("unsubscribed.is.null,unsubscribed.eq.false")
     .or(`tier2_ultimo_email_mes.is.null,tier2_ultimo_email_mes.neq.${mesAtualLabel}`)
-    .limit(200);
+    .limit(30);
 
   if (error) throw error;
 
@@ -264,6 +268,11 @@ function emailLeadSemanalTemplate({ nome, mes, gancho, link, unsubUrl }) {
 // 4x seguidas antes de mudar, o que parece falha, não nutrição). Controlado
 // por lead_ultima_semana_email (bucket de dias desde epoch / 15 — nome da
 // coluna ficou de quando era semanal, não vale a pena migrar só por isso).
+// Limit baixo de propósito (era 500): num dia com bastante lead acumulado
+// sem receber ainda, um limit alto manda tudo de uma vez e estoura a cota
+// diária do Resend (foi exatamente o que aconteceu). Quem ficar de fora
+// hoje continua candidato nas próximas execuções, então o backlog escoa
+// em alguns dias em vez de tentar sair tudo junto e falhar no meio.
 async function processarLoteLeadsSemanal({ supabase, resend, baseUrl }) {
   const semanaAtual = String(Math.floor(Date.now() / (15 * 24 * 60 * 60 * 1000)));
   const tresDiasAtras = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
@@ -277,7 +286,7 @@ async function processarLoteLeadsSemanal({ supabase, resend, baseUrl }) {
     .or("unsubscribed.is.null,unsubscribed.eq.false")
     .or(`lead_ultima_semana_email.is.null,lead_ultima_semana_email.neq.${semanaAtual}`)
     .lte("created_at", tresDiasAtras)
-    .limit(500);
+    .limit(40);
 
   if (error) throw error;
 
