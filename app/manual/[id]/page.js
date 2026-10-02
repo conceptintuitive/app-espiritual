@@ -12,6 +12,7 @@ import { calcularHumanDesign, CENTRO_NOME_AMIGAVEL } from '@/lib/humanDesign';
 import { TIPO_DESCRICAO, AUTORIDADE_DESCRICAO, narracaoHumanDesign, gerarIntegracaoHumanDesign } from '@/lib/humanDesignTextos';
 import { calcularSignosPessoa, gerarCompatibilidadeCompleta } from '@/lib/compatibilidadeCompleta';
 import ChatAssistente from '@/app/components/ChatAssistente';
+import BotaoCompartilharStory from '@/app/components/BotaoCompartilharStory';
 
 // ==============================================
 // SUPABASE CLIENT
@@ -1478,6 +1479,14 @@ e mostrar como sair dele.
                 );
               })}
 
+            {/* ========== FIM DO MANUAL: CARD DE STORY ========== */}
+            <div className="card premium" style={{ textAlign: 'center' }}>
+              <h2 className="h2">Leve seu número pro story</h2>
+              <p className="muted" style={{ marginTop: 6 }}>
+                Um card só com seu número de vida, seu arquétipo e uma frase do seu mapa. Nenhum dado pessoal.
+              </p>
+              <BotaoCompartilharStory analiseId={id} pago={hasPaid} numero={row?.numero_vida} origem="manual" />
+            </div>
           </>
         )}
         {/* ========== TIER 2 — PROJEÇÃO DE 12 MESES (upsell R$97) ========== */}

@@ -9,6 +9,7 @@ import { getTopMatches } from '@/lib/compatibilidade';
 import { TESTIMONIALS } from '@/lib/testimonials';
 import ChatAssistente from '@/app/components/ChatAssistente';
 import SeloArquetipo from '@/app/components/SeloArquetipo';
+import BotaoCompartilharStory from '@/app/components/BotaoCompartilharStory';
 
 // ── Supabase ──────────────────────────────────────────────────────────────────
 function getSupabaseClient() {
@@ -1054,6 +1055,8 @@ export default function ResultadoPage() {
             </div>
           </div>
         )}
+
+        <BotaoCompartilharStory analiseId={id} pago={analise.payment_status === 'paid'} numero={numeroVidaFinal} origem="resultado" />
 
         <button className="share-whatsapp-btn" onClick={handleShareWhatsapp}>
           📲 Mandar pra uma amiga no WhatsApp
