@@ -1,15 +1,34 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { urlDoCard, LINK_QUIZ } from '@/lib/cardCompartilhar';
+import { urlDoCard, LINK_QUIZ, linkStoryTipo } from '@/lib/cardCompartilhar';
+
+// Texto do share e nome do arquivo baixado variam por tipo de card — o resto
+// do componente (gerar PNG, share nativo vs download) é o mesmo pros 3.
+const CONFIG_POR_TIPO = {
+  numero: {
+    arquivo: (numero) => (numero ? `meu-numero-${numero}.png` : 'meu-numero.png'),
+    texto: () => `Descobri meu número de vida ✨ Descubra o seu: ${LINK_QUIZ}`,
+  },
+  ponto_cego: {
+    arquivo: () => 'meu-ponto-cego.png',
+    texto: () => `Descobri meu ponto cego ✨ Descubra o seu: ${linkStoryTipo('ponto_cego')}`,
+  },
+  mantra: {
+    arquivo: () => 'meu-mantra.png',
+    texto: () => `Esse é o meu mantra pessoal ✨ Descubra o seu: ${linkStoryTipo('mantra')}`,
+  },
+};
 
 // Botão "Compartilhar no story". No celular abre a folha de compartilhamento
 // nativa com o PNG (dá pra mandar direto pro story do Instagram); no desktop
 // baixa o PNG.
-// Recebe o id da análise: o servidor monta número, arquétipo e frase.
-// `numero` só dá nome ao arquivo baixado.
-export default function BotaoCompartilharStory({ analiseId, pago, numero, origem, className, style }) {
-  const src = urlDoCard(analiseId, pago);
+// Recebe o id da análise: o servidor monta o conteúdo do card (número,
+// arquétipo e frase — ou a frase do Ponto Cego/Mantra, conforme `tipo`).
+// `numero` só dá nome ao arquivo baixado no tipo "numero".
+export default function BotaoCompartilharStory({ analiseId, pago, numero, origem, tipo = 'numero', className, style }) {
+  const config = CONFIG_POR_TIPO[tipo] || CONFIG_POR_TIPO.numero;
+  const src = urlDoCard(analiseId, pago, tipo);
   const btnRef = useRef(null);
   const arquivoRef = useRef(null);
   const [estado, setEstado] = useState('idle'); // idle | gerando | erro
@@ -27,7 +46,7 @@ export default function BotaoCompartilharStory({ analiseId, pago, numero, origem
       ([entry]) => {
         if (!entry.isIntersecting) return;
         obs.disconnect();
-        baixarArquivo(src, numero)
+        baixarArquivo(src, config.arquivo(numero))
           .then((file) => { if (!cancelado) arquivoRef.current = file; })
           .catch(() => {});
       },
@@ -35,7 +54,7 @@ export default function BotaoCompartilharStory({ analiseId, pago, numero, origem
     );
     obs.observe(btnRef.current);
     return () => { cancelado = true; obs.disconnect(); };
-  }, [src, numero]);
+  }, [src, numero, config]);
 
   if (!src) return null;
 
@@ -43,7 +62,7 @@ export default function BotaoCompartilharStory({ analiseId, pago, numero, origem
     if (estado === 'gerando') return;
     setEstado('gerando');
     try {
-      const file = arquivoRef.current || (await baixarArquivo(src, numero));
+      const file = arquivoRef.current || (await baixarArquivo(src, config.arquivo(numero)));
       arquivoRef.current = file;
 
       // "Mobile" = tela de toque E suporte a compartilhar arquivo. Só checar
@@ -56,20 +75,20 @@ export default function BotaoCompartilharStory({ analiseId, pago, numero, origem
         try {
           await navigator.share({
             files: [file],
-            text: `Descobri meu número de vida ✨ Descubra o seu: ${LINK_QUIZ}`,
+            text: config.texto(),
           });
-          track('share', origem);
+          track('share', origem, tipo);
         } catch (e) {
           // AbortError = a pessoa fechou a folha de share. Qualquer outro
           // erro (ex.: NotAllowedError) cai pro download.
           if (e?.name !== 'AbortError') {
             baixarPng(file);
-            track('download_fallback', origem);
+            track('download_fallback', origem, tipo);
           }
         }
       } else {
         baixarPng(file);
-        track('download', origem);
+        track('download', origem, tipo);
       }
       setEstado('idle');
     } catch (e) {
@@ -96,11 +115,11 @@ export default function BotaoCompartilharStory({ analiseId, pago, numero, origem
   );
 }
 
-async function baixarArquivo(src, numero) {
+async function baixarArquivo(src, nomeArquivo) {
   const res = await fetch(src);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const blob = await res.blob();
-  return new File([blob], numero ? `meu-numero-${numero}.png` : 'meu-numero.png', { type: 'image/png' });
+  return new File([blob], nomeArquivo, { type: 'image/png' });
 }
 
 function baixarPng(file) {
@@ -114,9 +133,13 @@ function baixarPng(file) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-function track(metodo, origem) {
+function track(metodo, origem, tipo) {
   try {
     window?.gtag?.('event', 'compartilhar_story', { event_category: 'engagement', metodo, origem });
+    // Evento novo, por tipo de card — pra medir Ponto Cego/Mantra separado
+    // do card de número no GA4, sem quebrar relatórios já montados em cima
+    // do compartilhar_story acima.
+    window?.gtag?.('event', 'share_card', { event_category: 'engagement', tipo, metodo, origem });
   } catch {}
 }
 
