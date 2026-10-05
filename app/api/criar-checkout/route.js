@@ -67,7 +67,7 @@ if (!analiseId) {
 
 const { data: analise, error: analiseError } = await supabase
   .from("analises")
-  .select("id,nome,email,payment_status")
+  .select("id,nome,email,payment_status,created_at")
   .eq("id", analiseId)
   .single();
 
@@ -91,6 +91,16 @@ if (analise.payment_status === "paid") {
 
     const baseUrl = getBaseUrl();
 
+    // Preço de lançamento (R$47) vale só nas 24h após a análise ser gerada
+    // ("só hoje") — depois disso cobra o valor cheio (R$97). Mesmo cálculo
+    // do countdown exibido em /resultado e do checkout via Mercado Pago
+    // (app/api/criar-checkout-mp/route.js), pra nunca cobrar diferente do
+    // que foi mostrado, seja qual for o método de pagamento escolhido.
+    const JANELA_LANCAMENTO_MS = 24 * 60 * 60 * 1000;
+    const dentroDaJanela =
+      analise.created_at && Date.now() - new Date(analise.created_at).getTime() <= JANELA_LANCAMENTO_MS;
+    const precoManual = dentroDaJanela ? 4700 : 9700;
+
     const sessionParams = {
   mode: "payment",
   payment_method_types: ["card", "boleto"],
@@ -102,7 +112,7 @@ if (analise.payment_status === "paid") {
           name: "Manual Premium Personalizado",
           description: `Relatório personalizado completo para ${analise.nome ?? "você"}`,
         },
-        unit_amount: 4700,
+        unit_amount: precoManual,
       },
       quantity: 1,
     },
