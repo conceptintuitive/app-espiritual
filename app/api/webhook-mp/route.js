@@ -51,6 +51,13 @@ export async function POST(request) {
     const payment = await mpResponse.json();
     console.log("💰 Status do pagamento:", payment.status, "| external_reference:", payment.external_reference);
 
+    // MP só preenche payer.phone quando o checkout pediu/coletou esse dado
+    // (varia por método de pagamento) — nem toda transação vai ter isso.
+    // hashPhone() em lib/meta.js trata undefined sem erro.
+    const payerPhone = payment.payer?.phone?.number
+      ? `${payment.payer.phone.area_code || ""}${payment.payer.phone.number}`
+      : null;
+
     if (payment.status !== "approved") {
       return NextResponse.json({ received: true, status: payment.status });
     }
@@ -139,6 +146,7 @@ export async function POST(request) {
           value: payment.transaction_amount ?? 0,
           currency: (payment.currency_id || "BRL").toUpperCase(),
           email: upsellAnaliseData?.email,
+          phone: payerPhone,
           analiseId,
           contentName: produtosUpsellLabel,
         });
@@ -195,6 +203,7 @@ export async function POST(request) {
           value: payment.transaction_amount ?? 0,
           currency: (payment.currency_id || "BRL").toUpperCase(),
           email: compatAnaliseData?.email,
+          phone: payerPhone,
           analiseId,
           contentName: "Compatibilidade Completa",
         });
@@ -381,6 +390,7 @@ export async function POST(request) {
         value: payment.transaction_amount ?? 0,
         currency: (payment.currency_id || "BRL").toUpperCase(),
         email: analiseData?.email,
+        phone: payerPhone,
         analiseId,
         clientIp: checkoutIp,
         userAgent: checkoutUserAgent,
