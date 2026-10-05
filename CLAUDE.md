@@ -50,7 +50,7 @@ npm run start    # Servidor de produção
 
 O arquivo contém grandes objetos de metadados (`SIGNO_PROFUNDO`, `NUMERO_PROFUNDO`, `REGENTE_PROFUNDO`, `ESTILO_ELEMENTO`, etc.) que mapeiam arquétipos espirituais. A função `generateManual(params)` recebe os dados do usuário e monta o manual combinando essas tabelas. `renderManualMarkdown(manual)` converte para markdown.
 
-As seções geradas incluem: Perfil Energético, Missão de Alma, Desafios Kármicos, Potenciais Ocultos, Amor & Relacionamento, Dinheiro & Prosperidade, Plano de 7 Dias, Calendário Espiritual (30 dias).
+As seções geradas incluem: Perfil Energético, Missão de Alma, Desafios Kármicos, Potenciais Ocultos, Amor & Relacionamento, Dinheiro & Prosperidade, Plano de 7 Dias, Calendário Espiritual (4 semanas).
 
 ### Supabase — tabela `analises`
 

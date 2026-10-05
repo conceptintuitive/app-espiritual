@@ -109,7 +109,7 @@ function splitBodyIntoParasAndQuote(body) {
 }
 
 // ==============================================
-// ITEM DE CHECKLIST INTERATIVO (Plano 7 dias / Rituais / Calendário 30 dias)
+// ITEM DE CHECKLIST INTERATIVO (Plano 7 dias / Rituais / Calendário 4 semanas)
 // ==============================================
 function CheckItem({ itemKey, checked, onToggle, children }) {
   return (
@@ -912,7 +912,7 @@ e mostrar como sair dele.
               <ul className="list-check compact">
                 <li>✓ Mapa do Amor (padrão afetivo real)</li>
                 <li>✓ Mapa do Dinheiro (prosperidade e bloqueios)</li>
-                <li>✓ Calendário de Poder (30 dias)</li>
+                <li>✓ Calendário de Poder (4 semanas)</li>
               </ul>
             </div>
 
