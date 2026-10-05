@@ -131,11 +131,12 @@ function CheckItem({ itemKey, checked, onToggle, children }) {
 // SEÇÃO EM CAMADAS: título + destaque sempre visível + conteúdo completo
 // recolhido atrás de "Ler mais" (<details> nativo — sem estado próprio).
 // ==============================================
-function SecaoColapsavel({ anchor, title, destaque, children }) {
+function SecaoColapsavel({ anchor, title, destaque, extra, children }) {
   return (
     <div id={anchor} className="card premium">
       <h2 className="h2">{title}</h2>
       {destaque && <p className="section-destaque">{renderInline(destaque)}</p>}
+      {extra}
       <details className="section-details">
         <summary className="section-summary">
           <span className="only-closed">Ler mais</span>
@@ -1134,8 +1135,17 @@ e mostrar como sair dele.
                 // TIPO: TEXT
                 if (section.type === 'text') {
                   const { paragraphs, quote } = splitBodyIntoParasAndQuote(section.body);
+                  const ehPontoCego = String(section.title ?? '').trim().toLowerCase() === 'ponto cego';
                   return (
-                    <SecaoColapsavel key={anchor} anchor={anchor} title={section.title} destaque={destaqueFrase(section.body)}>
+                    <SecaoColapsavel
+                      key={anchor} anchor={anchor} title={section.title} destaque={destaqueFrase(section.body)}
+                      extra={ehPontoCego ? (
+                        <BotaoCompartilharStory
+                          analiseId={id} pago={hasPaid} tipo="ponto_cego" origem="manual_ponto_cego"
+                          style={{ marginTop: 0, marginBottom: 16, fontSize: 15, padding: '10px 20px' }}
+                        />
+                      ) : null}
+                    >
                       {paragraphs.map((p, i) => (
                         <p key={i} className="richText-p">{renderInline(p)}</p>
                       ))}
@@ -1502,6 +1512,10 @@ e mostrar como sair dele.
                           {section.signature && (
                             <div style={{ marginTop: 10 }}>{section.signature}</div>
                           )}
+                          <BotaoCompartilharStory
+                            analiseId={id} pago={hasPaid} tipo="mantra" origem="manual_mantra"
+                            style={{ marginTop: 16, marginBottom: 0, fontSize: 15, padding: '10px 20px' }}
+                          />
                         </div>
                       )}
 

@@ -2,16 +2,17 @@ import { ImageResponse } from 'next/og';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { createClient } from '@supabase/supabase-js';
-import { idValido, dadosDoCard, SITE_HOST } from '@/lib/cardCompartilhar';
+import { idValido, dadosDoCard, fraseDoPontoCego, fraseDoMantra, tipoCardValido, SITE_HOST } from '@/lib/cardCompartilhar';
+import { generateManual } from '@/lib/manualgenerator';
 
 // Node (não edge): a rota importa o manualgenerator pra montar a frase e o
 // arquétipo, e ele é grande demais pra valer a pena num bundle edge.
 export const runtime = 'nodejs';
 
-// Card 1080x1920 pro story. Recebe só ?id=<uuid da análise>. Número,
-// arquétipo e frase são montados no servidor (lib/cardCompartilhar.js) —
-// nada da URL vira texto na imagem, e a imagem não carrega nome, data de
-// nascimento nem nenhum outro dado pessoal.
+// Card 1080x1920 pro story. Recebe ?id=<uuid da análise>&tipo=<numero|
+// ponto_cego|mantra>. Todo texto é montado no servidor — nada da URL vira
+// texto na imagem, e a imagem não carrega nome, data de nascimento nem
+// nenhum outro dado pessoal, em nenhum dos 3 tipos.
 
 const W = 1080;
 const H = 1920;
@@ -37,6 +38,15 @@ const fontes = Promise.all([
 
 const GOLD = '#e8c47a';
 
+const KICKER_POR_TIPO = {
+  ponto_cego: 'SEU PONTO CEGO',
+  mantra: 'SEU MANTRA PESSOAL',
+};
+
+// Select amplo o bastante pra rodar generateManual() quando tipo exige
+// Ponto Cego/Mantra — pros três tipos de card, de propósito: evita duas
+// rotas de busca, e o custo extra de colunas é irrelevante (rota já tem
+// cache de 1 dia no CDN).
 async function buscarAnalise(id) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -44,33 +54,111 @@ async function buscarAnalise(id) {
   const supabase = createClient(url, key, { auth: { persistSession: false } });
   const { data } = await supabase
     .from('analises')
-    .select('nome, signo, numero_vida, data_nascimento, payment_status, sintese_gerada')
+    .select(`
+      nome, signo, numero_vida, data_nascimento, payment_status, sintese_gerada,
+      objetivo_principal, relacao_status, trabalho_status, local_nascimento,
+      diagnostico_gerado, amor_gerado, tipo_pessoa_gerado, plano7_gerado,
+      signo_lua, signo_venus, signo_marte, signo_nodo, signo_mercurio, signo_ascendente,
+      ano_pessoal, numero_alma, numero_expressao,
+      arquetipos_gerado, ponto_cego_gerado, bloqueios_gerado, dinheiro_gerado,
+      rituais_gerado, objetivo_gerado, leitura_gerada, calendario_gerado,
+      fechamento_gerado, carta_tarot, carta_tarot_interpretacao
+    `)
     .eq('id', id)
     .maybeSingle();
   return data;
 }
 
+function paramsDoManual(row) {
+  return {
+    nome: row.nome,
+    signo: row.signo,
+    numeroVida: row.numero_vida,
+    objetivoPrincipal: row.objetivo_principal,
+    relacaoStatus: row.relacao_status,
+    trabalhoStatus: row.trabalho_status,
+    local: row.local_nascimento,
+    dataNascimentoISO: row.data_nascimento,
+    diagnosticoGerado: row.diagnostico_gerado || null,
+    amorGerado: row.amor_gerado || null,
+    tipoPessoaGerado: row.tipo_pessoa_gerado || null,
+    plano7Gerado: row.plano7_gerado || null,
+    signoLua: row.signo_lua || null,
+    signoVenus: row.signo_venus || null,
+    signoMarte: row.signo_marte || null,
+    signoNodo: row.signo_nodo || null,
+    signoMercurio: row.signo_mercurio || null,
+    signoAscendente: row.signo_ascendente || null,
+    anoPessoal: row.ano_pessoal ?? null,
+    numeroAlma: row.numero_alma ?? null,
+    numeroExpressao: row.numero_expressao ?? null,
+    arquetiposGerado: row.arquetipos_gerado || null,
+    pontoCegoGerado: row.ponto_cego_gerado || null,
+    bloqueiosGerado: row.bloqueios_gerado || null,
+    dinheiroGerado: row.dinheiro_gerado || null,
+    rituaisGerado: row.rituais_gerado || null,
+    objetivoGerado: row.objetivo_gerado || null,
+    leituraGerada: row.leitura_gerada || null,
+    calendarioGerado: row.calendario_gerado || null,
+    fechamentoGerado: row.fechamento_gerado || null,
+    sinteseGerada: row.sintese_gerada || null,
+    cartaTarot: row.carta_tarot || null,
+    cartaTarotInterpretacao: row.carta_tarot_interpretacao || null,
+  };
+}
+
 export async function GET(request) {
-  const id = new URL(request.url).searchParams.get('id');
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get('id');
+  const tipo = tipoCardValido(searchParams.get('tipo'));
   if (!idValido(id)) {
     return new Response('Parâmetro id inválido', { status: 400 });
   }
 
-  let card;
+  let row;
   try {
-    const row = await buscarAnalise(id);
-    card = row ? dadosDoCard(row) : null;
+    row = await buscarAnalise(id);
   } catch (e) {
     console.error('[card] falhou ao buscar análise:', e?.message);
     return new Response('Erro ao gerar card', { status: 500 });
   }
-  if (!card) return new Response('Análise não encontrada', { status: 404 });
+  if (!row) return new Response('Análise não encontrada', { status: 404 });
 
-  const { numero, arquetipo, frase } = card;
+  const firstName = String(row?.nome || '').trim().split(/\s+/)[0] || '';
+  let numero = null;
+  let arquetipo = null;
+  let frase = null;
+
+  if (tipo === 'numero') {
+    const card = dadosDoCard(row);
+    if (!card) return new Response('Análise não encontrada', { status: 404 });
+    ({ numero, arquetipo, frase } = card);
+  } else {
+    // Ponto Cego/Mantra só existem no manual completo — card não compra
+    // sozinho, por isso não checa payment_status aqui (quem gerou o link já
+    // passou pela tela paga; se a análise nem existe, cai no 404 acima).
+    let manual;
+    try {
+      manual = generateManual(paramsDoManual(row));
+    } catch (e) {
+      console.error('[card] falhou ao gerar manual:', e?.message);
+      return new Response('Erro ao gerar card', { status: 500 });
+    }
+    frase = tipo === 'mantra'
+      ? fraseDoMantra({ manual })
+      : fraseDoPontoCego({ manual, firstName });
+    if (!frase) {
+      // Mantra sem fechamento_gerado: não existe fallback estático pra ele
+      // (ver nota em lib/cardCompartilhar.js) — melhor 404 do que inventar.
+      return new Response('Conteúdo ainda não disponível pra esse card', { status: 404 });
+    }
+  }
+
   const [cinzel, garamondItalic, garamond] = await fontes;
 
   // Número mestre (11/22/33) tem 2 dígitos — fonte menor pra não estourar.
   const tamanhoNumero = numero > 9 ? 300 : 390;
+  const kicker = KICKER_POR_TIPO[tipo];
 
   return new ImageResponse(
     (
@@ -124,12 +212,14 @@ export async function GET(request) {
               INTUITIVE CONCEPT
               <div style={{ width: 60, height: 1, background: 'rgba(232,196,122,0.5)', marginLeft: 16 }} />
             </div>
-            <div style={{ marginTop: 60, fontFamily: 'Cinzel', fontSize: 40, letterSpacing: 10, color: 'rgba(243,232,255,0.85)' }}>
-              NÚMERO DE VIDA
-            </div>
+            {tipo === 'numero' && (
+              <div style={{ marginTop: 60, fontFamily: 'Cinzel', fontSize: 40, letterSpacing: 10, color: 'rgba(243,232,255,0.85)' }}>
+                NÚMERO DE VIDA
+              </div>
+            )}
           </div>
 
-          {/* Miolo: número + arquétipo + frase (a frase é o destaque) */}
+          {/* Miolo */}
           <div
             style={{
               flex: 1,
@@ -139,37 +229,66 @@ export async function GET(request) {
               justifyContent: 'center',
             }}
           >
-            <div
-              style={{
-                display: 'flex',
-                fontFamily: 'Cinzel',
-                fontSize: tamanhoNumero,
-                lineHeight: 1,
-                color: GOLD,
-                textShadow: '0 0 60px rgba(232,196,122,0.35)',
-              }}
-            >
-              {String(numero)}
-            </div>
-            {arquetipo && (
-              <div style={{ marginTop: 18, fontFamily: 'Cinzel', fontSize: 42, letterSpacing: 3, color: 'rgba(232,196,122,0.9)' }}>
-                {`${numero} · ${arquetipo}`}
+            {tipo === 'numero' ? (
+              // Satori (o renderizador do next/og) não lida bem com <>...</>
+              // dentro de um container flex quando há mais de um filho — o
+              // grupo inteiro perde o layout (some ou desalinha). Por isso
+              // cada ramo do ternário vira uma <div> de verdade com seu
+              // próprio display:flex, nunca um Fragment.
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    fontFamily: 'Cinzel',
+                    fontSize: tamanhoNumero,
+                    lineHeight: 1,
+                    color: GOLD,
+                    textShadow: '0 0 60px rgba(232,196,122,0.35)',
+                  }}
+                >
+                  {String(numero)}
+                </div>
+                {arquetipo && (
+                  <div style={{ marginTop: 18, fontFamily: 'Cinzel', fontSize: 42, letterSpacing: 3, color: 'rgba(232,196,122,0.9)' }}>
+                    {`${numero} · ${arquetipo}`}
+                  </div>
+                )}
+                <div style={{ width: 120, height: 2, background: 'rgba(232,196,122,0.6)', marginTop: 44, marginBottom: 40 }} />
+                <div
+                  style={{
+                    display: 'flex',
+                    textAlign: 'center',
+                    fontFamily: 'EB Garamond',
+                    fontStyle: 'italic',
+                    fontSize: 99,
+                    lineHeight: 1.12,
+                    color: '#f6ecff',
+                  }}
+                >
+                  “{frase}”
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div style={{ display: 'flex', textAlign: 'center', fontFamily: 'Cinzel', fontSize: 44, letterSpacing: 6, color: GOLD }}>
+                  {kicker}
+                </div>
+                <div style={{ width: 120, height: 2, background: 'rgba(232,196,122,0.6)', marginTop: 40, marginBottom: 44 }} />
+                <div
+                  style={{
+                    display: 'flex',
+                    textAlign: 'center',
+                    fontFamily: 'EB Garamond',
+                    fontStyle: 'italic',
+                    fontSize: 84,
+                    lineHeight: 1.25,
+                    color: '#f6ecff',
+                  }}
+                >
+                  “{frase}”
+                </div>
               </div>
             )}
-            <div style={{ width: 120, height: 2, background: 'rgba(232,196,122,0.6)', marginTop: 44, marginBottom: 40 }} />
-            <div
-              style={{
-                display: 'flex',
-                textAlign: 'center',
-                fontFamily: 'EB Garamond',
-                fontStyle: 'italic',
-                fontSize: 99,
-                lineHeight: 1.12,
-                color: '#f6ecff',
-              }}
-            >
-              “{frase}”
-            </div>
           </div>
 
           {/* Faixa vazia pro sticker de link */}
