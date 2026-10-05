@@ -1827,6 +1827,15 @@ const globalCss = `
     z-index: 5;
   }
 
+  /* O FAB do Oráculo (ChatAssistente.js, .chat-fab) é fixed no canto inferior
+     direito — em mobile sobe pra bottom:92px por causa da barra de CTA do
+     /resultado, então aqui no Manual fica ainda mais perto do fim da tela.
+     56px de botão + 92px de offset ≈ 150px: dá folga pro conteúdo (e o
+     "Ler mais" dos cards) nunca ficar embaixo dele. */
+  @media (max-width: 767px) {
+    .container { padding-bottom: 180px; }
+  }
+
   /* ========== STARS ========== */
   .stars { 
     position: fixed; 
@@ -1982,12 +1991,20 @@ const globalCss = `
     line-height: 1.5;
     color: rgba(243, 232, 255, 0.92);
   }
+  /* Com a seção aberta, a frase do destaque já aparece de novo lá dentro
+     (ela é a 1ª frase do conteúdo completo) — esconde o destaque avulso
+     pra não repetir. */
+  .card.premium:has(.section-details[open]) .section-destaque {
+    display: none;
+  }
   .section-details summary.section-summary {
     list-style: none;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
+    min-height: 44px;
     padding: 10px 18px;
     border-radius: 999px;
     border: 1px solid rgba(232, 196, 122, 0.4);
