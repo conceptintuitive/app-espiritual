@@ -77,7 +77,7 @@ export default function ExplorarClient() {
     cardState === 'sem-previa'
       ? 'Numerologia e astrologia personalizadas a partir da sua data de nascimento — sua análise gratuita em poucos minutos.'
       : cardState === 'nao-pago'
-      ? 'A prévia é só o começo. Faltam seu Ponto Cego, os Bloqueios Invisíveis que se repetem na sua vida e um calendário guiado de 30 dias.'
+      ? 'A prévia é só o começo. Faltam seu Ponto Cego, os Bloqueios Invisíveis que se repetem na sua vida e um calendário guiado de 4 semanas.'
       : 'Sua análise personalizada, com tudo que já revelamos sobre seu Sol, Lua, Ascendente e os pontos que mais importam agora.';
 
   // Previsão do Ano e Human Design são bônus avulsos (R$29,90 cada), cada um

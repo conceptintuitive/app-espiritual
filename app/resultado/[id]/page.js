@@ -906,7 +906,7 @@ export default function ResultadoPage() {
               { check: true,  label: 'Padrão no Amor (com "pare de fazer" e "comece a fazer")' },
               { check: true,  label: 'Mapa do Dinheiro (bloqueios e ações práticas)' },
               { check: true,  label: 'Compatibilidade Astral (Sol, Lua, Ascendente, Vênus, Marte)' },
-              { check: false, label: 'Calendário de 30 Dias (dia a dia detalhado)' },
+              { check: false, label: 'Calendário de 4 Semanas (dia a dia detalhado)' },
               { check: false, label: 'Fechamento e Mantra Pessoal' },
             ].map(({ check, label }) => (
               <li key={label} className={`manual-index-item ${check ? 'manual-index-seen' : 'manual-index-locked'}`}>
@@ -958,7 +958,7 @@ export default function ResultadoPage() {
             <li>✓ Mapa do amor (seu padrão afetivo real)</li>
             <li>✓ Mapa do dinheiro (bloqueios e direção)</li>
             <li>✓ Plano de 7 dias personalizado</li>
-            <li>✓ Calendário de 30 dias</li>
+            <li>✓ Calendário de 4 semanas</li>
             <li>✓ 3 rituais específicos pro seu perfil — com áudio guiado 🔊</li>
             <li>✓ 🎁 Compatibilidade Astral (Sol, Lua, Ascendente, Vênus e Marte)</li>
             <li>✓ 🎁 Compatibilidade Completa com uma pessoa específica — grátis</li>
