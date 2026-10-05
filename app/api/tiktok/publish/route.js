@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { getValidAccessToken } from "@/lib/tiktokOAuth";
+import { getValidAccessToken, getStoredTokens } from "@/lib/tiktokOAuth";
 import {
   downloadVideo,
-  queryCreatorInfo,
-  initDirectPost,
+  initInboxUpload,
   uploadVideoInChunks,
   fetchPublishStatus,
 } from "@/lib/tiktokContentPosting";
@@ -32,8 +31,13 @@ function isAuthorized(request) {
   return provided === secret;
 }
 
-// Limite do TikTok pro texto do post (post_info.title).
+// Limite do TikTok pra legenda. No modo inbox a legenda NÃO vai pro TikTok
+// (a API não aceita) — fica salva em tiktok_publishes e volta na resposta,
+// pro Make poder te mandar junto com o aviso de rascunho.
 const MAX_CAPTION = 2200;
+
+// Escopo exigido pelo upload pro inbox.
+const ESCOPO_INBOX = "video.upload";
 
 // Procura uma publicação anterior do mesmo vídeo que não tenha falhado.
 // Evita post duplicado quando o Make reexecuta o cenário (retry, timeout,
@@ -74,8 +78,9 @@ async function atualizarStatus(supabase, publishId, statusData) {
 
 // POST /api/tiktok/publish — chamada pelo Make depois que o Creatomate
 // termina de renderizar o vídeo. Baixa o MP4, garante um access_token
-// válido (renova sozinho se preciso), inicializa e sobe o Direct Post, e
-// devolve o publish_id pra acompanhamento.
+// válido (renova sozinho se preciso) e envia o vídeo pros RASCUNHOS da
+// conta (Upload to inbox). O TikTok notifica a conta; publicar é manual.
+// Devolve o publish_id pra acompanhamento.
 export async function POST(request) {
   if (!isAuthorized(request)) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
@@ -107,34 +112,30 @@ export async function POST(request) {
   }
 
   try {
-    // 1) token válido (getValidAccessToken já renova sozinho se preciso)
+    // 1) a conta conectada tem o escopo do inbox? Token gerado antes da troca
+    // de video.publish → video.upload não tem, e o TikTok recusaria só
+    // depois do download. Falha cedo, com a instrução de como resolver.
+    const stored = await getStoredTokens();
+    const escopos = String(stored?.scope || "").split(/[,\s]+/);
+    if (stored?.scope && !escopos.includes(ESCOPO_INBOX)) {
+      throw new Error(
+        `O token salvo não tem o escopo ${ESCOPO_INBOX} (tem: ${stored.scope}). Reconecte a conta em /api/tiktok/connect.`
+      );
+    }
+
+    // token válido (getValidAccessToken já renova sozinho se preciso)
     const accessToken = await getValidAccessToken();
 
     // 2) baixa o MP4 do Creatomate pro servidor
     const videoBuffer = await downloadVideo(videoUrl);
 
-    // 3) consulta obrigatória antes de postar — também dá os níveis de
-    // privacidade que essa conta/app têm liberado
-    const creatorInfo = await queryCreatorInfo(accessToken);
-    const opcoesPrivacidade = creatorInfo?.privacy_level_options || [];
-    const privacyLevel =
-      body?.privacy_level && opcoesPrivacidade.includes(body.privacy_level)
-        ? body.privacy_level
-        : opcoesPrivacidade[0];
-
-    if (!privacyLevel) {
-      throw new Error("O TikTok não retornou nenhuma opção de privacy_level válida pra essa conta/app (creator_info.privacy_level_options veio vazio)");
-    }
-
-    // 4) inicializa o Direct Post — devolve publish_id + upload_url
-    const { publish_id, upload_url } = await initDirectPost({
+    // 3) inicializa o upload pro inbox — devolve publish_id + upload_url
+    const { publish_id, upload_url } = await initInboxUpload({
       accessToken,
       videoSizeBytes: videoBuffer.byteLength,
-      caption,
-      privacyLevel,
     });
 
-    // 5) registra ANTES do upload: se o Make reenviar enquanto o upload
+    // 4) registra ANTES do upload: se o Make reenviar enquanto o upload
     // ainda está rodando, a checagem de duplicidade (passo 0) já enxerga.
     await registrarPublicacao(supabase, {
       publish_id,
@@ -144,7 +145,7 @@ export async function POST(request) {
       updated_at: new Date().toISOString(),
     });
 
-    // 6) upload binário do vídeo. Se falhar, marca UPLOAD_FAILED pra que uma
+    // 5) upload binário do vídeo. Se falhar, marca UPLOAD_FAILED pra que uma
     // nova tentativa com o mesmo video_url seja permitida.
     try {
       await uploadVideoInChunks({ uploadUrl: upload_url, buffer: videoBuffer });
@@ -154,7 +155,7 @@ export async function POST(request) {
     }
     await atualizarStatus(supabase, publish_id, { status: "PROCESSING" });
 
-    // 7) primeira checagem de status — logo após o upload, o TikTok quase
+    // 6) primeira checagem de status — logo após o upload, o TikTok quase
     // sempre ainda está processando; o Make pode consultar de novo depois
     // via GET /api/tiktok/publish?publish_id=... pro resultado final.
     let statusData = null;
@@ -167,12 +168,14 @@ export async function POST(request) {
       console.error("⚠️ Publish aceito, mas falha ao consultar status inicial:", statusErr.message);
     }
 
-    console.log("✅ Vídeo enviado ao TikTok, publish_id:", publish_id);
+    console.log("✅ Vídeo enviado pros rascunhos do TikTok, publish_id:", publish_id);
 
     return NextResponse.json({
       success: true,
+      modo: "inbox",
       publish_id,
       status: statusData?.status || "PROCESSING",
+      caption,
     });
   } catch (err) {
     console.error("❌ Erro ao publicar vídeo no TikTok:", err.message);
