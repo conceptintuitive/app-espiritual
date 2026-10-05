@@ -69,6 +69,16 @@ function firstSentences(text, maxSentences = 1) {
   return sentences.slice(0, maxSentences).join(' ').trim();
 }
 
+// Destaque de 1 frase mostrado em evidência acima do "Ler mais" — sempre
+// extraído do texto já gerado (firstSentences acima), nunca uma chamada de
+// IA nova. Corta por tamanho só pra blindar contra um texto sem pontuação
+// (viraria "a primeira frase" = o texto inteiro).
+function destaqueFrase(text, max = 170) {
+  const frase = firstSentences(text, 1);
+  if (!frase) return '';
+  return frase.length > max ? `${frase.slice(0, max - 1).trimEnd()}…` : frase;
+}
+
 // ==============================================
 // MARKDOWN LEVE (**negrito** / *itálico*) → React nodes, sem dangerouslySetInnerHTML
 // ==============================================
@@ -114,6 +124,26 @@ function CheckItem({ itemKey, checked, onToggle, children }) {
       <span className="check-box">{checked ? '✅' : '⬜'}</span>
       <span className="check-label">{children}</span>
     </li>
+  );
+}
+
+// ==============================================
+// SEÇÃO EM CAMADAS: título + destaque sempre visível + conteúdo completo
+// recolhido atrás de "Ler mais" (<details> nativo — sem estado próprio).
+// ==============================================
+function SecaoColapsavel({ anchor, title, destaque, children }) {
+  return (
+    <div id={anchor} className="card premium">
+      <h2 className="h2">{title}</h2>
+      {destaque && <p className="section-destaque">{renderInline(destaque)}</p>}
+      <details className="section-details">
+        <summary className="section-summary">
+          <span className="only-closed">Ler mais</span>
+          <span className="only-open">Ler menos</span>
+        </summary>
+        <div className="section-full">{children}</div>
+      </details>
+    </div>
   );
 }
 
@@ -1105,21 +1135,19 @@ e mostrar como sair dele.
                 if (section.type === 'text') {
                   const { paragraphs, quote } = splitBodyIntoParasAndQuote(section.body);
                   return (
-                    <div key={anchor} id={anchor} className="card premium">
-                      <h2 className="h2">{section.title}</h2>
+                    <SecaoColapsavel key={anchor} anchor={anchor} title={section.title} destaque={destaqueFrase(section.body)}>
                       {paragraphs.map((p, i) => (
                         <p key={i} className="richText-p">{renderInline(p)}</p>
                       ))}
                       {quote && <blockquote className="pullQuote">"{renderInline(quote)}"</blockquote>}
-                    </div>
+                    </SecaoColapsavel>
                   );
                 }
 
                 // TIPO: DIAGNÓSTICO (blocos com subtítulo + pull-quote)
                 if (section.type === 'diagnostico') {
                   return (
-                    <div key={anchor} id={anchor} className="card premium">
-                      <h2 className="h2">{section.title}</h2>
+                    <SecaoColapsavel key={anchor} anchor={anchor} title={section.title} destaque={destaqueFrase(section.blocks?.[0]?.text)}>
                       {Array.isArray(section.blocks) && section.blocks.map((b, i) => (
                         <div key={i} className="diag-block">
                           <div className="diag-block-label">{b.label}</div>
@@ -1130,15 +1158,16 @@ e mostrar como sair dele.
                         </div>
                       ))}
                       {section.quote && <blockquote className="pullQuote">"{renderInline(section.quote)}"</blockquote>}
-                    </div>
+                    </SecaoColapsavel>
                   );
                 }
 
                 // TIPO: ARQUÉTIPOS (cards)
                 if (section.type === 'archetypes') {
+                  const primeiro = section.items?.[0];
+                  const destaque = primeiro?.frase || destaqueFrase(primeiro?.descricao);
                   return (
-                    <div key={anchor} id={anchor} className="card premium">
-                      <h2 className="h2">{section.title}</h2>
+                    <SecaoColapsavel key={anchor} anchor={anchor} title={section.title} destaque={destaque}>
                       {Array.isArray(section.items) && section.items.map((it, i) => (
                         <div key={i} className="subcard archetype-card">
                           <div className="subttl">{it.icon} {it.label} — {it.nome}</div>
@@ -1147,15 +1176,16 @@ e mostrar como sair dele.
                           <ListenButton text={buildArchetypeNarration(it)} label="Ouvir este arquétipo" />
                         </div>
                       ))}
-                    </div>
+                    </SecaoColapsavel>
                   );
                 }
 
                 // TIPO: RITUAIS (cards com passos numerados e checkbox de prática)
                 if (section.type === 'rituals') {
+                  const primeiroRitual = section.items?.[0];
+                  const destaqueRitual = primeiroRitual?.frase || (primeiroRitual?.nome ? `Ritual: ${primeiroRitual.nome}` : '');
                   return (
-                    <div key={anchor} id={anchor} className="card premium">
-                      <h2 className="h2">{section.title}</h2>
+                    <SecaoColapsavel key={anchor} anchor={anchor} title={section.title} destaque={destaqueRitual}>
                       {Array.isArray(section.items) && section.items.map((r, i) => {
                         const ck = `rituals_${i}`;
                         return (
@@ -1177,15 +1207,15 @@ e mostrar como sair dele.
                           </div>
                         );
                       })}
-                    </div>
+                    </SecaoColapsavel>
                   );
                 }
 
                 // TIPO: BULLETS
                 if (section.type === 'bullets') {
+                  const destaqueBullets = section.note ? destaqueFrase(section.note) : destaqueFrase(section.items?.[0]);
                   return (
-                    <div key={anchor} id={anchor} className="card premium">
-                      <h2 className="h2">{section.title}</h2>
+                    <SecaoColapsavel key={anchor} anchor={anchor} title={section.title} destaque={destaqueBullets}>
                       {section.note && <div className="note">{section.note}</div>}
                       <ul className="list-check">
                         {Array.isArray(section.items) &&
@@ -1193,7 +1223,7 @@ e mostrar como sair dele.
                             <li key={i}>✓ {renderInline(item)}</li>
                           ))}
                       </ul>
-                    </div>
+                    </SecaoColapsavel>
                   );
                 }
 
@@ -1233,9 +1263,7 @@ e mostrar como sair dele.
 
   return (
     <Fragment key={anchor}>
-    <div id={anchor} className="card premium">
-      <h2 className="h2">{section.title}</h2>
-
+    <SecaoColapsavel anchor={anchor} title={section.title} destaque={destaqueFrase(section.pattern)}>
       <div className="note noteLove">
         <b>{section.headline}</b>
 
@@ -1280,7 +1308,7 @@ e mostrar como sair dele.
                           </ul>
                         </div>
                       </div>
-                    </div>
+                    </SecaoColapsavel>
 
                     {/* ========== COMPATIBILIDADE ASTRAL (5 pontos) ========== */}
                     {row && (
@@ -1369,8 +1397,7 @@ e mostrar como sair dele.
                 // TIPO: MONEY
                 if (section.type === 'money') {
                   return (
-                    <div key={anchor} id={anchor} className="card premium">
-                      <h2 className="h2">{section.title}</h2>
+                    <SecaoColapsavel key={anchor} anchor={anchor} title={section.title} destaque={destaqueFrase(section.headline)}>
                       <div className="note">
                         <b>{section.headline}</b>
                       </div>
@@ -1406,7 +1433,7 @@ e mostrar como sair dele.
                           </ul>
                         </div>
                       </div>
-                    </div>
+                    </SecaoColapsavel>
                   );
                 }
 
@@ -1945,6 +1972,37 @@ const globalCss = `
     margin-top: 14px;
   }
   .richText-p:first-of-type { margin-top: 10px; }
+
+  /* ========== SEÇÃO EM CAMADAS: destaque + Ler mais ========== */
+  .section-destaque {
+    margin: 0 0 14px;
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 20px;
+    line-height: 1.5;
+    color: rgba(243, 232, 255, 0.92);
+  }
+  .section-details summary.section-summary {
+    list-style: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    border-radius: 999px;
+    border: 1px solid rgba(232, 196, 122, 0.4);
+    background: rgba(232, 196, 122, 0.08);
+    color: var(--warning);
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    letter-spacing: 0.04em;
+  }
+  .section-details summary.section-summary::-webkit-details-marker { display: none; }
+  .section-details summary.section-summary::marker { content: ''; }
+  .section-details .only-open { display: none; }
+  .section-details[open] .only-closed { display: none; }
+  .section-details[open] .only-open { display: inline; }
+  .section-details .section-full { margin-top: 16px; }
 
   /* ========== PULL-QUOTE ========== */
   .pullQuote {
