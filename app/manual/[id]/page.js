@@ -1439,9 +1439,27 @@ e mostrar como sair dele.
 
                 // TIPO: CALENDAR30
                 if (section.type === 'calendar30') {
+                  const diasDoCalendario = (Array.isArray(section.weeks) ? section.weeks : [])
+                    .flatMap((week, i) => (Array.isArray(week.days) ? week.days.map((_, j) => `calendar30_w${i}d${j}`) : []));
+                  const totalDias = diasDoCalendario.length;
+                  const diasFeitos = diasDoCalendario.filter((ck) => checks[ck]).length;
+                  const progressoPct = totalDias > 0 ? Math.round((diasFeitos / totalDias) * 100) : 0;
+
                   return (
                     <div key={anchor} id={anchor} className="card premium">
                       <h2 className="h2">{section.title}</h2>
+
+                      {totalDias > 0 && (
+                        <div className="calendar-progress">
+                          <div className="calendar-progress-row">
+                            <span className="calendar-progress-label">{diasFeitos} de {totalDias}</span>
+                            <span className="calendar-progress-pct">{progressoPct}%</span>
+                          </div>
+                          <div className="calendar-progress-track">
+                            <div className="calendar-progress-fill" style={{ width: `${progressoPct}%` }} />
+                          </div>
+                        </div>
+                      )}
 
                       {Array.isArray(section.weeks) &&
                         section.weeks.map((week, i) => (
@@ -2148,6 +2166,40 @@ const globalCss = `
     height: 100%;
     border-radius: 3px;
     background: linear-gradient(90deg, var(--secondary), var(--primary));
+  }
+
+  /* ========== CALENDÁRIO DE 30 DIAS: barra de progresso ========== */
+  .calendar-progress {
+    margin: 4px 0 18px;
+  }
+  .calendar-progress-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-family: 'Cinzel', serif;
+  }
+  .calendar-progress-label {
+    font-size: 14px;
+    color: var(--warning);
+    letter-spacing: 0.03em;
+  }
+  .calendar-progress-pct {
+    font-size: 12px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .calendar-progress-track {
+    height: 8px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.06);
+    overflow: hidden;
+  }
+  .calendar-progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--secondary), var(--primary));
+    transition: width 0.3s ease;
   }
   .compat-match-text {
     margin-top: 6px;
