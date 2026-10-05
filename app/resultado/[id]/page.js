@@ -591,10 +591,11 @@ export default function ResultadoPage() {
   const firstName = pickFirstName(analise.nome);
   // "mais de X" sempre arredondado pra baixo (nunca infla o número real); só mostra a partir de um mínimo plausível
   const roundedStatsCount = statsCount && statsCount >= 15 ? Math.floor(statsCount / 10) * 10 : null;
-  // Preço de verdade, não só visual: depois que a janela de 15min expira, o
+  // Preço de verdade, não só visual: depois que a janela de 24h expira, o
   // preço de lançamento acaba de fato — em /api/criar-checkout-mp e aqui usam
-  // o mesmo cálculo (created_at + 15min), então nunca fica um valor exibido
-  // diferente do que é cobrado.
+  // o mesmo cálculo (created_at + 24h), então nunca fica um valor exibido
+  // diferente do que é cobrado por ali. (O checkout via Stripe, usado como
+  // fallback em /manual/[id], ainda não tem essa janela — ver nota separada.)
   const precoAtual = ofertaExpirada ? 97 : 47;
   const cargoLabel = incluirTier2
     ? `DESBLOQUEAR MANUAL + PROJEÇÃO 12 MESES + HUMAN DESIGN — R$ ${precoAtual + 50}`

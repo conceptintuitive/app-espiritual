@@ -32,6 +32,13 @@ async function handlePaymentSuccess(session, supabase) {
     return;
   }
 
+  // Só vem preenchido se phone_number_collection estiver habilitado na
+  // sessão do Checkout (hoje não está) — na prática, quase sempre null.
+  // Lido de forma defensiva mesmo assim: se um dia a coleta for ligada, ou
+  // algum método de pagamento específico trouxer o dado, já funciona sem
+  // precisar mexer aqui de novo.
+  const phone = session.customer_details?.phone || null;
+
   console.log("✅ Pagamento aprovado:", session.id, "| Análise:", analiseId, "| Email:", email);
 
   // Crítico: atualiza status antes de responder ao Stripe
@@ -166,6 +173,7 @@ async function handlePaymentSuccess(session, supabase) {
       value: (session.amount_total ?? 0) / 100,
       currency: (session.currency || "brl").toUpperCase(),
       email,
+      phone,
       analiseId,
       clientIp: checkoutIp,
       userAgent: checkoutUserAgent,
