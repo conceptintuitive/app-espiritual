@@ -6,12 +6,27 @@ import SiteNav from '@/app/components/SiteNav';
 
 export default function ExplorarClient() {
   const [ultimaAnaliseId, setUltimaAnaliseId] = useState(null);
+  // null = ainda não checou (ou não tem análise); true/false = resultado real
+  // de GET /api/status-analise. Fica null enquanto carrega de propósito —
+  // cardState só mostra "pago" ou "não pago" depois de saber de verdade,
+  // pra nunca piscar "Desbloquear" pra quem já comprou.
+  const [pagoStatus, setPagoStatus] = useState(null);
 
   useEffect(() => {
     try {
       setUltimaAnaliseId(window.localStorage.getItem('ic_ultima_analise_id'));
     } catch {}
   }, []);
+
+  useEffect(() => {
+    if (!ultimaAnaliseId) return;
+    let mounted = true;
+    fetch(`/api/status-analise?id=${encodeURIComponent(ultimaAnaliseId)}`)
+      .then((r) => r.json())
+      .then((data) => { if (mounted) setPagoStatus(Boolean(data?.pago)); })
+      .catch(() => { if (mounted) setPagoStatus(false); });
+    return () => { mounted = false; };
+  }, [ultimaAnaliseId]);
 
   useEffect(() => {
     const stars = document.getElementById('stars');
@@ -30,12 +45,38 @@ export default function ExplorarClient() {
     return () => { stars.innerHTML = ''; };
   }, []);
 
-  const meuMapaHref = ultimaAnaliseId ? `/resultado/${ultimaAnaliseId}` : '/';
-  const meuMapaCta = ultimaAnaliseId ? 'Ver meu resultado →' : 'Descobrir meu mapa →';
-  const meuMapaDesc = ultimaAnaliseId
-    ? 'Sua análise personalizada, com tudo que já revelamos sobre seu Sol, Lua, Ascendente e os pontos que mais importam agora.'
-    : 'Numerologia e astrologia personalizadas a partir da sua data de nascimento — sua análise gratuita em poucos minutos.';
-  const meuMapaTag = ultimaAnaliseId ? 'Já está pronto' : 'Comece por aqui';
+  // 'sem-previa': nunca fez o quiz. 'carregando': tem análise, mas ainda não
+  // sabemos se foi paga (não decide nada enquanto isso). 'pago'/'nao-pago':
+  // resultado real de /api/status-analise.
+  const cardState = !ultimaAnaliseId
+    ? 'sem-previa'
+    : pagoStatus === null
+    ? 'carregando'
+    : pagoStatus
+    ? 'pago'
+    : 'nao-pago';
+
+  const meuMapaHref =
+    cardState === 'pago' ? `/manual/${ultimaAnaliseId}` :
+    cardState === 'sem-previa' ? '/' :
+    `/resultado/${ultimaAnaliseId}`;
+
+  const meuMapaTag =
+    cardState === 'pago' ? 'Já é seu' :
+    cardState === 'carregando' ? 'Carregando…' :
+    cardState === 'sem-previa' ? 'Comece por aqui' :
+    'R$47 · sua prévia está pronta';
+
+  const meuMapaCta =
+    cardState === 'pago' ? 'Abrir meu Manual →' :
+    cardState === 'carregando' ? 'Ver meu mapa →' :
+    cardState === 'sem-previa' ? 'Descobrir meu mapa →' :
+    'Desbloquear meu Manual →';
+
+  const meuMapaDesc =
+    cardState === 'sem-previa'
+      ? 'Numerologia e astrologia personalizadas a partir da sua data de nascimento — sua análise gratuita em poucos minutos.'
+      : 'Sua análise personalizada, com tudo que já revelamos sobre seu Sol, Lua, Ascendente e os pontos que mais importam agora.';
 
   // Previsão do Ano e Human Design são bônus avulsos (R$29,90 cada), cada um
   // com sua própria página de prévia + desbloqueio. Se já existe uma análise,
@@ -62,9 +103,11 @@ export default function ExplorarClient() {
       <div className="grid">
         <Link href={meuMapaHref} className="card primary">
           <div className="icon-badge">🔮</div>
-          <span className="tag">{meuMapaTag}</span>
-          <h3>Meu Mapa</h3>
-          <p>{meuMapaDesc}</p>
+          <div className="primary-content">
+            <span className="tag">{meuMapaTag}</span>
+            <h3>Seu Manual Completo</h3>
+            <p>{meuMapaDesc}</p>
+          </div>
           <span className="cta">{meuMapaCta}</span>
         </Link>
 
@@ -86,7 +129,6 @@ export default function ExplorarClient() {
 
         <Link href={previsaoHref} className="card quinary">
           <div className="icon-badge">🔮</div>
-          <span className="tag">A partir de R$ 29,90</span>
           <h3>Previsão do Ano</h3>
           <p>Os próximos 12 meses, um a um, com o que cada ciclo favorece e o que pede cuidado — a partir da sua data de nascimento.</p>
           <span className="cta">Ver minha previsão →</span>
@@ -94,7 +136,6 @@ export default function ExplorarClient() {
 
         <Link href={humanDesignHref} className="card senary">
           <div className="icon-badge">🧬</div>
-          <span className="tag">A partir de R$ 29,90</span>
           <h3>Human Design</h3>
           <p>Seu Tipo, sua Autoridade e seu Perfil — como sua energia funciona de verdade, a partir da data, hora e local de nascimento.</p>
           <span className="cta">Descobrir meu Human Design →</span>
@@ -191,6 +232,15 @@ export default function ExplorarClient() {
         .card.octonary::before { background: radial-gradient(circle at 20% 0%, rgba(245,158,11,0.2), rgba(19,8,40,0.95) 70%); }
         .card.nonary::before { background: radial-gradient(circle at 20% 0%, rgba(139,92,246,0.2), rgba(236,72,153,0.1), rgba(19,8,40,0.95) 70%); }
         .card.denary::before { background: radial-gradient(circle at 20% 0%, rgba(245,158,11,0.22), rgba(139,92,246,0.14), rgba(19,8,40,0.95) 70%); }
+
+        .card.primary { grid-column: 1 / -1; }
+        .card.primary .primary-content { display: flex; flex-direction: column; gap: 8px; }
+        .card.primary .primary-content p { margin: 0; }
+        @media (min-width: 720px) {
+          .card.primary { flex-direction: row; align-items: center; gap: 28px; padding: 28px 36px; }
+          .card.primary .primary-content { flex: 1; }
+          .card.primary .cta { flex-shrink: 0; margin-top: 0; }
+        }
 
         .icon-badge { width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; background: rgba(255,255,255,0.06); border: 1px solid var(--border-strong); }
         .tag { font-family: 'Cinzel', serif; font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--warning); }
