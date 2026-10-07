@@ -17,6 +17,7 @@ import {
 import { sendGA4Purchase } from "@/lib/ga4";
 import { sendTikTokPurchase } from "@/lib/tiktok";
 import { sendMetaPurchase } from "@/lib/meta";
+import { getOrigemVenda } from "@/lib/testEmails";
 
 // ─── Lógica compartilhada entre pagamento síncrono e assíncrono (boleto) ──────
 async function handlePaymentSuccess(session, supabase) {
@@ -50,7 +51,7 @@ async function handlePaymentSuccess(session, supabase) {
       paid_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       valor_pago: (session.amount_total ?? 0) / 100,
-      origem: "venda",
+      origem: getOrigemVenda(email),
     })
     .eq("id", analiseId);
 

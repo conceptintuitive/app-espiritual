@@ -15,6 +15,7 @@ import {
 import { sendGA4Purchase } from "@/lib/ga4";
 import { sendTikTokPurchase } from "@/lib/tiktok";
 import { sendMetaPurchase } from "@/lib/meta";
+import { getOrigemVenda } from "@/lib/testEmails";
 
 export const runtime = "nodejs";
 
@@ -57,6 +58,7 @@ export async function POST(request) {
     const payerPhone = payment.payer?.phone?.number
       ? `${payment.payer.phone.area_code || ""}${payment.payer.phone.number}`
       : null;
+    const origemPagamento = getOrigemVenda(payment.payer?.email);
 
     if (payment.status !== "approved") {
       return NextResponse.json({ received: true, status: payment.status });
@@ -103,7 +105,7 @@ export async function POST(request) {
       const updates = {
         updated_at: new Date().toISOString(),
         valor_pago: payment.transaction_amount ?? 0,
-        origem: "venda",
+        origem: origemPagamento,
       };
       if (incluiProjecao) {
         updates.tier2_payment_status = "paid";
@@ -180,7 +182,7 @@ export async function POST(request) {
           compat_paid_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           valor_pago: payment.transaction_amount ?? 0,
-          origem: "venda",
+          origem: origemPagamento,
         })
         .eq("id", analiseId);
 
@@ -242,7 +244,7 @@ export async function POST(request) {
         paid_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         valor_pago: payment.transaction_amount ?? 0,
-        origem: "venda",
+        origem: origemPagamento,
         ...(includesTier2 && {
           tier2_payment_status: "paid",
           tier2_mp_payment_id: paymentId.toString(),

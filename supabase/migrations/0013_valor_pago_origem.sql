@@ -17,17 +17,30 @@
 alter table analises add column if not exists valor_pago numeric;
 alter table analises add column if not exists origem text;
 
--- Backfill: até essa migração, o webhook do MP marcava payment_status='paid'
--- sem preencher paid_at (só o do Stripe preenchia) — por isso usamos também
--- mp_payment_id/stripe_payment_intent, não só paid_at, pra identificar quem
--- passou de fato por um webhook de pagamento (venda real) dos marcados à mão
--- (cortesia, sem nenhum desses IDs).
+-- Backfill, em 3 grupos. ATENÇÃO: antes da PR que acompanha essa migração, o
+-- webhook do MP marcava payment_status='paid' sem preencher paid_at (só o do
+-- Stripe preenchia) — por isso paid_at sozinho NÃO é prova de venda real, e
+-- stripe_session_id também não (é gravado na abertura do checkout, antes de
+-- qualquer pagamento).
+
+-- 1) paid_at preenchido só acontece via webhook de verdade (Stripe sempre
+--    gravou; MP passa a gravar a partir dessa PR) — venda confirmada.
 update analises
   set origem = 'venda'
-  where payment_status = 'paid'
-    and origem is null
-    and (paid_at is not null or mp_payment_id is not null or stripe_payment_intent is not null);
+  where payment_status = 'paid' and paid_at is not null and origem is null;
 
+-- 2) Sem paid_at e sem mp_payment_id: não tem como ter vindo de um pagamento
+--    do MP confirmado (webhook grava mp_payment_id junto com payment_status),
+--    nem do Stripe (webhook do Stripe sempre grava paid_at) — só pode ter
+--    sido marcado como pago manualmente. Cobre tanto quem não tem nenhum dos
+--    dois IDs quanto quem só tem stripe_session_id (criado na abertura do
+--    checkout, não prova pagamento).
 update analises
   set origem = 'cortesia'
-  where payment_status = 'paid' and paid_at is null and origem is null;
+  where payment_status = 'paid' and paid_at is null and mp_payment_id is null and origem is null;
+
+-- 3) Sem paid_at mas COM mp_payment_id: ambíguo por SQL — pode ser uma venda
+--    real do MP de antes dessa correção (que não gravava paid_at), ou uma
+--    marcação manual que copiou/inventou um mp_payment_id. Fica com origem
+--    NULL de propósito; resolva rodando scripts/backfill-origem-mp.mjs, que
+--    consulta a API do MP pra confirmar o status de cada pagamento.
