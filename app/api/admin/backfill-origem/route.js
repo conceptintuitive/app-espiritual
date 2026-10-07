@@ -36,6 +36,14 @@ async function fetchAll(query) {
   return all;
 }
 
+async function consultarMP(mpPaymentId) {
+  const res = await fetch(`https://api.mercadopago.com/v1/payments/${mpPaymentId}`, {
+    headers: { Authorization: `Bearer ${process.env.MP_ACCESS_TOKEN}` },
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const secret = searchParams.get("secret");
@@ -54,32 +62,20 @@ export async function GET(request) {
   const resultado = { apply, passo1_emails_teste: [], passo2_api_mp: [] };
 
   try {
-    // ── Passo 1: e-mails de teste → origem = 'teste' (pago ou não) ──────────
+    // ── Candidatos a e-mail de teste (todos, pago ou não) ───────────────────
+    let paraTeste = [];
     if (!process.env.TEST_EMAILS) {
       resultado.passo1_aviso = "TEST_EMAILS não definido — passo pulado.";
     } else {
       const candidatos = await fetchAll(
         supabase.from("analises").select("id, email, origem, payment_status").not("email", "is", null)
       );
-      const paraTeste = candidatos.filter((row) => isTestEmail(row.email) && row.origem !== "teste");
-
-      resultado.passo1_emails_teste = paraTeste.map((row) => ({
-        id: row.id,
-        email: maskEmail(row.email),
-        origem_atual: row.origem ?? null,
-        origem_nova: "teste",
-      }));
-
-      if (apply && paraTeste.length) {
-        const { error } = await supabase
-          .from("analises")
-          .update({ origem: "teste" })
-          .in("id", paraTeste.map((r) => r.id));
-        if (error) throw new Error(`Falha ao aplicar passo 1: ${error.message}`);
-      }
+      paraTeste = candidatos.filter((row) => isTestEmail(row.email) && row.origem !== "teste");
     }
 
-    // ── Passo 2: ambíguos do MP (paid_at null + mp_payment_id preenchido) ───
+    // ── Ambíguos do MP (paid_at null + mp_payment_id preenchido) ────────────
+    // Separa e-mail de teste (passo 1, origem='teste') de venda/cortesia de
+    // verdade (passo 2) — um registro de teste nunca deve sair como 'venda'.
     const ambiguos = await fetchAll(
       supabase
         .from("analises")
@@ -89,31 +85,60 @@ export async function GET(request) {
         .not("mp_payment_id", "is", null)
         .is("origem", null)
     );
+    const ambiguosTeste = ambiguos.filter((row) => isTestEmail(row.email));
+    const ambiguosNormais = ambiguos.filter((row) => !isTestEmail(row.email));
 
-    const planos = [];
-    for (const row of ambiguos) {
+    // ── Passo 1: e-mails de teste, enriquecidos com paid_at/valor_pago reais ─
+    const enriquecimentoTeste = new Map();
+    for (const row of ambiguosTeste) {
       try {
-        const res = await fetch(`https://api.mercadopago.com/v1/payments/${row.mp_payment_id}`, {
-          headers: { Authorization: `Bearer ${process.env.MP_ACCESS_TOKEN}` },
-        });
-        if (!res.ok) {
-          resultado.passo2_api_mp.push({
-            id: row.id,
-            email: maskEmail(row.email),
-            status_mp: `erro HTTP ${res.status}`,
-            origem_nova: null,
-            revisar_manualmente: true,
+        const payment = await consultarMP(row.mp_payment_id);
+        if (payment.status === "approved") {
+          enriquecimentoTeste.set(row.id, {
+            paid_at: payment.date_approved,
+            valor_pago: payment.transaction_amount ?? null,
           });
-          continue;
         }
-        const payment = await res.json();
+      } catch {
+        // Sem paid_at/valor_pago real — fica só com origem='teste' mesmo.
+      }
+    }
+
+    const planosTeste = paraTeste.map((row) => ({
+      id: row.id,
+      update: { origem: "teste", ...(enriquecimentoTeste.get(row.id) || {}) },
+    }));
+
+    resultado.passo1_emails_teste = planosTeste.map((plano) => {
+      const row = paraTeste.find((r) => r.id === plano.id);
+      return {
+        id: plano.id,
+        email: maskEmail(row?.email),
+        origem_atual: row?.origem ?? null,
+        origem_nova: "teste",
+        ...(plano.update.paid_at ? { paid_at: plano.update.paid_at, valor_pago: plano.update.valor_pago } : {}),
+      };
+    });
+
+    if (apply && planosTeste.length) {
+      for (const plano of planosTeste) {
+        const { error } = await supabase.from("analises").update(plano.update).eq("id", plano.id);
+        if (error) throw new Error(`Falha ao aplicar passo 1 (${plano.id}): ${error.message}`);
+      }
+    }
+
+    // ── Passo 2: ambíguos do MP, SEM e-mails de teste ───────────────────────
+    const planosNormais = [];
+    for (const row of ambiguosNormais) {
+      try {
+        const payment = await consultarMP(row.mp_payment_id);
         if (payment.status === "approved") {
           const update = {
             origem: "venda",
             paid_at: payment.date_approved,
             valor_pago: payment.transaction_amount ?? null,
           };
-          planos.push({ id: row.id, update });
+          planosNormais.push({ id: row.id, update });
           resultado.passo2_api_mp.push({
             id: row.id,
             email: maskEmail(row.email),
@@ -123,7 +148,7 @@ export async function GET(request) {
             valor_pago: payment.transaction_amount ?? null,
           });
         } else {
-          planos.push({ id: row.id, update: { origem: "cortesia" } });
+          planosNormais.push({ id: row.id, update: { origem: "cortesia" } });
           resultado.passo2_api_mp.push({
             id: row.id,
             email: maskEmail(row.email),
@@ -142,8 +167,8 @@ export async function GET(request) {
       }
     }
 
-    if (apply && planos.length) {
-      for (const plano of planos) {
+    if (apply && planosNormais.length) {
+      for (const plano of planosNormais) {
         const { error } = await supabase.from("analises").update(plano.update).eq("id", plano.id);
         if (error) {
           resultado.passo2_erros = resultado.passo2_erros || [];
