@@ -100,7 +100,11 @@ export async function POST(request) {
         payment.metadata?.inclui_humandesign === true ||
         payment.metadata?.inclui_humandesign === "true";
 
-      const updates = { updated_at: new Date().toISOString() };
+      const updates = {
+        updated_at: new Date().toISOString(),
+        valor_pago: payment.transaction_amount ?? 0,
+        origem: "venda",
+      };
       if (incluiProjecao) {
         updates.tier2_payment_status = "paid";
         updates.tier2_mp_payment_id = paymentId.toString();
@@ -175,6 +179,8 @@ export async function POST(request) {
           compat_mp_payment_id: paymentId.toString(),
           compat_paid_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
+          valor_pago: payment.transaction_amount ?? 0,
+          origem: "venda",
         })
         .eq("id", analiseId);
 
@@ -233,7 +239,10 @@ export async function POST(request) {
       .update({
         payment_status: "paid",
         mp_payment_id: paymentId.toString(),
+        paid_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
+        valor_pago: payment.transaction_amount ?? 0,
+        origem: "venda",
         ...(includesTier2 && {
           tier2_payment_status: "paid",
           tier2_mp_payment_id: paymentId.toString(),

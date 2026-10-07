@@ -49,6 +49,8 @@ async function handlePaymentSuccess(session, supabase) {
       stripe_payment_intent: session.payment_intent,
       paid_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
+      valor_pago: (session.amount_total ?? 0) / 100,
+      origem: "venda",
     })
     .eq("id", analiseId);
 

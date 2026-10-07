@@ -55,7 +55,7 @@ As seções geradas incluem: Perfil Energético, Missão de Alma, Desafios Kárm
 
 ### Supabase — tabela `analises`
 
-Colunas relevantes: `id` (UUID PK), `nome`, `email`, `data_nascimento`, `hora_nascimento`, `local_nascimento`, `objetivo_principal`, `relacao_status`, `trabalho_status`, `signo`, `numero_vida`, `status`, `payment_status` (`'pending'` | `'paid'`), `stripe_session_id`, `stripe_payment_intent`, `paid_at`, `updated_at`.
+Colunas relevantes: `id` (UUID PK), `nome`, `email`, `data_nascimento`, `hora_nascimento`, `local_nascimento`, `objetivo_principal`, `relacao_status`, `trabalho_status`, `signo`, `numero_vida`, `status`, `payment_status` (`'pending'` | `'paid'`), `stripe_session_id`, `stripe_payment_intent`, `mp_payment_id`, `paid_at`, `valor_pago`, `origem` (`'venda'` | `'cortesia'` | `'teste'`), `updated_at`.
 
 ## Environment Variables
 
@@ -93,3 +93,4 @@ Três integrações distintas com o TikTok, não confundir: `TIKTOK_ACCESS_TOKEN
 - O Stripe Checkout usa `promo_codes: true` — não remover.
 - O webhook valida `stripe-signature` antes de processar; qualquer alteração deve manter essa validação.
 - **Preço do Manual**: R$27 nas primeiras 24h desde `created_at` da análise, R$47 depois (sem tier de R$97). Regra única em `lib/preco.js` (`getPrecoManual`) — nunca hardcode 27/47 em outro lugar; importe de lá. Usada pelos checkouts (MP e Stripe), pela página de resultado (`precoAtual`), pelo Oráculo (prop `precoManual` do `ChatAssistente`), pelo e-mail de recuperação de +20h e pelo card do `/explorar` (via `/api/status-analise`, que devolve `precoAtual` já calculado).
+- **`valor_pago` e `origem`**: `app/api/webhook-mp/route.js` e `app/api/webhook/route.js` gravam `valor_pago` (valor real cobrado na transação — `payment.transaction_amount` no MP, `session.amount_total / 100` no Stripe) e `origem = 'venda'` em todo `.update()` que confirma pagamento (Manual, upsell de bônus avulso, Compatibilidade Completa). `valor_pago` reflete a transação mais recente confirmada, não um total acumulado. Pagamento marcado como pago manualmente (fora de webhook, ex. `scripts/test-ia.mjs`) deve gravar `origem = 'cortesia'` e `paid_at`; uso interno/QA usa `'teste'`. Nunca marcar como pago sem um desses dois campos.
