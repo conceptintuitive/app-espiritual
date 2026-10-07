@@ -50,14 +50,22 @@ async function handlePaymentSuccess(session, supabase) {
       stripe_payment_intent: session.payment_intent,
       paid_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      valor_pago: (session.amount_total ?? 0) / 100,
-      origem: getOrigemVenda(email),
     })
     .eq("id", analiseId);
 
   if (updateError) {
     console.error("❌ Erro ao atualizar status de pagamento:", updateError);
     return;
+  }
+
+  // Bookkeeping, best-effort: se isso falhar, o Manual já foi liberado
+  // acima — não pode travar nem impedir a resposta 200 pro Stripe por causa disso.
+  const { error: valorPagoError } = await supabase
+    .from("analises")
+    .update({ valor_pago: (session.amount_total ?? 0) / 100, origem: getOrigemVenda(email) })
+    .eq("id", analiseId);
+  if (valorPagoError) {
+    console.error("⚠️ Falha ao gravar valor_pago/origem do Manual (já liberado):", valorPagoError);
   }
 
   console.log('✅ Status atualizado para "paid"');
