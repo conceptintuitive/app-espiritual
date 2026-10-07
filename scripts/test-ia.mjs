@@ -248,5 +248,5 @@ console.log('✅ Salvo com sucesso!');
 console.log('\nPróximos passos:');
 console.log(`  1. Acesse o Supabase e confirme que diagnostico_gerado foi preenchido`);
 console.log(`  2. No SQL Editor, rode:`);
-console.log(`     UPDATE analises SET payment_status = 'paid' WHERE id = '${analiseId}';`);
+console.log(`     UPDATE analises SET payment_status = 'paid', paid_at = now(), origem = 'cortesia' WHERE id = '${analiseId}';`);
 console.log(`  3. Acesse: http://localhost:3000/manual/${analiseId}`);
