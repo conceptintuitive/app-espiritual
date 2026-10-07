@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { MercadoPagoConfig, Preference } from "mercadopago";
 import { createClient } from "@supabase/supabase-js";
-import { getPrecoManual } from "@/lib/preco";
+import { getPrecoManual, PRECO_BONUS_AVULSO, PRECO_BONUS_COMBO } from "@/lib/preco";
 
 export const runtime = "nodejs";
 
@@ -92,9 +92,9 @@ export async function POST(request) {
     ];
 
     if (bonusProdutos.length > 0) {
-      // R$50 é o preço combo (só quando os dois vêm juntos) — R$29,90 é o
-      // preço de um bônus avulso adicionado ao manual, sem o desconto do combo.
-      const preco = bonusProdutos.length === 2 ? 50 : 29.9;
+      // PRECO_BONUS_COMBO só quando os dois vêm juntos; PRECO_BONUS_AVULSO
+      // pra um bônus só, adicionado ao manual.
+      const preco = bonusProdutos.length === 2 ? PRECO_BONUS_COMBO : PRECO_BONUS_AVULSO;
       const titulo = bonusProdutos.map((p) => BONUS_TITULOS[p]).join(" + ");
       items.push({
         id: `${analiseId}-bonus-${bonusProdutos.join("-")}`,

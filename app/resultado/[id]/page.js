@@ -10,7 +10,7 @@ import { TESTIMONIALS } from '@/lib/testimonials';
 import ChatAssistente from '@/app/components/ChatAssistente';
 import SeloArquetipo from '@/app/components/SeloArquetipo';
 import BotaoCompartilharStory from '@/app/components/BotaoCompartilharStory';
-import { PRECO_MANUAL_JANELA, PRECO_MANUAL_PADRAO } from '@/lib/preco';
+import { PRECO_MANUAL_JANELA, PRECO_MANUAL_PADRAO, PRECO_BONUS_COMBO } from '@/lib/preco';
 
 // ── Supabase ──────────────────────────────────────────────────────────────────
 function getSupabaseClient() {
@@ -96,7 +96,7 @@ function Tier2AddonToggle({ checked, onChange, precoTotal }) {
     <label className={`tier2-addon${checked ? ' is-checked' : ''}`}>
       <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
       <span>
-        {checked ? '✅' : '🔮'} Incluir também <strong>Projeção de 12 Meses + Mapa de Human Design</strong> (+R$ 50 — R$ {precoTotal} no total)
+        {checked ? '✅' : '🔮'} Incluir também <strong>Projeção de 12 Meses + Mapa de Human Design</strong> (+R$ {PRECO_BONUS_COMBO} — R$ {precoTotal} no total)
       </span>
     </label>
   );
@@ -472,7 +472,7 @@ export default function ResultadoPage() {
     setProcessando(true);
     // Antes era hardcoded (47/97) — divergia do preço real fora da janela.
     // precoAtual já é a fonte de verdade (lib/preco.js) usada no botão/CTA.
-    const valorTotal = incluirTier2 ? precoAtual + 50 : precoAtual;
+    const valorTotal = incluirTier2 ? precoAtual + PRECO_BONUS_COMBO : precoAtual;
     try {
       try { window?.gtag?.('event', 'clique_comprar', { event_category: 'conversion', value: valorTotal, currency: 'BRL' }); } catch {}
       try { window?.fbq?.('track', 'InitiateCheckout', { value: valorTotal, currency: 'BRL' }); } catch {}
@@ -506,32 +506,10 @@ export default function ResultadoPage() {
     } finally { setProcessando(false); }
   };
 
-  // Compra avulsa de um bônus (Previsão do Ano ou Human Design), sem
-  // precisar do manual completo — R$29,90 cada, cada um com sua própria
-  // página de prévia/desbloqueio.
-  const [processandoAvulso, setProcessandoAvulso] = useState(null);
-  const handleComprarAvulso = async (produto) => {
-    setProcessandoAvulso(produto);
-    try {
-      const redirectTo = produto === 'projecao12m' ? 'previsao' : 'humandesign';
-      const response = await fetch('/api/criar-checkout-upsell-mp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ analiseId: id, produtos: [produto], redirectTo }),
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data?.error || 'Erro ao abrir checkout');
-      const url = data?.url || data?.sandbox_url;
-      if (!url) throw new Error('Checkout sem URL');
-      setCheckoutUrl(url);
-      window.location.href = url;
-      return;
-    } catch (e) {
-      console.error('Erro no checkout avulso:', e);
-      try { window?.gtag?.('event', 'erro_checkout', { event_category: 'error', erro: String(e?.message || e).slice(0, 100) }); } catch {}
-      alert(e?.message || 'Erro. Tente novamente.');
-    } finally { setProcessandoAvulso(null); }
-  };
+  // Previsão do Ano e Human Design não têm mais compra avulsa — só liberam
+  // junto com o Manual (ver checkbox "Incluir também" nos CTAs acima e
+  // app/api/criar-checkout-upsell-mp/route.js, que agora exige o Manual
+  // pago). handleComprarAvulso/processandoAvulso foram removidos daqui.
 
   // loading / erro
   if (loading) {
@@ -600,7 +578,7 @@ export default function ResultadoPage() {
   // um valor exibido diferente do que é cobrado.
   const precoAtual = ofertaExpirada ? PRECO_MANUAL_PADRAO : PRECO_MANUAL_JANELA;
   const cargoLabel = incluirTier2
-    ? `DESBLOQUEAR MANUAL + PROJEÇÃO 12 MESES + HUMAN DESIGN — R$ ${precoAtual + 50}`
+    ? `DESBLOQUEAR MANUAL + PROJEÇÃO 12 MESES + HUMAN DESIGN — R$ ${precoAtual + PRECO_BONUS_COMBO}`
     : `DESBLOQUEAR MEU MANUAL — R$ ${precoAtual}`;
 
   return (
@@ -690,7 +668,7 @@ export default function ResultadoPage() {
               <button className="btn-cta" onClick={handleComprar} disabled={processando}>
                 {processando ? '⏳ Abrindo…' : cargoLabel}
               </button>
-              <Tier2AddonToggle checked={incluirTier2} onChange={setIncluirTier2} precoTotal={precoAtual + 50} />
+              <Tier2AddonToggle checked={incluirTier2} onChange={setIncluirTier2} precoTotal={precoAtual + PRECO_BONUS_COMBO} />
               <p className="pos-compra" style={{ marginTop: 10 }}>
                 Após o pagamento, você receberá o link do seu manual por email em poucos minutos. Verifique também a caixa de spam.
               </p>
@@ -771,7 +749,7 @@ export default function ResultadoPage() {
               <button className="btn-cta" onClick={handleComprar} disabled={processando}>
                 {processando ? '⏳ Abrindo…' : cargoLabel}
               </button>
-              <Tier2AddonToggle checked={incluirTier2} onChange={setIncluirTier2} precoTotal={precoAtual + 50} />
+              <Tier2AddonToggle checked={incluirTier2} onChange={setIncluirTier2} precoTotal={precoAtual + PRECO_BONUS_COMBO} />
             </div>
           </div>
         )}
@@ -860,7 +838,7 @@ export default function ResultadoPage() {
               <button className="btn-cta" onClick={handleComprar} disabled={processando}>
                 {processando ? '⏳ Abrindo…' : cargoLabel}
               </button>
-              <Tier2AddonToggle checked={incluirTier2} onChange={setIncluirTier2} precoTotal={precoAtual + 50} />
+              <Tier2AddonToggle checked={incluirTier2} onChange={setIncluirTier2} precoTotal={precoAtual + PRECO_BONUS_COMBO} />
             </div>
           </div>
         )}
@@ -976,7 +954,7 @@ export default function ResultadoPage() {
           <button className="btn-cta" onClick={handleComprar} disabled={processando}>
             {processando ? '⏳ Abrindo…' : cargoLabel}
           </button>
-          <Tier2AddonToggle checked={incluirTier2} onChange={setIncluirTier2} precoTotal={precoAtual + 50} />
+          <Tier2AddonToggle checked={incluirTier2} onChange={setIncluirTier2} precoTotal={precoAtual + PRECO_BONUS_COMBO} />
 
           <label className={`presente-toggle${ehPresente ? ' is-checked' : ''}`}>
             <input type="checkbox" checked={ehPresente} onChange={(e) => setEhPresente(e.target.checked)} />
@@ -1035,29 +1013,6 @@ export default function ResultadoPage() {
             Após o pagamento, você receberá o link do seu manual por email em poucos minutos. Verifique também a caixa de spam.
           </p>
         </div>
-
-        {/* ══ BÔNUS AVULSOS — sem precisar do manual completo ══ */}
-        {analise.payment_status !== 'paid' &&
-          (analise.tier2_payment_status !== 'paid' || analise.hd_payment_status !== 'paid') && (
-          <div className="avulso-block">
-            <p className="avulso-titulo">Prefere só um bônus específico?</p>
-            <p className="avulso-desc">
-              Dá pra levar só a Previsão do Ano ou só o Mapa de Human Design, sem o manual completo — R$ 29,90 cada.
-            </p>
-            <div className="avulso-botoes">
-              {analise.tier2_payment_status !== 'paid' && (
-                <button className="btn-avulso" onClick={() => handleComprarAvulso('projecao12m')} disabled={!!processandoAvulso}>
-                  {processandoAvulso === 'projecao12m' ? '⏳ Abrindo…' : '🔮 Só a Previsão do Ano — R$ 29,90'}
-                </button>
-              )}
-              {analise.hd_payment_status !== 'paid' && (
-                <button className="btn-avulso" onClick={() => handleComprarAvulso('humandesign')} disabled={!!processandoAvulso}>
-                  {processandoAvulso === 'humandesign' ? '⏳ Abrindo…' : '🧬 Só o Human Design — R$ 29,90'}
-                </button>
-              )}
-            </div>
-          </div>
-        )}
 
         <BotaoCompartilharStory analiseId={id} pago={analise.payment_status === 'paid'} numero={numeroVidaFinal} origem="resultado" />
 
@@ -1461,25 +1416,6 @@ const globalCss = `
   }
   .reforco-text { font-size: 17px; color: var(--muted); max-width: 420px; line-height: 1.7; font-style: italic; }
 
-  /* ── Bônus avulsos ── */
-  .avulso-block {
-    margin: 40px auto 0; padding: 24px 20px; max-width: 460px;
-    display: flex; flex-direction: column; align-items: center; gap: 10px;
-    text-align: center; border-top: 1px solid var(--border);
-  }
-  .avulso-titulo { font-family: 'Cinzel', serif; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0; }
-  .avulso-desc { font-size: 15px; color: var(--muted); line-height: 1.6; margin: 0 0 6px; }
-  .avulso-botoes { display: flex; flex-direction: column; gap: 10px; width: 100%; }
-  .btn-avulso {
-    padding: 13px 18px; border-radius: 999px;
-    border: 1.5px solid var(--border-strong);
-    background: rgba(255,255,255,0.03);
-    color: var(--text); font-family: 'Cormorant Garamond', serif;
-    font-size: 15px; font-weight: 600; cursor: pointer;
-    transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
-  }
-  .btn-avulso:hover:not(:disabled) { border-color: var(--secondary); background: rgba(139,92,246,0.1); transform: translateY(-1px); }
-  .btn-avulso:disabled { opacity: 0.6; cursor: default; }
 
   /* ── Loading / erro ── */
   .center {
