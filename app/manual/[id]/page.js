@@ -14,7 +14,7 @@ import { calcularSignosPessoa, gerarCompatibilidadeCompleta } from '@/lib/compat
 import FeedbackSecao, { chaveSecao } from '@/app/components/FeedbackSecao';
 import ChatAssistente from '@/app/components/ChatAssistente';
 import BotaoCompartilharStory from '@/app/components/BotaoCompartilharStory';
-import { getPrecoManual } from '@/lib/preco';
+import { getPrecoManual, PRECO_BONUS_AVULSO, PRECO_BONUS_COMBO } from '@/lib/preco';
 
 // ==============================================
 // SUPABASE CLIENT
@@ -246,16 +246,16 @@ function ListenButton({ text, label = 'Ouvir', pauseLabel = 'Pausar áudio' }) {
 }
 
 // ==============================================
-// TOGGLE DE COMBO — oferece incluir o outro upsell junto, por R$50 no total
-// em vez de R$29,90 avulso (economia de R$9,80). Só aparece se o outro
-// produto ainda não tiver sido comprado.
+// TOGGLE DE COMBO — oferece incluir o outro upsell junto, por
+// PRECO_BONUS_COMBO no total em vez de PRECO_BONUS_AVULSO cada. Só aparece
+// se o outro produto ainda não tiver sido comprado.
 // ==============================================
 function ComboUpsellToggle({ label, checked, onChange }) {
   return (
     <label className={`combo-upsell${checked ? ' is-checked' : ''}`}>
       <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
       <span>
-        {checked ? '✅' : '➕'} Incluir também {label} — os dois por <strong>R$ 50</strong> (economize R$ 9,80)
+        {checked ? '✅' : '➕'} Incluir também {label} — os dois por <strong>R$ {PRECO_BONUS_COMBO}</strong> (economize R$ {(PRECO_BONUS_AVULSO * 2 - PRECO_BONUS_COMBO).toFixed(0)})
       </span>
     </label>
   );
@@ -655,7 +655,7 @@ export default function ManualPage() {
 
   // ==============================================
   // HANDLER: CHECKOUT DOS UPSELLS (Projeção de 12 Meses e/ou Human Design —
-  // R$29,90 avulso cada, R$50 os dois juntos, via MP)
+  // PRECO_BONUS_AVULSO cada, PRECO_BONUS_COMBO os dois juntos, via MP)
   // ==============================================
   const [processandoUpsell, setProcessandoUpsell] = useState(false);
   const [comboProjecao, setComboProjecao] = useState(false);
@@ -1654,15 +1654,15 @@ e mostrar como sair dele.
                   {processandoUpsell
                     ? '⏳ Abrindo…'
                     : comboProjecao
-                    ? '🔓 Desbloquear os Dois — R$ 50'
-                    : '🔓 Desbloquear Projeção de 12 Meses — R$ 29,90'}
+                    ? `🔓 Desbloquear os Dois — R$ ${PRECO_BONUS_COMBO}`
+                    : `🔓 Desbloquear Projeção de 12 Meses — R$ ${PRECO_BONUS_AVULSO}`}
                 </button>
               </div>
             )}
           </div>
         )}
 
-        {/* ========== UPSELL — MAPA DE HUMAN DESIGN (R$29,90, ou combo R$50) ========== */}
+        {/* ========== UPSELL — MAPA DE HUMAN DESIGN ========== */}
         {row && (() => {
           const hd = calcularHumanDesign(row.data_nascimento, row.hora_nascimento);
           if (!hd) return null;
@@ -1786,8 +1786,8 @@ e mostrar como sair dele.
                     {processandoUpsell
                       ? '⏳ Abrindo…'
                       : comboHumanDesign
-                      ? '🔓 Desbloquear os Dois — R$ 50'
-                      : '🔓 Desbloquear Mapa de Human Design — R$ 29,90'}
+                      ? `🔓 Desbloquear os Dois — R$ ${PRECO_BONUS_COMBO}`
+                      : `🔓 Desbloquear Mapa de Human Design — R$ ${PRECO_BONUS_AVULSO}`}
                   </button>
                 </div>
               )}

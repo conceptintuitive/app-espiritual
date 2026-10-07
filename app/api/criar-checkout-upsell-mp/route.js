@@ -1,13 +1,9 @@
 import { NextResponse } from "next/server";
 import { MercadoPagoConfig, Preference } from "mercadopago";
 import { createClient } from "@supabase/supabase-js";
+import { PRECO_BONUS_AVULSO, PRECO_BONUS_COMBO } from "@/lib/preco";
 
 export const runtime = "nodejs";
-
-// Cada upsell custa R$29,90 avulso, ou R$50 os dois juntos (economia de
-// R$9,80) — preço combo definido explicitamente, não é soma dos avulsos.
-const PRECO_AVULSO = 29.9;
-const PRECO_COMBO = 50;
 
 const PRODUTOS = {
   projecao12m: {
@@ -78,8 +74,17 @@ export async function POST(request) {
       return NextResponse.json({ error: "Análise não encontrada" }, { status: 404 });
     }
 
-    // Não exige mais o manual base pago — esses bônus também podem ser
-    // comprados avulsos, direto do /resultado, sem o manual completo.
+    // Exige o Manual pago — Previsão de 12 Meses e Human Design são
+    // complementos do Manual, não produtos avulsos. Sem isso, erro
+    // específico (checado pelo front pra redirecionar pra oferta do
+    // Manual, em vez de só mostrar um alerta genérico).
+    if (analise.payment_status !== "paid") {
+      return NextResponse.json(
+        { error: "manual_nao_pago", mensagem: "Esse bônus só pode ser comprado junto com o Manual." },
+        { status: 403 }
+      );
+    }
+
     const jaPago = produtos.filter((p) => analise[PRODUTOS[p].statusCol] === "paid");
     if (jaPago.length > 0) {
       return NextResponse.json(
@@ -88,7 +93,7 @@ export async function POST(request) {
       );
     }
 
-    const preco = produtos.length === 2 ? PRECO_COMBO : PRECO_AVULSO;
+    const preco = produtos.length === 2 ? PRECO_BONUS_COMBO : PRECO_BONUS_AVULSO;
     const titulo = produtos.map((p) => PRODUTOS[p].titulo).join(" + ");
     const baseUrl = getBaseUrl();
 

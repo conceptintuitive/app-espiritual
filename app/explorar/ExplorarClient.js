@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import SiteNav from '@/app/components/SiteNav';
-import { PRECO_MANUAL_PADRAO } from '@/lib/preco';
+import { PRECO_MANUAL_PADRAO, PRECO_BONUS_AVULSO } from '@/lib/preco';
 
 export default function ExplorarClient() {
   const [ultimaAnaliseId, setUltimaAnaliseId] = useState(null);
@@ -12,6 +12,11 @@ export default function ExplorarClient() {
   // cardState só mostra "pago" ou "não pago" depois de saber de verdade,
   // pra nunca piscar "Desbloquear" pra quem já comprou.
   const [pagoStatus, setPagoStatus] = useState(null);
+  // Mesma lógica null-enquanto-carrega pros bônus — Previsão/HD só são
+  // compráveis junto com o Manual, então a tag certa depende de pagoStatus
+  // E do status do bônus em si.
+  const [tier2Pago, setTier2Pago] = useState(null);
+  const [hdPago, setHdPago] = useState(null);
   // Preço de verdade vem do servidor (depende da janela de 24h do created_at
   // daquela análise) — nunca hardcoded aqui. PRECO_MANUAL_PADRAO só é usado
   // antes da resposta chegar, pra não exibir vazio/undefined por um instante.
@@ -31,9 +36,16 @@ export default function ExplorarClient() {
       .then((data) => {
         if (!mounted) return;
         setPagoStatus(Boolean(data?.pago));
+        setTier2Pago(Boolean(data?.tier2Pago));
+        setHdPago(Boolean(data?.hdPago));
         if (typeof data?.precoAtual === 'number') setPrecoAtual(data.precoAtual);
       })
-      .catch(() => { if (mounted) setPagoStatus(false); });
+      .catch(() => {
+        if (!mounted) return;
+        setPagoStatus(false);
+        setTier2Pago(false);
+        setHdPago(false);
+      });
     return () => { mounted = false; };
   }, [ultimaAnaliseId]);
 
@@ -89,12 +101,27 @@ export default function ExplorarClient() {
       ? 'A prévia é só o começo. Faltam seu Ponto Cego, os Bloqueios Invisíveis que se repetem na sua vida e um calendário guiado de 4 semanas.'
       : 'Sua análise personalizada, com tudo que já revelamos sobre seu Sol, Lua, Ascendente e os pontos que mais importam agora.';
 
-  // Previsão do Ano e Human Design são bônus avulsos (R$29,90 cada), cada um
-  // com sua própria página de prévia + desbloqueio. Se já existe uma análise,
-  // manda direto pra lá; senão, começa pelo formulário, igual o Meu Mapa.
+  // Previsão do Ano e Human Design não são mais avulsos — só liberam junto
+  // com o Manual (R$17 cada, complemento). Cada um tem sua própria página
+  // de prévia + desbloqueio. Se já existe uma análise, manda direto pra lá;
+  // senão, começa pelo formulário, igual o Meu Mapa.
   const previsaoHref = ultimaAnaliseId ? `/previsao-do-ano/${ultimaAnaliseId}` : '/';
   const humanDesignHref = ultimaAnaliseId ? `/human-design/${ultimaAnaliseId}` : '/';
   const compatCompletaHref = ultimaAnaliseId ? `/compatibilidade-completa/${ultimaAnaliseId}` : '/';
+
+  // Mesma tag pros dois cards de bônus (Previsão e HD): precisa saber se o
+  // Manual foi pago (pra liberar a compra) e se aquele bônus específico já
+  // foi comprado — null enquanto carrega, pra nunca piscar "Desbloqueia com
+  // o Manual" pra quem já tem tudo.
+  function tagBonus(bonusPago) {
+    if (!ultimaAnaliseId) return null;
+    if (pagoStatus === null) return 'Carregando…';
+    if (bonusPago) return 'Já é seu';
+    if (pagoStatus) return `R$${PRECO_BONUS_AVULSO} · complemento do seu Manual`;
+    return 'Desbloqueia com o Manual';
+  }
+  const previsaoTag = tagBonus(tier2Pago);
+  const humanDesignTag = tagBonus(hdPago);
 
   return (
     <div className="wrap">
@@ -140,6 +167,7 @@ export default function ExplorarClient() {
 
         <Link href={previsaoHref} className="card quinary">
           <div className="icon-badge">🔮</div>
+          {previsaoTag && <span className="tag">{previsaoTag}</span>}
           <h3>Previsão do Ano</h3>
           <p>Os próximos 12 meses, um a um, com o que cada ciclo favorece e o que pede cuidado — a partir da sua data de nascimento.</p>
           <span className="cta">Ver minha previsão →</span>
@@ -147,6 +175,7 @@ export default function ExplorarClient() {
 
         <Link href={humanDesignHref} className="card senary">
           <div className="icon-badge">🧬</div>
+          {humanDesignTag && <span className="tag">{humanDesignTag}</span>}
           <h3>Human Design</h3>
           <p>Seu Tipo, sua Autoridade e seu Perfil — como sua energia funciona de verdade, a partir da data, hora e local de nascimento.</p>
           <span className="cta">Descobrir meu Human Design →</span>
