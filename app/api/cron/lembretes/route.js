@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
 import { gerarProjecao12Meses } from "@/lib/transitos12meses";
 import { gerarGanchoNutricaoLead } from "@/lib/nutricaoLeadTextos";
+import { PRECO_MANUAL_JANELA, PRECO_MANUAL_PADRAO } from "@/lib/preco";
 
 export const runtime = "nodejs";
 
@@ -74,16 +75,16 @@ function emailTemplate({ nome, link, variant, unsubUrl }) {
   }
 
   return {
-    subject: "Seu Manual ainda está a R$47, por poucas horas",
+    subject: `Últimas horas a R$${PRECO_MANUAL_JANELA}`,
     html: `
 <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;background:#0f0f14;padding:40px 20px;">
   <div style="max-width:520px;margin:0 auto;background:#1a1a24;border-radius:18px;padding:32px;color:#fff;text-align:center;">
     <h1 style="margin:0 0 12px;font-size:22px;font-weight:600;">${primeiroNome}, seu padrão continua sem nome 🌙</h1>
     <p style="color:#bbb;font-size:14px;margin:0 0 24px;">
-      Seu mapa já foi lido. Falta você ver o resto: seu Ponto Cego, os Bloqueios Invisíveis e o calendário guiado. O valor de R$47 vale até completar 24h da sua análise. Depois disso, o Manual passa para R$97.
+      Seu mapa já foi lido. Falta você ver o resto: seu Ponto Cego, os Bloqueios Invisíveis e o calendário guiado. O valor de R$${PRECO_MANUAL_JANELA} vale até completar 24h da sua análise. Depois disso, o Manual passa para R$${PRECO_MANUAL_PADRAO}.
     </p>
     <a href="${link}" style="display:inline-block;padding:14px 24px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;text-decoration:none;border-radius:12px;font-weight:600;font-size:14px;">
-      Ver meu Manual por R$47
+      Ver meu Manual por R$${PRECO_MANUAL_JANELA}
     </a>
     <p style="margin:28px 0 0;font-size:12px;color:#777;">
       Se o botão não funcionar, copie e cole no navegador:<br/>
@@ -93,7 +94,7 @@ function emailTemplate({ nome, link, variant, unsubUrl }) {
   </div>
   <p style="text-align:center;font-size:12px;color:#666;margin-top:24px;">Com carinho,<br/>Equipe Intuitive ✨</p>
 </div>`.trim(),
-    text: `${primeiroNome}, seu Manual ainda está a R$47, por poucas horas: ${link}${unsubscribeFooterText(unsubUrl)}`,
+    text: `${primeiroNome}, últimas horas a R$${PRECO_MANUAL_JANELA}: ${link}${unsubscribeFooterText(unsubUrl)}`,
   };
 }
 
@@ -355,7 +356,7 @@ export async function GET(request) {
       supabase, resend, baseUrl, variant: "1h", coluna: "reminder_1h_sent_at",
       desdeMin: 55, ateMin: 70,
     });
-    // Dispara em +20h (não +24h) pra chegar antes da janela de R$47 fechar
+    // Dispara em +20h (não +24h) pra chegar antes da janela de R$27 fechar
     // (fecha em 24h, ver criar-checkout[-mp]/route.js). variant/coluna
     // continuam "24h" — nome legado, não vale migração só por isso.
     const lote24h = await processarLote({

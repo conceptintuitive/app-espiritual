@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { MercadoPagoConfig, Preference } from "mercadopago";
 import { createClient } from "@supabase/supabase-js";
+import { getPrecoManual } from "@/lib/preco";
 
 export const runtime = "nodejs";
 
@@ -73,14 +74,11 @@ export async function POST(request) {
 
     const baseUrl = getBaseUrl();
 
-    // Preço de lançamento (R$47) vale só nas 24h após a análise ser gerada
-    // ("só hoje") — depois disso cobra o valor cheio (R$97). Mesmo cálculo
-    // do countdown exibido em /resultado, pra nunca cobrar diferente do que
-    // foi mostrado.
-    const JANELA_LANCAMENTO_MS = 24 * 60 * 60 * 1000;
-    const dentroDaJanela =
-      analise.created_at && Date.now() - new Date(analise.created_at).getTime() <= JANELA_LANCAMENTO_MS;
-    const precoManual = dentroDaJanela ? 47 : 97;
+    // Preço de lançamento (R$27) vale só nas 24h após a análise ser gerada
+    // ("só hoje") — depois disso cobra o valor padrão (R$47). lib/preco.js
+    // é a fonte única dessa regra — mesmo cálculo do countdown exibido em
+    // /resultado, pra nunca cobrar diferente do que foi mostrado.
+    const precoManual = getPrecoManual(analise.created_at);
 
     const items = [
       {

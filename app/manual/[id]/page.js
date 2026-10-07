@@ -14,6 +14,7 @@ import { calcularSignosPessoa, gerarCompatibilidadeCompleta } from '@/lib/compat
 import FeedbackSecao, { chaveSecao } from '@/app/components/FeedbackSecao';
 import ChatAssistente from '@/app/components/ChatAssistente';
 import BotaoCompartilharStory from '@/app/components/BotaoCompartilharStory';
+import { getPrecoManual } from '@/lib/preco';
 
 // ==============================================
 // SUPABASE CLIENT
@@ -428,12 +429,22 @@ export default function ManualPage() {
       if (window.localStorage.getItem(storageKey)) return;
     } catch {}
 
+    // Antes hardcoded em 47 — não refletia o que foi cobrado de verdade.
+    // Hoje nenhuma coluna guarda o valor pago, então recalcula pela mesma
+    // regra do checkout (lib/preco.js), usando paid_at como referência —
+    // não "agora", pra não mudar de valor se a pessoa reabrir o manual dias
+    // depois de ter pago dentro da janela. Se um dia existir uma coluna com
+    // o valor pago de verdade (ex: valor_pago), ela tem prioridade.
+    const valorPurchase = typeof row.valor_pago === 'number'
+      ? row.valor_pago
+      : getPrecoManual(row.created_at, row.paid_at ? new Date(row.paid_at).getTime() : Date.now());
+
     try {
       window?.fbq?.(
         'track',
         'Purchase',
         {
-          value: 47,
+          value: valorPurchase,
           currency: 'BRL',
           content_ids: [id],
           content_type: 'product',

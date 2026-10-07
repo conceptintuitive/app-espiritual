@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { PRECO_MANUAL_PADRAO } from '@/lib/preco';
 
 const LIMITE_GRATIS = 3;
 const SUGESTOES = [
@@ -9,7 +10,7 @@ const SUGESTOES = [
   'O que o meu Ano Pessoal está pedindo de mim?',
 ];
 
-export default function ChatAssistente({ analiseId, isPaid, firstName, autoOpen, nudge }) {
+export default function ChatAssistente({ analiseId, isPaid, firstName, autoOpen, nudge, precoManual = PRECO_MANUAL_PADRAO }) {
   const [open, setOpen] = useState(Boolean(autoOpen));
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
@@ -128,7 +129,7 @@ export default function ChatAssistente({ analiseId, isPaid, firstName, autoOpen,
 
           {esgotado && !isPaid && (
             <button className="chat-upsell" onClick={irParaOferta}>
-              Desbloquear perguntas ilimitadas — R$ 47
+              Desbloquear perguntas ilimitadas — R$ {precoManual}
             </button>
           )}
         </div>

@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
+import { getPrecoManual } from "@/lib/preco";
 
 export const runtime = "nodejs"; // força Node (Stripe não roda no Edge)
 
@@ -91,15 +92,12 @@ if (analise.payment_status === "paid") {
 
     const baseUrl = getBaseUrl();
 
-    // Preço de lançamento (R$47) vale só nas 24h após a análise ser gerada
-    // ("só hoje") — depois disso cobra o valor cheio (R$97). Mesmo cálculo
-    // do countdown exibido em /resultado e do checkout via Mercado Pago
-    // (app/api/criar-checkout-mp/route.js), pra nunca cobrar diferente do
-    // que foi mostrado, seja qual for o método de pagamento escolhido.
-    const JANELA_LANCAMENTO_MS = 24 * 60 * 60 * 1000;
-    const dentroDaJanela =
-      analise.created_at && Date.now() - new Date(analise.created_at).getTime() <= JANELA_LANCAMENTO_MS;
-    const precoManual = dentroDaJanela ? 4700 : 9700;
+    // Preço de lançamento (R$27) vale só nas 24h após a análise ser gerada
+    // ("só hoje") — depois disso cobra o valor padrão (R$47). lib/preco.js
+    // é a fonte única dessa regra (mesmo cálculo do checkout via Mercado
+    // Pago e do countdown em /resultado) — *100 porque o Stripe trabalha em
+    // centavos, MP não.
+    const precoManual = getPrecoManual(analise.created_at) * 100;
 
     const sessionParams = {
   mode: "payment",

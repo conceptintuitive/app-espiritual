@@ -38,8 +38,9 @@ npm run start    # Servidor de produção
 | `lib/calculos.js` | Cálculo do número de vida (redução numerológica) e signo zodiacal. |
 | `lib/ia.js` | Integração Groq API (llama-3.3-70b). Existe, mas **não está conectada ao fluxo principal** ainda. |
 | `lib/supabaseBrowser.js` | Cliente Supabase para o browser. |
+| `lib/preco.js` | Fonte única do preço do Manual — `getPrecoManual(createdAt)` retorna R$27 nas primeiras 24h desde a análise, R$47 depois. Usada pelos dois checkouts, pela página de resultado, e-mails, Oráculo e `/explorar`. |
 | `app/api/gerar-analise/route.js` | Recebe dados do formulário, computa signo + numero_vida, insere em `analises`. |
-| `app/api/criar-checkout/route.js` | Cria sessão Stripe (R$ 47). Previne double-pay. |
+| `app/api/criar-checkout/route.js` | Cria sessão Stripe. Preço via `lib/preco.js` (R$27/R$47 por `created_at`). Previne double-pay. |
 | `app/api/webhook/route.js` | Valida assinatura Stripe, atualiza DB, envia e-mail, dispara evento GA4 `purchase`. |
 | `app/api/send/route.js` | Envia e-mail de acesso via Resend. |
 | `app/page.js` | Landing page com formulário (55 KB); persiste estado no localStorage. |
@@ -91,3 +92,4 @@ Três integrações distintas com o TikTok, não confundir: `TIKTOK_ACCESS_TOKEN
 - `app/page.js` é um Client Component grande; evite adicionar lógica pesada — prefira mover para API routes ou `lib/`.
 - O Stripe Checkout usa `promo_codes: true` — não remover.
 - O webhook valida `stripe-signature` antes de processar; qualquer alteração deve manter essa validação.
+- **Preço do Manual**: R$27 nas primeiras 24h desde `created_at` da análise, R$47 depois (sem tier de R$97). Regra única em `lib/preco.js` (`getPrecoManual`) — nunca hardcode 27/47 em outro lugar; importe de lá. Usada pelos checkouts (MP e Stripe), pela página de resultado (`precoAtual`), pelo Oráculo (prop `precoManual` do `ChatAssistente`), pelo e-mail de recuperação de +20h e pelo card do `/explorar` (via `/api/status-analise`, que devolve `precoAtual` já calculado).

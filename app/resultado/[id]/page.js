@@ -10,6 +10,7 @@ import { TESTIMONIALS } from '@/lib/testimonials';
 import ChatAssistente from '@/app/components/ChatAssistente';
 import SeloArquetipo from '@/app/components/SeloArquetipo';
 import BotaoCompartilharStory from '@/app/components/BotaoCompartilharStory';
+import { PRECO_MANUAL_JANELA, PRECO_MANUAL_PADRAO } from '@/lib/preco';
 
 // ── Supabase ──────────────────────────────────────────────────────────────────
 function getSupabaseClient() {
@@ -469,7 +470,9 @@ export default function ResultadoPage() {
       return;
     }
     setProcessando(true);
-    const valorTotal = incluirTier2 ? 97 : 47;
+    // Antes era hardcoded (47/97) — divergia do preço real fora da janela.
+    // precoAtual já é a fonte de verdade (lib/preco.js) usada no botão/CTA.
+    const valorTotal = incluirTier2 ? precoAtual + 50 : precoAtual;
     try {
       try { window?.gtag?.('event', 'clique_comprar', { event_category: 'conversion', value: valorTotal, currency: 'BRL' }); } catch {}
       try { window?.fbq?.('track', 'InitiateCheckout', { value: valorTotal, currency: 'BRL' }); } catch {}
@@ -592,11 +595,10 @@ export default function ResultadoPage() {
   // "mais de X" sempre arredondado pra baixo (nunca infla o número real); só mostra a partir de um mínimo plausível
   const roundedStatsCount = statsCount && statsCount >= 15 ? Math.floor(statsCount / 10) * 10 : null;
   // Preço de verdade, não só visual: depois que a janela de 24h expira, o
-  // preço de lançamento acaba de fato — em /api/criar-checkout-mp e aqui usam
-  // o mesmo cálculo (created_at + 24h), então nunca fica um valor exibido
-  // diferente do que é cobrado por ali. (O checkout via Stripe, usado como
-  // fallback em /manual/[id], ainda não tem essa janela — ver nota separada.)
-  const precoAtual = ofertaExpirada ? 97 : 47;
+  // preço de lançamento acaba de fato — lib/preco.js é a fonte única dessa
+  // regra, usada aqui e nos dois checkouts (MP e Stripe), então nunca fica
+  // um valor exibido diferente do que é cobrado.
+  const precoAtual = ofertaExpirada ? PRECO_MANUAL_PADRAO : PRECO_MANUAL_JANELA;
   const cargoLabel = incluirTier2
     ? `DESBLOQUEAR MANUAL + PROJEÇÃO 12 MESES + HUMAN DESIGN — R$ ${precoAtual + 50}`
     : `DESBLOQUEAR MEU MANUAL — R$ ${precoAtual}`;
@@ -937,17 +939,17 @@ export default function ResultadoPage() {
           <div className="offer-badge-sm">Seu plano completo</div>
           {!ofertaExpirada && countdownLabel && (
             <p className="countdown-badge">
-              🗓️ Esse preço é só de hoje — amanhã vira R$ 97,00 <strong>({countdownLabel})</strong>
+              🗓️ R$ {PRECO_MANUAL_JANELA} só nas primeiras 24h — depois vira R$ {PRECO_MANUAL_PADRAO} <strong>({countdownLabel})</strong>
             </p>
           )}
           <p className="ancora-valor">14 seções personalizadas · 30+ páginas · feito só pra você</p>
           <div className="offer-price-row">
             {ofertaExpirada ? (
-              <span className="price-now-sm">R$ 97,00</span>
+              <span className="price-now-sm">R$ {PRECO_MANUAL_PADRAO},00</span>
             ) : (
               <>
-                <span className="price-old-sm">de R$ 97,00</span>
-                <span className="price-now-sm">por R$ 47,00</span>
+                <span className="price-old-sm">de R$ {PRECO_MANUAL_PADRAO},00</span>
+                <span className="price-now-sm">por R$ {PRECO_MANUAL_JANELA},00</span>
               </>
             )}
           </div>
@@ -1080,7 +1082,7 @@ export default function ResultadoPage() {
       </div>
 
       {/* ══ ASSISTENTE DE IA — 3 perguntas grátis na prévia ══ */}
-      <ChatAssistente analiseId={id} isPaid={false} firstName={firstName} autoOpen={abrirChat} nudge={nudgeChat} />
+      <ChatAssistente analiseId={id} isPaid={false} firstName={firstName} autoOpen={abrirChat} nudge={nudgeChat} precoManual={precoAtual} />
 
       {/* ══ LINK MANUAL DE CHECKOUT — reserva pra quando o redirecionamento
            automático é bloqueado silenciosamente (comum em navegadores
