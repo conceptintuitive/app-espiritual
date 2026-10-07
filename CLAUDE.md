@@ -55,7 +55,7 @@ As seções geradas incluem: Perfil Energético, Missão de Alma, Desafios Kárm
 
 ### Supabase — tabela `analises`
 
-Colunas relevantes: `id` (UUID PK), `nome`, `email`, `data_nascimento`, `hora_nascimento`, `local_nascimento`, `objetivo_principal`, `relacao_status`, `trabalho_status`, `signo`, `numero_vida`, `status`, `payment_status` (`'pending'` | `'paid'`), `stripe_session_id`, `stripe_payment_intent`, `paid_at`, `updated_at`.
+Colunas relevantes: `id` (UUID PK), `nome`, `email`, `data_nascimento`, `hora_nascimento`, `local_nascimento`, `objetivo_principal`, `relacao_status`, `trabalho_status`, `signo`, `numero_vida`, `status`, `payment_status` (`'pending'` | `'paid'`), `stripe_session_id`, `stripe_payment_intent`, `mp_payment_id`, `paid_at`, `valor_pago`, `origem` (`'venda'` | `'cortesia'` | `'teste'`), `updated_at`.
 
 ## Environment Variables
 
@@ -79,6 +79,7 @@ TIKTOK_CLIENT_SECRET=
 TIKTOK_OAUTH_REDIRECT_URI=
 TIKTOK_OAUTH_SCOPES=
 TIKTOK_PUBLISH_API_SECRET=
+TEST_EMAILS=
 ```
 
 `SUPABASE_SERVICE_ROLE_KEY` é usada apenas em API routes (server-side). As variáveis `NEXT_PUBLIC_*` ficam expostas no cliente. `CRON_SECRET` protege `/api/cron/lembretes` e `/api/cron/tiktok-refresh` contra chamadas não autorizadas — o disparo é feito por um cron externo (ex: cron-job.org), já que o plano Vercel Hobby não permite cron com intervalo menor que 1x/dia.
@@ -93,3 +94,4 @@ Três integrações distintas com o TikTok, não confundir: `TIKTOK_ACCESS_TOKEN
 - O Stripe Checkout usa `promo_codes: true` — não remover.
 - O webhook valida `stripe-signature` antes de processar; qualquer alteração deve manter essa validação.
 - **Preço do Manual**: R$27 nas primeiras 24h desde `created_at` da análise, R$47 depois (sem tier de R$97). Regra única em `lib/preco.js` (`getPrecoManual`) — nunca hardcode 27/47 em outro lugar; importe de lá. Usada pelos checkouts (MP e Stripe), pela página de resultado (`precoAtual`), pelo Oráculo (prop `precoManual` do `ChatAssistente`), pelo e-mail de recuperação de +20h e pelo card do `/explorar` (via `/api/status-analise`, que devolve `precoAtual` já calculado).
+- **`valor_pago` e `origem`**: `app/api/webhook-mp/route.js` e `app/api/webhook/route.js` gravam `valor_pago` (valor real cobrado na transação — `payment.transaction_amount` no MP, `session.amount_total / 100` no Stripe) em todo `.update()` que confirma pagamento (Manual, upsell de bônus avulso, Compatibilidade Completa). `valor_pago` reflete a transação mais recente confirmada, não um total acumulado. `origem` vem de `getOrigemVenda(email)` (`lib/testEmails.js`): `'venda'` por padrão, ou `'teste'` se o e-mail do pagador estiver na env `TEST_EMAILS` (lista separada por vírgula — compras de teste da própria autora, pra não sujar os números). Pagamento marcado como pago manualmente (fora de webhook, ex. `scripts/test-ia.mjs`) deve gravar `origem = 'cortesia'` e `paid_at`. Nunca marcar como pago sem esses dois campos. `scripts/backfill-origem-mp.mjs` resolve os registros antigos que a migração `0013_valor_pago_origem.sql` deixou com `origem` nulo (precisam consultar a API do MP) — roda em dry-run por padrão, `--apply` pra escrever. **Temporário**: `GET /api/admin/backfill-origem?secret=CRON_SECRET[&apply=1]` expõe essa mesma lógica como rota (criada pra rodar o backfill sem ambiente local) — remover depois do backfill único em produção.

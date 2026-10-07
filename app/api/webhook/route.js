@@ -17,6 +17,7 @@ import {
 import { sendGA4Purchase } from "@/lib/ga4";
 import { sendTikTokPurchase } from "@/lib/tiktok";
 import { sendMetaPurchase } from "@/lib/meta";
+import { getOrigemVenda } from "@/lib/testEmails";
 
 // ─── Lógica compartilhada entre pagamento síncrono e assíncrono (boleto) ──────
 async function handlePaymentSuccess(session, supabase) {
@@ -55,6 +56,16 @@ async function handlePaymentSuccess(session, supabase) {
   if (updateError) {
     console.error("❌ Erro ao atualizar status de pagamento:", updateError);
     return;
+  }
+
+  // Bookkeeping, best-effort: se isso falhar, o Manual já foi liberado
+  // acima — não pode travar nem impedir a resposta 200 pro Stripe por causa disso.
+  const { error: valorPagoError } = await supabase
+    .from("analises")
+    .update({ valor_pago: (session.amount_total ?? 0) / 100, origem: getOrigemVenda(email) })
+    .eq("id", analiseId);
+  if (valorPagoError) {
+    console.error("⚠️ Falha ao gravar valor_pago/origem do Manual (já liberado):", valorPagoError);
   }
 
   console.log('✅ Status atualizado para "paid"');

@@ -15,6 +15,7 @@ import {
 import { sendGA4Purchase } from "@/lib/ga4";
 import { sendTikTokPurchase } from "@/lib/tiktok";
 import { sendMetaPurchase } from "@/lib/meta";
+import { getOrigemVenda } from "@/lib/testEmails";
 
 export const runtime = "nodejs";
 
@@ -57,6 +58,7 @@ export async function POST(request) {
     const payerPhone = payment.payer?.phone?.number
       ? `${payment.payer.phone.area_code || ""}${payment.payer.phone.number}`
       : null;
+    const origemPagamento = getOrigemVenda(payment.payer?.email);
 
     if (payment.status !== "approved") {
       return NextResponse.json({ received: true, status: payment.status });
@@ -112,6 +114,7 @@ export async function POST(request) {
         updates.hd_paid_at = new Date().toISOString();
       }
 
+      // Crítico: libera o(s) bônus antes de qualquer outra coisa.
       const { error: upsellUpdateError } = await supabase
         .from("analises")
         .update(updates)
@@ -120,6 +123,16 @@ export async function POST(request) {
       if (upsellUpdateError) {
         console.error("Erro ao atualizar upsell no Supabase:", upsellUpdateError);
         return NextResponse.json({ error: "Erro ao atualizar" }, { status: 500 });
+      }
+
+      // Bookkeeping, best-effort: se isso falhar, o bônus já foi liberado
+      // acima — não pode travar nem voltar erro pro MP por causa disso.
+      const { error: upsellValorError } = await supabase
+        .from("analises")
+        .update({ valor_pago: payment.transaction_amount ?? 0, origem: origemPagamento })
+        .eq("id", analiseId);
+      if (upsellValorError) {
+        console.error("⚠️ Falha ao gravar valor_pago/origem do upsell (bônus já liberado):", upsellValorError);
       }
 
       const produtosUpsellLabel =
@@ -168,6 +181,7 @@ export async function POST(request) {
     }
 
     if (isCompat) {
+      // Crítico: libera a Compatibilidade antes de qualquer outra coisa.
       const { error: compatUpdateError } = await supabase
         .from("analises")
         .update({
@@ -181,6 +195,16 @@ export async function POST(request) {
       if (compatUpdateError) {
         console.error("Erro ao atualizar compatibilidade no Supabase:", compatUpdateError);
         return NextResponse.json({ error: "Erro ao atualizar" }, { status: 500 });
+      }
+
+      // Bookkeeping, best-effort: se isso falhar, a Compatibilidade já foi
+      // liberada acima — não pode travar nem voltar erro pro MP por causa disso.
+      const { error: compatValorError } = await supabase
+        .from("analises")
+        .update({ valor_pago: payment.transaction_amount ?? 0, origem: origemPagamento })
+        .eq("id", analiseId);
+      if (compatValorError) {
+        console.error("⚠️ Falha ao gravar valor_pago/origem da compatibilidade (já liberada):", compatValorError);
       }
 
       after(async () => {
@@ -228,11 +252,13 @@ export async function POST(request) {
     const includesTier2 = payment.metadata?.includes_tier2 === true || payment.metadata?.includes_tier2 === "true";
     const includesHd = payment.metadata?.includes_hd === true || payment.metadata?.includes_hd === "true";
 
+    // Crítico: libera o Manual (e o combo, se houver) antes de qualquer outra coisa.
     const { error: updateError } = await supabase
       .from("analises")
       .update({
         payment_status: "paid",
         mp_payment_id: paymentId.toString(),
+        paid_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         ...(includesTier2 && {
           tier2_payment_status: "paid",
@@ -250,6 +276,16 @@ export async function POST(request) {
     if (updateError) {
       console.error("Erro ao atualizar Supabase:", updateError);
       return NextResponse.json({ error: "Erro ao atualizar" }, { status: 500 });
+    }
+
+    // Bookkeeping, best-effort: se isso falhar, o Manual já foi liberado
+    // acima — não pode travar nem voltar erro pro MP por causa disso.
+    const { error: valorPagoError } = await supabase
+      .from("analises")
+      .update({ valor_pago: payment.transaction_amount ?? 0, origem: origemPagamento })
+      .eq("id", analiseId);
+    if (valorPagoError) {
+      console.error("⚠️ Falha ao gravar valor_pago/origem do Manual (já liberado):", valorPagoError);
     }
 
     // Busca o email da análise pra enviar o link do manual — se for presente,
