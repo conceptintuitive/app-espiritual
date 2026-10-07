@@ -115,10 +115,14 @@ export async function POST(request) {
         },
         back_urls: {
           success: `${baseUrl}/manual/${analiseId}`,
-          failure: `${baseUrl}/resultado/${analiseId}`,
+          failure: `${baseUrl}/resultado/${analiseId}?pagamento=recusado`,
           pending: `${baseUrl}/resultado/${analiseId}?pending=true`,
         },
         auto_return: "approved",
+        // Explícito em vez de depender só da configuração do app no painel do
+        // MP — se aquela config estiver errada/desatualizada, o pagamento
+        // pode ser aprovado no MP sem a gente nunca ficar sabendo.
+        notification_url: `${baseUrl}/api/webhook-mp`,
         external_reference: analiseId,
         // Propaga pro objeto de pagamento no webhook, pra saber quais bônus
         // esse checkout já incluía junto com o manual.

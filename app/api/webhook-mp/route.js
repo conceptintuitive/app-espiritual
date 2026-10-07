@@ -16,6 +16,7 @@ import { sendGA4Purchase } from "@/lib/ga4";
 import { sendTikTokPurchase } from "@/lib/tiktok";
 import { sendMetaPurchase } from "@/lib/meta";
 import { getOrigemVenda } from "@/lib/testEmails";
+import { buildAtualizacaoPagamentoManual } from "@/lib/mpPagamentoManual";
 
 export const runtime = "nodejs";
 
@@ -249,28 +250,15 @@ export async function POST(request) {
     // Se o checkout foi feito com o bônus junto (opção "incluir tier2" no
     // /resultado, +R$50 = preço combo), o metadata da preferência carrega
     // isso até o pagamento — desbloqueia os dois bônus, não só um.
-    const includesTier2 = payment.metadata?.includes_tier2 === true || payment.metadata?.includes_tier2 === "true";
-    const includesHd = payment.metadata?.includes_hd === true || payment.metadata?.includes_hd === "true";
+    const { critica, bookkeeping } = buildAtualizacaoPagamentoManual(payment, paymentId);
 
-    // Crítico: libera o Manual (e o combo, se houver) antes de qualquer outra coisa.
+    // Crítico: libera o Manual (e o combo, se houver) antes de qualquer outra
+    // coisa. Idempotente mesmo se /api/confirmar-pagamento-mp já liberou
+    // antes (ex: pessoa chegou do redirect do MP antes desse webhook) —
+    // regrava os mesmos campos, sem efeito colateral.
     const { error: updateError } = await supabase
       .from("analises")
-      .update({
-        payment_status: "paid",
-        mp_payment_id: paymentId.toString(),
-        paid_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        ...(includesTier2 && {
-          tier2_payment_status: "paid",
-          tier2_mp_payment_id: paymentId.toString(),
-          tier2_paid_at: new Date().toISOString(),
-        }),
-        ...(includesHd && {
-          hd_payment_status: "paid",
-          hd_mp_payment_id: paymentId.toString(),
-          hd_paid_at: new Date().toISOString(),
-        }),
-      })
+      .update(critica)
       .eq("id", analiseId);
 
     if (updateError) {
@@ -282,7 +270,7 @@ export async function POST(request) {
     // acima — não pode travar nem voltar erro pro MP por causa disso.
     const { error: valorPagoError } = await supabase
       .from("analises")
-      .update({ valor_pago: payment.transaction_amount ?? 0, origem: origemPagamento })
+      .update(bookkeeping)
       .eq("id", analiseId);
     if (valorPagoError) {
       console.error("⚠️ Falha ao gravar valor_pago/origem do Manual (já liberado):", valorPagoError);

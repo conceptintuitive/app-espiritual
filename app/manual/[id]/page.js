@@ -412,6 +412,84 @@ export default function ManualPage() {
   const hasPaid = useMemo(() => isPaid(row), [row]);
 
   // ==============================================
+  // CHEGOU DO REDIRECT DO MP (?payment_id=...) — confirmação pós-pagamento
+  // Enquanto não sabemos se payment_status já virou 'paid' (corrida contra o
+  // webhook), NUNCA mostra o paywall normal com botão "Desbloquear" pra quem
+  // claramente acabou de pagar — mostra "Confirmando..." + polling.
+  // ==============================================
+  const mpPaymentId = searchParams.get('payment_id') || searchParams.get('collection_id');
+  const [confirmandoMp, setConfirmandoMp] = useState(Boolean(mpPaymentId));
+  const [mpConfirmTimedOut, setMpConfirmTimedOut] = useState(false);
+  const [mpConfirmRetryKey, setMpConfirmRetryKey] = useState(0);
+
+  useEffect(() => {
+    if (!mpPaymentId || !id || loading) return;
+    if (hasPaid) { setConfirmandoMp(false); return; }
+
+    let mounted = true;
+    let timer = null;
+    let attempts = 0;
+    const maxAttempts = 40; // 40 x 3s = 2 minutos
+    setConfirmandoMp(true);
+    setMpConfirmTimedOut(false);
+
+    async function refetchRow() {
+      try {
+        const supabase = getSupabaseClient();
+        if (!supabase) return false;
+        const { data } = await supabase.from('analises').select('*').eq('id', id).single();
+        if (!mounted || !data) return false;
+        setRow(data);
+        return isPaid(data);
+      } catch {
+        return false;
+      }
+    }
+
+    async function poll() {
+      const pago = await refetchRow();
+      if (!mounted) return;
+      if (pago) { setConfirmandoMp(false); return; }
+      attempts += 1;
+      if (attempts >= maxAttempts) {
+        setConfirmandoMp(false);
+        setMpConfirmTimedOut(true);
+        return;
+      }
+      timer = setTimeout(poll, 3000);
+    }
+
+    // Consulta a API do MP direto no servidor (sem esperar o webhook) — se
+    // já estiver 'approved', libera na hora. Idempotente com o webhook
+    // (ver lib/mpPagamentoManual.js): não importa qual dos dois chega primeiro.
+    async function confirmarEEntaoPollar() {
+      try {
+        const res = await fetch('/api/confirmar-pagamento-mp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ analiseId: id, paymentId: mpPaymentId }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!mounted) return;
+        if (data?.pago) {
+          const confirmou = await refetchRow();
+          if (!mounted) return;
+          if (confirmou) { setConfirmandoMp(false); return; }
+        }
+      } catch {}
+      if (!mounted) return;
+      poll();
+    }
+
+    confirmarEEntaoPollar();
+
+    return () => {
+      mounted = false;
+      if (timer) clearTimeout(timer);
+    };
+  }, [mpPaymentId, id, loading, hasPaid, mpConfirmRetryKey]);
+
+  // ==============================================
   // PIXEL DO META — PURCHASE (client-side)
   // Só dispara quando hasPaid já é true (mesma trava que libera o conteúdo).
   // event_id = o mesmo transactionId que o Conversions API já usa no
@@ -897,8 +975,43 @@ e mostrar como sair dele.
           </div>
         </div>
 
-        {/* ========== PAYWALL (se não pagou) ========== */}
-        {!hasPaid && (
+        {/* ========== CHEGOU DO MP, AINDA NÃO CONFIRMADO ========== */}
+        {/* Nunca mostra o paywall com "Desbloquear" pra quem já pagou — só
+            o estado de confirmação/timeout, até o banco confirmar. */}
+        {!hasPaid && mpPaymentId && (
+          <div className="card paywall">
+            {confirmandoMp ? (
+              <div style={{ textAlign: 'center', padding: '12px 0' }}>
+                <div className="spinner" style={{ margin: '0 auto 16px' }} />
+                <h2 className="h2">Confirmando seu pagamento…</h2>
+                <p className="p">Isso leva só um instante.</p>
+              </div>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '12px 0' }}>
+                <h2 className="h2">Pagamento recebido 🎉</h2>
+                <p className="p">
+                  Seu pagamento foi recebido e está sendo confirmado — isso pode levar
+                  alguns minutos. Assim que for processado, seu acesso chega também
+                  por e-mail.
+                </p>
+                <button
+                  className="btn"
+                  style={{ marginTop: 16 }}
+                  onClick={() => setMpConfirmRetryKey((k) => k + 1)}
+                >
+                  🔄 Verificar de novo
+                </button>
+                <p className="muted" style={{ marginTop: 12, fontSize: 13 }}>
+                  {/* TODO (Bianca): confirmar/trocar pelo contato de suporte real antes do merge */}
+                  Se demorar mais do que isso, nos chame pelo suporte (suporte@intuitiveconcept.com.br).
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ========== PAYWALL (se não pagou, SEM vir do MP) ========== */}
+        {!hasPaid && !mpPaymentId && (
           <div className="card paywall">
             <h2 className="h2">🔒 Acesso Bloqueado</h2>
             <p className="p">
