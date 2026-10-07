@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import SiteNav from '@/app/components/SiteNav';
+import { PRECO_MANUAL_PADRAO } from '@/lib/preco';
 
 export default function ExplorarClient() {
   const [ultimaAnaliseId, setUltimaAnaliseId] = useState(null);
@@ -11,6 +12,10 @@ export default function ExplorarClient() {
   // cardState só mostra "pago" ou "não pago" depois de saber de verdade,
   // pra nunca piscar "Desbloquear" pra quem já comprou.
   const [pagoStatus, setPagoStatus] = useState(null);
+  // Preço de verdade vem do servidor (depende da janela de 24h do created_at
+  // daquela análise) — nunca hardcoded aqui. PRECO_MANUAL_PADRAO só é usado
+  // antes da resposta chegar, pra não exibir vazio/undefined por um instante.
+  const [precoAtual, setPrecoAtual] = useState(PRECO_MANUAL_PADRAO);
 
   useEffect(() => {
     try {
@@ -23,7 +28,11 @@ export default function ExplorarClient() {
     let mounted = true;
     fetch(`/api/status-analise?id=${encodeURIComponent(ultimaAnaliseId)}`)
       .then((r) => r.json())
-      .then((data) => { if (mounted) setPagoStatus(Boolean(data?.pago)); })
+      .then((data) => {
+        if (!mounted) return;
+        setPagoStatus(Boolean(data?.pago));
+        if (typeof data?.precoAtual === 'number') setPrecoAtual(data.precoAtual);
+      })
       .catch(() => { if (mounted) setPagoStatus(false); });
     return () => { mounted = false; };
   }, [ultimaAnaliseId]);
@@ -65,7 +74,7 @@ export default function ExplorarClient() {
     cardState === 'pago' ? 'Já é seu' :
     cardState === 'carregando' ? 'Carregando…' :
     cardState === 'sem-previa' ? 'Comece por aqui' :
-    'R$47 · sua prévia está pronta';
+    `R$${precoAtual} · sua prévia está pronta`;
 
   const meuMapaCta =
     cardState === 'pago' ? 'Abrir meu Manual →' :
