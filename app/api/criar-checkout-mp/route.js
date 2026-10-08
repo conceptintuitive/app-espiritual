@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { MercadoPagoConfig, Preference } from "mercadopago";
 import { createClient } from "@supabase/supabase-js";
 import { getPrecoManual, PRECO_BONUS_AVULSO, PRECO_BONUS_COMBO } from "@/lib/preco";
+import { emailValido } from "@/lib/emailValidacao";
 
 export const runtime = "nodejs";
 
@@ -50,8 +51,12 @@ export async function POST(request) {
       : [];
     const presenteEmail = String(body?.presenteEmail || "").trim();
     const presenteDe = String(body?.presenteDe || "").trim();
-    if (presenteEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(presenteEmail)) {
+    if (presenteEmail && !emailValido(presenteEmail)) {
       return NextResponse.json({ error: "Email de presente inválido" }, { status: 400 });
+    }
+    const emailCorrigido = String(body?.emailCorrigido || "").trim();
+    if (emailCorrigido && !emailValido(emailCorrigido)) {
+      return NextResponse.json({ error: "email_invalido", mensagem: "Esse e-mail também não parece válido. Confira e tente de novo." }, { status: 400 });
     }
 
     if (!analiseId) {
@@ -70,6 +75,30 @@ export async function POST(request) {
 
     if (analise.payment_status === "paid") {
       return NextResponse.json({ error: "Esta análise já foi paga" }, { status: 400 });
+    }
+
+    // E-mail salvo pode ter passado pela validação fraca de antes desta
+    // mudança — sem checar aqui, a criação da preference falhava lá na
+    // frente (API do MP rejeita e-mail malformado) sem explicar o motivo
+    // real pra quem clicou em comprar. Com emailCorrigido, atualiza o
+    // cadastro e segue com o checkout na mesma chamada, sem refazer o quiz.
+    let emailPagador = analise.email;
+    if (emailCorrigido) {
+      emailPagador = emailCorrigido;
+      const { error: emailUpdateError } = await supabase
+        .from("analises")
+        .update({ email: emailCorrigido, updated_at: new Date().toISOString() })
+        .eq("id", analiseId);
+      if (emailUpdateError) {
+        console.error("Erro ao atualizar e-mail da análise:", emailUpdateError);
+        return NextResponse.json({ error: "Erro ao atualizar e-mail" }, { status: 500 });
+      }
+    } else if (!emailValido(analise.email)) {
+      return NextResponse.json({
+        error: "email_invalido",
+        mensagem: `O e-mail salvo (${analise.email || "em branco"}) parece inválido. Confirme ou corrija abaixo pra continuar.`,
+        emailAtual: analise.email || "",
+      }, { status: 400 });
     }
 
     const baseUrl = getBaseUrl();
@@ -111,7 +140,7 @@ export async function POST(request) {
       body: {
         items,
         payer: {
-          email: analise.email || undefined,
+          email: emailPagador || undefined,
         },
         back_urls: {
           success: `${baseUrl}/manual/${analiseId}`,

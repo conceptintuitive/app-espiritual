@@ -5,6 +5,7 @@ import { gerarPreviewIA, gerarDiagnosticoIA, gerarAmorIA, gerarArquetiposIA, ger
 import { buildDiagnosticoCtx, buildAmorCtx, buildArquetiposCtx, buildPlano7Ctx } from '@/lib/manualgenerator';
 import { sortearCarta, TAROT_PROMPTS_EN } from '@/lib/tarot';
 import { sendMetaLead } from '@/lib/meta';
+import { emailValido } from '@/lib/emailValidacao';
 
 // Monta URL da Pollinations.ai a partir da carta sorteada.
 // A URL é estável e cacheada — o browser carrega direto, sem precisar de upload nem API key.
@@ -124,7 +125,7 @@ export async function POST(request) {
     if (!nome?.trim() || nome.trim().length < 3) {
       return NextResponse.json({ error: 'Nome inválido' }, { status: 400 });
     }
-    if (!email?.includes('@')) {
+    if (!emailValido(email)) {
       return NextResponse.json({ error: 'Email inválido' }, { status: 400 });
     }
     if (!data_nascimento) {
