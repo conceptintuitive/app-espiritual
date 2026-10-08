@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { TESTIMONIALS } from '@/lib/testimonials';
+import { emailValido, sugestaoEmail } from '@/lib/emailValidacao';
 
 // ── FAQ accordion ─────────────────────────────────────────────────────────────
 function FaqItem({ q, a }) {
@@ -62,6 +63,8 @@ function QuizOverlay({ onClose }) {
   const [loadingStep, setLoadingStep] = useState(0);
   const [erro, setErro] = useState('');
   const [nomeErro, setNomeErro] = useState('');
+  const [emailErro, setEmailErro] = useState('');
+  const [emailSugestao, setEmailSugestao] = useState('');
 
   useEffect(() => {
     if (!loading) { setLoadingStep(0); return; }
@@ -99,9 +102,10 @@ function QuizOverlay({ onClose }) {
     const nomeTrimmed = nome.trim();
     const emailTrimmed = email.trim();
     setNomeErro('');
+    setEmailErro('');
     const nomePalavras = nomeTrimmed.split(/\s+/).filter(Boolean);
     if (nomePalavras.length < 2) { setNomeErro('Digite seu nome completo para um resultado mais preciso.'); return; }
-    if (!emailTrimmed.includes('@')) { setErro('Digite um e-mail válido.'); return; }
+    if (!emailValido(emailTrimmed)) { setEmailErro('Digite um e-mail válido.'); return; }
     if (!dataNasc) { setErro('Selecione sua data de nascimento.'); return; }
 
     setLoading(true);
@@ -151,7 +155,17 @@ function QuizOverlay({ onClose }) {
   const capturedPartialEmailRef = useRef('');
   const handleEmailBlur = () => {
     const trimmed = email.trim().toLowerCase();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) return;
+
+    if (!trimmed) { setEmailErro(''); setEmailSugestao(''); return; }
+
+    const sugestao = sugestaoEmail(trimmed);
+    setEmailSugestao(sugestao || '');
+    if (!emailValido(trimmed)) {
+      setEmailErro(sugestao ? '' : 'Digite um e-mail válido.');
+      return;
+    }
+    setEmailErro('');
+
     if (capturedPartialEmailRef.current === trimmed) return;
     capturedPartialEmailRef.current = trimmed;
     fetch('/api/lead-parcial', {
@@ -159,6 +173,13 @@ function QuizOverlay({ onClose }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: trimmed, nome: nome.trim() || null }),
     }).catch(() => {});
+  };
+
+  const aplicarSugestaoEmail = () => {
+    if (!emailSugestao) return;
+    setEmail(emailSugestao);
+    setEmailErro('');
+    setEmailSugestao('');
   };
 
   const AREAS = [
@@ -440,16 +461,35 @@ function QuizOverlay({ onClose }) {
                     <input
                       type="email"
                       value={email}
-                      onChange={e => setEmail(e.target.value.replace(/\s/g, ''))}
+                      onChange={e => { setEmail(e.target.value.replace(/\s/g, '')); setEmailErro(''); setEmailSugestao(''); }}
                       onBlur={handleEmailBlur}
                       placeholder="seu@email.com"
                       style={{
                         width: '100%', padding: '14px 16px', borderRadius: 14,
-                        border: '1px solid rgba(139,92,246,.3)', background: 'rgba(18,18,30,.9)',
+                        border: `1px solid ${emailErro ? 'rgba(239,68,68,.6)' : 'rgba(139,92,246,.3)'}`,
+                        background: 'rgba(18,18,30,.9)',
                         color: '#f0eff4', fontFamily: 'var(--F)', fontSize: 16,
                         outline: 'none',
                       }}
                     />
+                    {emailSugestao && (
+                      <p style={{ fontSize: 13, color: '#9896a8', fontFamily: 'var(--F)', marginTop: 6 }}>
+                        Você quis dizer{' '}
+                        <button
+                          type="button"
+                          onClick={aplicarSugestaoEmail}
+                          style={{ background: 'none', border: 'none', padding: 0, color: '#d4a853', textDecoration: 'underline', cursor: 'pointer', fontFamily: 'var(--F)', fontSize: 13 }}
+                        >
+                          {emailSugestao}
+                        </button>
+                        ?
+                      </p>
+                    )}
+                    {emailErro && (
+                      <p style={{ fontSize: 13, color: 'rgba(254,202,202,.9)', fontFamily: 'var(--F)', marginTop: 6 }}>
+                        {emailErro}
+                      </p>
+                    )}
                   </div>
                 </div>
                 {erro && (

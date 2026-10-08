@@ -11,6 +11,7 @@ import ChatAssistente from '@/app/components/ChatAssistente';
 import SeloArquetipo from '@/app/components/SeloArquetipo';
 import BotaoCompartilharStory from '@/app/components/BotaoCompartilharStory';
 import { PRECO_MANUAL_JANELA, PRECO_MANUAL_PADRAO, PRECO_BONUS_COMBO } from '@/lib/preco';
+import { emailValido } from '@/lib/emailValidacao';
 
 // ── Supabase ──────────────────────────────────────────────────────────────────
 function getSupabaseClient() {
@@ -467,8 +468,14 @@ export default function ResultadoPage() {
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
   };
 
-  const handleComprar = async () => {
-    if (ehPresente && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(presenteEmail)) {
+  // Quando criar-checkout-mp recusa por e-mail inválido salvo na análise
+  // (ver app/api/criar-checkout-mp/route.js), guarda a mensagem aqui em vez
+  // do alert() genérico — o modal abaixo deixa corrigir sem refazer o quiz.
+  const [emailCorrecaoInfo, setEmailCorrecaoInfo] = useState(null);
+  const [novoEmailInput, setNovoEmailInput] = useState('');
+
+  const handleComprar = async (emailCorrigido) => {
+    if (ehPresente && !emailValido(presenteEmail)) {
       alert('Digite um email válido pra quem vai receber o presente.');
       return;
     }
@@ -486,12 +493,21 @@ export default function ResultadoPage() {
           analiseId: id,
           incluirTier2,
           ...(ehPresente && { presenteEmail: presenteEmail.trim(), presenteDe: presenteDe.trim() }),
+          ...(emailCorrigido && { emailCorrigido }),
         }),
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data?.details || data?.error || 'Erro ao abrir checkout');
+      if (!response.ok) {
+        if (data?.error === 'email_invalido') {
+          setEmailCorrecaoInfo({ mensagem: data?.mensagem || 'O e-mail salvo parece inválido.' });
+          setNovoEmailInput(emailCorrigido || data?.emailAtual || '');
+          return;
+        }
+        throw new Error(data?.details || data?.error || 'Erro ao abrir checkout');
+      }
       const url = data?.url || data?.sandbox_url;
       if (!url) throw new Error('Checkout sem URL');
+      setEmailCorrecaoInfo(null);
       // Guarda a URL antes de tentar redirecionar: se o redirecionamento
       // automático for bloqueado silenciosamente (sem lançar erro nenhum),
       // o link manual abaixo continua disponível pra pessoa tocar.
@@ -507,6 +523,15 @@ export default function ResultadoPage() {
       try { window?.gtag?.('event', 'erro_checkout', { event_category: 'error', erro: String(e?.message || e).slice(0, 100) }); } catch {}
       alert(e?.message || 'Erro. Tente novamente.');
     } finally { setProcessando(false); }
+  };
+
+  const handleConfirmarNovoEmail = () => {
+    const trimmed = novoEmailInput.trim();
+    if (!emailValido(trimmed)) {
+      alert('Digite um e-mail válido.');
+      return;
+    }
+    handleComprar(trimmed);
   };
 
   // Previsão do Ano e Human Design não têm mais compra avulsa — só liberam
@@ -688,7 +713,7 @@ export default function ResultadoPage() {
               <p className="locked-text">
                 O mecanismo que mantém esse ciclo rodando e o ajuste que muda o resultado estão no diagnóstico completo.
               </p>
-              <button className="btn-cta" onClick={handleComprar} disabled={processando}>
+              <button className="btn-cta" onClick={() => handleComprar()} disabled={processando}>
                 {processando ? '⏳ Abrindo…' : cargoLabel}
               </button>
               <Tier2AddonToggle checked={incluirTier2} onChange={setIncluirTier2} precoTotal={precoAtual + PRECO_BONUS_COMBO} />
@@ -769,7 +794,7 @@ export default function ResultadoPage() {
               <p className="locked-text">
                 Seus bloqueios financeiros e o caminho para destravar estão no manual completo.
               </p>
-              <button className="btn-cta" onClick={handleComprar} disabled={processando}>
+              <button className="btn-cta" onClick={() => handleComprar()} disabled={processando}>
                 {processando ? '⏳ Abrindo…' : cargoLabel}
               </button>
               <Tier2AddonToggle checked={incluirTier2} onChange={setIncluirTier2} precoTotal={precoAtual + PRECO_BONUS_COMBO} />
@@ -858,7 +883,7 @@ export default function ResultadoPage() {
               <p className="locked-text">
                 A interpretação completa de como {cartaTarot.nome}{cartaTarot.invertida ? ' Invertida' : ''} se conecta ao seu perfil e objetivo está no manual completo.
               </p>
-              <button className="btn-cta" onClick={handleComprar} disabled={processando}>
+              <button className="btn-cta" onClick={() => handleComprar()} disabled={processando}>
                 {processando ? '⏳ Abrindo…' : cargoLabel}
               </button>
               <Tier2AddonToggle checked={incluirTier2} onChange={setIncluirTier2} precoTotal={precoAtual + PRECO_BONUS_COMBO} />
@@ -974,7 +999,7 @@ export default function ResultadoPage() {
           <div className="manual-preview-note">
             📖 Seu manual tem 14 seções escritas exclusivamente para {firstName}. Nenhum outro manual é igual ao seu.
           </div>
-          <button className="btn-cta" onClick={handleComprar} disabled={processando}>
+          <button className="btn-cta" onClick={() => handleComprar()} disabled={processando}>
             {processando ? '⏳ Abrindo…' : cargoLabel}
           </button>
           <Tier2AddonToggle checked={incluirTier2} onChange={setIncluirTier2} precoTotal={precoAtual + PRECO_BONUS_COMBO} />
@@ -1029,7 +1054,7 @@ export default function ResultadoPage() {
         {/* ══ BLOCO 8 — REFORÇO ══ */}
         <div className="reforco-block">
           <p className="reforco-text">Se as 3 primeiras frases já te descreveram, imagina o diagnóstico completo.</p>
-          <button className="btn-cta btn-cta-sm" onClick={handleComprar} disabled={processando}>
+          <button className="btn-cta btn-cta-sm" onClick={() => handleComprar()} disabled={processando}>
             {processando ? '⏳ Abrindo…' : cargoLabel}
           </button>
           <p className="pos-compra" style={{ marginTop: 10 }}>
@@ -1109,6 +1134,31 @@ export default function ResultadoPage() {
               disabled={processando}
             >
               {processando ? '⏳ Abrindo…' : `QUERO GARANTIR — R$ ${precoAtual}`}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ══ CORRIGIR E-MAIL — criar-checkout-mp recusou por e-mail inválido salvo ══ */}
+      {emailCorrecaoInfo && (
+        <div className="exit-overlay" onClick={() => setEmailCorrecaoInfo(null)}>
+          <div className="exit-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="exit-close" aria-label="Fechar" onClick={() => setEmailCorrecaoInfo(null)}>✕</button>
+            <div className="exit-title">Confere seu e-mail?</div>
+            <p className="exit-desc">{emailCorrecaoInfo.mensagem}</p>
+            <input
+              type="email"
+              value={novoEmailInput}
+              onChange={(e) => setNovoEmailInput(e.target.value.trim())}
+              placeholder="seu@email.com"
+              style={{
+                width: '100%', padding: '14px 16px', borderRadius: 14, marginBottom: 14,
+                border: '1px solid rgba(139,92,246,.4)', background: 'rgba(18,18,30,.9)',
+                color: 'var(--text)', fontSize: 16, outline: 'none',
+              }}
+            />
+            <button className="btn-cta" onClick={handleConfirmarNovoEmail} disabled={processando}>
+              {processando ? '⏳ Abrindo…' : 'Confirmar e continuar'}
             </button>
           </div>
         </div>
