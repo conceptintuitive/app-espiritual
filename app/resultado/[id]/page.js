@@ -108,6 +108,7 @@ export default function ResultadoPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isPending = searchParams.get('pending') === 'true';
+  const pagamentoRecusado = searchParams.get('pagamento') === 'recusado';
   const abrirChat = searchParams.get('chat') === '1';
 
   const [analise, setAnalise] = useState(null);
@@ -118,6 +119,7 @@ export default function ResultadoPage() {
   const [retryCount, setRetryCount]   = useState(0);
   const [retrying,   setRetrying]     = useState(false);
   const [pendingTimedOut, setPendingTimedOut] = useState(false);
+  const [pendingRetryKey, setPendingRetryKey] = useState(0);
   const [secondsLeft, setSecondsLeft] = useState(null);
   const [statsCount, setStatsCount] = useState(null);
   const [ofertaExpirada, setOfertaExpirada] = useState(false);
@@ -194,6 +196,7 @@ export default function ResultadoPage() {
   // polling de confirmação de pagamento — só ativa com ?pending=true (retorno do PIX/MP)
   useEffect(() => {
     if (!isPending || !id) return;
+    setPendingTimedOut(false);
     let mounted = true;
     let timer = null;
     let attempts = 0;
@@ -231,7 +234,7 @@ export default function ResultadoPage() {
       mounted = false;
       if (timer) clearTimeout(timer);
     };
-  }, [isPending, id, router]);
+  }, [isPending, id, router, pendingRetryKey]);
 
   // derived
   const signoFinal = useMemo(() => {
@@ -564,6 +567,16 @@ export default function ResultadoPage() {
             Ainda estamos confirmando seu pagamento — isso pode levar alguns minutos.
             Você também vai receber o link do seu manual por e-mail assim que for confirmado.
           </p>
+          <button
+            className="btn-cta btn-cta-sm"
+            style={{ marginTop: 8 }}
+            onClick={() => setPendingRetryKey((k) => k + 1)}
+          >
+            🔄 Verificar de novo
+          </button>
+          <Link href={`/resultado/${id}`} className="muted" style={{ fontSize: 14, textDecoration: 'underline' }}>
+            Voltar para a oferta
+          </Link>
         </div>
       </div>
     );
@@ -588,6 +601,16 @@ export default function ResultadoPage() {
       <div id="stars" className="stars" />
 
       <div className="container">
+
+        {/* ══ Pagamento recusado no MP — volta aqui via back_urls.failure ══ */}
+        {pagamentoRecusado && (
+          <div className="banner-recusado">
+            <strong>Seu pagamento não foi aprovado.</strong>
+            <p style={{ marginTop: 4 }}>
+              Tente outro cartão ou pague com <span className="pix-destaque">Pix</span> — costuma ser mais rápido e sem recusa.
+            </p>
+          </div>
+        )}
 
         {/* ══ BLOCO 1 — HERO ══ */}
         <div className="hero">
@@ -1140,6 +1163,23 @@ const globalCss = `
     animation: twinkle 3s infinite;
   }
   @keyframes twinkle { 0%,100%{opacity:0.3} 50%{opacity:1} }
+
+  /* ── Banner de pagamento recusado ── */
+  .banner-recusado {
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid var(--warning);
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+  .banner-recusado strong { color: var(--warning); }
+  .banner-recusado .pix-destaque {
+    display: inline-block;
+    margin-top: 4px;
+    font-weight: 700;
+    color: var(--success);
+  }
 
   /* ── Hero ── */
   .hero { padding: 16px 0 12px; text-align: center; }
