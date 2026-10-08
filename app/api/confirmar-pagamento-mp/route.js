@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { buildAtualizacaoPagamentoManual } from "@/lib/mpPagamentoManual";
+import { liberarAcessoManual, dispararPosPagamentoManual } from "@/lib/mpPagamentoManual";
 
 export const runtime = "nodejs";
 
@@ -9,11 +9,9 @@ export const runtime = "nodejs";
 // vez de esperar o webhook (que pode levar alguns segundos), consulta a API
 // do MP direto e libera na hora se já estiver 'approved'.
 //
-// Idempotente com o webhook-mp: os dois escrevem exatamente os mesmos
-// campos (buildAtualizacaoPagamentoManual), então não importa qual chega
-// primeiro — o outro só regrava os mesmos valores. Só o webhook dispara
-// e-mail de acesso, geração de IA e eventos de Purchase (Meta/GA4/TikTok);
-// essa rota só libera o acesso mais rápido, não duplica esses efeitos.
+// Idempotente com o webhook-mp: os dois usam lib/mpPagamentoManual.js, que
+// garante que o pós-pagamento (e-mail de acesso) roda uma vez só mesmo se
+// os dois caminhos chegarem juntos — ver os comentários lá.
 export async function POST(request) {
   try {
     const body = await request.json().catch(() => null);
@@ -67,19 +65,27 @@ export async function POST(request) {
       return NextResponse.json({ pago: false, status: payment.status });
     }
 
-    const { critica, bookkeeping } = buildAtualizacaoPagamentoManual(payment, paymentId);
+    // MP só preenche payer.phone quando o checkout pediu/coletou esse dado —
+    // mesmo tratamento defensivo que o webhook já faz.
+    const payerPhone = payment.payer?.phone?.number
+      ? `${payment.payer.phone.area_code || ""}${payment.payer.phone.number}`
+      : null;
 
-    const { error: updateError } = await supabase.from("analises").update(critica).eq("id", analiseId);
-    if (updateError) {
+    const { ok: liberado, error: updateError } = await liberarAcessoManual({
+      supabase, analiseId, payment, paymentId,
+    });
+    if (!liberado) {
       console.error("Erro ao liberar manual (confirmação síncrona):", updateError);
       return NextResponse.json({ pago: false, error: "Erro ao atualizar" }, { status: 500 });
     }
 
-    // Bookkeeping, best-effort — o acesso já foi liberado acima.
-    const { error: bookkeepingError } = await supabase.from("analises").update(bookkeeping).eq("id", analiseId);
-    if (bookkeepingError) {
-      console.error("⚠️ Falha ao gravar valor_pago/origem (confirmação síncrona, já liberado):", bookkeepingError);
-    }
+    // Responde rápido pro front desbloquear a tela — IA/e-mail/Purchase
+    // seguem em background (a geração de IA tem seu próprio fallback via
+    // app/api/gerar-manual-completo, disparado pelo front assim que
+    // hasPaid vira true; aqui só cuida de Purchase + e-mail de acesso).
+    after(async () => {
+      await dispararPosPagamentoManual({ supabase, analiseId, payment, paymentId, payerPhone });
+    });
 
     return NextResponse.json({ pago: true });
   } catch (error) {

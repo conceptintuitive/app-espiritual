@@ -16,7 +16,7 @@ import { sendGA4Purchase } from "@/lib/ga4";
 import { sendTikTokPurchase } from "@/lib/tiktok";
 import { sendMetaPurchase } from "@/lib/meta";
 import { getOrigemVenda } from "@/lib/testEmails";
-import { buildAtualizacaoPagamentoManual } from "@/lib/mpPagamentoManual";
+import { liberarAcessoManual, dispararPosPagamentoManual } from "@/lib/mpPagamentoManual";
 
 export const runtime = "nodejs";
 
@@ -250,82 +250,22 @@ export async function POST(request) {
     // Se o checkout foi feito com o bônus junto (opção "incluir tier2" no
     // /resultado, +R$50 = preço combo), o metadata da preferência carrega
     // isso até o pagamento — desbloqueia os dois bônus, não só um.
-    const { critica, bookkeeping } = buildAtualizacaoPagamentoManual(payment, paymentId);
-
+    //
     // Crítico: libera o Manual (e o combo, se houver) antes de qualquer outra
     // coisa. Idempotente mesmo se /api/confirmar-pagamento-mp já liberou
     // antes (ex: pessoa chegou do redirect do MP antes desse webhook) —
     // regrava os mesmos campos, sem efeito colateral.
-    const { error: updateError } = await supabase
-      .from("analises")
-      .update(critica)
-      .eq("id", analiseId);
-
-    if (updateError) {
+    const { ok: liberado, error: updateError } = await liberarAcessoManual({
+      supabase, analiseId, payment, paymentId,
+    });
+    if (!liberado) {
       console.error("Erro ao atualizar Supabase:", updateError);
       return NextResponse.json({ error: "Erro ao atualizar" }, { status: 500 });
     }
 
-    // Bookkeeping, best-effort: se isso falhar, o Manual já foi liberado
-    // acima — não pode travar nem voltar erro pro MP por causa disso.
-    const { error: valorPagoError } = await supabase
-      .from("analises")
-      .update(bookkeeping)
-      .eq("id", analiseId);
-    if (valorPagoError) {
-      console.error("⚠️ Falha ao gravar valor_pago/origem do Manual (já liberado):", valorPagoError);
-    }
-
-    // Busca o email da análise pra enviar o link do manual — se for presente,
-    // manda pro destinatário (presente_email), não pra quem pagou.
-    const { data: analiseData } = await supabase
-      .from("analises")
-      .select("email,presente_email,presente_de")
-      .eq("id", analiseId)
-      .single();
-
-    const emailDestino = analiseData?.presente_email || analiseData?.email;
-    if (emailDestino) {
-      try {
-        await fetch("https://intuitiveconcept.com.br/api/send", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: emailDestino,
-            manualId: analiseId,
-            ...(analiseData?.presente_email && { presenteDe: analiseData?.presente_de || "" }),
-          }),
-        });
-        console.log("📧 Email enviado para", emailDestino, analiseData?.presente_email ? "(presente)" : "");
-      } catch (emailErr) {
-        console.error("Erro ao enviar email:", emailErr);
-      }
-    }
-
-    // Fire-and-forget: geração de IA após responder ao MP
+    // Fire-and-forget: geração de IA + e-mail de acesso + Purchase, depois
+    // de responder ao MP.
     after(async () => {
-      // IP/user-agent do cliente, capturados na criação do checkout — select
-      // isolado e best-effort, de propósito: se a coluna ainda não existir
-      // no banco (deploy antes da migração rodar), essa falha não pode se
-      // propagar pro select de geração de IA logo abaixo.
-      let checkoutIp = null;
-      let checkoutUserAgent = null;
-      try {
-        const { data: trackingData, error: trackingErr } = await supabase
-          .from("analises")
-          .select("checkout_ip, checkout_user_agent")
-          .eq("id", analiseId)
-          .single();
-        if (trackingErr) {
-          console.error("⚠️ Não foi possível ler checkout_ip/checkout_user_agent (coluna existe?):", trackingErr.message);
-        } else {
-          checkoutIp = trackingData?.checkout_ip || null;
-          checkoutUserAgent = trackingData?.checkout_user_agent || null;
-        }
-      } catch (trackingCatchErr) {
-        console.error("⚠️ Erro ao ler checkout_ip/checkout_user_agent:", trackingCatchErr?.message || trackingCatchErr);
-      }
-
       try {
         const { data: analise, error: analiseErr } = await supabase
           .from("analises")
@@ -391,34 +331,9 @@ export async function POST(request) {
         console.error("❌ Erro ao gerar conteúdo IA (MP):", iaErr?.message || iaErr);
       }
 
-      // GA4 purchase ───────────────────────────────────────────────────────────
-      await sendGA4Purchase({
-        transactionId: paymentId.toString(),
-        value: payment.transaction_amount ?? 0,
-        currency: (payment.currency_id || "BRL").toUpperCase(),
-        clientId: `server.${paymentId}`,
-      });
-
-      // TikTok CompletePayment ─────────────────────────────────────────────────
-      await sendTikTokPurchase({
-        transactionId: paymentId.toString(),
-        value: payment.transaction_amount ?? 0,
-        currency: (payment.currency_id || "BRL").toUpperCase(),
-        email: analiseData?.email,
-        analiseId,
-      });
-
-      // Meta Purchase ───────────────────────────────────────────────────────────
-      await sendMetaPurchase({
-        transactionId: paymentId.toString(),
-        value: payment.transaction_amount ?? 0,
-        currency: (payment.currency_id || "BRL").toUpperCase(),
-        email: analiseData?.email,
-        phone: payerPhone,
-        analiseId,
-        clientIp: checkoutIp,
-        userAgent: checkoutUserAgent,
-      });
+      // Purchase (GA4/Meta/TikTok) + e-mail de acesso (uma vez só, com lock —
+      // ver lib/mpPagamentoManual.js).
+      await dispararPosPagamentoManual({ supabase, analiseId, payment, paymentId, payerPhone });
     });
 
     console.log("✅ Análise", analiseId, "marcada como paga via MP");

@@ -298,6 +298,17 @@ function isPaid(row) {
   return false;
 }
 
+// Colunas IA do Manual (mesma lista de app/api/gerar-manual-completo/route.js,
+// exceto sintese_gerada — não vira seção própria, é usada só como insumo
+// interno do "Seu Mapa Completo"). Usada pra saber quais seções ainda estão
+// pendentes enquanto a geração roda — ver lib/manualgenerator.js (pend()).
+const CAMPOS_GERADOS_IA = [
+  'diagnostico_gerado', 'tipo_pessoa_gerado', 'arquetipos_gerado', 'amor_gerado',
+  'objetivo_gerado', 'leitura_gerada', 'plano7_gerado', 'ponto_cego_gerado',
+  'bloqueios_gerado', 'dinheiro_gerado', 'rituais_gerado', 'calendario_gerado',
+  'fechamento_gerado',
+];
+
 // ==============================================
 // COMPONENTE PRINCIPAL
 // ==============================================
@@ -616,7 +627,17 @@ export default function ManualPage() {
   const manual = useMemo(() => {
     if (!row) return null;
 
+    // Enquanto a geração IA ainda não terminou (mesma condição que dispara
+    // o efeito de geração sob demanda acima), as seções cujo campo _gerado
+    // ainda está null mostram "Preparando seu Manual..." em vez do texto
+    // genérico de fallback — ver lib/manualgenerator.js (pend()).
+    const iaPendente = isPaid(row) && !row.fechamento_gerado;
+    const pendingFields = iaPendente ? new Set(
+      CAMPOS_GERADOS_IA.filter((col) => !row[col])
+    ) : null;
+
     const params = {
+      pendingFields,
       nome: row.nome,
       signo: row.signo,
       numeroVida: row.numero_vida,
@@ -1002,8 +1023,13 @@ e mostrar como sair dele.
                   🔄 Verificar de novo
                 </button>
                 <p className="muted" style={{ marginTop: 12, fontSize: 13 }}>
-                  {/* TODO (Bianca): confirmar/trocar pelo contato de suporte real antes do merge */}
-                  Se demorar mais do que isso, nos chame pelo suporte (suporte@intuitiveconcept.com.br).
+                  Se demorar mais do que isso,{' '}
+                  <a
+                    href={`mailto:conceptintuitive@gmail.com?subject=${encodeURIComponent('Paguei o Manual e não consegui acessar')}`}
+                    style={{ color: 'inherit', textDecoration: 'underline' }}
+                  >
+                    nos chame pelo suporte
+                  </a>.
                 </p>
               </div>
             )}
@@ -1252,6 +1278,19 @@ e mostrar como sair dele.
                             <li key={i}>✓ {item}</li>
                           ))}
                       </ul>
+                    </div>
+                  );
+                }
+
+                // TIPO: PREPARANDO (IA ainda gerando essa seção)
+                if (section.type === 'preparando') {
+                  return (
+                    <div key={anchor} id={anchor} className="card">
+                      <h2 className="h2">{section.title}</h2>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '8px 0' }}>
+                        <div className="spinner" style={{ width: 28, height: 28, flexShrink: 0 }} />
+                        <p className="p" style={{ margin: 0 }}>Preparando essa parte do seu Manual…</p>
+                      </div>
                     </div>
                   );
                 }
