@@ -136,8 +136,10 @@ export async function POST(request) {
         console.error("⚠️ Falha ao gravar valor_pago/origem do upsell (bônus já liberado):", upsellValorError);
       }
 
+      // Mesmo nome usado no checkout e nas páginas públicas (/previsao-do-ano,
+      // /human-design) — ver criar-checkout-mp/criar-checkout-upsell-mp.
       const produtosUpsellLabel =
-        [incluiProjecao && "Projeção de 12 Meses", incluiHumanDesign && "Human Design"].filter(Boolean).join(" + ");
+        [incluiProjecao && "Previsão do Ano", incluiHumanDesign && "Human Design"].filter(Boolean).join(" + ");
 
       after(async () => {
         await sendGA4Purchase({
