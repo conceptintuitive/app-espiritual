@@ -6,9 +6,12 @@ import { emailValido } from "@/lib/emailValidacao";
 
 export const runtime = "nodejs";
 
+// Nomes que aparecem no checkout do MP — alinhados com o que a pessoa já viu
+// nas páginas públicas (/previsao-do-ano, /human-design), não com o nome
+// interno antigo ("Projeção de 12 Meses"/"Mapa de Human Design").
 const BONUS_TITULOS = {
-  projecao12m: "Projeção de 12 Meses",
-  humandesign: "Mapa de Human Design",
+  projecao12m: "Previsão do Ano",
+  humandesign: "Human Design",
 };
 
 function getBaseUrl() {
@@ -112,7 +115,7 @@ export async function POST(request) {
     const items = [
       {
         id: analiseId,
-        title: "Manual Premium Personalizado",
+        title: "Manual Completo — Intuitive Concept",
         description: `Relatório personalizado completo para ${analise.nome ?? "você"}`,
         quantity: 1,
         currency_id: "BRL",
@@ -127,7 +130,7 @@ export async function POST(request) {
       const titulo = bonusProdutos.map((p) => BONUS_TITULOS[p]).join(" + ");
       items.push({
         id: `${analiseId}-bonus-${bonusProdutos.join("-")}`,
-        title: `${titulo} (bônus)`,
+        title: `${titulo} — Intuitive Concept`,
         description: `${titulo} para ${analise.nome ?? "você"}`,
         quantity: 1,
         currency_id: "BRL",

@@ -5,15 +5,18 @@ import { PRECO_BONUS_AVULSO, PRECO_BONUS_COMBO } from "@/lib/preco";
 
 export const runtime = "nodejs";
 
+// Nomes que aparecem no checkout do MP — alinhados com o que a pessoa já viu
+// nas páginas públicas (/previsao-do-ano, /human-design), não com o nome
+// interno antigo ("Projeção de 12 Meses"/"Mapa de Human Design").
 const PRODUTOS = {
   projecao12m: {
-    titulo: "Projeção de 12 Meses",
+    titulo: "Previsão do Ano",
     statusCol: "tier2_payment_status",
     paymentIdCol: "tier2_mp_payment_id",
     preferenceIdCol: "tier2_mp_preference_id",
   },
   humandesign: {
-    titulo: "Mapa de Human Design",
+    titulo: "Human Design",
     statusCol: "hd_payment_status",
     paymentIdCol: "hd_mp_payment_id",
     preferenceIdCol: "hd_mp_preference_id",
@@ -103,7 +106,7 @@ export async function POST(request) {
         items: [
           {
             id: `${analiseId}-upsell-${produtos.join("-")}`,
-            title: `${titulo} — Upsell`,
+            title: `${titulo} — Intuitive Concept`,
             description: `${titulo} para ${analise.nome ?? "você"}`,
             quantity: 1,
             currency_id: "BRL",
