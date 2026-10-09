@@ -796,7 +796,7 @@ export default function Home() {
         <div className="ctr" style={{ textAlign: 'center' }}>
 
           <div className="a1" style={{ marginBottom: 24 }}>
-            <span className="badge">✦ Numerologia + Neurociência</span>
+            <span className="badge">✦ Numerologia + Astrologia</span>
           </div>
 
           <div className="a2">

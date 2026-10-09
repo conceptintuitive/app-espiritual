@@ -14,6 +14,13 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  themeColor: '#0a0118',
+};
+
 export const metadata = {
   title: 'Manual dos Poderes Ocultos | Numerologia & Astrologia Personalizada',
   description: 'Descubra seu mapa espiritual completo com Numerologia, Astrologia e previsões personalizadas para 2025 e 2026. Análise profunda da sua alma.',
