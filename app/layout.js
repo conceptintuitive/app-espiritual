@@ -14,36 +14,34 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  themeColor: '#0a0118',
+};
+
 export const metadata = {
-  title: 'Manual dos Poderes Ocultos | Numerologia & Astrologia Personalizada',
-  description: 'Descubra seu mapa espiritual completo com Numerologia, Astrologia e previsões personalizadas para 2025 e 2026. Análise profunda da sua alma.',
-  keywords: 'numerologia, astrologia, mapa astral, número da vida, previsões 2025, espiritualidade, autoconhecimento, mapa espiritual',
-  authors: [{ name: 'Manual dos Poderes Ocultos' }],
-  creator: 'Manual dos Poderes Ocultos',
-  publisher: 'Manual dos Poderes Ocultos',
+  title: 'Intuitive Concept | Seu Mapa de Numerologia e Astrologia',
+  description: 'Descubra seu padrão no amor, no dinheiro e o que trava seu momento atual. Numerologia + Astrologia + Padrões Comportamentais. Teste grátis em 1 minuto.',
+  keywords: 'numerologia, astrologia, mapa astral, número da vida, autoconhecimento, padrões comportamentais, manual completo',
+  authors: [{ name: 'Intuitive Concept' }],
+  creator: 'Intuitive Concept',
+  publisher: 'Intuitive Concept',
 
   openGraph: {
-    title: 'Manual dos Poderes Ocultos | Descubra Seu Mapa Espiritual',
-    description: 'Análise completa de Numerologia + Astrologia + Previsões personalizadas. Descubra os segredos da sua alma.',
+    title: 'Intuitive Concept | Seu Mapa de Numerologia e Astrologia',
+    description: 'Descubra seu padrão no amor, no dinheiro e o que trava seu momento atual. Numerologia + Astrologia + Padrões Comportamentais. Teste grátis em 1 minuto.',
     url: 'https://intuitiveconcept.com.br',
-    siteName: 'Manual dos Poderes Ocultos',
-    images: [
-      {
-        url: 'https://intuitiveconcept.com.br/og-image.jpg',
-        width: 1200,
-        height: 630,
-        alt: 'Manual dos Poderes Ocultos - Mapa Espiritual',
-      },
-    ],
+    siteName: 'Intuitive Concept',
     locale: 'pt_BR',
     type: 'website',
   },
 
   twitter: {
     card: 'summary_large_image',
-    title: 'Manual dos Poderes Ocultos',
-    description: 'Descubra seu mapa espiritual completo com Numerologia e Astrologia',
-    images: ['https://intuitiveconcept.com.br/og-image.jpg'],
+    title: 'Intuitive Concept | Seu Mapa de Numerologia e Astrologia',
+    description: 'Descubra seu padrão no amor, no dinheiro e o que trava seu momento atual. Numerologia + Astrologia + Padrões Comportamentais. Teste grátis em 1 minuto.',
   },
 
   icons: {
@@ -144,8 +142,8 @@ export default function RootLayout({ children }) {
             __html: JSON.stringify({
               '@context': 'https://schema.org',
               '@type': 'WebApplication',
-              name: 'Manual dos Poderes Ocultos',
-              description: 'Análise espiritual completa com Numerologia e Astrologia',
+              name: 'Intuitive Concept',
+              description: 'Manual Completo personalizado de Numerologia e Astrologia: padrão no amor, no dinheiro e no momento atual.',
               url: 'https://intuitiveconcept.com.br',
               applicationCategory: 'LifestyleApplication',
               offers: {

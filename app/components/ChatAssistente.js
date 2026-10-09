@@ -137,14 +137,14 @@ export default function ChatAssistente({ analiseId, isPaid, firstName, autoOpen,
 
       <style jsx>{`
         .chat-fab {
-          position: fixed; bottom: 20px; right: 20px; z-index: 110;
+          position: fixed; bottom: calc(20px + env(safe-area-inset-bottom)); right: 20px; z-index: 110;
           width: 56px; height: 56px; border-radius: 50%; border: none; cursor: pointer;
           background: linear-gradient(135deg, var(--primary), var(--secondary));
           color: #fff; font-size: 22px;
           box-shadow: 0 10px 30px rgba(139, 92, 246, 0.5);
         }
         .chat-panel {
-          position: fixed; bottom: 88px; right: 20px; z-index: 110;
+          position: fixed; bottom: calc(88px + env(safe-area-inset-bottom)); right: 20px; z-index: 110;
           width: min(360px, calc(100vw - 32px));
           max-height: min(520px, calc(100vh - 140px));
           display: flex; flex-direction: column;
@@ -158,8 +158,8 @@ export default function ChatAssistente({ analiseId, isPaid, firstName, autoOpen,
         /* Em mobile o /resultado tem uma barra fixa de CTA no rodapé (64px, z-index 100) —
            sobe o botão/painel do chat pra não ficar coberto por ela. */
         @media (max-width: 767px) {
-          .chat-fab { bottom: 92px; }
-          .chat-panel { bottom: 160px; max-height: min(460px, calc(100vh - 212px)); }
+          .chat-fab { bottom: calc(92px + env(safe-area-inset-bottom)); }
+          .chat-panel { bottom: calc(160px + env(safe-area-inset-bottom)); max-height: min(460px, calc(100vh - 212px)); }
         }
         .chat-header {
           display: flex; align-items: center; justify-content: space-between; gap: 10px;

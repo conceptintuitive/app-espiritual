@@ -1757,7 +1757,7 @@ const globalCss = `
     background: rgba(16,185,129,0.14);
     backdrop-filter: blur(12px);
     border-top: 1px solid rgba(16,185,129,0.4);
-    padding: 14px 16px;
+    padding: 14px 16px calc(14px + env(safe-area-inset-bottom));
     display: flex; flex-direction: column; align-items: center; gap: 8px;
     text-align: center;
   }
@@ -1774,12 +1774,12 @@ const globalCss = `
   .sticky-bar {
     display: none;
     position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
-    height: 64px;
+    min-height: 64px;
     background: rgba(10,1,24,0.95);
     backdrop-filter: blur(12px);
     border-top: 1px solid rgba(139,92,246,0.3);
     align-items: center; justify-content: center;
-    padding: 0 16px;
+    padding: 0 16px env(safe-area-inset-bottom);
   }
   @media (max-width: 767px) {
     .sticky-bar { display: flex; }

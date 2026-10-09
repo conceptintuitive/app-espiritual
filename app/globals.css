@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0a0118;
+  --foreground: #ededed;
 }
 
 @theme inline {
@@ -12,15 +12,16 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Fundo escuro fixo no html também, não só no body — no Safari iOS, o
+   "bounce" de overscroll no topo/fim da página mostra o fundo do html, não
+   o do body. Sem isso aparecem faixas brancas ali mesmo com o body escuro.
+   Cada página pode sobrescrever body com seu próprio gradiente (mesma
+   família de cor); isso aqui é só a base, pra nunca piscar branco. */
+html, body {
+  background: var(--background);
 }
 
 body {
-  background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
