@@ -743,6 +743,38 @@ export default function ResultadoPage() {
           </div>
         )}
 
+        {/* ══ OFERTA COMPACTA — logo após a primeira seção forte da prévia
+             (Diagnóstico + imagem), pra quem não rola até a oferta completa
+             no final. Classe offer-card-compact DE PROPÓSITO diferente de
+             .offer-card: esse seletor já é usado pelo observer do sticky-bar
+             e pelo evento GA4 resultado_oferta_visivel — reaproveitar o nome
+             aqui corromperia os dois (métrica que esse bloco existe pra
+             melhorar). handleComprar() já dispara clique_comprar sozinho,
+             não precisa de evento próprio aqui. ══ */}
+        {diagnosticoParsed && (
+          <div className="card offer-card-compact">
+            {!ofertaExpirada && countdownLabel && (
+              <p className="countdown-badge">
+                🗓️ R$ {PRECO_MANUAL_JANELA} só hoje — depois vira R$ {PRECO_MANUAL_PADRAO} <strong>({countdownLabel})</strong>
+              </p>
+            )}
+            <div className="offer-price-row">
+              {ofertaExpirada ? (
+                <span className="price-now-sm">R$ {PRECO_MANUAL_PADRAO},00</span>
+              ) : (
+                <>
+                  <span className="price-old-sm">de R$ {PRECO_MANUAL_PADRAO},00</span>
+                  <span className="price-now-sm">por R$ {PRECO_MANUAL_JANELA},00</span>
+                </>
+              )}
+            </div>
+            <button className="btn-cta" onClick={() => handleComprar()} disabled={processando}>
+              {processando ? '⏳ Abrindo…' : cargoLabel}
+            </button>
+            <p className="offer-compact-note">Manual completo com 14 seções · Pix: acesso liberado na hora</p>
+          </div>
+        )}
+
         {/* ══ BLOCO 4 — AMOR (parcial) ══ */}
         {amorParsed && (
           <div className="section-card">
@@ -921,26 +953,31 @@ export default function ResultadoPage() {
           <div className="section-label">O Que Tem no Seu Manual</div>
           <ul className="manual-index-list">
             {[
-              { check: true,  label: 'Seu Mapa Completo' },
-              { check: true,  label: 'Diagnóstico Profundo' },
-              { check: false, label: 'Tipo de Pessoa (quem você é quando está no eixo — e fora dele)' },
-              { check: true,  label: '3 Arquétipos' },
-              { check: false, label: 'Objetivo do Ciclo Atual' },
-              { check: false, label: 'Leitura Integrada (o que te potencializa vs. o que te sabota)' },
-              { check: false, label: 'Seu Ponto Cego' },
-              { check: false, label: 'Bloqueios Invisíveis (com passos de destravamento)' },
-              { check: true,  label: 'Plano de 7 Dias' },
-              { check: true,  label: '3 Rituais Personalizados' },
-              { check: true,  label: 'Padrão no Amor (com "pare de fazer" e "comece a fazer")' },
-              { check: true,  label: 'Mapa do Dinheiro (bloqueios e ações práticas)' },
-              { check: true,  label: 'Compatibilidade Astral (Sol, Lua, Ascendente, Vênus, Marte)' },
-              { check: false, label: 'Calendário de 4 Semanas (dia a dia detalhado)' },
-              { check: false, label: 'Fechamento e Mantra Pessoal' },
-            ].map(({ check, label }) => (
+              { check: true,  label: 'Seu Mapa Completo', desc: 'Sua personalidade, forças e padrões centrais, tudo em um só lugar.' },
+              { check: true,  label: 'Diagnóstico Profundo', desc: 'O mecanismo que mantém seu ciclo atual rodando — e o ajuste que muda o resultado.' },
+              { check: false, label: 'Tipo de Pessoa', desc: 'Quem você é no seu melhor momento — e quem você é fora do eixo.' },
+              { check: true,  label: '3 Arquétipos', desc: 'As três energias que mais influenciam suas decisões hoje.' },
+              { check: false, label: 'Objetivo do Ciclo Atual', desc: 'Pra onde sua fase de vida está te empurrando agora.' },
+              { check: false, label: 'Leitura Integrada', desc: 'O que te potencializa e o que te sabota, lado a lado.' },
+              { check: false, label: 'Seu Ponto Cego', desc: 'O padrão que você repete sem perceber.' },
+              { check: false, label: 'Bloqueios Invisíveis', desc: 'O que trava seu progresso, com passos práticos de destravamento.' },
+              { check: true,  label: 'Plano de 7 Dias', desc: 'Ações diárias pra aplicar o que você descobriu nesta semana.' },
+              { check: true,  label: '3 Rituais Personalizados', desc: 'Práticas específicas pro seu perfil, com áudio guiado.' },
+              { check: true,  label: 'Padrão no Amor', desc: 'Seu padrão afetivo real: o que parar de fazer e o que começar.' },
+              { check: true,  label: 'Mapa do Dinheiro', desc: 'Seus bloqueios financeiros e ações práticas pra destravar.' },
+              { check: true,  label: 'Compatibilidade Astral', desc: 'Como você se conecta com outras pessoas: Sol, Lua, Ascendente, Vênus e Marte.' },
+              { check: false, label: 'Calendário de 4 Semanas', desc: 'Seu mês planejado dia a dia, alinhado ao seu ciclo pessoal.' },
+              { check: false, label: 'Fechamento e Mantra Pessoal', desc: 'Sua síntese final e uma frase-guia só sua.' },
+            ].map(({ check, label, desc }) => (
               <li key={label} className={`manual-index-item ${check ? 'manual-index-seen' : 'manual-index-locked'}`}>
                 <span className="manual-index-icon">{check ? '👁️' : '🔒'}</span>
-                {label}
-                {check && <span className="manual-index-tag"> — prévia liberada</span>}
+                <span className="manual-index-text">
+                  <span className="manual-index-label">
+                    {label}
+                    {check && <span className="manual-index-tag"> — prévia liberada</span>}
+                  </span>
+                  <span className="manual-index-desc">{desc}</span>
+                </span>
               </li>
             ))}
           </ul>
@@ -989,7 +1026,7 @@ export default function ResultadoPage() {
             <li>✓ Calendário de 4 semanas</li>
             <li>✓ 3 rituais específicos pro seu perfil — com áudio guiado 🔊</li>
             <li>✓ 🎁 Compatibilidade Astral (Sol, Lua, Ascendente, Vênus e Marte)</li>
-            <li>✓ 🎁 Compatibilidade Completa com uma pessoa específica — grátis</li>
+            <li>✓ 🎁 Compatibilidade Completa com uma pessoa específica (vendida por R$ 29,90) — de bônus no seu Manual</li>
           </ul>
           {!ofertaExpirada && (
             <div className="bonus-badge">
@@ -1459,6 +1496,13 @@ const globalCss = `
     font-size: 32px; font-family: 'Cinzel', serif;
     color: var(--warning); font-weight: 700;
   }
+  .offer-card-compact {
+    display: flex; flex-direction: column; align-items: center;
+    text-align: center; gap: 12px;
+    border-color: rgba(168,85,247,0.35);
+    background: linear-gradient(135deg, rgba(17,7,32,0.75), rgba(88,28,135,0.15));
+  }
+  .offer-compact-note { font-size: 13px; color: var(--muted); margin: -4px 0 0; }
   .offer-list { text-align: left; width: 100%; max-width: 340px; }
   .list-check { list-style: none; padding: 0; margin: 8px 0; }
   .list-check li {
@@ -1802,7 +1846,7 @@ const globalCss = `
   /* ── Índice do manual ── */
   .manual-index-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; }
   .manual-index-item {
-    display: flex; align-items: center; gap: 10px;
+    display: flex; align-items: flex-start; gap: 10px;
     font-size: 15px; line-height: 1.5;
     padding: 9px 0;
     border-bottom: 1px solid rgba(255,255,255,0.05);
@@ -1810,8 +1854,12 @@ const globalCss = `
   .manual-index-item:last-child { border-bottom: none; }
   .manual-index-seen { color: rgba(250,245,255,0.95); }
   .manual-index-locked { color: var(--muted); opacity: 0.7; }
-  .manual-index-icon { font-size: 14px; width: 18px; text-align: center; flex-shrink: 0; }
+  .manual-index-icon { font-size: 14px; width: 18px; text-align: center; flex-shrink: 0; margin-top: 2px; }
   .manual-index-seen .manual-index-icon { color: #f0c870; font-weight: 700; }
+  .manual-index-text { display: flex; flex-direction: column; gap: 2px; }
+  .manual-index-label { font-weight: 500; }
+  .manual-index-desc { font-size: 13px; font-weight: 400; line-height: 1.4; color: var(--muted); }
+  .manual-index-seen .manual-index-desc { color: rgba(250,245,255,0.55); }
   .manual-index-tag { color: #f0c870; font-size: 12px; font-style: italic; opacity: 0.85; }
   .manual-index-footer {
     margin-top: 18px; font-size: 14px; font-style: italic;
