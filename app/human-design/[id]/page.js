@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { calcularHumanDesign, CENTRO_NOME_AMIGAVEL } from '@/lib/humanDesign';
 import { TIPO_DESCRICAO, AUTORIDADE_DESCRICAO, gerarIntegracaoHumanDesign } from '@/lib/humanDesignTextos';
 import { PRECO_BONUS_AVULSO, PRECO_BONUS_COMBO } from '@/lib/preco';
+import { offsetSalvo, buscarOffsetNascimento } from '@/lib/sky';
 
 function getSupabaseClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -31,15 +32,17 @@ export default function HumanDesignPage() {
   useEffect(() => {
     const supabase = getSupabaseClient();
     if (!supabase || !id) { setErro(true); setLoading(false); return; }
-    supabase
-      .from('analises')
-      .select('id,nome,data_nascimento,hora_nascimento,signo,numero_vida,objetivo_principal,payment_status,tier2_payment_status,hd_payment_status')
-      .eq('id', id)
-      .single()
-      .then(({ data, error }) => {
-        if (error || !data) { setErro(true); } else { setRow(data); }
-        setLoading(false);
-      });
+    Promise.all([
+      supabase
+        .from('analises')
+        .select('id,nome,data_nascimento,hora_nascimento,signo,numero_vida,objetivo_principal,payment_status,tier2_payment_status,hd_payment_status')
+        .eq('id', id)
+        .single(),
+      buscarOffsetNascimento(supabase, id),
+    ]).then(([{ data, error }, utcOffset]) => {
+      if (error || !data) { setErro(true); } else { setRow({ ...data, utc_offset_nascimento: utcOffset }); }
+      setLoading(false);
+    });
   }, [id]);
 
   async function handleComprar() {
@@ -111,7 +114,7 @@ export default function HumanDesignPage() {
         )}
 
         {!loading && row && row.data_nascimento && (() => {
-          const hd = calcularHumanDesign(row.data_nascimento, row.hora_nascimento);
+          const hd = calcularHumanDesign(row.data_nascimento, row.hora_nascimento, offsetSalvo(row) ?? -3);
           if (!hd) return <div className="card"><p className="p">Não foi possível calcular seu mapa.</p></div>;
 
           const desbloqueado = row.hd_payment_status === 'paid';

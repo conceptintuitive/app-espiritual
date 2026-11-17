@@ -16,6 +16,7 @@ import FeedbackSecao, { chaveSecao } from '@/app/components/FeedbackSecao';
 import ChatAssistente from '@/app/components/ChatAssistente';
 import BotaoCompartilharStory from '@/app/components/BotaoCompartilharStory';
 import { getPrecoManual, PRECO_BONUS_AVULSO, PRECO_BONUS_COMBO } from '@/lib/preco';
+import { offsetSalvo } from '@/lib/sky';
 
 // Olho Cósmico (abertura "Meu Mapa"): chunk separado, só baixa pra quem pagou.
 const OlhoCosmicoManual = dynamic(() => import('@/app/components/olho/OlhoCosmicoManual'), { ssr: false });
@@ -805,7 +806,7 @@ export default function ManualPage() {
 
   const compatMinhasSignos = useMemo(() => {
     if (!row?.data_nascimento) return null;
-    return calcularSignosPessoa(row.data_nascimento, row.hora_nascimento);
+    return calcularSignosPessoa(row.data_nascimento, row.hora_nascimento, offsetSalvo(row));
   }, [row]);
 
   const compatPessoa2Signos = useMemo(() => {
@@ -1826,7 +1827,7 @@ e mostrar como sair dele.
 
         {/* ========== UPSELL — MAPA DE HUMAN DESIGN ========== */}
         {row && (() => {
-          const hd = calcularHumanDesign(row.data_nascimento, row.hora_nascimento);
+          const hd = calcularHumanDesign(row.data_nascimento, row.hora_nascimento, offsetSalvo(row) ?? -3);
           if (!hd) return null;
           const tipoInfo = TIPO_DESCRICAO[hd.tipo];
           const autoridadeInfo = AUTORIDADE_DESCRICAO[hd.autoridade];

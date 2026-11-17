@@ -132,23 +132,38 @@ export async function POST(request) {
     const numeroAlma      = calcularNumeroAlma(nome);
     const numeroExpressao = calcularNumeroExpressao(nome);
 
-    let planetas = null;
-    try {
-      planetas = calcularPlanetas(data_nascimento, noTime ? null : hora_nascimento);
-    } catch (_) {}
+    const temHora = !noTime && !!hora_nascimento;
 
     // Geocoding (rápido, 5s timeout) — necessário para signoAscendente no insert
     let coords = null;
-    let signoAscendente = null;
     try {
       // Com município do autocomplete, as coordenadas já vêm prontas (IBGE) —
       // não precisa do Nominatim (mais rápido e sem erro de geocoding).
       coords = municipio ? { lat: municipio.lat, lon: municipio.lon } : await geocodeLocal(local_nascimento);
-      if (coords && !noTime && hora_nascimento) {
-        // Offset real da época e do lugar (fuso IANA com horário de verão
-        // histórico por estado). Texto livre: fuso do município mais próximo.
-        const tz = municipio?.tz || fusoPorCoordenada(coords.lat, coords.lon);
-        const utcOffset = utcOffsetHoras({ data: data_nascimento, hora: hora_nascimento, tz });
+    } catch (_) {}
+
+    // Offset real do nascimento (fuso IANA com horário de verão histórico por
+    // estado), calculado UMA vez e usado em tudo: planetas, Ascendente e — via
+    // utc_offset_nascimento gravado — Human Design e Compatibilidade, que são
+    // recalculados a cada visita. Fuso: município do autocomplete → município
+    // mais próximo das coordenadas (texto livre) → horário de Brasília (sem
+    // cidade). Sem hora: null, e tudo segue o cálculo legado.
+    let utcOffset = null;
+    if (temHora) {
+      try {
+        const tz = municipio?.tz || (coords ? fusoPorCoordenada(coords.lat, coords.lon) : 'America/Sao_Paulo');
+        utcOffset = utcOffsetHoras({ data: data_nascimento, hora: hora_nascimento, tz });
+      } catch (_) {}
+    }
+
+    let planetas = null;
+    try {
+      planetas = calcularPlanetas(data_nascimento, temHora ? hora_nascimento : null, utcOffset);
+    } catch (_) {}
+
+    let signoAscendente = null;
+    try {
+      if (coords && temHora && utcOffset !== null) {
         signoAscendente = calcularAscendente(data_nascimento, hora_nascimento, coords.lat, coords.lon, utcOffset);
       }
     } catch (_) {}
@@ -211,6 +226,22 @@ export async function POST(request) {
       // municipio_ibge/fuso_iana (migração 0015) seguem o mesmo padrão do
       // telefone: update separado e best effort, pra o insert crítico nunca
       // falhar se a migração ainda não tiver rodado.
+      // utc_offset_nascimento (migração 0016): o offset usado nos planetas e
+      // no Ascendente acima. Human Design e Compatibilidade são recalculados a
+      // cada visita e leem esse valor; sem ele (registros antigos, ou migração
+      // ainda não rodada) caem no cálculo legado. Por isso a 0016 precisa
+      // rodar ANTES deste código entrar em produção — senão o signo_lua salvo
+      // (fuso real) e o recalculado na Compatibilidade (legado) divergem.
+      if (utcOffset !== null) {
+        const { error: offErr } = await supabase
+          .from('analises')
+          .update({ utc_offset_nascimento: utcOffset })
+          .eq('id', analiseId);
+        if (offErr) {
+          console.error('⚠️ Não foi possível salvar utc_offset_nascimento (migração 0016 rodou?):', offErr.message);
+        }
+      }
+
       if (municipio) {
         const { error: munErr } = await supabase
           .from('analises')
