@@ -2,12 +2,17 @@
 
 // Olho Cósmico — abertura animada por scroll: olho → íris → galáxia → estrela
 // → (perguntas) → céu real do nascimento → dígitos da data → número do
-// Caminho de Vida. Portado de reference/olho-cosmico/index.html.
+// Caminho de Vida. Portado da demo reference/olho-cosmico/index.html (branch
+// reference-olho — fora da main de propósito).
 //
 //   mode="publico"  (/ceu)          na estrela o scroll trava e aparecem as
 //                                   perguntas; o CTA final chama onCta(dados).
+//                                   "Nasci fora do Brasil" pula o céu real e vai
+//                                   direto pros dígitos e pro número.
 //   mode="manual"   (/manual/[id])  sem perguntas: `dados` vem do registro e
-//                                   a estrela passa direto pro céu.
+//                                   a estrela passa direto pro céu. Botão
+//                                   "pular ↓" durante toda a animação; onVisto()
+//                                   avisa quando a pessoa pulou ou chegou ao fim.
 //
 // Nunca importe este arquivo de forma estática numa página: use next/dynamic
 // com ssr:false (ver app/ceu/CeuClient.js e OlhoCosmicoManual.js), pra ele
@@ -85,13 +90,14 @@ const hojeISO = () => new Date().toISOString().slice(0, 10);
 // ─────────────────────────────────────────────────────────────────────────────
 // Motor (imperativo). Recebe os elementos e devolve os controles.
 // ─────────────────────────────────────────────────────────────────────────────
-function criarMotor(el, { mode, reduce, onGate }) {
+function criarMotor(el, { mode, reduce, onGate, onVisto }) {
   const st = {
     SKY: null, place: null, birthUTC: null, approx: false, sun: null,
     proj: [], projLines: [], labels: [], digitEls: [],
     skyState: { stars: 0, lines: 0, dim: 1 },
     hasData: false, gateOpen: false, visivel: true, vivo: true, raf: 0, ticking: false,
-    estaticoFinal: false,
+    fora: false, // nasceu fora do Brasil: sem céu real, só dígitos e número
+    vistoAvisado: false,
   };
   const cx2 = el.sky.getContext('2d');
   const words = Object.fromEntries(Object.keys(TEXT).map((k) => [k, [...el[k].querySelectorAll(`.${s.w}`)]]));
@@ -128,6 +134,16 @@ function criarMotor(el, { mode, reduce, onGate }) {
 
   function setBirth(dateStr, timeStr) {
     const [y, m, d] = dateStr.split('-').map(Number);
+    if (st.fora) {
+      // Sem local no Brasil não dá pra montar o céu: some o céu, fica a legenda.
+      st.birthUTC = null; st.sun = null; st.approx = false;
+      st.proj = []; st.projLines = []; st.labels = [];
+      el.skyl1.innerHTML = '';
+      el.skyl3.textContent = 'O céu do seu nascimento ainda não está disponível para fora do Brasil.';
+      el.skymeta.textContent = `${d} ${MESES[m - 1]} ${y}`;
+      cx2.clearRect(0, 0, el.sky.width, el.sky.height);
+      return;
+    }
     st.approx = !timeStr;
     const [hh, mm] = (timeStr || '21:00').split(':').map(Number);
     st.birthUTC = localToUTC({ y, m, d, hh, mm }, st.place.tz);
@@ -299,9 +315,11 @@ function criarMotor(el, { mode, reduce, onGate }) {
     st.skyState.lines = ease(clamp01((sk - 0.3) / 0.5));
     st.skyState.dim = 1 - 0.55 * clamp01((P - 0.84) / 0.06);
     el.sky.style.opacity = st.skyState.stars * st.skyState.dim;
-    const cap = reduce ? (st.hasData ? 1 : 0) : band(P, [0.70, 0.75, 0.82, 0.86]);
+    const cap = reduce ? (st.hasData ? 1 : 0)
+      : st.fora ? band(P, [0.70, 0.75, 1.01, 1.02]) // fica até o número (no topo, ver .capTopo)
+      : band(P, [0.70, 0.75, 0.82, 0.86]);
     el.skycap.style.opacity = cap; el.skycap.style.transform = `translateY(${(1 - cap) * 12}px)`;
-    el.zen.style.opacity = reduce ? 0 : band(P, [0.66, 0.70, 0.80, 0.84]);
+    el.zen.style.opacity = reduce || st.fora ? 0 : band(P, [0.66, 0.70, 0.80, 0.84]);
     try { drawSky(); } catch (e) { console.error(e); }
 
     // Modo dia: a imagem da estrela (e4) sai junto com a entrada do céu e o
@@ -347,7 +365,14 @@ function criarMotor(el, { mode, reduce, onGate }) {
     el.cta.style.opacity = cta;
     el.cta.style.pointerEvents = cta > 0.9 ? 'auto' : 'none';
     el.hint.style.opacity = P > 0.02 ? 0 : 1;
+    if (st.hasData && P >= 0.98) avisarVisto();
     if (st.skyState.stars > 0) ligarTwinkle();
+  }
+
+  function avisarVisto() {
+    if (st.vistoAvisado) return;
+    st.vistoAvisado = true;
+    onVisto?.();
   }
 
   const onScroll = () => { if (!st.ticking) { st.ticking = true; requestAnimationFrame(render); } };
@@ -363,9 +388,12 @@ function criarMotor(el, { mode, reduce, onGate }) {
 
   return {
     setSky(json) { st.SKY = json; computeSky(); render(); },
-    /** @param {{ nome: string, data: string, hora: string|null, place: {name,lat,lon,tz}, numero: number }} d */
+    /** @param {{ nome: string, data: string, hora: string|null, place: {name,lat,lon,tz}|null, numero: number }} d
+     *  place = null → nasceu fora do Brasil (sem céu real). */
     setDados(d) {
       st.place = d.place;
+      st.fora = !d.place;
+      el.skycap.classList.toggle(s.capTopo, st.fora);
       buildDigits(d.data, d.nome, d.numero);
       setBirth(d.data, d.hora);
       st.hasData = true; st.gateOpen = false;
@@ -375,7 +403,8 @@ function criarMotor(el, { mode, reduce, onGate }) {
     seguirProCeu() {
       if (reduce) return;
       const { max, top } = medir();
-      scrollTo({ top: top + max * 0.74, behavior: 'smooth' });
+      // fora do Brasil: pula o céu e para onde os dígitos começam a aparecer
+      scrollTo({ top: top + max * (st.fora ? 0.84 : 0.74), behavior: 'smooth' });
     },
     /** "trocar dados": volta pra estrela com as perguntas. */
     editar() {
@@ -388,6 +417,7 @@ function criarMotor(el, { mode, reduce, onGate }) {
     },
     /** Rola pra logo depois da seção (CTA do modo manual). */
     rolarProFim() {
+      avisarVisto();
       const { top } = medir();
       scrollTo({ top: top + el.root.offsetHeight, behavior: reduce ? 'instant' : 'smooth' });
     },
@@ -412,11 +442,14 @@ function criarMotor(el, { mode, reduce, onGate }) {
  *   dados?: { nome: string, data: string, hora: string|null,
  *             place: { name: string, lat: number, lon: number, tz: string }, numero: number } | null,
  *   onCta?: (dados: object) => void,
+ *   onVisto?: () => void,
  * }} props
  *   mode="manual": `dados` obrigatório (pode chegar depois — fica preto até lá).
- *   mode="publico": `onCta` recebe { nome, dataNascimento, hora, cidade } das respostas.
+ *     `onVisto` é chamado uma vez quando a pessoa pula ou chega ao número.
+ *   mode="publico": `onCta` recebe { nome, dataNascimento, hora, cidade } das
+ *     respostas (cidade = null quando nasceu fora do Brasil).
  */
-export default function OlhoCosmico({ mode = 'publico', dados = null, onCta }) {
+export default function OlhoCosmico({ mode = 'publico', dados = null, onCta, onVisto }) {
   const refs = {
     root: useRef(null), stageWrap: useRef(null), stage: useRef(null),
     e1: useRef(null), e2: useRef(null), e3: useRef(null), e4: useRef(null),
@@ -438,13 +471,16 @@ export default function OlhoCosmico({ mode = 'publico', dados = null, onCta }) {
   const [cidadeTexto, setCidadeTexto] = useState('');
   const [cidade, setCidade] = useState(null);
   const [respondido, setRespondido] = useState(false);
+  // onVisto pode mudar a cada render do pai; o motor lê sempre a versão atual
+  const onVistoRef = useRef(onVisto);
+  onVistoRef.current = onVisto;
   const inputs = { 1: useRef(null), 2: useRef(null), 3: useRef(null), 4: useRef(null) };
 
   useEffect(() => {
     const r = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
     setReduce(r);
     const el = Object.fromEntries(Object.entries(refs).map(([k, v]) => [k, v.current]));
-    const m = criarMotor(el, { mode, reduce: r, onGate: setIntroAberta });
+    const m = criarMotor(el, { mode, reduce: r, onGate: setIntroAberta, onVisto: () => onVistoRef.current?.() });
     motor.current = m;
     setPronto(true);
     let cancelado = false;
@@ -476,20 +512,21 @@ export default function OlhoCosmico({ mode = 'publico', dados = null, onCta }) {
   const valido = step === 1 ? nome.trim().length > 0 : step === 2 ? !!data : step === 3 ? !!hora : step === 4 ? !!cidade : true;
   const avancar = () => { if (valido) setStep((n) => n + 1); };
 
-  function revelar(e) {
+  // `fora` = "Nasci fora do Brasil": sem cidade, pula o céu real
+  function revelar(e, fora = false) {
     e?.preventDefault();
-    if (!cidade || !data || !nome.trim()) return;
-    const primeiroNome = nome.trim();
+    if ((!cidade && !fora) || !data || !nome.trim()) return;
+    if (fora) { setCidade(null); setCidadeTexto(''); }
     motor.current?.setDados({
-      nome: primeiroNome,
+      nome: nome.trim(),
       data,
       hora: semHora ? null : hora,
-      place: { name: cidade.nome, lat: cidade.lat, lon: cidade.lon, tz: cidade.tz },
+      place: fora ? null : { name: cidade.nome, lat: cidade.lat, lon: cidade.lon, tz: cidade.tz },
       numero: calcularNumeroVida(data),
     });
     setIntroAberta(false);
     setRespondido(true);
-    try { window.gtag?.('event', 'ceu_revelar', { event_category: 'ceu', sem_hora: semHora }); } catch {}
+    try { window.gtag?.('event', 'ceu_revelar', { event_category: 'ceu', sem_hora: semHora, fora_do_brasil: fora }); } catch {}
     motor.current?.seguirProCeu();
   }
 
@@ -546,6 +583,10 @@ export default function OlhoCosmico({ mode = 'publico', dados = null, onCta }) {
           <div ref={refs.hint} className={s.hint}>role <span>↓</span></div>
         </div>
 
+        {mode === 'manual' && (
+          <button type="button" className={s.pular} onClick={() => motor.current?.rolarProFim()}>pular ↓</button>
+        )}
+
         {mode === 'publico' && (
           <>
             <button type="button" className={`${s.edit} ${respondido ? '' : s.off}`} onClick={editar}>✎ trocar dados</button>
@@ -591,6 +632,7 @@ export default function OlhoCosmico({ mode = 'publico', dados = null, onCta }) {
                     onChangeText={(t) => { setCidadeTexto(t); setCidade(null); }}
                     onSelect={(m) => { setCidade(m); setCidadeTexto(m.nome); }}
                   />
+                  <button type="button" className={`${s.skip} ${s.fora}`} onClick={(e) => revelar(e, true)}>Nasci fora do Brasil</button>
                   <button type="submit" className={s.go} disabled={step === 4 && !valido}>Revelar meu céu ✦</button>
                 </div>
                 <button type="button" className={`${s.back} ${step === 0 ? s.backOff : ''}`} onClick={() => step > 0 && setStep(step - 1)}>← voltar</button>

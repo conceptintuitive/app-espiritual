@@ -116,7 +116,23 @@
 
 /* ── prefers-reduced-motion: versão estática (uma tela, sem rolagem) ── */
 .estatico { height: 100vh; height: 100dvh; }
-.estatico .skycap { top: 7%; bottom: auto; }
+.estatico .skycap { top: 7%; bottom: auto; left: 8%; right: 8%; }
 .estatico .skycap .l1 { display: none; }
 .estatico .hint { display: none; }
 .estatico .intro, .estatico .step, .estatico .back, .estatico .dots i { transition: none; }
+
+/* "Nasci fora do Brasil": link logo abaixo do campo de cidade */
+.fora { margin-top: 14px; }
+.step .fora + .go { margin-top: 22px; }
+/* Fora do Brasil: a legenda sobe pro topo e fica até o número */
+.capTopo { top: 7%; bottom: auto; left: 8%; right: 8%; }
+.capTopo .l1 { display: none; }
+
+/* Manual: "pular ↓" discreto, visível durante toda a animação */
+.pular {
+  position: absolute; right: 14px; top: 14px; z-index: 5;
+  background: rgba(0,0,0,.35); border: 1px solid rgba(255,255,255,.18); border-radius: 999px;
+  color: rgba(255,255,255,.7); font-family: 'Geist Mono', monospace; font-size: 11px; letter-spacing: .12em;
+  padding: 7px 13px; cursor: pointer; backdrop-filter: blur(6px);
+}
+.pular:hover { color: #fff; border-color: rgba(255,255,255,.4); }
