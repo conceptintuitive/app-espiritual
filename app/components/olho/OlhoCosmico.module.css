@@ -24,7 +24,9 @@
 
 .stage {
   position: relative; height: 100vh; height: 100dvh;
-  width: min(100vw, calc(100dvh * 0.5628)); overflow: hidden; background: #000;
+  /* Sempre em largura total (desde a versão desktop da demo): no celular já era
+     100vw; no desktop entram as imagens 16:9 (.largo) em vez de faixas pretas. */
+  width: 100%; overflow: hidden; background: #000;
 }
 .layer {
   position: absolute; inset: 0; width: 100%; height: 100%;
@@ -38,6 +40,12 @@
           mask-image: radial-gradient(circle closest-side at 50% 48%, #000 35%, transparent 100%);
 }
 .e4 { transform-origin: 50% 48.5%; }
+/* Desktop/paisagem (classe .largo no stageWrap, ver setOrientation): galáxia
+   16:9 com máscara elíptica. As origens do zoom vêm do JS (ORIGINS.w). */
+.largo .e3 {
+  -webkit-mask-image: radial-gradient(ellipse closest-side at 50% 51%, #000 45%, transparent 100%);
+          mask-image: radial-gradient(ellipse closest-side at 50% 51%, #000 45%, transparent 100%);
+}
 .sky { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; }
 .skycap { position: absolute; left: 0; right: 0; bottom: 12%; text-align: center; opacity: 0; }
 .skycap .l1 { font-family: 'Instrument Serif', serif; font-size: clamp(28px, 7.6vw, 40px); line-height: 1.08; text-shadow: 0 2px 24px #000; }

@@ -32,12 +32,32 @@ import { calcularNumeroVida } from '@/lib/calculos';
 import CidadeAutocomplete from '@/app/components/CidadeAutocomplete';
 
 /* Cada camada tem keyframes: [progresso, escala, opacidade, rotação(graus), blur(px)] */
-const KF = {
+// Retrato (celular): imagens 9:16 e1–e4.webp
+const KF_V = {
   e1: [[0, 1, 1, 0, 0], [0.22, 1.8, 1, 0, 0], [0.30, 2.15, 0, 0, 2]],
   e2: [[0.18, 0.84, 0, 0, 0], [0.30, 1, 1, 0, 0], [0.50, 2.6, 1, 0, 0], [0.60, 3.6, 0, 0, 5]],
   e3: [[0.44, 0.32, 0, -140, 3], [0.58, 1, 1, 0, 0], [0.72, 1.18, 1, 14, 0], [0.81, 4.2, 0, 30, 0]],
   e4: [[0.74, 1.45, 0, 0, 0], [0.85, 1, 1, 0, 0], [1, 1.04, 1, 0, 0]],
 };
+// Desktop/paisagem: imagens 16:9 e1w–e4w.webp (pupila menor na e1w, então o
+// zoom inicial é um pouco maior)
+const KF_W = {
+  e1: [[0, 1, 1, 0, 0], [0.22, 1.75, 1, 0, 0], [0.30, 2.05, 0, 0, 2]],
+  e2: [[0.18, 0.85, 0, 0, 0], [0.30, 1, 1, 0, 0], [0.50, 2.5, 1, 0, 0], [0.60, 3.4, 0, 0, 5]],
+  e3: KF_V.e3,
+  e4: KF_V.e4,
+};
+// Ponto de cada imagem pra onde o zoom converge (pupila, centro da galáxia, estrela)
+const ORIGINS = {
+  v: { e1: '48.9% 45.2%', e2: '50% 46.7%', e3: '50% 48%', e4: '50% 48.5%' },
+  w: { e1: '49.2% 48.7%', e2: '49.8% 48.9%', e3: '49.7% 50.8%', e4: '50.1% 50.8%' },
+};
+const CAMADAS = ['e1', 'e2', 'e3', 'e4'];
+// Telas quadradas ou largas (largura/altura > 0,9) usam as imagens 16:9 — mesmo
+// limiar da demo. Celular em pé fica sempre no retrato.
+const LIMIAR_LARGO = 0.9;
+const ehLargo = () => typeof window !== 'undefined' && innerWidth / innerHeight > LIMIAR_LARGO;
+const srcCamada = (k, largo) => `/olho/${k}${largo ? 'w' : ''}.webp`;
 const TEXT = { // [entra, cheio, sai, some]
   t1: [0.02, 0.06, 0.13, 0.17],
   t2: [0.32, 0.36, 0.43, 0.47],
@@ -97,6 +117,7 @@ function criarMotor(el, { mode, reduce, onGate, onVisto }) {
     skyState: { stars: 0, lines: 0, dim: 1 },
     hasData: false, gateOpen: false, visivel: true, vivo: true, raf: 0, ticking: false,
     fora: false, // nasceu fora do Brasil: sem céu real, só dígitos e número
+    kf: KF_V, largo: null,
     vistoAvisado: false,
   };
   const cx2 = el.sky.getContext('2d');
@@ -285,6 +306,21 @@ function criarMotor(el, { mode, reduce, onGate, onVisto }) {
     el.stageWrap.classList.toggle(s.depois, depois);
   }
 
+  // Troca retrato ↔ paisagem: imagens, keyframes, origens do zoom e máscara
+  // elíptica da galáxia (.largo no CSS). Só age quando a orientação muda.
+  function setOrientation() {
+    const largo = ehLargo();
+    if (largo === st.largo) return;
+    st.largo = largo;
+    st.kf = largo ? KF_W : KF_V;
+    el.stageWrap.classList.toggle(s.largo, largo); // stageWrap: o React nunca reescreve o className dele
+    for (const k of CAMADAS) {
+      const src = srcCamada(k, largo);
+      if (!el[k].getAttribute('src')?.endsWith(src)) el[k].setAttribute('src', src);
+      el[k].style.transformOrigin = ORIGINS[largo ? 'w' : 'v'][k];
+    }
+  }
+
   function render() {
     st.ticking = false;
     let P;
@@ -325,8 +361,8 @@ function criarMotor(el, { mode, reduce, onGate, onVisto }) {
     // Modo dia: a imagem da estrela (e4) sai junto com a entrada do céu e o
     // canvas desenha no lugar uma estrela menor e branca (ver drawSky).
     const diaK = st.sun && st.sun.day ? st.skyState.stars : 0;
-    for (const k of Object.keys(KF)) {
-      const [, sc, o, r, b] = sample(KF[k], p);
+    for (const k of CAMADAS) {
+      const [, sc, o, r, b] = sample(st.kf[k], p);
       const node = el[k];
       node.style.opacity = k === 'e4' ? o * (1 - diaK) : o;
       node.style.transform = `scale(${sc}) rotate(${r}deg)`;
@@ -354,7 +390,8 @@ function criarMotor(el, { mode, reduce, onGate, onVisto }) {
     const spin = p * 2.2;
     st.digitEls.forEach((node) => {
       const a = +node.dataset.a + spin;
-      const r = W * 0.34 * (1 - merge);
+      // raio pela menor dimensão: no desktop a largura sozinha jogaria os dígitos pra fora
+      const r = Math.min(W, el.stage.clientHeight) * 0.34 * (1 - merge);
       node.style.opacity = appear * (1 - merge);
       node.style.transform = `translate(calc(-50% + ${Math.cos(a) * r}px), calc(-50% + ${Math.sin(a) * r}px)) scale(${1 - merge * 0.5})`;
     });
@@ -376,7 +413,8 @@ function criarMotor(el, { mode, reduce, onGate, onVisto }) {
   }
 
   const onScroll = () => { if (!st.ticking) { st.ticking = true; requestAnimationFrame(render); } };
-  const onResize = () => { computeSky(); render(); };
+  const onResize = () => { setOrientation(); computeSky(); render(); };
+  setOrientation();
   if (!reduce) addEventListener('scroll', onScroll, { passive: true });
   addEventListener('resize', onResize);
 
@@ -458,6 +496,9 @@ export default function OlhoCosmico({ mode = 'publico', dados = null, onCta, onV
     digits: useRef(null), reveal: useRef(null), who: useRef(null), num: useRef(null), cta: useRef(null), hint: useRef(null),
   };
   const motor = useRef(null);
+  // ssr:false — dá pra ler a janela já no 1º render. useState pra não mudar
+  // depois: quem troca as imagens no resize é o motor, direto no DOM.
+  const [largoInicial] = useState(ehLargo);
   const [reduce, setReduce] = useState(false);
   const [pronto, setPronto] = useState(false);
 
@@ -554,10 +595,12 @@ export default function OlhoCosmico({ mode = 'publico', dados = null, onCta, onV
       <div ref={refs.stageWrap} className={s.stageWrap}>
         <div ref={refs.stage} className={s.stage}>
           {/* eslint-disable @next/next/no-img-element -- camadas animadas por transform; next/image não ajuda aqui */}
-          <img ref={refs.e1} className={`${s.layer} ${s.e1}`} src="/olho/e1.webp" alt="" fetchPriority="high" />
-          <img ref={refs.e2} className={`${s.layer} ${s.e2}`} src="/olho/e2.webp" alt="" />
-          <img ref={refs.e3} className={`${s.layer} ${s.e3}`} src="/olho/e3.webp" alt="" />
-          <img ref={refs.e4} className={`${s.layer} ${s.e4}`} src="/olho/e4.webp" alt="" />
+          {/* src inicial já na orientação certa (só baixa um jogo de imagens);
+              depois, giro/resize troca pelo motor (setOrientation) */}
+          <img ref={refs.e1} className={`${s.layer} ${s.e1}`} src={srcCamada('e1', largoInicial)} alt="" fetchPriority="high" />
+          <img ref={refs.e2} className={`${s.layer} ${s.e2}`} src={srcCamada('e2', largoInicial)} alt="" />
+          <img ref={refs.e3} className={`${s.layer} ${s.e3}`} src={srcCamada('e3', largoInicial)} alt="" />
+          <img ref={refs.e4} className={`${s.layer} ${s.e4}`} src={srcCamada('e4', largoInicial)} alt="" />
           {/* eslint-enable @next/next/no-img-element */}
           <canvas ref={refs.sky} className={s.sky} />
           <div ref={refs.flash} className={s.flash} />
