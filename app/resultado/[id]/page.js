@@ -1117,7 +1117,7 @@ export default function ResultadoPage() {
           <div className="muted">Precisa de ajuda? Email: <strong>conceptintuitive@gmail.com</strong></div>
         </div>
 
-        <a href="/?refazer=1" className="refazer-link">↺ Refazer minha análise com outros dados</a>
+        <Link href="/?refazer=1" className="refazer-link">↺ Refazer minha análise com outros dados</Link>
 
       </div>
 

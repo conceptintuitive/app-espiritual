@@ -116,3 +116,20 @@ test('projeção: zênite no centro, horizonte a R px', () => {
   const [hx, hy] = Q(0, 90 - 1e-9); // polo norte, no horizonte do equador
   perto(Math.hypot(hx, hy), 50, 1e-4, 'raio do horizonte');
 });
+
+// ── Offset pro Ascendente (substitui a antiga heurística brasilUtcOffset) ─────
+
+test('utcOffsetHoras: horário de verão real por estado e ano', async () => {
+  const { utcOffsetHoras } = await import('../lib/sky.js');
+  const o = (data, hora, tz) => utcOffsetHoras({ data, hora, tz });
+  assert.equal(o('1994-12-21', '07:25', 'America/Sao_Paulo'), -2); // Vitória, verão
+  assert.equal(o('1994-06-21', '07:25', 'America/Sao_Paulo'), -3);
+  // Casos em que a heurística antiga (-2 de nov a fev, qualquer lugar/ano) errava:
+  assert.equal(o('2005-12-15', '10:00', 'America/Recife'), -3);   // PE sem verão em 2005
+  assert.equal(o('2010-01-15', '10:00', 'America/Manaus'), -4);   // AM é -4
+  assert.equal(o('2022-01-15', '10:00', 'America/Sao_Paulo'), -3); // sem verão desde 2019
+  assert.equal(o('1985-06-15', '10:00', 'America/Rio_Branco'), -5); // AC (inverno)
+  assert.equal(o('1985-11-15', '10:00', 'America/Rio_Branco'), -4); // AC teve verão em 85/86
+  assert.equal(o('2000-03-01', '10:00', 'America/Sao_Paulo'), -3); // verão acabou em fev/2000
+  assert.equal(o('1999-10-20', '10:00', 'America/Sao_Paulo'), -2); // e começou em out/1999
+});
