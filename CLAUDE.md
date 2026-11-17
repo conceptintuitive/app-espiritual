@@ -13,8 +13,10 @@ Stack: **Next.js 16 App Router** (JavaScript, sem TypeScript), **Supabase** (Pos
 ```bash
 npm run dev      # Servidor de desenvolvimento (localhost:3000)
 npm run build    # Build de produção
-npm run lint     # ESLint
+npm run lint     # ESLint (o eslint.config.mjs atual quebra com eslint-config-next 16 — pendente)
 npm run start    # Servidor de produção
+npm test         # node --test em tests/*.test.js (lib/sky.js, lib/fusoBR.js, lib/municipios.js) — sem dependências
+node scripts/gerar-municipios.mjs  # regenera public/data/municipios-br.json (base IBGE)
 ```
 
 ## Architecture & Data Flow
@@ -55,7 +57,14 @@ O item "Meu Mapa" do menu (`app/components/SiteNav.js`) aponta para `/resultado/
 | `app/api/webhook/route.js` | Valida assinatura Stripe, atualiza DB, dispara Purchase GA4/Meta/TikTok, chama `/api/send`. |
 | `app/api/send/route.js` | Envia e-mail de acesso via Resend. Chamado com URL **fixa de produção** (`https://intuitiveconcept.com.br/api/send`) pelo webhook Stripe e por `lib/mpPagamentoManual.js` — preview/local também mandam e-mail pela produção. |
 | `app/api/cron/lembretes/route.js` | E-mails de recuperação/nutrição (agrupa por e-mail, rodapé de descadastro via `/api/unsubscribe`). |
-| `app/page.js` | Landing + quiz em 4 etapas (Client Component, ~47 KB). **Não** persiste o estado do quiz: o único uso de localStorage é ler `ic_ultima_analise_id`. Não lê query string. |
+| `app/page.js` | Landing + quiz em 4 etapas (Client Component, ~47 KB). Não persiste o estado do quiz por conta própria; lê `ic_ultima_analise_id` e `ic_ceu_dados` (pré-preenchimento vindo do `/ceu`, ver Olho Cósmico). Query string: só `?refazer=1`. |
+| `app/components/olho/` | **Olho Cósmico** — `OlhoCosmico.js` (abertura animada por scroll, portada de `reference/olho-cosmico/`), `OlhoCosmico.module.css`, `OlhoCosmicoManual.js` (monta os dados a partir do registro). Ver convenções. |
+| `app/ceu/` | Rota pública `/ceu` — Olho Cósmico com perguntas (`mode="publico"`). |
+| `app/components/CidadeAutocomplete.js` | Autocomplete de município (quiz etapa 3 e `/ceu`). Texto livre continua valendo. |
+| `lib/sky.js` | Matemática do céu: `localToUTC` (fuso IANA histórico via Intl), `localSiderealDeg`, `altAz`, `sunRaDec`, `makeProjector` (estereográfica no zênite), `birthSky`. Testes em `tests/sky.test.js`. |
+| `lib/fusoBR.js` | Fuso IANA por município: tabela por UF + exceções (Noronha, oeste do AM → Eirunepe, oeste do PA → Santarem por longitude). `FUSOS_BR` = whitelist. |
+| `lib/municipios.js` | Carrega `public/data/municipios-br.json` sob demanda (~83 KB gzip) e busca/resolve municípios (sem acento, "Cidade, UF", mais próximo por lat/long). |
+| `lib/ceuDados.js` | Repasse `/ceu` → quiz via localStorage `ic_ceu_dados` (validade 24h, flag `abrirQuiz` consumido uma vez). Nunca por query string. |
 | `app/resultado/[id]/page.js` | Prévia gratuita — página de vendas em PT-BR, chama `criar-checkout-mp`. |
 | `app/manual/[id]/page.js` | Manual completo; chama `generateManual()` com `pendingFields`, confirma pagamento MP pós-redirect, dispara `gerar-manual-completo`. **Não exporta PDF** (`jspdf` está no package.json sem uso); `html2canvas` só é usado em `app/components/SeloArquetipo.js` para exportar o selo como imagem. |
 | `app/api/card/route.js`, `app/api/og/[id]/route.js` | Card 1080x1920 de story (fontes em `app/api/card/fonts`) e imagem OG de fallback. |
@@ -74,6 +83,8 @@ Colunas relevantes:
 - **IA:** `preview_gerado`, `carta_tarot_interpretacao` e as colunas `*_gerado` de `gerar-manual-completo`.
 - **Pagamento:** `status`, `payment_status` (`'pending'` | `'paid'`), `stripe_session_id`, `stripe_payment_intent`, `mp_payment_id`, `paid_at`, `valor_pago`, `origem` (`'venda'` | `'cortesia'` | `'teste'`), `processado_em`, `updated_at`; upsells com prefixos `tier2_*`, `hd_*`, `compat_*`.
 - **E-mail/marketing:** `reminder_1h_sent_at`, `reminder_24h_sent_at`, `unsubscribed`, `lead_ultima_semana_email`, `tier2_ultimo_email_mes`, `presente_de`, `presente_email`.
+
+Local de nascimento (migração `0015_municipio_fuso.sql`, opcionais): `municipio_ibge`, `fuso_iana` — preenchidas só quando a cidade foi escolhida no autocomplete; gravadas por `gerar-analise` num update separado best effort (mesmo padrão do `telefone`), então o insert nunca falha se a migração não tiver rodado.
 
 Outras tabelas (ver `supabase/migrations/`): `chat_mensagens`, `leads_parciais`, `tiktok_oauth_tokens`, `tiktok_publishes`, `manual_feedback`.
 
@@ -114,6 +125,8 @@ Três integrações distintas com o TikTok, não confundir: `TIKTOK_ACCESS_TOKEN
 - `app/page.js` é um Client Component grande; evite adicionar lógica pesada — prefira mover para API routes ou `lib/`.
 - O Stripe Checkout usa `allow_promotion_codes: true` — não remover.
 - **Fuso horário de nascimento**: hoje `gerar-analise` usa `brasilUtcOffset()` (heurística: -2 de nov a fev, -3 no resto, qualquer UF e qualquer ano) para o Ascendente. É impreciso para estados sem horário de verão e para os anos em que ele não existiu.
+- **Olho Cósmico**: o componente `app/components/olho/OlhoCosmico.js` só entra via `next/dynamic` com `ssr:false` (`app/ceu/CeuClient.js` e `/manual/[id]`) — **nunca** importe estaticamente nem coloque na landing/quiz. No `/manual/[id]` aparece só com `hasPaid && !gerando`, acima do `#manual` (a barra de progresso de leitura conta a partir do `#manual`). Hora desconhecida = 21h, legenda "céu aproximado", nunca modo dia. Modo dia (Sol acima de ~-3°): a imagem `e4` some e o canvas desenha no zênite uma estrela menor e branca. `prefers-reduced-motion`: uma tela estática, sem scroll. O palco usa "sticky" em JS (fixed/absolute), porque `position: sticky` quebra com o `overflow-x: hidden` do body do Manual. Número: `numero_vida` do registro no modo manual, `calcularNumeroVida` de `lib/calculos.js` no `/ceu` — nunca a função da demo. Assets em `public/olho/` (WebP, fontes self-hosted, `sky.json` d3-celestial BSD-3 com a licença ao lado).
+- **Local de nascimento**: com município escolhido no autocomplete, o quiz manda `municipio_ibge`/`latitude`/`longitude`/`fuso_iana`; `gerar-analise` valida (`municipioDoBody`: IBGE, caixa do Brasil, fuso na whitelist) e pula o Nominatim. Texto livre segue o caminho antigo (geocoding). O Ascendente ainda usa `brasilUtcOffset()` — troca por `lib/sky.js` planejada pra um PR separado.
 - **Código morto conhecido**: `app/api/email-checkout/route.js` (sem chamador, remetente placeholder `contato@seudominio.com`), `gerarAnaliseEspiritual` em `lib/ia.js`, dependência `jspdf`/`jspdf-autotable`.
 - O webhook valida `stripe-signature` antes de processar; qualquer alteração deve manter essa validação.
 - **Preço do Manual**: R$27 nas primeiras 24h desde `created_at` da análise, R$47 depois (sem tier de R$97). Regra única em `lib/preco.js` (`getPrecoManual`) — nunca hardcode 27/47 em outro lugar; importe de lá. Usada pelos checkouts (MP e Stripe), pela página de resultado (`precoAtual`), pelo Oráculo (prop `precoManual` do `ChatAssistente`), pelo e-mail de recuperação de +20h e pelo card do `/explorar` (via `/api/status-analise`, que devolve `precoAtual` já calculado).

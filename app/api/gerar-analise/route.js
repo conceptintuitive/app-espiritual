@@ -6,6 +6,7 @@ import { buildDiagnosticoCtx, buildAmorCtx, buildArquetiposCtx, buildPlano7Ctx }
 import { sortearCarta, TAROT_PROMPTS_EN } from '@/lib/tarot';
 import { sendMetaLead } from '@/lib/meta';
 import { emailValido } from '@/lib/emailValidacao';
+import { FUSOS_BR } from '@/lib/fusoBR';
 
 // Monta URL da Pollinations.ai a partir da carta sorteada.
 // A URL é estável e cacheada — o browser carrega direto, sem precisar de upload nem API key.
@@ -45,6 +46,20 @@ async function geocodeLocal(localNascimento) {
 // observaram horário de verão (UTC-2) de novembro a fevereiro até 2019.
 function brasilUtcOffset(month) {
   return [11, 12, 1, 2].includes(month) ? -2 : -3;
+}
+
+// Município escolhido no autocomplete do quiz (lib/municipios.js). Valida tudo
+// — vem do browser — e devolve null se qualquer campo estiver fora do esperado
+// (aí o fluxo cai no geocoding por texto, como antes).
+function municipioDoBody({ municipio_ibge, latitude, longitude, fuso_iana }) {
+  const ibge = Number(municipio_ibge);
+  const lat = Number(latitude);
+  const lon = Number(longitude);
+  if (!Number.isInteger(ibge) || ibge < 1100000 || ibge > 5399999) return null;
+  // Caixa que cobre o território brasileiro (inclui Noronha e ilhas oceânicas)
+  if (!(lat >= -34 && lat <= 5.5 && lon >= -74.5 && lon <= -28.5)) return null;
+  if (!FUSOS_BR.has(fuso_iana)) return null;
+  return { ibge, lat, lon, tz: fuso_iana };
 }
 
 function parseDataISO(dateStr) {
@@ -109,6 +124,7 @@ export async function POST(request) {
       relacao_status,
       trabalho_status,
     } = body;
+    const municipio = municipioDoBody(body);
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -149,7 +165,9 @@ export async function POST(request) {
     try {
       const [, m] = data_nascimento.split('-').map(Number);
       const utcOffset = brasilUtcOffset(m);
-      coords = await geocodeLocal(local_nascimento);
+      // Com município do autocomplete, as coordenadas já vêm prontas (IBGE) —
+      // não precisa do Nominatim (mais rápido e sem erro de geocoding).
+      coords = municipio ? { lat: municipio.lat, lon: municipio.lon } : await geocodeLocal(local_nascimento);
       if (coords && !noTime && hora_nascimento) {
         signoAscendente = calcularAscendente(data_nascimento, hora_nascimento, coords.lat, coords.lon, utcOffset);
       }
@@ -210,6 +228,19 @@ export async function POST(request) {
       // roda em toda submissão do formulário grátis. Update separado e best
       // effort, então se a migração da coluna ainda não rodou, só o telefone
       // fica sem salvar (e o Lead da Meta sai sem "ph"), nada mais quebra.
+      // municipio_ibge/fuso_iana (migração 0015) seguem o mesmo padrão do
+      // telefone: update separado e best effort, pra o insert crítico nunca
+      // falhar se a migração ainda não tiver rodado.
+      if (municipio) {
+        const { error: munErr } = await supabase
+          .from('analises')
+          .update({ municipio_ibge: municipio.ibge, fuso_iana: municipio.tz })
+          .eq('id', analiseId);
+        if (munErr) {
+          console.error('⚠️ Não foi possível salvar municipio_ibge/fuso_iana (migração 0015 rodou?):', munErr.message);
+        }
+      }
+
       if (telefone?.trim()) {
         const { error: telErr } = await supabase
           .from('analises')

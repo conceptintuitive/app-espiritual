@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { TESTIMONIALS } from '@/lib/testimonials';
 import { emailValido, sugestaoEmail } from '@/lib/emailValidacao';
+import CidadeAutocomplete from '@/app/components/CidadeAutocomplete';
+import { lerCeuDados, consumirAbrirQuiz, limparCeuDados } from '@/lib/ceuDados';
 
 // ── FAQ accordion ─────────────────────────────────────────────────────────────
 function FaqItem({ q, a }) {
@@ -57,6 +59,8 @@ function QuizOverlay({ onClose }) {
   const [horaNasc,   setHoraNasc]   = useState('');
   const [localNasc,  setLocalNasc]  = useState('');
   const [noSabeHora, setNoSabeHora] = useState(false);
+  // Município escolhido no autocomplete (null = texto livre ou vazio)
+  const [municipio, setMunicipio] = useState(null);
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -65,6 +69,21 @@ function QuizOverlay({ onClose }) {
   const [nomeErro, setNomeErro] = useState('');
   const [emailErro, setEmailErro] = useState('');
   const [emailSugestao, setEmailSugestao] = useState('');
+
+  // Veio do /ceu (Olho Cósmico)? Pré-preenche nome, data, hora e cidade pra
+  // pessoa não responder de novo. Dados no localStorage, validade de 24h.
+  useEffect(() => {
+    const d = lerCeuDados();
+    if (!d) return;
+    if (d.nome) setNome(d.nome);
+    if (d.dataNascimento) setDataNasc(d.dataNascimento);
+    if (d.hora) setHoraNasc(d.hora);
+    else setNoSabeHora(true);
+    if (d.cidade) {
+      setMunicipio(d.cidade);
+      setLocalNasc(`${d.cidade.nome}, ${d.cidade.uf}`);
+    }
+  }, []);
 
   useEffect(() => {
     if (!loading) { setLoadingStep(0); return; }
@@ -118,6 +137,13 @@ function QuizOverlay({ onClose }) {
       hora_nascimento: noSabeHora ? '' : horaNasc,
       local_nascimento: localNasc,
       noTime: noSabeHora || !horaNasc,
+      // Só quando a pessoa escolheu uma sugestão — texto livre segue pro geocoding
+      ...(municipio ? {
+        municipio_ibge: municipio.ibge,
+        latitude: municipio.lat,
+        longitude: municipio.lon,
+        fuso_iana: municipio.tz,
+      } : {}),
       objetivo_principal: areaTraada,
       relacao_status: '',
       trabalho_status: '',
@@ -141,7 +167,7 @@ function QuizOverlay({ onClose }) {
         const msg = data?.details || data?.error || 'Falha ao gerar análise.';
         throw new Error(msg);
       }
-      if (data?.id) { router.push(`/resultado/${data.id}`); return; }
+      if (data?.id) { limparCeuDados(); router.push(`/resultado/${data.id}`); return; }
       throw new Error('A API não retornou um ID.');
     } catch (err) {
       setErro(err?.message || 'Ops! Tivemos uma instabilidade. Tente novamente em instantes.');
@@ -386,18 +412,21 @@ function QuizOverlay({ onClose }) {
                 <label style={{ display: 'block', fontSize: 13, color: '#9896a8', fontFamily: 'var(--F)', marginBottom: 6 }}>
                   Cidade onde nasceu <span style={{ color: '#6b6980' }}>(opcional)</span>
                 </label>
-                <input
-                  type="text"
-                  value={localNasc}
-                  onChange={e => setLocalNasc(e.target.value)}
-                  placeholder="Ex: São Paulo, SP"
-                  style={{
-                    width: '100%', padding: '13px 18px', borderRadius: 14,
-                    border: '1px solid rgba(139,92,246,.3)', background: 'rgba(18,18,30,.9)',
-                    color: '#f0eff4', fontFamily: 'var(--F)', fontSize: 16,
-                    outline: 'none', marginBottom: 10, boxSizing: 'border-box',
-                  }}
-                />
+                {/* Autocomplete com os municípios do IBGE; texto livre continua valendo */}
+                <div style={{ marginBottom: 10 }}>
+                  <CidadeAutocomplete
+                    value={localNasc}
+                    onChangeText={(t) => { setLocalNasc(t); setMunicipio(null); }}
+                    onSelect={(m) => { setLocalNasc(`${m.nome}, ${m.uf}`); setMunicipio(m); }}
+                    placeholder="Ex: São Paulo, SP"
+                    inputStyle={{
+                      width: '100%', padding: '13px 18px', borderRadius: 14,
+                      border: '1px solid rgba(139,92,246,.3)', background: 'rgba(18,18,30,.9)',
+                      color: '#f0eff4', fontFamily: 'var(--F)', fontSize: 16,
+                      outline: 'none', boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
 
                 {/* Texto de apoio */}
                 <p style={{ fontSize: 13, color: '#6b6980', fontFamily: 'var(--F)', marginBottom: 22, lineHeight: 1.5 }}>
@@ -558,6 +587,8 @@ export default function Home() {
     if (typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
     if (params.get('refazer') === '1') setQuizOpen(true);
+    // Veio do CTA "Abrir meu mapa" do /ceu: abre o quiz já preenchido (uma vez)
+    else if (consumirAbrirQuiz()) setQuizOpen(true);
   }, []);
 
   useEffect(() => {
