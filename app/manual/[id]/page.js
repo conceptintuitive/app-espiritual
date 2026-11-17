@@ -2,6 +2,7 @@
 
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { createClient } from '@supabase/supabase-js';
 
 // ✅ IMPORT do gerador de manual
@@ -15,6 +16,9 @@ import FeedbackSecao, { chaveSecao } from '@/app/components/FeedbackSecao';
 import ChatAssistente from '@/app/components/ChatAssistente';
 import BotaoCompartilharStory from '@/app/components/BotaoCompartilharStory';
 import { getPrecoManual, PRECO_BONUS_AVULSO, PRECO_BONUS_COMBO } from '@/lib/preco';
+
+// Olho Cósmico (abertura "Meu Mapa"): chunk separado, só baixa pra quem pagou.
+const OlhoCosmicoManual = dynamic(() => import('@/app/components/olho/OlhoCosmicoManual'), { ssr: false });
 
 // ==============================================
 // SUPABASE CLIENT
@@ -553,8 +557,11 @@ export default function ManualPage() {
   useEffect(() => {
     const onScroll = () => {
       const doc = document.documentElement;
-      const scrollable = (doc.scrollHeight || 0) - doc.clientHeight;
-      const pct = scrollable > 0 ? Math.min(100, Math.max(0, (window.scrollY / scrollable) * 100)) : 0;
+      // O progresso conta a partir do conteúdo do manual, não do Olho Cósmico
+      // que fica em cima dele (são ~9 telas de animação).
+      const inicio = document.getElementById('manual')?.offsetTop || 0;
+      const scrollable = (doc.scrollHeight || 0) - doc.clientHeight - inicio;
+      const pct = scrollable > 0 ? Math.min(100, Math.max(0, ((window.scrollY - inicio) / scrollable) * 100)) : 0;
       setReadProgress(pct);
     };
     window.addEventListener('scroll', onScroll, { passive: true });
@@ -947,8 +954,11 @@ export default function ManualPage() {
         <div className="reading-progress-fill" style={{ width: `${readProgress}%` }} />
       </div>
 
+      {/* OLHO CÓSMICO — o céu do nascimento, só pra quem pagou */}
+      {hasPaid && !gerando && <OlhoCosmicoManual row={row} />}
+
       {/* CONTEÚDO */}
-      <div className="container">
+      <div className="container" id="manual">
 
         {/* ========== LOADING (aguardando geração IA) ========== */}
         {gerando ? (
