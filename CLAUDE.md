@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Intuitive Concept** — plataforma de análises espirituais personalizadas (numerologia, astrologia, arquétipos). O produto central é um manual premium gerado a partir de dados do usuário (nome, data de nascimento, objetivo, etc.), vendido via Stripe após uma prévia gratuita.
 
-Stack: **Next.js 16 App Router**, **Supabase** (PostgreSQL + auth), **Stripe** (pagamentos), **Resend** (e-mail), **Groq API** (IA), **Google Analytics 4**.
+Stack: **Next.js 16 App Router** (JavaScript, sem TypeScript), **Supabase** (PostgreSQL), **Mercado Pago** (checkout principal — Pix/cartão) + **Stripe** (checkout secundário), **Resend** (e-mail), **Anthropic API** (geração do Manual) + **Groq API** (Oráculo), **Google Analytics 4**, **Meta CAPI** e **TikTok Events API** (eventos server-side).
 
 ## Development Commands
 
@@ -21,41 +21,61 @@ npm run start    # Servidor de produção
 
 ### User Journey
 ```
-/ (formulário)
-  → POST /api/gerar-analise   (valida, calcula signo/número de vida, salva na tabela `analises`)
-  → /resultado/[id]           (prévia gratuita + CTA de upgrade)
-  → POST /api/criar-checkout  (cria sessão Stripe Checkout)
-  → Stripe Checkout
-  → POST /api/webhook         (evento checkout.session.completed → payment_status='paid', dispara e-mail)
-  → /manual/[id]              (manual completo, protegido por payment_status)
+/ (quiz em 4 etapas; etapa 4 dispara POST /api/lead-parcial no onBlur do e-mail)
+  → POST /api/gerar-analise      (valida, calcula signo/números/planetas, geocoda a cidade via Nominatim,
+                                  insere em `analises`; em after(): telefone, Lead Meta e 6 seções IA iniciais)
+  → /resultado/[id]              (prévia gratuita + CTA)
+  → POST /api/criar-checkout-mp  (preference Mercado Pago — CHECKOUT PRINCIPAL)
+  → Mercado Pago (Pix/cartão)
+  → POST /api/webhook-mp  e/ou  POST /api/confirmar-pagamento-mp (chamado por /manual/[id] no redirect)
+        → lib/mpPagamentoManual.js (libera acesso, Purchase GA4/Meta/TikTok, e-mail de acesso 1x)
+  → /manual/[id]                 (manual completo, protegido por payment_status;
+                                  dispara POST /api/gerar-manual-completo se faltar seção IA)
 ```
+Checkout **Stripe** (`/api/criar-checkout` → `/api/webhook`) ainda funciona, mas só é chamado pelo botão "Desbloquear" do paywall dentro de `/manual/[id]` (quem chega ao manual sem ter pago). Upsells (Previsão do Ano/tier2, Human Design, combo) usam `/api/criar-checkout-upsell-mp`; Compatibilidade Completa avulsa usa `/api/criar-checkout-compat-mp` (R$29,90) e é grátis via `/api/salvar-compat-pessoa2` para quem já comprou o Manual.
+
+O item "Meu Mapa" do menu (`app/components/SiteNav.js`) aponta para `/resultado/[ultimaAnaliseId]` (lido de `localStorage.ic_ultima_analise_id`), **não** para `/manual/[id]`.
 
 ### Key Files
 
 | File | Role |
 |---|---|
-| `lib/manualgenerator.js` | **Motor principal** — gera o manual completo a partir dos dados do usuário usando tabelas estáticas de numerologia/astrologia. Não usa IA por padrão. |
-| `lib/calculos.js` | Cálculo do número de vida (redução numerológica) e signo zodiacal. |
-| `lib/ia.js` | Integração Groq API (llama-3.3-70b). Existe, mas **não está conectada ao fluxo principal** ainda. |
+| `lib/manualgenerator.js` | **Esqueleto do manual** — `generateManual(params)` monta as seções a partir de tabelas estáticas de numerologia/astrologia; os campos `*_gerado` (IA) salvos na análise substituem o texto estático de cada seção quando existem. |
+| `lib/calculos.js` | Números (`calcularNumeroVida`, `calcularNumeroAlma`, `calcularNumeroExpressao`, `calcularAnoPessoal`, `calcularMesPessoal`), signo, posições planetárias (`calcularPlanetas`, Meeus/Schlyter), `calcularAscendente`, corpos para Human Design. |
+| `lib/ia.js` | **Conectada ao fluxo.** Todas as seções do Manual (`gerar*IA`) usam `chamarClaude()` → Anthropic API, modelo `claude-sonnet-4-6` (`ANTHROPIC_API_KEY`). Os comentários "via Groq"/`MODEL_HEAVY`/`MODEL_LIGHT` no arquivo estão desatualizados; só `gerarAnaliseEspiritual` (sem uso) ainda chama Groq. Chamada por `gerar-analise` (6 seções iniciais) e `gerar-manual-completo` (restante). |
+| `lib/assistente.js` | Oráculo/chat (`/api/assistente`, `app/components/ChatAssistente.js`) — Groq, modelo `openai/gpt-oss-120b` (`GROQ_API_KEY`). |
 | `lib/supabaseBrowser.js` | Cliente Supabase para o browser. |
-| `lib/preco.js` | Fonte única do preço do Manual — `getPrecoManual(createdAt)` retorna R$27 nas primeiras 24h desde a análise, R$47 depois. Usada pelos dois checkouts, pela página de resultado, e-mails, Oráculo e `/explorar`. |
-| `app/api/gerar-analise/route.js` | Recebe dados do formulário, computa signo + numero_vida, insere em `analises`. |
-| `app/api/criar-checkout/route.js` | Cria sessão Stripe. Preço via `lib/preco.js` (R$27/R$47 por `created_at`). Previne double-pay. |
-| `app/api/webhook/route.js` | Valida assinatura Stripe, atualiza DB, envia e-mail, dispara evento GA4 `purchase`. |
-| `app/api/send/route.js` | Envia e-mail de acesso via Resend. |
-| `app/page.js` | Landing page com formulário (55 KB); persiste estado no localStorage. |
-| `app/resultado/[id]/page.js` | Prévia gratuita — estrutura de página de vendas em PT-BR. |
-| `app/manual/[id]/page.js` | Manual completo; chama `generateManual()`, exporta PDF via html2canvas + jsPDF. |
+| `lib/preco.js` | Fonte única do preço do Manual — `getPrecoManual(createdAt)` retorna R$27 nas primeiras 24h desde a análise, R$47 depois. Também exporta `PRECO_BONUS_AVULSO`/`PRECO_BONUS_COMBO`. Usada pelos dois checkouts, pela página de resultado, e-mails, Oráculo e `/explorar`. |
+| `lib/mpPagamentoManual.js` | Pós-pagamento MP do Manual (ver convenções). |
+| `app/api/gerar-analise/route.js` | Recebe dados do quiz, calcula signo/números/planetas, geocoda a cidade (Nominatim) para lat/long + Ascendente, insere em `analises`, gera 6 seções IA em `after()`. Tem cópias locais de `calcularSigno`/`calcularNumeroVida` (mesmo resultado das de `lib/calculos.js`). |
+| `app/api/gerar-manual-completo/route.js` | Gera as seções IA que faltam (`maxDuration = 300`); chamada por `/manual/[id]` quando `payment_status='paid'` e `fechamento_gerado` é null. |
+| `app/api/criar-checkout-mp/route.js` | **Checkout principal** — preference MP do Manual (+ combo opcional), preço via `lib/preco.js`, `notification_url` explícito, valida e-mail antes de chamar o MP. |
+| `app/api/webhook-mp/route.js` | Webhook MP (Manual, upsells, Compatibilidade Completa). |
+| `app/api/criar-checkout/route.js` | Checkout Stripe (secundário, só no paywall de `/manual/[id]`). Preço via `lib/preco.js`. Previne double-pay. `allow_promotion_codes: true`. |
+| `app/api/webhook/route.js` | Valida assinatura Stripe, atualiza DB, dispara Purchase GA4/Meta/TikTok, chama `/api/send`. |
+| `app/api/send/route.js` | Envia e-mail de acesso via Resend. Chamado com URL **fixa de produção** (`https://intuitiveconcept.com.br/api/send`) pelo webhook Stripe e por `lib/mpPagamentoManual.js` — preview/local também mandam e-mail pela produção. |
+| `app/api/cron/lembretes/route.js` | E-mails de recuperação/nutrição (agrupa por e-mail, rodapé de descadastro via `/api/unsubscribe`). |
+| `app/page.js` | Landing + quiz em 4 etapas (Client Component, ~47 KB). **Não** persiste o estado do quiz: o único uso de localStorage é ler `ic_ultima_analise_id`. Não lê query string. |
+| `app/resultado/[id]/page.js` | Prévia gratuita — página de vendas em PT-BR, chama `criar-checkout-mp`. |
+| `app/manual/[id]/page.js` | Manual completo; chama `generateManual()` com `pendingFields`, confirma pagamento MP pós-redirect, dispara `gerar-manual-completo`. **Não exporta PDF** (`jspdf` está no package.json sem uso); `html2canvas` só é usado em `app/components/SeloArquetipo.js` para exportar o selo como imagem. |
+| `app/api/card/route.js`, `app/api/og/[id]/route.js` | Card 1080x1920 de story (fontes em `app/api/card/fonts`) e imagem OG de fallback. |
 
 ### manualgenerator.js — como funciona
 
 O arquivo contém grandes objetos de metadados (`SIGNO_PROFUNDO`, `NUMERO_PROFUNDO`, `REGENTE_PROFUNDO`, `ESTILO_ELEMENTO`, etc.) que mapeiam arquétipos espirituais. A função `generateManual(params)` recebe os dados do usuário e monta o manual combinando essas tabelas. `renderManualMarkdown(manual)` converte para markdown.
 
-As seções geradas incluem: Perfil Energético, Missão de Alma, Desafios Kármicos, Potenciais Ocultos, Amor & Relacionamento, Dinheiro & Prosperidade, Plano de 7 Dias, Calendário Espiritual (4 semanas).
+As seções com versão IA são as listadas em `app/api/gerar-manual-completo/route.js` (síntese, diagnóstico, tipo de pessoa, amor, arquétipos, ponto cego, bloqueios, dinheiro, rituais, objetivo, leitura integrada, plano de 7 dias, calendário de 4 semanas, fechamento). Essa é a fonte da verdade da lista.
 
 ### Supabase — tabela `analises`
 
-Colunas relevantes: `id` (UUID PK), `nome`, `email`, `data_nascimento`, `hora_nascimento`, `local_nascimento`, `objetivo_principal`, `relacao_status`, `trabalho_status`, `signo`, `numero_vida`, `status`, `payment_status` (`'pending'` | `'paid'`), `stripe_session_id`, `stripe_payment_intent`, `mp_payment_id`, `paid_at`, `valor_pago`, `origem` (`'venda'` | `'cortesia'` | `'teste'`), `updated_at`.
+Colunas relevantes:
+- **Dados do quiz:** `id` (UUID PK), `created_at`, `nome`, `email`, `telefone`, `data_nascimento` (`YYYY-MM-DD`), `hora_nascimento` (`HH:MM` ou null se "não sei"), `local_nascimento` (texto livre), `latitude`/`longitude` (geocoding Nominatim, podem ser null), `objetivo_principal`, `relacao_status`, `trabalho_status`.
+- **Calculados:** `signo`, `numero_vida`, `ano_pessoal`, `numero_alma`, `numero_expressao`, `signo_lua`, `signo_venus`, `signo_marte`, `signo_mercurio`, `signo_nodo`, `signo_ascendente`, `lua_cuspide`, `carta_tarot`, `imagem_ia_url`.
+- **IA:** `preview_gerado`, `carta_tarot_interpretacao` e as colunas `*_gerado` de `gerar-manual-completo`.
+- **Pagamento:** `status`, `payment_status` (`'pending'` | `'paid'`), `stripe_session_id`, `stripe_payment_intent`, `mp_payment_id`, `paid_at`, `valor_pago`, `origem` (`'venda'` | `'cortesia'` | `'teste'`), `processado_em`, `updated_at`; upsells com prefixos `tier2_*`, `hd_*`, `compat_*`.
+- **E-mail/marketing:** `reminder_1h_sent_at`, `reminder_24h_sent_at`, `unsubscribed`, `lead_ultima_semana_email`, `tier2_ultimo_email_mes`, `presente_de`, `presente_email`.
+
+Outras tabelas (ver `supabase/migrations/`): `chat_mensagens`, `leads_parciais`, `tiktok_oauth_tokens`, `tiktok_publishes`, `manual_feedback`.
 
 ## Environment Variables
 
@@ -66,10 +86,11 @@ SUPABASE_SERVICE_ROLE_KEY=
 STRIPE_SECRET_KEY=
 STRIPE_WEBHOOK_SECRET=
 RESEND_API_KEY=
+ANTHROPIC_API_KEY=
 GROQ_API_KEY=
 GA4_MEASUREMENT_ID=
 GA4_API_SECRET=
-NEXT_PUBLIC_SITE_URL=
+NEXT_PUBLIC_BASE_URL=
 MP_ACCESS_TOKEN=
 CRON_SECRET=
 META_ACCESS_TOKEN=
@@ -82,7 +103,7 @@ TIKTOK_PUBLISH_API_SECRET=
 TEST_EMAILS=
 ```
 
-`SUPABASE_SERVICE_ROLE_KEY` é usada apenas em API routes (server-side). As variáveis `NEXT_PUBLIC_*` ficam expostas no cliente. `CRON_SECRET` protege `/api/cron/lembretes` e `/api/cron/tiktok-refresh` contra chamadas não autorizadas — o disparo é feito por um cron externo (ex: cron-job.org), já que o plano Vercel Hobby não permite cron com intervalo menor que 1x/dia.
+`ANTHROPIC_API_KEY` gera o Manual (`lib/ia.js`); `GROQ_API_KEY` é só do Oráculo (`lib/assistente.js`). `NEXT_PUBLIC_BASE_URL` é a URL base usada nos checkouts e no cron (fallback: `VERCEL_URL`, depois `localhost:3000`) — não existe `NEXT_PUBLIC_SITE_URL` no código. `SUPABASE_SERVICE_ROLE_KEY` é usada apenas em API routes (server-side). As variáveis `NEXT_PUBLIC_*` ficam expostas no cliente. `CRON_SECRET` protege `/api/cron/lembretes` e `/api/cron/tiktok-refresh` contra chamadas não autorizadas — o disparo é feito por um cron externo (ex: cron-job.org), já que o plano Vercel Hobby não permite cron com intervalo menor que 1x/dia.
 
 Três integrações distintas com o TikTok, não confundir: `TIKTOK_ACCESS_TOKEN` é um token estático gerado manualmente no TikTok Ads Manager, usado só pela Events API (`lib/tiktok.js`, evento `CompletePayment` dos webhooks de pagamento). `TIKTOK_CLIENT_KEY`/`TIKTOK_CLIENT_SECRET` são do app cadastrado no TikTok for Developers, usados pelo fluxo OAuth do Login Kit (`lib/tiktokOAuth.js`, rotas `/api/tiktok/connect` e `/api/tiktok/callback`) — geram um access_token/refresh_token diferentes, guardados na tabela `tiktok_oauth_tokens`. `TIKTOK_OAUTH_REDIRECT_URI` e `TIKTOK_OAUTH_SCOPES` são opcionais (têm default no código; o escopo default inclui `video.upload`, exigido pelo Upload to inbox da Content Posting API). `TIKTOK_PUBLISH_API_SECRET` protege `/api/tiktok/publish` (`lib/tiktokContentPosting.js`) — rota chamada por automação externa (Make) pra enviar um vídeo já pronto (ex: gerado no Creatomate) pros **rascunhos** da conta TikTok conectada via OAuth (o TikTok notifica e a publicação é manual no app), usando o access_token/refresh_token da tabela acima. Não usa Direct Post (`video.publish`) de propósito: exige auditoria com tela de confirmação por post, incompatível com o fluxo automático.
 
@@ -91,7 +112,9 @@ Três integrações distintas com o TikTok, não confundir: `TIKTOK_ACCESS_TOKEN
 - Path alias `@/*` aponta para a raiz do projeto (`jsconfig.json`).
 - Todo o conteúdo visível ao usuário está em **português brasileiro**.
 - `app/page.js` é um Client Component grande; evite adicionar lógica pesada — prefira mover para API routes ou `lib/`.
-- O Stripe Checkout usa `promo_codes: true` — não remover.
+- O Stripe Checkout usa `allow_promotion_codes: true` — não remover.
+- **Fuso horário de nascimento**: hoje `gerar-analise` usa `brasilUtcOffset()` (heurística: -2 de nov a fev, -3 no resto, qualquer UF e qualquer ano) para o Ascendente. É impreciso para estados sem horário de verão e para os anos em que ele não existiu.
+- **Código morto conhecido**: `app/api/email-checkout/route.js` (sem chamador, remetente placeholder `contato@seudominio.com`), `gerarAnaliseEspiritual` em `lib/ia.js`, dependência `jspdf`/`jspdf-autotable`.
 - O webhook valida `stripe-signature` antes de processar; qualquer alteração deve manter essa validação.
 - **Preço do Manual**: R$27 nas primeiras 24h desde `created_at` da análise, R$47 depois (sem tier de R$97). Regra única em `lib/preco.js` (`getPrecoManual`) — nunca hardcode 27/47 em outro lugar; importe de lá. Usada pelos checkouts (MP e Stripe), pela página de resultado (`precoAtual`), pelo Oráculo (prop `precoManual` do `ChatAssistente`), pelo e-mail de recuperação de +20h e pelo card do `/explorar` (via `/api/status-analise`, que devolve `precoAtual` já calculado).
 - **`valor_pago` e `origem`**: `app/api/webhook-mp/route.js` e `app/api/webhook/route.js` gravam `valor_pago` (valor real cobrado na transação — `payment.transaction_amount` no MP, `session.amount_total / 100` no Stripe) em todo `.update()` que confirma pagamento (Manual, upsell de bônus avulso, Compatibilidade Completa). `valor_pago` reflete a transação mais recente confirmada, não um total acumulado. `origem` vem de `getOrigemVenda(email)` (`lib/testEmails.js`): `'venda'` por padrão, ou `'teste'` se o e-mail do pagador estiver na env `TEST_EMAILS` (lista separada por vírgula — compras de teste da própria autora, pra não sujar os números). Pagamento marcado como pago manualmente (fora de webhook, ex. `scripts/test-ia.mjs`) deve gravar `origem = 'cortesia'` e `paid_at`. Nunca marcar como pago sem esses dois campos. `scripts/backfill-origem-mp.mjs` resolve os registros antigos que a migração `0013_valor_pago_origem.sql` deixou com `origem` nulo (precisam consultar a API do MP) — roda em dry-run por padrão, `--apply` pra escrever. **Temporário**: `GET /api/admin/backfill-origem?secret=CRON_SECRET[&apply=1]` expõe essa mesma lógica como rota (criada pra rodar o backfill sem ambiente local) — remover depois do backfill único em produção.
