@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
 import { calcularSignosPessoa, gerarCompatibilidadeCompleta } from '@/lib/compatibilidadeCompleta';
+import { offsetSalvo, buscarOffsetNascimento } from '@/lib/sky';
 
 function getSupabaseClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -30,14 +31,17 @@ export default function CompatibilidadeCompletaPage() {
   useEffect(() => {
     const supabase = getSupabaseClient();
     if (!supabase || !id) { setErro(true); setLoading(false); return; }
-    supabase
-      .from('analises')
-      .select('id,nome,data_nascimento,hora_nascimento,payment_status,compat_payment_status,compat_pessoa2_nome,compat_pessoa2_data_nascimento')
-      .eq('id', id)
-      .single()
-      .then(({ data, error }) => {
+    Promise.all([
+      supabase
+        .from('analises')
+        .select('id,nome,data_nascimento,hora_nascimento,payment_status,compat_payment_status,compat_pessoa2_nome,compat_pessoa2_data_nascimento')
+        .eq('id', id)
+        .single(),
+      buscarOffsetNascimento(supabase, id),
+    ])
+      .then(([{ data, error }, utcOffset]) => {
         if (error || !data) { setErro(true); } else {
-          setRow(data);
+          setRow({ ...data, utc_offset_nascimento: utcOffset });
           if (data.compat_pessoa2_nome) setPessoa2Nome(data.compat_pessoa2_nome);
           if (data.compat_pessoa2_data_nascimento) setPessoa2Data(data.compat_pessoa2_data_nascimento);
         }
@@ -47,7 +51,7 @@ export default function CompatibilidadeCompletaPage() {
 
   const minhasSignos = useMemo(() => {
     if (!row?.data_nascimento) return null;
-    return calcularSignosPessoa(row.data_nascimento, row.hora_nascimento);
+    return calcularSignosPessoa(row.data_nascimento, row.hora_nascimento, offsetSalvo(row));
   }, [row]);
 
   const pessoa2Signos = useMemo(() => {
