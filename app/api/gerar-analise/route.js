@@ -1,12 +1,14 @@
 import { NextResponse, after } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { calcularPlanetas, calcularAscendente, calcularAnoPessoal, calcularNumeroAlma, calcularNumeroExpressao } from '@/lib/calculos';
+import { calcularPlanetas, calcularAscendente, calcularAnoPessoal, calcularNumeroAlma, calcularNumeroExpressao, calcularNumeroVida } from '@/lib/calculos';
 import { gerarPreviewIA, gerarDiagnosticoIA, gerarAmorIA, gerarArquetiposIA, gerarPlano7IA, gerarInterpretacaoTarotIA } from '@/lib/ia';
 import { buildDiagnosticoCtx, buildAmorCtx, buildArquetiposCtx, buildPlano7Ctx } from '@/lib/manualgenerator';
 import { sortearCarta, TAROT_PROMPTS_EN } from '@/lib/tarot';
 import { sendMetaLead } from '@/lib/meta';
 import { emailValido } from '@/lib/emailValidacao';
 import { FUSOS_BR } from '@/lib/fusoBR';
+import { utcOffsetHoras } from '@/lib/sky';
+import { fusoPorCoordenada } from '@/lib/fusoPorCoordenada';
 
 // Monta URL da Pollinations.ai a partir da carta sorteada.
 // A URL é estável e cacheada — o browser carrega direto, sem precisar de upload nem API key.
@@ -39,13 +41,6 @@ async function geocodeLocal(localNascimento) {
   } catch {
     return null;
   }
-}
-
-// Heurística de UTC offset para o Brasil.
-// Brasil padrão: UTC-3. Historicamente, estados do Sul/Sudeste/Centro-Oeste
-// observaram horário de verão (UTC-2) de novembro a fevereiro até 2019.
-function brasilUtcOffset(month) {
-  return [11, 12, 1, 2].includes(month) ? -2 : -3;
 }
 
 // Município escolhido no autocomplete do quiz (lib/municipios.js). Valida tudo
@@ -85,23 +80,6 @@ function calcularSigno(dataISO) {
   if ((m === 1 && d >= 20) || (m === 2 && d <= 18)) return 'Aquário';
   if ((m === 2 && d >= 19) || (m === 3 && d <= 20)) return 'Peixes';
   return '';
-}
-
-function reduzirNumero(n) {
-  while (n > 9 && n !== 11 && n !== 22 && n !== 33) {
-    n = String(n).split('').reduce((a, b) => a + Number(b), 0);
-  }
-  return n;
-}
-
-function calcularNumeroVida(dataISO) {
-  const p = parseDataISO(dataISO);
-  if (!p) return 0;
-  const soma =
-    String(p.y).split('').reduce((a, b) => a + Number(b), 0) +
-    String(p.m).split('').reduce((a, b) => a + Number(b), 0) +
-    String(p.d).split('').reduce((a, b) => a + Number(b), 0);
-  return reduzirNumero(soma);
 }
 
 export async function POST(request) {
@@ -163,12 +141,14 @@ export async function POST(request) {
     let coords = null;
     let signoAscendente = null;
     try {
-      const [, m] = data_nascimento.split('-').map(Number);
-      const utcOffset = brasilUtcOffset(m);
       // Com município do autocomplete, as coordenadas já vêm prontas (IBGE) —
       // não precisa do Nominatim (mais rápido e sem erro de geocoding).
       coords = municipio ? { lat: municipio.lat, lon: municipio.lon } : await geocodeLocal(local_nascimento);
       if (coords && !noTime && hora_nascimento) {
+        // Offset real da época e do lugar (fuso IANA com horário de verão
+        // histórico por estado). Texto livre: fuso do município mais próximo.
+        const tz = municipio?.tz || fusoPorCoordenada(coords.lat, coords.lon);
+        const utcOffset = utcOffsetHoras({ data: data_nascimento, hora: hora_nascimento, tz });
         signoAscendente = calcularAscendente(data_nascimento, hora_nascimento, coords.lat, coords.lon, utcOffset);
       }
     } catch (_) {}

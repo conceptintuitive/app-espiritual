@@ -9,7 +9,7 @@
 //   pai recebe só o texto (onChangeText) e `selecionado` fica null.
 // - Teclado: ↑/↓ navegam, Enter escolhe, Esc fecha.
 
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { buscarMunicipios, carregarMunicipios, rotuloMunicipio } from '@/lib/municipios';
 
 const TEMAS = {
@@ -54,19 +54,16 @@ export default function CidadeAutocomplete({
   const t = TEMAS[tema] || TEMAS.quiz;
   const listaId = useId();
   const [lista, setLista] = useState(null);
-  const [sugestoes, setSugestoes] = useState([]);
   const [aberto, setAberto] = useState(false);
-  const [ativo, setAtivo] = useState(0);
+  const [ativoBruto, setAtivo] = useState(0);
   const fecharTimer = useRef(null);
 
   useEffect(() => () => clearTimeout(fecharTimer.current), []);
 
-  useEffect(() => {
-    if (!lista) return;
-    const s = buscarMunicipios(lista, value);
-    setSugestoes(s);
-    setAtivo(0);
-  }, [lista, value]);
+  // Sugestões derivadas do texto (sem state extra). O destaque volta pra 1ª
+  // opção quando o texto muda (onChange abaixo) e nunca passa do fim da lista.
+  const sugestoes = useMemo(() => (lista ? buscarMunicipios(lista, value) : []), [lista, value]);
+  const ativo = Math.min(ativoBruto, Math.max(0, sugestoes.length - 1));
 
   function garantirBase() {
     if (lista) return;
@@ -97,7 +94,7 @@ export default function CidadeAutocomplete({
         style={inputStyle}
         onFocus={() => { garantirBase(); setAberto(true); }}
         onBlur={() => { fecharTimer.current = setTimeout(() => setAberto(false), 150); }}
-        onChange={(e) => { onChangeText(e.target.value); setAberto(true); }}
+        onChange={(e) => { onChangeText(e.target.value); setAberto(true); setAtivo(0); }}
         onKeyDown={(e) => {
           if (mostrar && e.key === 'ArrowDown') { e.preventDefault(); setAtivo((i) => (i + 1) % sugestoes.length); return; }
           if (mostrar && e.key === 'ArrowUp') { e.preventDefault(); setAtivo((i) => (i - 1 + sugestoes.length) % sugestoes.length); return; }

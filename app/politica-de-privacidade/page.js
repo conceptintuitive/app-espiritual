@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 export const metadata = {
   title: 'Política de Privacidade | Intuitive Concept',
   description: 'Como a Intuitive Concept coleta, usa e protege seus dados pessoais, em conformidade com a LGPD.',
@@ -30,7 +32,7 @@ export default function PoliticaDePrivacidadePage() {
   return (
     <div style={styles.page}>
       <div style={styles.container}>
-        <a href="/" style={styles.back}>← Voltar para o início</a>
+        <Link href="/" style={styles.back}>← Voltar para o início</Link>
         <h1 style={styles.h1}>Política de Privacidade</h1>
         <p style={styles.updated}>Última atualização: 23 de setembro de 2026</p>
 

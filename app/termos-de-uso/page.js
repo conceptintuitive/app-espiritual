@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 export const metadata = {
   title: 'Termos de Uso | Intuitive Concept',
   description: 'Termos de Uso da plataforma Intuitive Concept — numerologia, astrologia e conteúdo espiritual personalizado.',
@@ -28,7 +30,7 @@ export default function TermosDeUsoPage() {
   return (
     <div style={styles.page}>
       <div style={styles.container}>
-        <a href="/" style={styles.back}>← Voltar para o início</a>
+        <Link href="/" style={styles.back}>← Voltar para o início</Link>
         <h1 style={styles.h1}>Termos de Uso</h1>
         <p style={styles.updated}>Última atualização: 23 de setembro de 2026</p>
 

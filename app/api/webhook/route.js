@@ -18,6 +18,7 @@ import { sendGA4Purchase } from "@/lib/ga4";
 import { sendTikTokPurchase } from "@/lib/tiktok";
 import { sendMetaPurchase } from "@/lib/meta";
 import { getOrigemVenda } from "@/lib/testEmails";
+import { getBaseUrl } from "@/lib/baseUrl";
 
 // ─── Lógica compartilhada entre pagamento síncrono e assíncrono (boleto) ──────
 async function handlePaymentSuccess(session, supabase) {
@@ -192,7 +193,7 @@ async function handlePaymentSuccess(session, supabase) {
 
     // Email de acesso ──────────────────────────────────────────────────────────
     try {
-      const sendRes = await fetch("https://intuitiveconcept.com.br/api/send", {
+      const sendRes = await fetch(`${getBaseUrl()}/api/send`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, manualId: analiseId }),
