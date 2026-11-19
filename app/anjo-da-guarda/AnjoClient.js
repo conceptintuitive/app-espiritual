@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation';
 import SiteNav from '@/app/components/SiteNav';
 import { salvarCeuDados } from '@/lib/ceuDados';
 import { ANJOS, calcularAnjos, dadosDoAnjo, anjosDoMomento } from '@/lib/anjos';
-import { TEXTO_ANJO, TEXTO_CORO, TEXTO_ELEMENTO_ANJO } from '@/lib/anjosTextos';
+import { TEXTO_ANJO, TEXTO_CORO, TEXTO_ELEMENTO_ANJO, BUSCA_CAMINHO } from '@/lib/anjosTextos';
 import { CSS_ANJO, FONTES_ANJO } from './estilo';
 
 function hojeISO() {
@@ -149,8 +149,17 @@ function Resultado({ anjos, entrada, periodos, ano, onCta }) {
 
   return (
     <>
+      <div className="an-dois">
+        <p><strong>Você tem dois anjos.</strong> Na Cabala, os 72 anjos dividem o tempo de duas formas:</p>
+        <ul>
+          <li><b>Pela data → anjo da guarda.</b> Seu protetor: quem você é na essência e o que você busca.</li>
+          <li><b>Pela hora → anjo da mente.</b> Não protege: mostra como você pensa e decide.</li>
+        </ul>
+      </div>
+
       <div className="an-card">
         <span className="an-eyebrow">{nomePessoa} anjo da guarda</span>
+        <span className="an-eyebrow an-por">pela data</span>
         <div className="an-nome">{g.nome}</div>
         <div className="an-num">nº {g.n} de 72 · coro dos {g.coro.nome}</div>
         <p className="an-dom">{t.dom}</p>
@@ -195,6 +204,7 @@ function Resultado({ anjos, entrada, periodos, ano, onCta }) {
       {mente ? (
         <>
           <h2>O anjo da sua mente: {mente.nome}</h2>
+          <span className="an-eyebrow an-por">como você pensa · pela hora</span>
           <p className="an-lead">
             Você nasceu às {entrada.hora}, nos 20 minutos que {mente.nome} rege ({mente.hora}). Ele não é o seu protetor
             principal: é o jeito como sua cabeça funciona.
@@ -206,9 +216,9 @@ function Resultado({ anjos, entrada, periodos, ano, onCta }) {
           {mente.n === g.n && <p className="an-nota">Seu anjo guardião e o da mente são o mesmo: a energia de {g.nome} é dobrada em você.</p>}
           <p><Link className="an-link" href={`/anjo-da-guarda/${mente.slug}`}>Ler tudo sobre {mente.nome} →</Link></p>
         </>
-      ) : (
-        <p className="an-nota" style={{ marginTop: 28 }}>Com a hora de nascimento você descobre também o anjo da sua mente.</p>
-      )}
+      ) : null}
+
+      <NaPratica g={g} mente={mente} />
 
       <div className="an-cta">
         <p>
@@ -221,6 +231,34 @@ function Resultado({ anjos, entrada, periodos, ano, onCta }) {
         </div>
       </div>
     </>
+  );
+}
+
+function NaPratica({ g, mente }) {
+  const [busca] = BUSCA_CAMINHO[g.n];
+  const caminho = mente ? BUSCA_CAMINHO[mente.n][1] : null;
+  return (
+    <div className="an-pratica">
+      <span className="an-eyebrow">Na prática</span>
+      <p>O anjo da guarda é <strong>o que você busca</strong>; o da mente é <strong>como você chega lá</strong>.</p>
+      {mente && mente.n === g.n && (
+        <p>
+          No seu caso: você quer {busca} e chega lá {caminho} — os dois são {g.nome}, então essa energia vem em dobro.
+        </p>
+      )}
+      {mente && mente.n !== g.n && (
+        <p>No seu caso: você quer {busca} ({g.nome}), {caminho} ({mente.nome}).</p>
+      )}
+      {!mente && (
+        <p>
+          No seu caso: você quer {busca} ({g.nome}). Coloque a hora de nascimento pra ver como você chega lá.
+        </p>
+      )}
+      <p>
+        Por isso duas pessoas nascidas no mesmo dia podem ser bem diferentes: o anjo da guarda é o mesmo, mas o anjo da
+        mente muda com a hora.
+      </p>
+    </div>
   );
 }
 
