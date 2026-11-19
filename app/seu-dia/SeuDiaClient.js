@@ -17,9 +17,9 @@ import { TEXTO_SELO, TEXTO_TOM, TEXTO_RELACAO_DIA } from '@/lib/kinTextos';
 import { calcularAnjos, dadosDoAnjo, anjoPorLongitude } from '@/lib/anjos';
 import { TEXTO_ANJO } from '@/lib/anjosTextos';
 import { longitudeSolar } from '@/lib/bazi';
-import { salvarPerfil } from '@/lib/perfilLocal';
-import VoceTambem from '@/app/components/VoceTambem';
+import { salvarPerfil, lerPerfil } from '@/lib/perfilLocal';
 import AbaMapa from './AbaMapa';
+import AbaInicio from './AbaInicio';
 
 const TOM = {
   fluxo: { rotulo: 'Dia a favor', classe: 'sd-tom-fluxo' },
@@ -71,19 +71,24 @@ export default function SeuDiaClient() {
   const [perfil, setPerfil] = useState(null);
   const [erroLink, setErroLink] = useState(false);
 
+  function carregarPerfil(vivo = () => true) {
+    api('/api/seu-dia/perfil').then(({ ok, json }) => {
+      if (!vivo()) return;
+      if (!ok || !json?.perfil) { setEstado('entrar'); return; }
+      setPerfil(json.perfil);
+      setEstado(json.perfil.precisaDados ? 'dados' : 'app');
+    }).catch(() => vivo() && setEstado('entrar'));
+  }
+
   useEffect(() => {
     try {
       if (new URLSearchParams(window.location.search).get('erro') === 'link') setErroLink(true);
     } catch {}
     let vivo = true;
-    api('/api/seu-dia/perfil').then(({ ok, json }) => {
-      if (!vivo) return;
-      if (!ok || !json?.perfil) { setEstado('entrar'); return; }
-      setPerfil(json.perfil);
-      setEstado(json.perfil.precisaDados ? 'dados' : 'app');
-    }).catch(() => vivo && setEstado('entrar'));
+    carregarPerfil(() => vivo);
     return () => { vivo = false; };
   }, []);
+
 
   return (
     <div className="sd-wrap">
@@ -94,7 +99,7 @@ export default function SeuDiaClient() {
       <SiteNav active="seu-dia" />
 
       {estado === 'carregando' && <div className="sd-centro"><span className="sd-spinner" aria-label="Carregando" /></div>}
-      {estado === 'entrar' && <TelaEntrar erroLink={erroLink} />}
+      {estado === 'entrar' && <TelaEntrar erroLink={erroLink} onEntrou={() => { setEstado('carregando'); carregarPerfil(); }} />}
       {estado === 'dados' && (
         <TelaDados
           perfil={perfil}
@@ -118,50 +123,66 @@ export default function SeuDiaClient() {
 
 // ── Entrar ───────────────────────────────────────────────────────────────────
 
-function TelaEntrar({ erroLink }) {
+function TelaEntrar({ erroLink, onEntrou }) {
   const [email, setEmail] = useState('');
   const [enviando, setEnviando] = useState(false);
-  const [enviado, setEnviado] = useState(false);
+  const [etapa, setEtapa] = useState('email'); // email → codigo (ou link, sem a migração 0019)
+  const [codigo, setCodigo] = useState('');
+  const [conferindo, setConferindo] = useState(false);
   const [erro, setErro] = useState('');
+  const [podeReenviar, setPodeReenviar] = useState(false);
   const sugestao = sugestaoEmail(email);
 
+  useEffect(() => {
+    if (etapa !== 'codigo') return;
+    const t = setTimeout(() => setPodeReenviar(true), 60000);
+    return () => clearTimeout(t);
+  }, [etapa]);
+
   async function enviar(e) {
-    e.preventDefault();
+    e?.preventDefault();
     setErro('');
     if (!emailValido(email)) { setErro('Confira o e-mail.'); return; }
     setEnviando(true);
     const { ok, json } = await api('/api/seu-dia/entrar', { method: 'POST', body: { email } });
     setEnviando(false);
     if (!ok) { setErro(json?.error || 'Não conseguimos enviar agora.'); return; }
-    evento('sd_link_enviado');
-    setEnviado(true);
+    evento('sd_codigo_enviado', { com_codigo: json?.codigo !== false });
+    setCodigo('');
+    setPodeReenviar(false);
+    setEtapa(json?.codigo === false ? 'link' : 'codigo');
+  }
+
+  async function conferir(valor) {
+    const c = String(valor || '').replace(/\D/g, '');
+    if (c.length !== 6 || conferindo) return;
+    setErro('');
+    setConferindo(true);
+    const { ok, json } = await api('/api/seu-dia/codigo', { method: 'POST', body: { email, codigo: c } });
+    setConferindo(false);
+    if (!ok) { setErro(json?.error || 'Não deu certo. Tente de novo.'); setCodigo(''); return; }
+    evento('sd_entrou', { via: 'codigo' });
+    onEntrou();
   }
 
   return (
     <main className="sd-col">
       <header className="sd-hero-entrar">
-        <span className="sd-eyebrow">O APP DIÁRIO DO INTUITIVE CONCEPT</span>
-        <h1>Seu Dia</h1>
-        <p className="sd-lead">Seu mapa lido todo dia. Astrologia chinesa, numerologia, a Lua e o tarô cruzados num recado só — feito pra você, não pro seu signo.</p>
+        <span className="sd-eyebrow">INTUITIVE CONCEPT</span>
+        <h1>Minha Área</h1>
+        <p className="sd-lead">Seu mapa, seu dia e suas leituras num lugar só — feito pra você, não pro seu signo.</p>
       </header>
 
       <ul className="sd-lista-beneficios">
-        <li><Icone nome="sol" /> O tema do seu dia e o que fazer (e evitar)</li>
-        <li><Icone nome="relogio" /> Suas horas de força, no relógio da sua cidade</li>
-        <li><Icone nome="calendario" /> A semana e os próximos 30 dias à frente</li>
+        <li><Icone nome="mapa" /> Seu mapa inteiro: signo, número, anjo, Kin, astrologia chinesa</li>
+        <li><Icone nome="sol" /> O seu dia, todo dia, com o que fazer e evitar</li>
+        <li><Icone nome="carta" /> Suas leituras compradas sempre à mão</li>
         <li><Icone nome="sino" /> Um aviso às 7h, sem precisar abrir nada</li>
       </ul>
 
-      {erroLink && !enviado && <p className="sd-aviso">Esse link venceu ou já não vale. Peça um novo abaixo.</p>}
+      {erroLink && etapa === 'email' && <p className="sd-aviso">Esse link venceu ou já não vale. Peça um código novo abaixo.</p>}
 
-      {enviado ? (
-        <div className="sd-card sd-centro-texto">
-          <h2>Confira seu e-mail</h2>
-          <p>Mandamos um link pra <strong>{email}</strong>. Toque nele pra entrar — vale por 30 minutos.</p>
-          <p className="sd-mudo">Não chegou? Olhe a caixa de spam ou promoções.</p>
-          <button type="button" className="sd-btn-sec" onClick={() => setEnviado(false)}>Usar outro e-mail</button>
-        </div>
-      ) : (
+      {etapa === 'email' && (
         <form className="sd-card sd-form" onSubmit={enviar}>
           <label htmlFor="sd-email">Seu e-mail</label>
           <input id="sd-email" type="email" autoComplete="email" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="voce@email.com" required />
@@ -169,9 +190,49 @@ function TelaEntrar({ erroLink }) {
             <button type="button" className="sd-link-btn" onClick={() => setEmail(sugestao)}>Você quis dizer {sugestao}?</button>
           )}
           {erro && <p className="sd-erro">{erro}</p>}
-          <button type="submit" className="sd-btn" disabled={enviando}>{enviando ? 'Enviando…' : 'Receber meu link de entrada'}</button>
-          <p className="sd-mudo sd-centro-texto">Sem senha. 7 dias do Seu Dia Completo grátis; depois, o resumo do dia continua grátis.</p>
+          <button type="submit" className="sd-btn" disabled={enviando}>{enviando ? 'Enviando…' : 'Entrar ou criar minha conta'}</button>
+          <p className="sd-mudo sd-centro-texto">Sem senha: mandamos um código de 6 dígitos pro seu e-mail. Primeira vez? A conta é criada na hora.</p>
         </form>
+      )}
+
+      {etapa === 'codigo' && (
+        <form className="sd-card sd-form" onSubmit={(e) => { e.preventDefault(); conferir(codigo); }}>
+          <h2 className="sd-card-titulo">Digite o código</h2>
+          <p className="sd-mudo">Mandamos 6 dígitos pra <strong>{email}</strong>. Vale por 15 minutos.</p>
+          <input
+            className="sd-codigo"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            pattern="[0-9]*"
+            maxLength={6}
+            value={codigo}
+            aria-label="Código de 6 dígitos"
+            onChange={(e) => {
+              const v = e.target.value.replace(/\D/g, '').slice(0, 6);
+              setCodigo(v);
+              if (v.length === 6) conferir(v);
+            }}
+            autoFocus
+          />
+          {erro && <p className="sd-erro">{erro}</p>}
+          <button type="submit" className="sd-btn" disabled={conferindo || codigo.length !== 6}>{conferindo ? 'Conferindo…' : 'Entrar'}</button>
+          <p className="sd-mudo">Não chegou? Olhe o spam ou promoções. O e-mail também traz um botão que entra direto.</p>
+          <div className="sd-codigo-acoes">
+            <button type="button" className="sd-link-btn" onClick={() => { setEtapa('email'); setErro(''); }}>Trocar e-mail</button>
+            <button type="button" className="sd-link-btn" disabled={!podeReenviar || enviando} onClick={() => enviar()}>
+              {podeReenviar ? 'Mandar outro código' : 'Mandar outro (em 1 min)'}
+            </button>
+          </div>
+        </form>
+      )}
+
+      {etapa === 'link' && (
+        <div className="sd-card sd-centro-texto">
+          <h2>Confira seu e-mail</h2>
+          <p>Mandamos um link pra <strong>{email}</strong>. Toque nele pra entrar — vale por 30 minutos.</p>
+          <p className="sd-mudo">Não chegou? Olhe a caixa de spam ou promoções.</p>
+          <button type="button" className="sd-btn-sec" onClick={() => setEtapa('email')}>Usar outro e-mail</button>
+        </div>
       )}
     </main>
   );
@@ -180,13 +241,16 @@ function TelaEntrar({ erroLink }) {
 // ── Dados de nascimento ──────────────────────────────────────────────────────
 
 function TelaDados({ perfil, onSalvo, onCancelar }) {
-  const base = perfil?.precisaDados ? perfil?.sugestao : perfil;
+  // Cadastro novo: usa a última análise do e-mail; sem ela, o perfil salvo neste aparelho.
+  const [local] = useState(() => (perfil?.precisaDados && !perfil?.sugestao ? lerPerfil() : null));
+  const base = perfil?.precisaDados ? (perfil?.sugestao || local) : perfil;
   const [nome, setNome] = useState(base?.nome || '');
   const [data, setData] = useState(base?.dataNascimento || '');
   const [hora, setHora] = useState(base?.hora || '');
   const [naoSei, setNaoSei] = useState(!!base && !base.hora && !!base.dataNascimento);
-  const [cidade, setCidade] = useState(perfil?.cidade || null);
-  const [cidadeTexto, setCidadeTexto] = useState(perfil?.cidade ? `${perfil.cidade.nome}, ${perfil.cidade.uf}` : '');
+  const cidadeBase = perfil?.cidade || local?.cidade || null;
+  const [cidade, setCidade] = useState(cidadeBase);
+  const [cidadeTexto, setCidadeTexto] = useState(cidadeBase ? `${cidadeBase.nome}, ${cidadeBase.uf}` : '');
   const [erro, setErro] = useState('');
   const [salvando, setSalvando] = useState(false);
 
@@ -216,7 +280,7 @@ function TelaDados({ perfil, onSalvo, onCancelar }) {
       <header className="sd-cabecalho">
         <span className="sd-eyebrow">{perfil?.precisaDados ? 'ÚLTIMO PASSO' : 'SEUS DADOS'}</span>
         <h1>Quando você nasceu?</h1>
-        {perfil?.sugestao && perfil.precisaDados && (
+        {perfil?.precisaDados && (perfil?.sugestao || local) && (
           <p className="sd-mudo">Preenchemos com os dados do seu mapa. Confira antes de seguir.</p>
         )}
       </header>
@@ -245,7 +309,7 @@ function TelaDados({ perfil, onSalvo, onCancelar }) {
         {!cidade && cidadeTexto && <p className="sd-mudo">Escolha a cidade na lista — sem ela, as horas ficam aproximadas.</p>}
 
         {erro && <p className="sd-erro">{erro}</p>}
-        <button type="submit" className="sd-btn" disabled={salvando}>{salvando ? 'Salvando…' : 'Ver meu dia'}</button>
+        <button type="submit" className="sd-btn" disabled={salvando}>{salvando ? 'Salvando…' : perfil?.precisaDados ? 'Criar minha área ✦' : 'Salvar'}</button>
         {onCancelar && <button type="button" className="sd-btn-sec" onClick={onCancelar}>Cancelar</button>}
       </form>
     </main>
@@ -254,8 +318,17 @@ function TelaDados({ perfil, onSalvo, onCancelar }) {
 
 // ── O app ────────────────────────────────────────────────────────────────────
 
+const ABAS = ['inicio', 'hoje', 'semana', 'mapa', 'conta'];
+
 function AppSeuDia({ perfil, setPerfil, onEditar, onSair }) {
-  const [aba, setAba] = useState('hoje');
+  // ?aba=hoje (aviso das 7h) abre direto no dia; o padrão é o Início.
+  const [aba, setAbaEstado] = useState(() => {
+    try {
+      const q = new URLSearchParams(window.location.search).get('aba');
+      return ABAS.includes(q) ? q : 'inicio';
+    } catch { return 'inicio'; }
+  });
+  const setAba = (a) => { setAbaEstado(a); try { window.scrollTo(0, 0); } catch {} };
   const [modal, setModal] = useState(false);
 
   const tz = perfil.cidade?.tz || 'America/Sao_Paulo';
@@ -288,6 +361,9 @@ function AppSeuDia({ perfil, setPerfil, onEditar, onSair }) {
   return (
     <>
       <main className="sd-col sd-col-app">
+        {aba === 'inicio' && (
+          <AbaInicio perfil={perfil} leitura={leitura} onIr={(a) => { setAba(a); evento('sd_inicio_ir', { aba: a }); }} onDesbloquear={() => abrirModal('inicio')} />
+        )}
         {aba === 'hoje' && (
           <AbaHoje perfil={perfil} leitura={leitura} completo={completo} onDesbloquear={() => abrirModal('hoje')} />
         )}
@@ -295,17 +371,29 @@ function AppSeuDia({ perfil, setPerfil, onEditar, onSair }) {
           <AbaSemana semana={semana} depois={depois} completo={completo} onDesbloquear={() => abrirModal('semana')} />
         )}
         {aba === 'mapa' && <AbaMapa perfil={perfil} />}
-        {aba === 'ajustes' && (
-          <AbaAjustes perfil={perfil} onEditar={onEditar} onSair={onSair} onDesbloquear={() => abrirModal('ajustes')} />
+        {aba === 'conta' && (
+          <AbaAjustes perfil={perfil} onEditar={onEditar} onSair={onSair} onDesbloquear={() => abrirModal('conta')} />
         )}
       </main>
 
-      <nav className="sd-abas" aria-label="Seu Dia">
-        <button type="button" className={aba === 'hoje' ? 'is-on' : ''} aria-current={aba === 'hoje' ? 'page' : undefined} onClick={() => setAba('hoje')}><Icone nome="sol" />Hoje</button>
-        <button type="button" className={aba === 'semana' ? 'is-on' : ''} aria-current={aba === 'semana' ? 'page' : undefined} onClick={() => setAba('semana')}><Icone nome="calendario" />Semana</button>
-        <button type="button" className={aba === 'mapa' ? 'is-on' : ''} aria-current={aba === 'mapa' ? 'page' : undefined} onClick={() => { setAba('mapa'); evento('sd_aba_mapa'); }}><Icone nome="mapa" />Mapa</button>
-        <a href="/oraculo"><Icone nome="chat" />Oráculo</a>
-        <button type="button" className={aba === 'ajustes' ? 'is-on' : ''} aria-current={aba === 'ajustes' ? 'page' : undefined} onClick={() => setAba('ajustes')}><Icone nome="ajustes" />Ajustes</button>
+      <nav className="sd-abas" aria-label="Minha Área">
+        {[
+          ['inicio', 'casa', 'Início'],
+          ['hoje', 'sol', 'Hoje'],
+          ['semana', 'calendario', 'Semana'],
+          ['mapa', 'mapa', 'Mapa'],
+          ['conta', 'ajustes', 'Conta'],
+        ].map(([k, icone, rotulo]) => (
+          <button
+            key={k}
+            type="button"
+            className={aba === k ? 'is-on' : ''}
+            aria-current={aba === k ? 'page' : undefined}
+            onClick={() => { setAba(k); if (k === 'mapa') evento('sd_aba_mapa'); }}
+          >
+            <Icone nome={icone} />{rotulo}
+          </button>
+        ))}
       </nav>
 
       {modal && (
@@ -469,8 +557,6 @@ function AbaHoje({ perfil, leitura, completo, onDesbloquear }) {
       <button type="button" className="sd-btn-sec sd-compartilhar" onClick={compartilhar}>
         <Icone nome="compartilhar" /> {copiado ? 'Copiado!' : 'Compartilhar meu dia'}
       </button>
-
-      <VoceTambem dados={perfil} atual="seu-dia" />
     </>
   );
 }
@@ -760,7 +846,7 @@ function AbaAjustes({ perfil, onEditar, onSair, onDesbloquear }) {
     <>
       <header className="sd-cabecalho">
         <span className="sd-eyebrow">AJUSTES</span>
-        <h1>Seu Dia, do seu jeito</h1>
+        <h1>Sua conta</h1>
       </header>
 
       <section className="sd-card">
@@ -905,6 +991,7 @@ function ModalListaEspera({ onFechar }) {
 
 const PATHS = {
   sol: <><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></>,
+  casa: <><path d="M3 11l9-7 9 7" /><path d="M5 10v10h14V10" /><path d="M10 20v-6h4v6" /></>,
   mapa: <path d="M12 3l2.4 6.6L21 12l-6.6 2.4L12 21l-2.4-6.6L3 12l6.6-2.4z" />,
   calendario: <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4" /></>,
   chat: <path d="M21 12a8 8 0 0 1-11.6 7.1L4 21l1.9-5.4A8 8 0 1 1 21 12z" />,
@@ -962,6 +1049,9 @@ const CSS = `
   .sd-btn:disabled { opacity: 0.6; cursor: default; }
   .sd-btn-link { display: flex; align-items: center; justify-content: center; text-decoration: none; }
   .sd-btn-sec { min-height: 48px; border-radius: 999px; border: 1px solid #4a2f6e; background: transparent; color: #faf5ff; font-family: 'Cinzel', serif; font-weight: 700; font-size: 13px; letter-spacing: 0.04em; cursor: pointer; padding: 0 18px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+  .sd-codigo { text-align: center; font-family: 'Courier New', monospace !important; font-size: 34px !important; letter-spacing: 0.4em; padding-left: 0.4em !important; }
+  .sd-codigo-acoes { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .sd-link-btn:disabled { color: #8a7aa8; text-decoration: none; cursor: default; }
   .sd-link-btn { background: none; border: 0; color: #f5a524; font: inherit; text-decoration: underline; cursor: pointer; padding: 0; min-height: 32px; text-align: left; }
 
   .sd-form label { font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #cdbbe8; }
