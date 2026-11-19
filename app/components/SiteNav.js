@@ -35,6 +35,7 @@ export default function SiteNav({ active = null, sticky = true }) {
     { href: '/compatibilidade', label: 'Compatibilidade', key: 'compatibilidade' },
     { href: '/ceu', label: 'Céu do Nascimento', key: 'ceu' },
     { href: '/astrologia-chinesa', label: 'Astrologia Chinesa', key: 'astrologia-chinesa' },
+    { href: '/anjo-da-guarda', label: 'Anjo da Guarda', key: 'anjo' },
     { href: '/signos', label: 'Signos', key: 'signos' },
     { href: '/numerologia', label: 'Numerologia', key: 'numerologia' },
     { href: previsaoHref, label: 'Previsão do Ano', key: 'previsao' },
