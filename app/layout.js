@@ -3,6 +3,7 @@ import Script from "next/script";
 import { TIKTOK_PIXEL_ID } from "@/lib/tiktok";
 import { META_PIXEL_ID } from "@/lib/meta";
 import "./globals.css";
+import AvisoCookies from "@/app/components/AvisoCookies";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -85,6 +86,15 @@ export default function RootLayout({ children }) {
     __html: `
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
+      // LGPD: tudo negado até a pessoa aceitar no aviso de cookies (AvisoCookies.js).
+      var icOk = false; try { icOk = localStorage.getItem('ic_consent') === 'sim'; } catch (e) {}
+      gtag('consent', 'default', {
+        ad_storage: icOk ? 'granted' : 'denied',
+        ad_user_data: icOk ? 'granted' : 'denied',
+        ad_personalization: icOk ? 'granted' : 'denied',
+        analytics_storage: icOk ? 'granted' : 'denied',
+        wait_for_update: 500
+      });
       gtag('js', new Date());
 
       gtag('config', 'G-4YT1QFSD1P');
@@ -101,6 +111,8 @@ export default function RootLayout({ children }) {
             __html: `
               !function (w, d, t) {
                 w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie","holdConsent","revokeConsent","grantConsent"],ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.instance=function(t){for( var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e},ttq.load=function(e,n){var r="https://analytics.tiktok.com/i18n/pixel/events.js",o=n&&n.partner;ttq._i=ttq._i||{},ttq._i[e]=[],ttq._i[e]._u=r,ttq._t=ttq._t||{},ttq._t[e]=+new Date,ttq._o=ttq._o||{},ttq._o[e]=n||{};n=document.createElement("script") ;n.type="text/javascript",n.async=!0,n.src=r+"?sdkid="+e+"&lib="+t;e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(n,e)};
+                var icOk = false; try { icOk = localStorage.getItem('ic_consent') === 'sim'; } catch (e) {}
+                if (!icOk) ttq.holdConsent();
                 ttq.load('${TIKTOK_PIXEL_ID}');
                 ttq.page();
               }(window, document, 'ttq');
@@ -121,20 +133,14 @@ export default function RootLayout({ children }) {
               t.src=v;s=b.getElementsByTagName(e)[0];
               s.parentNode.insertBefore(t,s)}(window, document,'script',
               'https://connect.facebook.net/en_US/fbevents.js');
+              var icOk = false; try { icOk = localStorage.getItem('ic_consent') === 'sim'; } catch (e) {}
+              if (!icOk) fbq('consent', 'revoke');
               fbq('init', '${META_PIXEL_ID}');
               fbq('track', 'PageView');
             `,
           }}
         />
-        <noscript>
-          <img
-            height="1"
-            width="1"
-            style={{ display: 'none' }}
-            src={`https://www.facebook.com/tr?id=${META_PIXEL_ID}&ev=PageView&noscript=1`}
-            alt=""
-          />
-        </noscript>
+        {/* Sem o <noscript> do pixel do Meta: sem JavaScript não dá pra pedir consentimento (LGPD). */}
 
         <script
           type="application/ld+json"
@@ -157,6 +163,7 @@ export default function RootLayout({ children }) {
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         {children}
+        <AvisoCookies />
       </body>
     </html>
   );

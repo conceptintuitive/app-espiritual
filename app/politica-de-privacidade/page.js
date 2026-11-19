@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import SiteNav from '@/app/components/SiteNav';
+import BotaoPreferenciasCookies from '@/app/components/BotaoPreferenciasCookies';
 
 export const metadata = {
   title: 'Política de Privacidade | Intuitive Concept',
@@ -86,8 +87,10 @@ export default function PoliticaDePrivacidadePage() {
         <h2 style={styles.h2}>4. Cookies</h2>
         <p style={styles.p}>
           Usamos cookies e tecnologias semelhantes para lembrar sua sessão, medir tráfego e
-          personalizar anúncios. Você pode bloquear cookies nas configurações do seu navegador,
-          mas isso pode afetar o funcionamento de algumas partes do site.
+          personalizar anúncios. As ferramentas de análise e de anúncios (Google Analytics, Google
+          Ads, Meta e TikTok) só gravam cookies depois que você aceita no aviso de cookies; se você
+          escolher &ldquo;Só o essencial&rdquo;, ficam só os necessários pro site funcionar. Você pode
+          mudar a escolha quando quiser: <BotaoPreferenciasCookies />.
         </p>
         <p style={styles.p}>
           <strong>Cookie de sessão:</strong> ao entrar na Minha Área, gravamos um cookie (<code>ic_sd</code>) que
