@@ -15,7 +15,7 @@ npm run dev      # Servidor de desenvolvimento (localhost:3000)
 npm run build    # Build de produção
 npm run lint     # ESLint (flat config nativa do eslint-config-next 16; 0 erros, avisos tolerados)
 npm run start    # Servidor de produção
-npm test         # node --test em tests/*.test.js (lib/sky.js, lib/fusoBR.js, lib/municipios.js, planetas/HD legado x fuso real) — sem dependências
+npm test         # node --test em tests/*.test.js (lib/sky.js, lib/fusoBR.js, lib/municipios.js, lib/bazi.js, planetas/HD legado x fuso real) — sem dependências
 node scripts/gerar-municipios.mjs  # regenera public/data/municipios-br.json (base IBGE)
 ```
 
@@ -68,6 +68,9 @@ O item "Meu Mapa" do menu (`app/components/SiteNav.js`) aponta para `/resultado/
 | `lib/ceuDados.js` | Repasse `/ceu` → quiz via localStorage `ic_ceu_dados` (validade 24h, flag `abrirQuiz` consumido uma vez). Nunca por query string. |
 | `app/resultado/[id]/page.js` | Prévia gratuita — página de vendas em PT-BR, chama `criar-checkout-mp`. |
 | `app/manual/[id]/page.js` | Manual completo; chama `generateManual()` com `pendingFields`, confirma pagamento MP pós-redirect, dispara `gerar-manual-completo`. **Não exporta PDF** (`jspdf` está no package.json sem uso); `html2canvas` só é usado em `app/components/SeloArquetipo.js` para exportar o selo como imagem. |
+| `app/astrologia-chinesa/` | Rota pública `/astrologia-chinesa` — mapa BaZi (4 Pilares) grátis, calculado 100% no browser, sem API/banco/IA. CTA leva pro quiz pré-preenchido via `lib/ceuDados.js`. |
+| `lib/bazi.js` | Cálculo BaZi: ano/mês pelos termos solares (Lichun ~4/fev), dia pelo ciclo de 60, hora pelo **horário solar verdadeiro** (fuso histórico via `localToUTC` + longitude + equação do tempo; virada do dia às 23h solares). Dez Deuses, relações entre ramos, contagem de elementos, leitura de ano. Testes em `tests/bazi.test.js`. |
+| `lib/baziTextos.js` | Textos fixos do BaZi (Day Masters, 12 animais por posição, Dez Deuses, relações, elementos). Mesmo tom do Manual, sem hedge. |
 | `app/api/card/route.js`, `app/api/og/[id]/route.js` | Card 1080x1920 de story (fontes em `app/api/card/fonts`) e imagem OG de fallback. |
 
 ### manualgenerator.js — como funciona
