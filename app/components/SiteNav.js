@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 
 // Menu do site — aparece em TODAS as páginas (decisão de nov/2026, inclusive
@@ -13,6 +14,16 @@ import Link from 'next/link';
 // O menu carrega a própria fonte (Cinzel) pra ficar igual em qualquer página.
 export default function SiteNav({ active = null, sticky = true }) {
   const [ultimaAnaliseId, setUltimaAnaliseId] = useState(null);
+  // Celular: barra compacta (marca + Minha Área + ☰); o ☰ abre as ferramentas em grupos.
+  const [aberto, setAberto] = useState(false);
+  const pathname = usePathname();
+  useEffect(() => { setAberto(false); }, [pathname]);
+  useEffect(() => {
+    if (!aberto) return;
+    const onKey = (e) => { if (e.key === 'Escape') setAberto(false); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [aberto]);
 
   useEffect(() => {
     try {
@@ -45,8 +56,16 @@ export default function SiteNav({ active = null, sticky = true }) {
     { href: '/blog', label: 'Blog', key: 'blog' },
   ];
 
+  const porChave = Object.fromEntries(outrosItems.map((i) => [i.key, i]));
+  const grupos = [
+    { titulo: 'Você', itens: ['seu-dia', 'assinar', 'oraculo'] },
+    { titulo: 'Seus mapas', itens: ['ceu', 'astrologia-chinesa', 'anjo', 'kin-maia', 'previsao', 'human-design'] },
+    { titulo: 'Amor', itens: ['compatibilidade', 'compat-completa'] },
+    { titulo: 'Todo dia e conteúdo', itens: ['hexagrama', 'signos', 'numerologia', 'blog'] },
+  ].map((g) => ({ ...g, itens: g.itens.map((k) => porChave[k]).filter(Boolean) }));
+
   return (
-    <nav className={`site-nav${sticky ? '' : ' site-nav-static'}`}>
+    <nav className={`site-nav${sticky ? '' : ' site-nav-static'}${aberto ? ' is-aberto' : ''}`}>
       <link
         rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;800;900&display=swap"
@@ -61,7 +80,38 @@ export default function SiteNav({ active = null, sticky = true }) {
           Explorar
         </Link>
         <div className="site-nav-spacer" aria-hidden="true" />
+        <div className="site-nav-mobile">
+          <Link href="/seu-dia" className={`site-nav-area${active === 'seu-dia' ? ' is-active' : ''}`}>Minha Área</Link>
+          <button
+            type="button"
+            className="site-nav-burger"
+            aria-expanded={aberto}
+            aria-controls="site-nav-painel"
+            aria-label={aberto ? 'Fechar menu' : 'Abrir menu'}
+            onClick={() => setAberto((v) => !v)}
+          >
+            <span aria-hidden="true">{aberto ? '✕' : '☰'}</span>
+          </button>
+        </div>
       </div>
+
+      {aberto && (
+        <div id="site-nav-painel" className="site-nav-painel">
+          <Link href="/explorar" className={`site-nav-painel-explorar${active === 'explorar' ? ' is-active' : ''}`}>Explorar tudo ✦</Link>
+          {grupos.map((g) => (
+            <div key={g.titulo} className="site-nav-grupo">
+              <span className="site-nav-grupo-titulo">{g.titulo}</span>
+              <div className="site-nav-grupo-itens">
+                {g.itens.map((item) => (
+                  <Link key={item.key} href={item.href} className={`site-nav-link${active === item.key ? ' is-active' : ''}`} onClick={() => setAberto(false)}>
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="site-nav-links">
         {outrosItems.map((item) => (
@@ -164,18 +214,36 @@ export default function SiteNav({ active = null, sticky = true }) {
           border-color: rgba(216, 180, 254, 0.4);
           transform: translateY(-1px);
         }
+        .site-nav-mobile, .site-nav-painel { display: none; }
         @media (max-width: 640px) {
-          /* No celular o menu ocupa ~40% da tela: rola junto com a página em vez de ficar preso no topo. */
-          .site-nav { padding: 16px 16px 14px; position: relative; }
-          .site-nav-top {
-            grid-template-columns: 1fr;
-            justify-items: center;
-            gap: 10px;
+          /* Celular: barra de uma linha só (antes o menu inteiro ocupava a primeira tela). */
+          .site-nav { padding: 10px 14px; }
+          .site-nav-top { grid-template-columns: 1fr auto; gap: 10px; margin-bottom: 0; }
+          .site-nav-explorar, .site-nav-spacer, .site-nav-links { display: none; }
+          .site-nav-brand { font-size: 14px; }
+          .site-nav-mobile { display: flex; align-items: center; gap: 8px; }
+          .site-nav-area {
+            font-family: 'Cinzel', serif; font-size: 12.5px; font-weight: 700; color: #faf5ff; text-decoration: none; white-space: nowrap;
+            padding: 8px 14px; border-radius: 999px; border: 1px solid rgba(236, 72, 153, 0.5);
+            background: linear-gradient(135deg, rgba(236, 72, 153, 0.28), rgba(139, 92, 246, 0.28));
           }
-          .site-nav-brand { justify-self: center; }
-          .site-nav-spacer { display: none; }
-          .site-nav-explorar { font-size: 24px; padding: 13px 30px; }
-          .site-nav-links { gap: 8px; }
+          .site-nav-burger {
+            width: 40px; height: 40px; border-radius: 999px; border: 1px solid rgba(216, 180, 254, 0.3);
+            background: rgba(139, 92, 246, 0.12); color: #faf5ff; font-size: 18px; line-height: 1; cursor: pointer;
+            display: inline-flex; align-items: center; justify-content: center;
+          }
+          .site-nav-painel {
+            display: flex; flex-direction: column; gap: 14px; margin-top: 12px; padding-top: 12px;
+            border-top: 1px solid rgba(216, 180, 254, 0.18); max-height: calc(100dvh - 80px); overflow-y: auto;
+          }
+          .site-nav-painel-explorar {
+            align-self: stretch; text-align: center; font-family: 'Cinzel', serif; font-size: 16px; font-weight: 800; color: #faf5ff;
+            text-decoration: none; padding: 11px; border-radius: 999px; border: 1px solid rgba(236, 72, 153, 0.5);
+            background: linear-gradient(135deg, rgba(236, 72, 153, 0.34), rgba(139, 92, 246, 0.34));
+          }
+          .site-nav-grupo { display: flex; flex-direction: column; gap: 7px; }
+          .site-nav-grupo-titulo { font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: #f5a524; }
+          .site-nav-grupo-itens { display: flex; flex-wrap: wrap; gap: 7px; }
           .site-nav-link { font-size: 12.5px; padding: 8px 13px; }
         }
       `}</style>

@@ -36,7 +36,7 @@ node scripts/gerar-municipios.mjs  # regenera public/data/municipios-br.json (ba
 ```
 Checkout **Stripe** (`/api/criar-checkout` → `/api/webhook`) ainda funciona, mas só é chamado pelo botão "Desbloquear" do paywall dentro de `/manual/[id]` (quem chega ao manual sem ter pago). Upsells (Previsão do Ano/tier2, Human Design, combo) usam `/api/criar-checkout-upsell-mp`; Compatibilidade Completa avulsa usa `/api/criar-checkout-compat-mp` (R$29,90) e é grátis via `/api/salvar-compat-pessoa2` para quem já comprou o Manual.
 
-**Menu (`app/components/SiteNav.js`) em todas as páginas**, inclusive `/`, `/resultado/[id]` e `/manual/[id]` (decisão de nov/2026). Cada página passa `active` com a chave do seu item (ex.: `signos`, `astrologia-chinesa`, `meu-mapa`); legais e home passam nada. `/ceu` e `/manual/[id]` usam `sticky={false}` por causa do palco fixo do Olho Cósmico; no celular (≤640px) o menu nunca é sticky. Página nova = item novo no `outrosItems` do SiteNav + `<SiteNav active="..." />` na página. **"Minha Área"** (`/seu-dia`, chave `seu-dia`) substituiu os itens "Meu Mapa" e "Seu Dia" (nov/2026); `/resultado` e `/manual` ainda passam `active="meu-mapa"`, que não destaca nada.
+**Menu (`app/components/SiteNav.js`) em todas as páginas**, inclusive `/`, `/resultado/[id]` e `/manual/[id]` (decisão de nov/2026). Cada página passa `active` com a chave do seu item (ex.: `signos`, `astrologia-chinesa`, `meu-mapa`); legais e home passam nada. `/ceu` e `/manual/[id]` usam `sticky={false}` por causa do palco fixo do Olho Cósmico. No celular (≤640px) o menu vira uma barra de uma linha (marca + "Minha Área" + ☰); o ☰ abre as ferramentas em grupos (Você, Seus mapas, Amor, Todo dia e conteúdo) — item novo precisa entrar também em `grupos` no SiteNav. Página nova = item novo no `outrosItems` do SiteNav + `<SiteNav active="..." />` na página. **"Minha Área"** (`/seu-dia`, chave `seu-dia`) substituiu os itens "Meu Mapa" e "Seu Dia" (nov/2026); `/resultado` e `/manual` ainda passam `active="meu-mapa"`, que não destaca nada.
 
 ### Key Files
 
@@ -151,6 +151,8 @@ Três integrações distintas com o TikTok, não confundir: `TIKTOK_ACCESS_TOKEN
 ## Important Conventions
 
 - Path alias `@/*` aponta para a raiz do projeto (`jsconfig.json`).
+- **Páginas pessoais fora do Google**: `/manual/[id]`, `/resultado/[id]`, `/previsao-do-ano/[id]`, `/human-design/[id]`, `/compatibilidade-completa/[id]` e `/assinar/obrigado` têm um `layout.js` só com `robots: noindex, nofollow` (as páginas são Client Components). Página nova com dados de cliente = mesmo layout. `app/robots.js` só bloqueia `/api/` — não bloquear as páginas pessoais lá, senão o Google não lê o noindex.
+- **Termos e Política** (nov/2026) descrevem a assinatura (renovação automática no cartão, Pix pré-pago sem renovação, cancelamento na Minha Área, arrependimento de 7 dias, cortesia de 30 dias do Manual, aviso de 30 dias antes de mudar preço), o login por código e o perfil salvo no aparelho. Mudou regra de assinatura/login/dados → atualizar os dois textos.
 - Todo o conteúdo visível ao usuário está em **português brasileiro**.
 - `app/page.js` é um Client Component grande; evite adicionar lógica pesada — prefira mover para API routes ou `lib/`.
 - O Stripe Checkout usa `allow_promotion_codes: true` — não remover.
