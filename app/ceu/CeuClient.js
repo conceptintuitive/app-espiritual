@@ -3,6 +3,7 @@
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { salvarCeuDados } from '@/lib/ceuDados';
+import { salvarSeForMeu } from '@/lib/perfilLocal';
 import SiteNav from '@/app/components/SiteNav';
 
 // ssr:false — o Olho Cósmico depende de window/canvas e só existe nesta rota
@@ -17,6 +18,7 @@ export default function CeuClient() {
 
   function abrirMapa(dados) {
     salvarCeuDados(dados);
+    salvarSeForMeu(dados);
     try { window.gtag?.('event', 'ceu_cta', { event_category: 'ceu' }); } catch {}
     router.push('/');
   }

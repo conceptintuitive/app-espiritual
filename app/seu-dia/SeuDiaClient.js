@@ -17,6 +17,8 @@ import { TEXTO_SELO, TEXTO_TOM, TEXTO_RELACAO_DIA } from '@/lib/kinTextos';
 import { calcularAnjos, dadosDoAnjo, anjoPorLongitude } from '@/lib/anjos';
 import { TEXTO_ANJO } from '@/lib/anjosTextos';
 import { longitudeSolar } from '@/lib/bazi';
+import { salvarPerfil } from '@/lib/perfilLocal';
+import VoceTambem from '@/app/components/VoceTambem';
 
 const TOM = {
   fluxo: { rotulo: 'Dia a favor', classe: 'sd-tom-fluxo' },
@@ -274,6 +276,11 @@ function AppSeuDia({ perfil, setPerfil, onEditar, onSair }) {
     try { if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js'); } catch {}
   }, [perfil.acesso]);
 
+  // A conta do Seu Dia é da própria pessoa: vira o perfil deste aparelho (anjo, Kin, BaZi abrem com ele).
+  useEffect(() => {
+    salvarPerfil({ nome: perfil.nome, dataNascimento: perfil.dataNascimento, hora: perfil.hora || null, cidade: perfil.cidade || null });
+  }, [perfil.nome, perfil.dataNascimento, perfil.hora, perfil.cidade]);
+
   const completo = perfil.acesso === 'completo';
   const abrirModal = (origem) => { evento('sd_desbloquear_click', { origem }); setModal(true); };
 
@@ -459,6 +466,8 @@ function AbaHoje({ perfil, leitura, completo, onDesbloquear }) {
       <button type="button" className="sd-btn-sec sd-compartilhar" onClick={compartilhar}>
         <Icone nome="compartilhar" /> {copiado ? 'Copiado!' : 'Compartilhar meu dia'}
       </button>
+
+      <VoceTambem dados={perfil} atual="seu-dia" />
     </>
   );
 }

@@ -10,6 +10,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import SiteNav from '@/app/components/SiteNav';
 import { salvarCeuDados } from '@/lib/ceuDados';
+import { lerPerfil, ouvirPerfil, salvarSeForMeu } from '@/lib/perfilLocal';
+import PerfilBarra from '@/app/components/PerfilBarra';
+import VoceTambem from '@/app/components/VoceTambem';
 import { calcularKin, kinDaData, nomeDoKin, seloDoKin, tomDoKin, ondaEncantada, SELOS } from '@/lib/kin';
 import { TEXTO_SELO, TEXTO_TOM, TEXTO_COR, TEXTO_ORACULO } from '@/lib/kinTextos';
 import { CSS_ANJO, FONTES_ANJO } from '@/app/anjo-da-guarda/estilo';
@@ -34,6 +37,29 @@ export default function KinClient() {
   const [erro, setErro] = useState('');
   const [entrada, setEntrada] = useState(null);
   const [hoje, setHoje] = useState(null);
+  const [perfil, setPerfil] = useState(null);
+  const formRef = useRef(null);
+
+  function mostrarPerfil(p) {
+    setNome(p.nome || '');
+    setData(p.dataNascimento);
+    setHora(p.hora || '');
+    setEntrada({ nome: p.nome || '', data: p.dataNascimento, hora: p.hora || null, cidade: p.cidade || null });
+  }
+
+  // Perfil salvo neste aparelho: abre já com o Kin da pessoa.
+  useEffect(() => {
+    const p = lerPerfil();
+    setPerfil(p);
+    if (p) mostrarPerfil(p);
+    return ouvirPerfil(setPerfil);
+  }, []);
+
+  function outraPessoa() {
+    setEntrada(null);
+    setNome(''); setData(''); setHora('');
+    setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 60);
+  }
 
   // Kin de hoje: só no browser (data local da pessoa, sem diferença de hidratação).
   useEffect(() => {
@@ -55,14 +81,18 @@ export default function KinClient() {
       setErro('Confira a data de nascimento.');
       return;
     }
-    setEntrada({ nome: nome.trim(), data, hora: bissexto && /^\d{2}:\d{2}$/.test(hora) ? hora : null });
+    const mesma = perfil?.dataNascimento === data;
+    const horaKin = bissexto && /^\d{2}:\d{2}$/.test(hora) ? hora : null;
+    // A hora só é pedida no 29/02; nos outros dias, usa a do perfil (se for a mesma pessoa) e não apaga.
+    setEntrada({ nome: nome.trim(), data, hora: horaKin ?? (mesma ? perfil.hora : null), cidade: mesma ? perfil.cidade : null });
+    salvarSeForMeu({ nome: nome.trim(), dataNascimento: data, ...(bissexto ? { hora: horaKin } : {}) });
     evento('kin_calcular');
     setTimeout(() => resultadoRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
   }
 
   function irProManual() {
     evento('kin_cta_manual');
-    salvarCeuDados({ nome: entrada.nome, dataNascimento: entrada.data, hora: entrada.hora, cidade: null });
+    salvarCeuDados({ nome: entrada.nome, dataNascimento: entrada.data, hora: entrada.hora, cidade: entrada.cidade || null });
     router.push('/');
   }
 
@@ -80,7 +110,7 @@ export default function KinClient() {
         </p>
       </header>
 
-      <form className="an-form" onSubmit={calcular}>
+      <form ref={formRef} className="an-form" onSubmit={calcular}>
         <label>
           Seu primeiro nome
           <input className="an-input" value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex: Bianca" autoComplete="given-name" />
@@ -101,9 +131,19 @@ export default function KinClient() {
       </form>
 
       {kin && entrada && (
-        <section ref={resultadoRef} className="an-sec">
-          <Resultado k={kin} entrada={entrada} onCta={irProManual} />
-        </section>
+        <>
+          <PerfilBarra
+            perfil={perfil}
+            mostrando={entrada}
+            onOutraPessoa={outraPessoa}
+            onVoltarPraMim={() => perfil && mostrarPerfil(perfil)}
+            onMudou={() => setPerfil(lerPerfil())}
+          />
+          <section ref={resultadoRef} className="an-sec">
+            <Resultado k={kin} entrada={entrada} onCta={irProManual} />
+          </section>
+          <VoceTambem dados={{ nome: entrada.nome, dataNascimento: entrada.data, hora: entrada.hora, cidade: entrada.cidade }} atual="kin-maia" />
+        </>
       )}
 
       {hoje && <KinDeHoje dataISO={hoje} />}

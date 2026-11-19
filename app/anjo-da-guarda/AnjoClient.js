@@ -9,6 +9,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import SiteNav from '@/app/components/SiteNav';
 import { salvarCeuDados } from '@/lib/ceuDados';
+import { lerPerfil, ouvirPerfil, salvarSeForMeu } from '@/lib/perfilLocal';
+import PerfilBarra from '@/app/components/PerfilBarra';
+import VoceTambem from '@/app/components/VoceTambem';
 import { ANJOS, calcularAnjos, dadosDoAnjo, anjosDoMomento } from '@/lib/anjos';
 import { TEXTO_ANJO, TEXTO_CORO, TEXTO_ELEMENTO_ANJO, BUSCA_CAMINHO } from '@/lib/anjosTextos';
 import { CSS_ANJO, FONTES_ANJO } from './estilo';
@@ -32,6 +35,30 @@ export default function AnjoClient({ periodos, ano }) {
   const [erro, setErro] = useState('');
   const [entrada, setEntrada] = useState(null);
   const [momento, setMomento] = useState(null);
+  const [perfil, setPerfil] = useState(null);
+  const formRef = useRef(null);
+
+  function mostrarPerfil(p) {
+    setNome(p.nome || '');
+    setData(p.dataNascimento);
+    setHora(p.hora || '');
+    setNaoSeiHora(!p.hora);
+    setEntrada({ nome: p.nome || '', data: p.dataNascimento, hora: p.hora || null, cidade: p.cidade || null });
+  }
+
+  // Perfil salvo neste aparelho: abre já com o resultado da pessoa.
+  useEffect(() => {
+    const p = lerPerfil();
+    setPerfil(p);
+    if (p) mostrarPerfil(p);
+    return ouvirPerfil(setPerfil);
+  }, []);
+
+  function outraPessoa() {
+    setEntrada(null);
+    setNome(''); setData(''); setHora(''); setNaoSeiHora(false);
+    setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 60);
+  }
 
   // Anjo do dia/da hora: só no browser (evita diferença de hidratação).
   useEffect(() => {
@@ -43,7 +70,7 @@ export default function AnjoClient({ periodos, ano }) {
 
   const anjos = useMemo(() => {
     if (!entrada) return null;
-    try { return calcularAnjos({ data: entrada.data, hora: entrada.hora }); } catch { return null; }
+    try { return calcularAnjos({ data: entrada.data, hora: entrada.hora, tz: entrada.cidade?.tz || 'America/Sao_Paulo' }); } catch { return null; }
   }, [entrada]);
 
   function calcular(e) {
@@ -58,14 +85,17 @@ export default function AnjoClient({ periodos, ano }) {
       setErro('Informe a hora (ou marque "não sei a hora").');
       return;
     }
-    setEntrada({ nome: nome.trim(), data, hora: naoSeiHora ? null : hora });
+    const mesma = perfil?.dataNascimento === data;
+    const nova = { nome: nome.trim(), data, hora: naoSeiHora ? null : hora, cidade: mesma ? perfil.cidade : null };
+    setEntrada(nova);
+    salvarSeForMeu({ nome: nova.nome, dataNascimento: data, hora: nova.hora });
     evento('anjo_calcular', { com_hora: !naoSeiHora });
     setTimeout(() => resultadoRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
   }
 
   function irProManual() {
     evento('anjo_cta_manual');
-    salvarCeuDados({ nome: entrada.nome, dataNascimento: entrada.data, hora: entrada.hora, cidade: null });
+    salvarCeuDados({ nome: entrada.nome, dataNascimento: entrada.data, hora: entrada.hora, cidade: entrada.cidade || null });
     router.push('/');
   }
 
@@ -83,7 +113,7 @@ export default function AnjoClient({ periodos, ano }) {
         </p>
       </header>
 
-      <form className="an-form" onSubmit={calcular}>
+      <form ref={formRef} className="an-form" onSubmit={calcular}>
         <label>
           Seu primeiro nome
           <input className="an-input" value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex: Bianca" autoComplete="given-name" />
@@ -106,9 +136,19 @@ export default function AnjoClient({ periodos, ano }) {
       </form>
 
       {anjos && entrada && (
-        <section ref={resultadoRef} className="an-sec">
-          <Resultado anjos={anjos} entrada={entrada} periodos={periodos} ano={ano} onCta={irProManual} />
-        </section>
+        <>
+          <PerfilBarra
+            perfil={perfil}
+            mostrando={entrada}
+            onOutraPessoa={outraPessoa}
+            onVoltarPraMim={() => perfil && mostrarPerfil(perfil)}
+            onMudou={() => setPerfil(lerPerfil())}
+          />
+          <section ref={resultadoRef} className="an-sec">
+            <Resultado anjos={anjos} entrada={entrada} periodos={periodos} ano={ano} onCta={irProManual} />
+          </section>
+          <VoceTambem dados={{ nome: entrada.nome, dataNascimento: entrada.data, hora: entrada.hora, cidade: entrada.cidade }} atual="anjo" />
+        </>
       )}
 
       {momento && <AgoraNoCeu momento={momento} />}

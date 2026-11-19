@@ -6,6 +6,7 @@ import { TESTIMONIALS } from '@/lib/testimonials';
 import { emailValido, sugestaoEmail } from '@/lib/emailValidacao';
 import CidadeAutocomplete from '@/app/components/CidadeAutocomplete';
 import { lerCeuDados, consumirAbrirQuiz, limparCeuDados } from '@/lib/ceuDados';
+import { lerPerfil, salvarPerfil } from '@/lib/perfilLocal';
 import SiteNav from '@/app/components/SiteNav';
 
 // ── FAQ accordion ─────────────────────────────────────────────────────────────
@@ -72,8 +73,9 @@ function QuizOverlay({ onClose }) {
 
   // Veio do /ceu (Olho Cósmico)? Pré-preenche nome, data, hora e cidade pra
   // pessoa não responder de novo. Dados no localStorage, validade de 24h.
+  // Sem repasse do /ceu, usa o perfil salvo neste aparelho (lib/perfilLocal.js).
   useEffect(() => {
-    const d = lerCeuDados();
+    const d = lerCeuDados() || lerPerfil();
     if (!d) return;
     if (d.nome) setNome(d.nome);
     if (d.dataNascimento) setDataNasc(d.dataNascimento);
@@ -167,7 +169,12 @@ function QuizOverlay({ onClose }) {
         const msg = data?.details || data?.error || 'Falha ao gerar análise.';
         throw new Error(msg);
       }
-      if (data?.id) { limparCeuDados(); router.push(`/resultado/${data.id}`); return; }
+      if (data?.id) {
+        limparCeuDados();
+        salvarPerfil({ nome: nome.trim().split(' ')[0], dataNascimento: dataNasc, hora: noSabeHora ? null : horaNasc, cidade: municipio || null });
+        router.push(`/resultado/${data.id}`);
+        return;
+      }
       throw new Error('A API não retornou um ID.');
     } catch (err) {
       setErro(err?.message || 'Ops! Tivemos uma instabilidade. Tente novamente em instantes.');

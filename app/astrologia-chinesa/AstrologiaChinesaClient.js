@@ -5,11 +5,14 @@
 // banco, sem IA: custo zero por leitura. O CTA leva pro quiz já preenchido
 // (mesmo repasse do /ceu, via lib/ceuDados.js — nunca por query string).
 
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import SiteNav from '@/app/components/SiteNav';
 import CidadeAutocomplete from '@/app/components/CidadeAutocomplete';
 import { salvarCeuDados } from '@/lib/ceuDados';
+import { lerPerfil, ouvirPerfil, salvarSeForMeu } from '@/lib/perfilLocal';
+import PerfilBarra from '@/app/components/PerfilBarra';
+import VoceTambem from '@/app/components/VoceTambem';
 import {
   calcularBazi, TRONCOS, RAMOS, ELEMENTOS, DEZ_DEUSES, NOMES_POSICAO,
   nomePilar, dezDeuses, relacoesDoMapa, contarElementos, forcaDiaMestre, leituraDoAno,
@@ -44,6 +47,32 @@ export default function AstrologiaChinesaClient() {
   const [cidade, setCidade] = useState(null);
   const [erro, setErro] = useState('');
   const [entrada, setEntrada] = useState(null);
+  const [perfil, setPerfil] = useState(null);
+  const formRef = useRef(null);
+
+  function mostrarPerfil(p) {
+    setNome(p.nome || '');
+    setData(p.dataNascimento);
+    setHora(p.hora || '');
+    setNaoSeiHora(!p.hora);
+    setCidade(p.cidade || null);
+    setCidadeTexto(p.cidade ? `${p.cidade.nome}, ${p.cidade.uf}` : '');
+    setEntrada({ nome: p.nome || '', data: p.dataNascimento, hora: p.hora || null, cidade: p.cidade || null });
+  }
+
+  // Perfil salvo neste aparelho: abre já com o mapa da pessoa.
+  useEffect(() => {
+    const p = lerPerfil();
+    setPerfil(p);
+    if (p) mostrarPerfil(p);
+    return ouvirPerfil(setPerfil);
+  }, []);
+
+  function outraPessoa() {
+    setEntrada(null);
+    setNome(''); setData(''); setHora(''); setNaoSeiHora(false); setCidade(null); setCidadeTexto('');
+    setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 60);
+  }
 
   const mapa = useMemo(() => {
     if (!entrada) return null;
@@ -72,6 +101,7 @@ export default function AstrologiaChinesaClient() {
       return;
     }
     setEntrada({ nome: nome.trim(), data, hora: naoSeiHora ? null : hora, cidade });
+    salvarSeForMeu({ nome: nome.trim(), dataNascimento: data, hora: naoSeiHora ? null : hora, cidade });
     evento('bazi_calcular', { com_hora: !naoSeiHora, com_cidade: !!cidade });
     setTimeout(() => resultadoRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
   }
@@ -121,7 +151,7 @@ export default function AstrologiaChinesaClient() {
         </p>
       </header>
 
-      <form className="form" onSubmit={calcular}>
+      <form ref={formRef} className="form" onSubmit={calcular}>
         <label>
           Seu primeiro nome
           <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex: Bianca" autoComplete="given-name" />
@@ -155,9 +185,19 @@ export default function AstrologiaChinesaClient() {
       </form>
 
       {mapa && entrada && (
-        <section ref={resultadoRef} className="resultado">
-          <Resultado mapa={mapa} entrada={entrada} onCta={irProManual} onCompat={irPraCompat} />
-        </section>
+        <>
+          <PerfilBarra
+            perfil={perfil}
+            mostrando={entrada}
+            onOutraPessoa={outraPessoa}
+            onVoltarPraMim={() => perfil && mostrarPerfil(perfil)}
+            onMudou={() => setPerfil(lerPerfil())}
+          />
+          <section ref={resultadoRef} className="resultado">
+            <Resultado mapa={mapa} entrada={entrada} onCta={irProManual} onCompat={irPraCompat} />
+          </section>
+          <VoceTambem dados={{ nome: entrada.nome, dataNascimento: entrada.data, hora: entrada.hora, cidade: entrada.cidade }} atual="astrologia-chinesa" />
+        </>
       )}
 
       {!mapa && <SobreBazi />}

@@ -13,6 +13,8 @@ import BotaoCompartilharStory from '@/app/components/BotaoCompartilharStory';
 import { PRECO_MANUAL_JANELA, PRECO_MANUAL_PADRAO, PRECO_BONUS_COMBO } from '@/lib/preco';
 import { emailValido } from '@/lib/emailValidacao';
 import SiteNav from '@/app/components/SiteNav';
+import VoceTambem from '@/app/components/VoceTambem';
+import { salvarSeForMeu } from '@/lib/perfilLocal';
 
 // ── Supabase ──────────────────────────────────────────────────────────────────
 function getSupabaseClient() {
@@ -23,6 +25,19 @@ function getSupabaseClient() {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+/** Nascimento da análise no formato do perfil local (lib/perfilLocal.js). */
+function dadosDaAnalise(a) {
+  if (!a?.data_nascimento) return null;
+  const temCidade = a.fuso_iana && typeof a.latitude === 'number' && typeof a.longitude === 'number';
+  const [cidadeNome, uf] = String(a.local_nascimento || '').split(',').map((x) => x.trim());
+  return {
+    nome: String(a.nome || '').trim().split(' ')[0],
+    dataNascimento: a.data_nascimento,
+    hora: /^\d{2}:\d{2}/.test(a.hora_nascimento || '') ? a.hora_nascimento.slice(0, 5) : null,
+    cidade: temCidade ? { ibge: a.municipio_ibge ?? null, nome: cidadeNome || '', uf: uf || '', lat: a.latitude, lon: a.longitude, tz: a.fuso_iana } : null,
+  };
+}
+
 function parseISODate(dateStr) {
   if (!dateStr || typeof dateStr !== 'string') return null;
   const [y, m, d] = dateStr.split('-').map((x) => parseInt(x, 10));
@@ -173,6 +188,7 @@ export default function ResultadoPage() {
         setAnalise(data);
         try { window?.gtag?.('event', 'visualizou_resultado', { event_category: 'engagement', value: 1 }); } catch {}
         try { window.localStorage.setItem('ic_ultima_analise_id', id); } catch {}
+        salvarSeForMeu(dadosDaAnalise(data));
       } catch (e) {
         if (!mounted) return;
         setErro(e?.message || 'Erro ao carregar');
@@ -1106,6 +1122,8 @@ export default function ResultadoPage() {
         <button className="share-whatsapp-btn" onClick={handleShareWhatsapp}>
           📲 Mandar pra uma amiga no WhatsApp
         </button>
+
+        {dadosDaAnalise(analise) && <VoceTambem dados={dadosDaAnalise(analise)} atual="resultado" />}
 
         <div className="footer-links">
           <Link href="/explorar">Explorar</Link>
