@@ -13,7 +13,6 @@ import { calcularHumanDesign, CENTRO_NOME_AMIGAVEL } from '@/lib/humanDesign';
 import { TIPO_DESCRICAO, AUTORIDADE_DESCRICAO, narracaoHumanDesign, gerarIntegracaoHumanDesign } from '@/lib/humanDesignTextos';
 import { calcularSignosPessoa, gerarCompatibilidadeCompleta } from '@/lib/compatibilidadeCompleta';
 import FeedbackSecao, { chaveSecao } from '@/app/components/FeedbackSecao';
-import ChatAssistente from '@/app/components/ChatAssistente';
 import BotaoCompartilharStory from '@/app/components/BotaoCompartilharStory';
 import { getPrecoManual, PRECO_BONUS_AVULSO, PRECO_BONUS_COMBO } from '@/lib/preco';
 import { offsetSalvo } from '@/lib/sky';
@@ -22,6 +21,8 @@ import { useAssinatura } from '@/app/components/assinatura';
 
 // Olho Cósmico (abertura "Meu Mapa"): chunk separado, só baixa pra quem pagou.
 const OlhoCosmicoManual = dynamic(() => import('@/app/components/olho/OlhoCosmicoManual'), { ssr: false });
+// Chat flutuante do Oráculo: só carrega depois do Manual.
+const ChatAssistente = dynamic(() => import('@/app/components/ChatAssistente'), { ssr: false });
 
 // ==============================================
 // SUPABASE CLIENT

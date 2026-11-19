@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { urlDoCard, LINK_QUIZ, linkStoryTipo } from '@/lib/cardCompartilhar';
+import { urlDoCard, LINK_QUIZ, linkStoryTipo } from '@/lib/cardLinks';
 
 // Texto do share e nome do arquivo baixado variam por tipo de card — o resto
 // do componente (gerar PNG, share nativo vs download) é o mesmo pros 3.
