@@ -5,7 +5,9 @@ import Link from 'next/link';
 
 // Menu do site — aparece em TODAS as páginas (decisão de nov/2026, inclusive
 // /, /resultado/[id] e /manual/[id]). `active` = chave do item da página atual
-// (destaca o botão); páginas fora da lista passam null.
+// (destaca o botão); páginas fora da lista passam null. "Minha Área" (/seu-dia)
+// substituiu "Meu Mapa" e "Seu Dia" (nov/2026): lá ficam o mapa, o dia e as
+// leituras pagas da pessoa logada.
 // `sticky={false}` nas páginas com Olho Cósmico (/ceu, /manual/[id]): o palco
 // da animação fica fixo na tela e o menu precisa sair de cena rolando.
 // O menu carrega a própria fonte (Cinzel) pra ficar igual em qualquer página.
@@ -18,7 +20,6 @@ export default function SiteNav({ active = null, sticky = true }) {
     } catch {}
   }, []);
 
-  const meuMapaHref = ultimaAnaliseId ? `/resultado/${ultimaAnaliseId}` : '/';
   const previsaoHref = ultimaAnaliseId ? `/previsao-do-ano/${ultimaAnaliseId}` : '/';
   const humanDesignHref = ultimaAnaliseId ? `/human-design/${ultimaAnaliseId}` : '/';
   const compatCompletaHref = ultimaAnaliseId ? `/compatibilidade-completa/${ultimaAnaliseId}` : '/';
@@ -27,8 +28,7 @@ export default function SiteNav({ active = null, sticky = true }) {
   // e bem maior que o resto; os demais links formam uma segunda linha menor
   // logo abaixo.
   const outrosItems = [
-    { href: meuMapaHref, label: 'Meu Mapa', key: 'meu-mapa' },
-    { href: '/seu-dia', label: 'Seu Dia', key: 'seu-dia' },
+    { href: '/seu-dia', label: 'Minha Área', key: 'seu-dia' },
     { href: '/assinar', label: 'Intuitive Completo', key: 'assinar' },
     { href: '/oraculo', label: 'Oráculo', key: 'oraculo' },
     { href: '/hexagrama-do-dia', label: 'Hexagrama do Dia', key: 'hexagrama' },

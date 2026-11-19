@@ -41,7 +41,7 @@ async function handler(request) {
       const tz = p.fuso_iana || 'America/Sao_Paulo';
       const perfil = montarPerfil({ dataNascimento: p.data_nascimento, hora: p.hora_nascimento, tz, lon: p.longitude });
       const l = leituraDoDia(perfil, hojeNoFuso(tz));
-      payloadPorEmail.set(p.email, JSON.stringify({ title: TITULO_PUSH(p.nome, l.titulo), body: l.frase, url: '/seu-dia' }));
+      payloadPorEmail.set(p.email, JSON.stringify({ title: TITULO_PUSH(p.nome, l.titulo), body: l.frase, url: '/seu-dia?aba=hoje' }));
     } catch (e) {
       console.error('[cron/seu-dia-push] perfil', p.email, e);
     }
