@@ -252,6 +252,14 @@ export default function ExplorarClient() {
           <p>Seu animal, seu elemento e os 4 Pilares do Destino (BaZi), com a hora corrigida pelo horário de verão.</p>
           <span className="cta">Ver meu mapa chinês →</span>
         </Link>
+
+        <Link href="/anjo-da-guarda" className="card octonary">
+          <div className="icon-badge">✶</div>
+          <span className="tag">Grátis · na hora</span>
+          <h3>Seu Anjo da Guarda</h3>
+          <p>Qual dos 72 anjos da Cabala rege o seu nascimento — pela posição exata do Sol, e o anjo da sua mente pela hora.</p>
+          <span className="cta">Descobrir meu anjo →</span>
+        </Link>
       </div>
 
       <style jsx global>{`
