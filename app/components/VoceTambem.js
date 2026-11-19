@@ -8,59 +8,14 @@
 
 import { useMemo } from 'react';
 import Link from 'next/link';
-import { calcularSigno, calcularNumeroVida } from '@/lib/calculos';
-import { calcularBazi, TRONCOS, RAMOS, ELEMENTOS } from '@/lib/bazi';
-import { calcularAnjos, dadosDoAnjo } from '@/lib/anjos';
-import { TEXTO_ANJO } from '@/lib/anjosTextos';
-import { calcularKin } from '@/lib/kin';
-import { TEXTO_SELO } from '@/lib/kinTextos';
-
-const SLUG_SIGNO = {
-  'Áries': 'aries', 'Touro': 'touro', 'Gêmeos': 'gemeos', 'Câncer': 'cancer', 'Leão': 'leao', 'Virgem': 'virgem',
-  'Libra': 'libra', 'Escorpião': 'escorpiao', 'Sagitário': 'sagitario', 'Capricórnio': 'capricornio', 'Aquário': 'aquario', 'Peixes': 'peixes',
-};
+import { sistemasDaPessoa } from '@/lib/mapaSintese';
 
 function evento(destino, origem) {
   try { window.gtag?.('event', 'voce_tambem_click', { event_category: 'integracao', destino, origem }); } catch {}
 }
 
-/** Os cartões de uma pessoa. Exportado pros testes visuais / outras telas. */
-export function cartoesDaPessoa({ dataNascimento, hora = null, cidade = null }) {
-  const [, m, d] = dataNascimento.split('-').map(Number);
-  const tz = cidade?.tz || 'America/Sao_Paulo';
-  const out = [];
-
-  const signo = calcularSigno(d, m);
-  out.push({ chave: 'signos', sistema: 'Signo solar', valor: signo, sub: 'O que move você', href: `/signos/${SLUG_SIGNO[signo]}` });
-
-  const numero = calcularNumeroVida(dataNascimento);
-  out.push({ chave: 'numerologia', sistema: 'Número de vida', valor: String(numero), sub: 'Sua missão em números', href: `/numerologia/numero-${numero}` });
-
-  try {
-    const mapa = calcularBazi({ data: dataNascimento, hora, tz, lon: typeof cidade?.lon === 'number' ? cidade.lon : null });
-    const animal = RAMOS[mapa.ano.ramo].animal;
-    const elemAno = ELEMENTOS[TRONCOS[mapa.ano.tronco].elemento].nome;
-    const dm = TRONCOS[mapa.diaMestre];
-    out.push({
-      chave: 'astrologia-chinesa', sistema: 'Astrologia chinesa', valor: `${animal} de ${elemAno}`,
-      sub: `Por dentro, você é ${ELEMENTOS[dm.elemento].nome} ${dm.yang ? 'Yang' : 'Yin'}`, href: '/astrologia-chinesa',
-    });
-  } catch {}
-
-  try {
-    const a = calcularAnjos({ data: dataNascimento, hora, tz });
-    const g = dadosDoAnjo(a.guardiao);
-    out.push({ chave: 'anjo', sistema: 'Anjo da guarda', valor: g.nome, sub: TEXTO_ANJO[g.n].dom, href: '/anjo-da-guarda' });
-  } catch {}
-
-  try {
-    const k = calcularKin({ data: dataNascimento, hora });
-    out.push({ chave: 'kin-maia', sistema: `Kin Maia ${k.kin}`, valor: k.nome, sub: TEXTO_SELO[k.selo.codigo].palavras.join(' · '), href: '/kin-maia' });
-  } catch {}
-
-  out.push({ chave: 'ceu', sistema: 'Céu do nascimento', valor: 'O seu céu', sub: 'As estrelas exatas da sua hora', href: '/ceu' });
-  return out;
-}
+// O anjo da mente fica de fora da faixa (aparece na página do anjo e no Meu Mapa).
+const cartoesDaPessoa = (dados) => sistemasDaPessoa(dados).filter((c) => c.chave !== 'anjo-mente');
 
 /**
  * @param {{ dados: { nome?: string, dataNascimento: string, hora?: string|null, cidade?: object|null },
