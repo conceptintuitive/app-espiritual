@@ -1,5 +1,8 @@
 import Link from 'next/link';
 import SiteNav from '@/app/components/SiteNav';
+import { PRECO_ASSINATURA_MENSAL, PRECO_ASSINATURA_ANUAL } from '@/lib/preco';
+
+const brl = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
 export const metadata = {
   title: 'Termos de Uso | Intuitive Concept',
@@ -35,7 +38,7 @@ export default function TermosDeUsoPage() {
       <div style={styles.container}>
         <Link href="/" style={styles.back}>← Voltar para o início</Link>
         <h1 style={styles.h1}>Termos de Uso</h1>
-        <p style={styles.updated}>Última atualização: 23 de setembro de 2026</p>
+        <p style={styles.updated}>Última atualização: 19 de novembro de 2026</p>
 
         <p style={styles.p}>
           Estes Termos de Uso regem o acesso e uso do site <strong>Intuitive Concept</strong>
@@ -69,6 +72,12 @@ export default function TermosDeUsoPage() {
           autorização e supervisão de um responsável legal. Ao informar seus dados, você declara
           que eles são verdadeiros e que tem capacidade legal para contratar.
         </p>
+        <p style={styles.p}>
+          <strong>Minha Área.</strong> Para entrar na Minha Área você informa seu e-mail e recebe um
+          código de 6 dígitos (ou um link) — não há senha. O código vale por 15 minutos e uma única vez.
+          Depois de entrar, o acesso fica salvo no aparelho por até 180 dias. Como o acesso depende do
+          seu e-mail, mantenha sua caixa de entrada protegida e não compartilhe os códigos recebidos.
+        </p>
 
         <h2 style={styles.h2}>4. Pagamento, preços e reembolso</h2>
         <p style={styles.p}>
@@ -84,7 +93,44 @@ export default function TermosDeUsoPage() {
           e-mail de contato abaixo, sem burocracia.
         </p>
 
-        <h2 style={styles.h2}>5. Uso aceitável</h2>
+        <h2 style={styles.h2}>5. Assinatura Intuitive Completo</h2>
+        <p style={styles.p}>
+          A assinatura <strong>Intuitive Completo</strong> custa {brl(PRECO_ASSINATURA_MENSAL)} por mês (plano
+          mensal) ou {brl(PRECO_ASSINATURA_ANUAL)} por ano (plano anual). Ela libera, enquanto estiver ativa: o
+          Seu Dia completo, a Previsão do Ano, o Human Design e a Compatibilidade Completa sem limites e o
+          Oráculo ilimitado. O plano anual também libera o Manual Completo da análise mais recente feita com
+          o mesmo e-mail.
+        </p>
+        <p style={styles.p}>
+          <strong>Cartão com renovação automática:</strong> a cobrança se repete a cada período (mês ou ano)
+          no mesmo cartão, processada pelo Mercado Pago, até você cancelar. Se uma cobrança falhar, o acesso
+          continua por até 3 dias depois da data prevista; sem pagamento, ele é suspenso.
+        </p>
+        <p style={styles.p}>
+          <strong>Pix ou cartão à vista (pré-pago):</strong> você paga um período de cada vez — 31 dias no
+          mensal, 366 dias no anual — e <strong>não há renovação automática</strong>. Avisamos por e-mail 3
+          dias antes do vencimento, com um link para renovar se você quiser.
+        </p>
+        <p style={styles.p}>
+          <strong>Cancelamento:</strong> você pode cancelar a renovação a qualquer momento na Minha Área
+          (aba Conta → &ldquo;Cancelar renovação&rdquo;) ou pelo e-mail de contato. Depois de cancelar, não há
+          novas cobranças e o acesso continua até o fim do período já pago.
+        </p>
+        <p style={styles.p}>
+          <strong>Direito de arrependimento:</strong> você pode desistir da assinatura em até 7 dias da
+          contratação (art. 49 do Código de Defesa do Consumidor) e recebe de volta o valor pago, pelo mesmo
+          meio de pagamento. Basta pedir pelo e-mail de contato.
+        </p>
+        <p style={styles.p}>
+          <strong>Cortesia para quem comprou o Manual:</strong> quem compra o Manual Completo ganha 30 dias
+          de acesso aos recursos da assinatura, sem cobrança e sem renovação automática.
+        </p>
+        <p style={styles.p}>
+          <strong>Mudança de preço:</strong> se o preço mudar, avisamos por e-mail com pelo menos 30 dias de
+          antecedência da próxima cobrança. Um período já pago nunca é alterado.
+        </p>
+
+        <h2 style={styles.h2}>6. Uso aceitável</h2>
         <p style={styles.p}>
           Você concorda em não: (a) usar o site para fins ilegais; (b) tentar acessar dados de
           outras pessoas ou áreas restritas do sistema sem autorização; (c) copiar, revender ou
@@ -93,7 +139,7 @@ export default function TermosDeUsoPage() {
           um manual).
         </p>
 
-        <h2 style={styles.h2}>6. Propriedade intelectual</h2>
+        <h2 style={styles.h2}>7. Propriedade intelectual</h2>
         <p style={styles.p}>
           O layout, a marca, os textos institucionais e o método de geração de conteúdo da
           Intuitive Concept são de propriedade da plataforma. O relatório personalizado gerado
@@ -101,7 +147,7 @@ export default function TermosDeUsoPage() {
           mas não revendê-lo.
         </p>
 
-        <h2 style={styles.h2}>7. Limitação de responsabilidade</h2>
+        <h2 style={styles.h2}>8. Limitação de responsabilidade</h2>
         <p style={styles.p}>
           Fazemos o possível para manter o site disponível e funcionando corretamente, mas não
           garantimos disponibilidade ininterrupta. Não nos responsabilizamos por decisões tomadas
@@ -109,20 +155,20 @@ export default function TermosDeUsoPage() {
           máxima extensão permitida pela lei brasileira.
         </p>
 
-        <h2 style={styles.h2}>8. Alterações nestes termos</h2>
+        <h2 style={styles.h2}>9. Alterações nestes termos</h2>
         <p style={styles.p}>
           Podemos atualizar estes Termos de Uso periodicamente. A versão vigente é sempre a
           publicada nesta página, com a data de atualização no topo.
         </p>
 
-        <h2 style={styles.h2}>9. Lei aplicável</h2>
+        <h2 style={styles.h2}>10. Lei aplicável</h2>
         <p style={styles.p}>
           Estes termos são regidos pelas leis da República Federativa do Brasil. Fica eleito o
           foro do domicílio do consumidor para dirimir eventuais controvérsias, conforme o Código
           de Defesa do Consumidor.
         </p>
 
-        <h2 style={styles.h2}>10. Contato</h2>
+        <h2 style={styles.h2}>11. Contato</h2>
         <p style={styles.p}>
           Dúvidas sobre estes Termos de Uso podem ser enviadas para{' '}
           <a href="mailto:conceptintuitive@gmail.com" style={styles.a}>conceptintuitive@gmail.com</a>.

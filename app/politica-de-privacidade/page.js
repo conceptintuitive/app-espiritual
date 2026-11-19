@@ -37,7 +37,7 @@ export default function PoliticaDePrivacidadePage() {
       <div style={styles.container}>
         <Link href="/" style={styles.back}>← Voltar para o início</Link>
         <h1 style={styles.h1}>Política de Privacidade</h1>
-        <p style={styles.updated}>Última atualização: 23 de setembro de 2026</p>
+        <p style={styles.updated}>Última atualização: 19 de novembro de 2026</p>
 
         <p style={styles.p}>
           Esta política explica quais dados a <strong>Intuitive Concept</strong>{' '}
@@ -52,6 +52,8 @@ export default function PoliticaDePrivacidadePage() {
           <li style={styles.li}><strong>Dados que você informa diretamente:</strong> nome completo, e-mail, data de nascimento e, se você preencher, hora e local de nascimento — usados para gerar sua análise de numerologia e astrologia.</li>
           <li style={styles.li}><strong>E-mail parcial:</strong> se você começar a preencher o formulário e sair antes de concluir, podemos registrar o e-mail digitado até aquele ponto, para eventualmente entrar em contato sobre a análise que ficou pela metade.</li>
           <li style={styles.li}><strong>Dados de pagamento:</strong> ao comprar o Manual Premium, o processamento é feito pelo Stripe ou pelo Mercado Pago — não armazenamos número de cartão de crédito completo em nossos servidores.</li>
+          <li style={styles.li}><strong>Minha Área e Seu Dia:</strong> e-mail, nome, data, hora e cidade de nascimento, os dias em que você abriu a Minha Área (para medir o uso) e, se você ativar, a inscrição do aviso diário no seu aparelho. O código de entrada enviado por e-mail é guardado só em forma cifrada e apagado depois do uso ou em 15 minutos.</li>
+          <li style={styles.li}><strong>Assinatura:</strong> plano, forma de pagamento (cartão recorrente ou pré-pago), situação e datas de acesso, e os identificadores da cobrança no Mercado Pago. Não guardamos número de cartão.</li>
           <li style={styles.li}><strong>Dados de navegação:</strong> endereço IP, tipo de navegador, páginas visitadas e interações no site, coletados automaticamente por ferramentas de análise.</li>
         </ul>
 
@@ -86,6 +88,18 @@ export default function PoliticaDePrivacidadePage() {
           Usamos cookies e tecnologias semelhantes para lembrar sua sessão, medir tráfego e
           personalizar anúncios. Você pode bloquear cookies nas configurações do seu navegador,
           mas isso pode afetar o funcionamento de algumas partes do site.
+        </p>
+        <p style={styles.p}>
+          <strong>Cookie de sessão:</strong> ao entrar na Minha Área, gravamos um cookie (<code>ic_sd</code>) que
+          mantém você conectada por até 180 dias. Ele é necessário para o funcionamento da área logada.
+        </p>
+        <p style={styles.p}>
+          <strong>Dados salvos só no seu aparelho:</strong> as ferramentas grátis (Anjo da Guarda, Kin Maia,
+          Astrologia Chinesa, Céu do Nascimento e outras) são calculadas no seu navegador. Para você não
+          digitar seus dados de novo, guardamos nome e dados de nascimento no armazenamento local do
+          navegador (<code>localStorage</code>), só neste aparelho — eles não são enviados para os nossos
+          servidores por essas ferramentas. Você pode apagar a qualquer momento pelo botão
+          &ldquo;Apagar&rdquo; que aparece acima do resultado ou limpando os dados do site no navegador.
         </p>
 
         <h2 style={styles.h2}>5. Por quanto tempo guardamos seus dados</h2>
