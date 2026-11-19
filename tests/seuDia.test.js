@@ -57,3 +57,15 @@ test('datas: somarDias atravessa mês e ano; hojeNoFuso respeita o fuso', () => 
   assert.equal(somarDias('2026-12-30', 3), '2027-01-02');
   assert.equal(hojeNoFuso('America/Sao_Paulo', new Date('2026-11-20T02:00:00Z')), '2026-11-19');
 });
+
+test('explicações do Completo: animais, relações e por quê do tom batem com a leitura', () => {
+  const l = leituraDoDia(bianca, '2026-11-19');
+  const coelho = l.chinesa.animais.find((a) => a.pos === 'hora');
+  assert.equal(coelho.animal, 'Coelho');
+  assert.equal(coelho.relacoes[0].tipo, 'choque');
+  assert.ok(coelho.relacoes[0].naPratica.length > 20);
+  assert.ok(l.chinesa.animais.find((a) => a.pos === 'mes').neutro);
+  assert.equal(l.porQue.sinais.reduce((s, x) => s + x.peso, 0), l.porQue.pontos);
+  assert.equal(l.chinesa.voce.elemento, 'Metal Yin');
+  assert.match(l.numerologia.conta, /9 \+ 1 = 10 → 1/);
+});

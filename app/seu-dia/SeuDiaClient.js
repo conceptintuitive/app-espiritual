@@ -10,6 +10,7 @@ import SiteNav from '@/app/components/SiteNav';
 import CidadeAutocomplete from '@/app/components/CidadeAutocomplete';
 import { montarPerfil, leituraDoDia, proximosDias, hojeNoFuso, somarDias } from '@/lib/seuDia';
 import { emailValido, sugestaoEmail } from '@/lib/emailValidacao';
+import { oAnimal } from '@/lib/seuDiaTextos';
 import { PRECO_SEU_DIA_ANUAL, PRECO_SEU_DIA_MENSAL } from '@/lib/preco';
 
 const TOM = {
@@ -362,54 +363,49 @@ function AbaHoje({ perfil, leitura, completo, onDesbloquear }) {
 
       {completo ? (
         <>
-          <h2 className="sd-secao">As lentes do seu dia</h2>
-          <Lente titulo="Astrologia chinesa" destaque={<span lang="zh" className="sd-hanzi">{l.chinesa.deusHanzi}</span>}>
-            <p className="sd-lente-sub">{l.chinesa.deusNome} · {l.chinesa.pilarNome} <span lang="zh">{l.chinesa.pilarHanzi}</span></p>
-            <p>{l.chinesa.texto}</p>
-          </Lente>
+          <PorQueTema l={l} />
+          <SecaoChinesa l={l} />
+          <SecaoAnimais l={l} />
+          <SecaoHoras horas={l.horas} cidade={perfil.cidade?.nome} />
+
+          <h2 className="sd-secao">As outras lentes</h2>
           <Lente titulo="Numerologia" destaque={<span className="sd-numero">{l.numerologia.diaPessoal}</span>}>
             <p className="sd-lente-sub">Dia pessoal {l.numerologia.diaPessoal} · {l.numerologia.palavra}</p>
-            <p>{l.numerologia.texto}</p>
+            <p>{l.numerologia.longo}</p>
+            {l.numerologia.mesPalavra && (
+              <p>Pano de fundo: o seu mês pessoal é {l.numerologia.mesPessoal} ({l.numerologia.mesPalavra}). O mês dá o clima; o dia, o movimento.</p>
+            )}
+            <p className="sd-mudo">{l.numerologia.conta}</p>
           </Lente>
           {l.lua && (
             <Lente titulo="A Lua no seu mapa" destaque={<Icone nome="lua" tamanho={30} />}>
               <p className="sd-lente-sub">Lua em {l.lua.signo} · {l.lua.clima}</p>
+              <p>
+                Seu Sol é em {l.lua.signoSolar}{l.lua.signoLuaNatal ? ` e sua Lua de nascimento em ${l.lua.signoLuaNatal}` : ''}.
+                {' '}A Lua troca de signo a cada 2 ou 3 dias e dá o clima emocional do dia — hoje ela está em {l.lua.signo}.
+              </p>
               <p>{l.lua.texto}{l.lua.retorno ? ` ${l.lua.retorno}` : ''}</p>
+              <p className="sd-mudo">{l.lua.signo} × {l.lua.signoSolar}: {l.lua.aspectoExplica}</p>
             </Lente>
           )}
           <Lente titulo="Tarô do dia" destaque={<Icone nome="carta" tamanho={30} />}>
             <p className="sd-lente-sub">{l.tarot.nome}{l.tarot.invertida ? ' (invertida)' : ''}</p>
+            {l.tarot.palavrasChave.length > 0 && (
+              <div className="sd-chips">{l.tarot.palavrasChave.map((k) => <span key={k}>{k}</span>)}</div>
+            )}
             <p>{l.tarot.texto}</p>
+            <p className="sd-mudo">A sua carta sai da combinação da sua data de nascimento com a de hoje — outra pessoa tira outra carta.</p>
           </Lente>
-          <Lente titulo="I Ching (o mesmo pra todos hoje)" destaque={<Icone nome="hexagrama" tamanho={30} />}>
+          <Lente titulo="I Ching" destaque={<Icone nome="hexagrama" tamanho={30} />}>
             <p className="sd-lente-sub">{l.hexagrama.superior} sobre {l.hexagrama.inferior}</p>
-            <p><strong>Favorece:</strong> {l.hexagrama.favorece}.</p>
-            <p><strong>Cuidado:</strong> {l.hexagrama.cuidado}.</p>
+            <p>{l.hexagrama.texto}</p>
+            <p><strong>Favorece:</strong></p>
+            <ul className="sd-lista-simples">{l.hexagrama.favoreceLista.map((x) => <li key={x}>{x}</li>)}</ul>
+            <p><strong>Cuidado:</strong></p>
+            <ul className="sd-lista-simples">{l.hexagrama.cuidadoLista.map((x) => <li key={x}>{x}</li>)}</ul>
+            <p>{l.hexagrama.movimento}</p>
+            <p className="sd-mudo">É a única lente igual pra todo mundo: sai só da data de hoje, não do seu mapa.</p>
           </Lente>
-
-          {l.chinesa.relacoes.length > 0 && (
-            <section className="sd-card">
-              <h2 className="sd-card-titulo">Seu mapa hoje</h2>
-              {l.chinesa.relacoes.map((r) => (
-                <div key={`${r.pos}-${r.tipo}`} className="sd-relacao">
-                  <span className={`sd-bolinha ${r.positivo ? 'sd-bolinha-ok' : 'sd-bolinha-atencao'}`}><Icone nome={r.positivo ? 'check' : 'alerta'} tamanho={15} /></span>
-                  <p>{r.texto}</p>
-                </div>
-              ))}
-            </section>
-          )}
-
-          <section className="sd-card">
-            <h2 className="sd-card-titulo">Suas horas hoje</h2>
-            <p className="sd-mudo">
-              {l.horas.aproximado
-                ? 'Horário de Brasília aproximado. Adicione sua cidade em Ajustes pra hora exata.'
-                : `No relógio de ${perfil.cidade?.nome || 'sua cidade'}, já corrigido pelo sol.`}
-            </p>
-            {l.horas.forca.map((h) => <LinhaHora key={h.faixa} h={h} />)}
-            {l.horas.atencao && <LinhaHora h={l.horas.atencao} />}
-            {!l.horas.forca.length && !l.horas.atencao && <p>Hoje as horas estão equilibradas: nenhuma se destaca.</p>}
-          </section>
         </>
       ) : (
         <section className="sd-card sd-travado">
@@ -435,6 +431,103 @@ function AbaHoje({ perfil, leitura, completo, onDesbloquear }) {
   );
 }
 
+function PorQueTema({ l }) {
+  return (
+    <details className="sd-card sd-porque">
+      <summary>Por que esse tema e esse tom?</summary>
+      <p>Cada sistema pessoal vota num tema. O mais votado vira o título do dia.</p>
+      <ul className="sd-votos">
+        {l.porQue.votos.map((v) => (
+          <li key={v.lente} className={v.igual ? 'on' : ''}>
+            <span>{v.lente}</span><strong>{v.temasNomes}</strong>
+          </li>
+        ))}
+      </ul>
+      <p>O tom soma os sinais a favor (+) e contra (−) do dia: {l.porQue.pontos > 0 ? `+${l.porQue.pontos}` : l.porQue.pontos < 0 ? `−${Math.abs(l.porQue.pontos)}` : '0'} = {TOM[l.tom].rotulo.toLowerCase()}.</p>
+      <ul className="sd-votos">
+        {l.porQue.sinais.map((x) => (
+          <li key={x.texto}>
+            <span>{x.texto}</span><strong className={x.peso > 0 ? 'sd-verde' : 'sd-laranja'}>{x.peso > 0 ? `+${x.peso}` : `−${Math.abs(x.peso)}`}</strong>
+          </li>
+        ))}
+        {!l.porQue.sinais.length && <li><span>Nenhum sinal forte hoje</span><strong>0</strong></li>}
+      </ul>
+    </details>
+  );
+}
+
+function SecaoChinesa({ l }) {
+  const c = l.chinesa;
+  return (
+    <section className="sd-card">
+      <div className="sd-chinesa-topo">
+        <span lang="zh" className="sd-hanzi-grande" aria-hidden="true">{c.deusHanzi}</span>
+        <div>
+          <span className="sd-eyebrow">ASTROLOGIA CHINESA</span>
+          <h2 className="sd-card-titulo-grande">Dia de {c.deusNome}</h2>
+          <p className="sd-mudo">{c.pilarNome} <span lang="zh">{c.pilarHanzi}</span></p>
+        </div>
+      </div>
+      <p>No seu mapa chinês você é <strong>{c.voce.elemento}</strong> — {c.voce.imagem}. Hoje o dia é <strong>{c.diaElemento}</strong>.</p>
+      {c.porQue.map((t) => <p key={t}>{t}</p>)}
+      <h3 className="sd-sub">O que esperar</h3>
+      <p>{c.esperar}</p>
+      <h3 className="sd-sub">Como usar</h3>
+      <p>{c.usar}</p>
+    </section>
+  );
+}
+
+function SecaoAnimais({ l }) {
+  const c = l.chinesa;
+  return (
+    <section className="sd-card">
+      <h2 className="sd-card-titulo">Seus animais hoje</h2>
+      <p>
+        Todo dia tem um animal no calendário chinês. Hoje é {oAnimal(c.animalDia.animal)} <span lang="zh">{c.animalDia.hanzi}</span>.
+        {' '}Ele conversa com os animais do seu mapa — e cada um deles cuida de uma área da sua vida.
+      </p>
+      {c.animais.map((a) => (
+        <div key={a.pos} className="sd-animal">
+          <div className="sd-animal-topo">
+            <span lang="zh" className="sd-animal-hanzi" aria-hidden="true">{a.hanzi}</span>
+            <div>
+              <strong>{a.animal}</strong>
+              <span className="sd-mudo"> · {a.rotulo} · {a.area}</span>
+            </div>
+          </div>
+          <p className="sd-mudo">{a.explica}</p>
+          {a.relacoes.map((r) => (
+            <div key={r.tipo} className="sd-animal-rel">
+              <span className={`sd-tag ${r.positivo ? 'sd-tom-fluxo' : 'sd-tom-tensao'}`}>{r.nome} <span lang="zh">{r.hanzi}</span></span>
+              <p><strong>O que é:</strong> {r.oQue}</p>
+              <p><strong>Na prática:</strong> {r.naPratica}</p>
+            </div>
+          ))}
+          {a.neutro && <p className="sd-animal-neutro">{a.neutro}</p>}
+        </div>
+      ))}
+    </section>
+  );
+}
+
+function SecaoHoras({ horas, cidade }) {
+  return (
+    <section className="sd-card">
+      <h2 className="sd-card-titulo">Suas horas hoje</h2>
+      <p>O dia chinês tem 12 horas duplas, cada uma regida por um animal e um elemento. Aqui estão as que mais ajudam e a que mais atrapalha o seu mapa hoje.</p>
+      <p className="sd-mudo">
+        {horas.aproximado
+          ? 'Horário de Brasília aproximado. Adicione sua cidade em Ajustes pra hora exata.'
+          : `No relógio de ${cidade || 'sua cidade'}, já corrigido pela posição do sol.`}
+      </p>
+      {horas.forca.map((h) => <LinhaHora key={h.faixa} h={h} />)}
+      {horas.atencao && <LinhaHora h={horas.atencao} />}
+      {!horas.forca.length && !horas.atencao && <p>Hoje as horas estão equilibradas: nenhuma se destaca.</p>}
+    </section>
+  );
+}
+
 function Lente({ titulo, destaque, children }) {
   return (
     <section className="sd-card sd-lente">
@@ -456,7 +549,7 @@ function LinhaHora({ h }) {
         <span className={`sd-tag ${forca ? 'sd-tom-fluxo' : 'sd-tom-tensao'}`}>{forca ? 'FORÇA' : 'ATENÇÃO'}</span>
       </div>
       <div>
-        <p className="sd-hora-deus">{h.deusNome}</p>
+        <p className="sd-hora-deus">Hora {['Serpente', 'Cabra'].includes(h.animal) ? 'da' : 'do'} {h.animal} · {h.deusNome}</p>
         <p>{h.texto}</p>
       </div>
     </div>
@@ -826,6 +919,23 @@ const CSS = `
   .sd-hanzi { font-family: 'Noto Serif SC', serif; font-weight: 600; font-size: 19px; }
   .sd-numero { font-family: 'Cinzel', serif; font-weight: 700; font-size: 24px; }
 
+  .sd-porque summary { cursor: pointer; font-family: 'Cinzel', serif; font-weight: 700; font-size: 14px; letter-spacing: 0.04em; color: #f5a524; min-height: 32px; display: flex; align-items: center; }
+  .sd-porque p { font-size: 17px !important; }
+  .sd-votos { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+  .sd-votos li { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-top: 1px solid #2e1f4a; font-size: 17px; }
+  .sd-votos li.on strong { color: #f5a524; }
+  .sd-chinesa-topo { display: flex; gap: 14px; align-items: center; }
+  .sd-hanzi-grande { flex: none; font-family: 'Noto Serif SC', serif; font-weight: 600; font-size: 40px; color: #f5a524; line-height: 1; }
+  .sd-card-titulo-grande { margin: 2px 0 0; font-family: 'Cinzel', serif; font-weight: 700; font-size: 21px; }
+  .sd-sub { margin: 6px 0 0; font-family: 'Cinzel', serif; font-weight: 700; font-size: 13px; letter-spacing: 0.06em; color: #f5a524; }
+  .sd-animal { display: flex; flex-direction: column; gap: 6px; padding-top: 12px; border-top: 1px solid #2e1f4a; }
+  .sd-animal-topo { display: flex; gap: 10px; align-items: center; font-size: 18px; }
+  .sd-animal-hanzi { flex: none; width: 38px; height: 38px; border-radius: 10px; border: 1px solid #3b2a5c; display: flex; align-items: center; justify-content: center; font-family: 'Noto Serif SC', serif; font-weight: 600; font-size: 19px; color: #f5a524; }
+  .sd-animal-rel { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; margin-top: 2px; }
+  .sd-animal-neutro { color: #cdbbe8; font-style: italic; }
+  .sd-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .sd-chips span { font-size: 15px; padding: 3px 10px; border-radius: 999px; border: 1px solid #3b2a5c; color: #e9dcff; }
+  .sd-lista-simples { margin: 0; padding-left: 20px; font-size: 17px; line-height: 1.45; }
   .sd-relacao { display: flex; gap: 10px; align-items: flex-start; }
   .sd-bolinha { flex: none; width: 30px; height: 30px; border-radius: 999px; display: flex; align-items: center; justify-content: center; }
   .sd-bolinha-ok { background: #12331f; color: #86efac; }
