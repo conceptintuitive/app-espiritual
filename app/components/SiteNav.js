@@ -31,6 +31,9 @@ export default function SiteNav({ active = null, sticky = true }) {
     } catch {}
   }, []);
 
+  // Seu Manual: com análise no aparelho vai pra prévia (que manda pro Manual
+  // se já pagou); sem análise, pro quiz.
+  const manualHref = ultimaAnaliseId ? `/resultado/${ultimaAnaliseId}` : '/';
   const previsaoHref = ultimaAnaliseId ? `/previsao-do-ano/${ultimaAnaliseId}` : '/';
   const humanDesignHref = ultimaAnaliseId ? `/human-design/${ultimaAnaliseId}` : '/';
   const compatCompletaHref = ultimaAnaliseId ? `/compatibilidade-completa/${ultimaAnaliseId}` : '/';
@@ -40,6 +43,7 @@ export default function SiteNav({ active = null, sticky = true }) {
   // logo abaixo.
   const outrosItems = [
     { href: '/seu-dia', label: 'Minha Área', key: 'seu-dia' },
+    { href: manualHref, label: 'Seu Manual', key: 'meu-mapa' },
     { href: '/assinar', label: 'Intuitive Completo', key: 'assinar' },
     { href: '/oraculo', label: 'Oráculo', key: 'oraculo' },
     { href: '/hexagrama-do-dia', label: 'Hexagrama do Dia', key: 'hexagrama' },
@@ -58,7 +62,7 @@ export default function SiteNav({ active = null, sticky = true }) {
 
   const porChave = Object.fromEntries(outrosItems.map((i) => [i.key, i]));
   const grupos = [
-    { titulo: 'Você', itens: ['seu-dia', 'assinar', 'oraculo'] },
+    { titulo: 'Você', itens: ['seu-dia', 'meu-mapa', 'assinar', 'oraculo'] },
     { titulo: 'Seus mapas', itens: ['ceu', 'astrologia-chinesa', 'anjo', 'kin-maia', 'previsao', 'human-design'] },
     { titulo: 'Amor', itens: ['compatibilidade', 'compat-completa'] },
     { titulo: 'Todo dia e conteúdo', itens: ['hexagrama', 'signos', 'numerologia', 'blog'] },
