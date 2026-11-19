@@ -11,7 +11,7 @@ import CidadeAutocomplete from '@/app/components/CidadeAutocomplete';
 import { montarPerfil, leituraDoDia, proximosDias, hojeNoFuso, somarDias } from '@/lib/seuDia';
 import { emailValido, sugestaoEmail } from '@/lib/emailValidacao';
 import { oAnimal } from '@/lib/seuDiaTextos';
-import { PRECO_SEU_DIA_ANUAL, PRECO_SEU_DIA_MENSAL } from '@/lib/preco';
+import { PRECO_ASSINATURA_ANUAL, PRECO_ASSINATURA_MENSAL } from '@/lib/preco';
 
 const TOM = {
   fluxo: { rotulo: 'Dia a favor', classe: 'sd-tom-fluxo' },
@@ -273,11 +273,7 @@ function AppSeuDia({ perfil, setPerfil, onEditar, onSair }) {
       </nav>
 
       {modal && (
-        <ModalListaEspera
-          perfil={perfil}
-          onFechar={() => setModal(false)}
-          onEntrou={(plano) => setPerfil({ ...perfil, listaEspera: plano })}
-        />
+        <ModalListaEspera onFechar={() => setModal(false)} />
       )}
     </>
   );
@@ -289,16 +285,23 @@ function saudacao(nome) {
   return nome ? `${s}, ${nome}.` : `${s}.`;
 }
 
+const dataBR = (iso) => (iso ? new Date(iso).toLocaleDateString('pt-BR') : '');
+
 function BannerAcesso({ perfil, onDesbloquear }) {
+  if (perfil.motivoAcesso === 'assinatura') {
+    return <p className="sd-faixa">Intuitive Completo ativo até {dataBR(perfil.assinatura?.acessoAte)}.</p>;
+  }
   if (perfil.motivoAcesso === 'manual') {
-    return <p className="sd-faixa">Seu Dia Completo liberado: você é cliente do Manual.</p>;
+    return (
+      <p className="sd-faixa">
+        Seu 1º mês do Completo é por conta do Manual, até {dataBR(perfil.assinatura?.acessoAte)}.{' '}
+        <button type="button" className="sd-link-btn" onClick={onDesbloquear}>Continuar depois</button>
+      </p>
+    );
   }
   if (perfil.motivoAcesso === 'teste') {
     const dias = perfil.testeDiasRestantes || 1;
     return <p className="sd-faixa">Teste do Seu Dia Completo: {dias === 1 ? 'último dia' : `faltam ${dias} dias`}.</p>;
-  }
-  if (perfil.listaEspera) {
-    return <p className="sd-faixa">Você está na lista do Seu Dia Completo. Avisamos por e-mail quando abrir.</p>;
   }
   return (
     <p className="sd-faixa">
@@ -727,9 +730,7 @@ function AbaAjustes({ perfil, onEditar, onSair, onDesbloquear }) {
         <button type="button" className="sd-btn-sec" onClick={onEditar}>Editar</button>
       </section>
 
-      {perfil.acesso !== 'completo' && !perfil.listaEspera && (
-        <button type="button" className="sd-btn" onClick={onDesbloquear}>Quero o Seu Dia Completo</button>
-      )}
+      <SecaoAssinatura perfil={perfil} onDesbloquear={onDesbloquear} />
 
       <section className="sd-card">
         <h2 className="sd-card-titulo">Conta</h2>
@@ -740,12 +741,54 @@ function AbaAjustes({ perfil, onEditar, onSair, onDesbloquear }) {
   );
 }
 
-// ── Lista de espera (fase 1: ainda não cobra) ────────────────────────────────
+function SecaoAssinatura({ perfil, onDesbloquear }) {
+  const [renova, setRenova] = useState(!!perfil.assinatura?.renovaSozinha);
+  const [ocupado, setOcupado] = useState(false);
+  const [msg, setMsg] = useState('');
+  const a = perfil.assinatura;
 
-function ModalListaEspera({ perfil, onFechar, onEntrou }) {
-  const [plano, setPlano] = useState(perfil.listaEspera || 'anual');
-  const [estado, setEstado] = useState(perfil.listaEspera ? 'feito' : 'escolher');
-  const [erro, setErro] = useState('');
+  async function cancelar() {
+    if (!window.confirm('Cancelar a renovação automática? O acesso continua até o fim do período já pago.')) return;
+    setOcupado(true);
+    setMsg('');
+    const { ok, json } = await api('/api/assinatura/cancelar', { method: 'POST' });
+    setOcupado(false);
+    if (!ok) { setMsg(json?.error || 'Não conseguimos cancelar agora.'); return; }
+    setRenova(false);
+    evento('sd_assinatura_cancelada');
+    setMsg(`Renovação cancelada. Seu acesso continua até ${dataBR(a?.acessoAte)}.`);
+  }
+
+  return (
+    <section className="sd-card">
+      <h2 className="sd-card-titulo">Intuitive Completo</h2>
+      {perfil.motivoAcesso === 'assinatura' ? (
+        <>
+          <p>Plano {a?.plano === 'anual' ? 'anual' : 'mensal'}, ativo até {dataBR(a?.acessoAte)}{renova ? ' — renova sozinho no cartão.' : '.'}</p>
+          {renova ? (
+            <button type="button" className="sd-btn-sec" disabled={ocupado} onClick={cancelar}>Cancelar renovação</button>
+          ) : (
+            <a className="sd-btn-sec" href={`/assinar?plano=${a?.plano || 'anual'}`}>Renovar / somar mais tempo</a>
+          )}
+        </>
+      ) : (
+        <>
+          <p>{perfil.motivoAcesso === 'manual'
+            ? `Seu 1º mês é por conta do Manual, até ${dataBR(a?.acessoAte)}. Assine pra continuar depois.`
+            : 'Seu Dia completo, Previsão do Ano, Human Design, Compatibilidade Completa e Oráculo ilimitado — e o Manual no anual.'}
+          </p>
+          <button type="button" className="sd-btn" onClick={onDesbloquear}>Ver planos</button>
+        </>
+      )}
+      {msg && <p className="sd-mudo">{msg}</p>}
+    </section>
+  );
+}
+
+// ── Assinar (leva pro /assinar com o plano escolhido) ────────────────────────
+
+function ModalListaEspera({ onFechar }) {
+  const [plano, setPlano] = useState('anual');
 
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') onFechar(); };
@@ -753,62 +796,32 @@ function ModalListaEspera({ perfil, onFechar, onEntrou }) {
     return () => document.removeEventListener('keydown', onKey);
   }, [onFechar]);
 
-  async function entrar() {
-    setErro('');
-    setEstado('enviando');
-    const { ok, json } = await api('/api/seu-dia/lista-espera', { method: 'POST', body: { plano } });
-    if (!ok) { setErro(json?.error || 'Não conseguimos salvar agora.'); setEstado('escolher'); return; }
-    evento('sd_lista_espera', { plano });
-    onEntrou(plano);
-    setEstado('feito');
-  }
-
   const planos = [
-    { id: 'anual', nome: 'Anual', preco: `${brl(PRECO_SEU_DIA_ANUAL)}/ano`, sub: `${brl(PRECO_SEU_DIA_ANUAL / 12)} por mês` },
-    { id: 'mensal', nome: 'Mensal', preco: `${brl(PRECO_SEU_DIA_MENSAL)}/mês`, sub: 'Sem compromisso' },
+    { id: 'anual', nome: 'Anual', preco: `${brl(PRECO_ASSINATURA_ANUAL)}/ano`, sub: `${brl(PRECO_ASSINATURA_ANUAL / 12)} por mês · inclui o Manual` },
+    { id: 'mensal', nome: 'Mensal', preco: `${brl(PRECO_ASSINATURA_MENSAL)}/mês`, sub: 'Sem fidelidade' },
   ];
 
   return (
     <div className="sd-modal-fundo" onClick={(e) => { if (e.target === e.currentTarget) onFechar(); }}>
       <div className="sd-modal" role="dialog" aria-modal="true" aria-labelledby="sd-modal-titulo">
         <button type="button" className="sd-fechar" aria-label="Fechar" onClick={onFechar}><Icone nome="x" /></button>
-        <span className="sd-eyebrow">SEU DIA COMPLETO</span>
-        <h2 id="sd-modal-titulo">O seu mapa, todo dia.</h2>
-        {estado === 'feito' ? (
-          <>
-            <p>Você está na lista{perfil.listaEspera || plano ? ` (plano ${plano})` : ''}. Assim que a assinatura abrir, avisamos por e-mail.</p>
-            <button type="button" className="sd-btn" onClick={onFechar}>Fechar</button>
-          </>
-        ) : (
-          <>
-            <ul className="sd-lista-beneficios sd-lista-compacta">
-              <li><Icone nome="check" /> As 5 lentes do seu dia</li>
-              <li><Icone nome="check" /> Horas de força e de atenção, no relógio da sua cidade</li>
-              <li><Icone nome="check" /> A semana e os próximos 30 dias</li>
-              <li><Icone nome="check" /> Aviso às 7h</li>
-            </ul>
-            <div role="radiogroup" aria-label="Plano" className="sd-planos">
-              {planos.map((p) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  role="radio"
-                  aria-checked={plano === p.id}
-                  className={`sd-plano${plano === p.id ? ' is-on' : ''}`}
-                  onClick={() => setPlano(p.id)}
-                >
-                  <span><strong>{p.nome}</strong><span className="sd-mudo">{p.sub}</span></span>
-                  <strong>{p.preco}</strong>
-                </button>
-              ))}
-            </div>
-            <p className="sd-mudo">A assinatura abre em breve. Entre na lista e seja avisada primeiro.</p>
-            {erro && <p className="sd-erro">{erro}</p>}
-            <button type="button" className="sd-btn" disabled={estado === 'enviando'} onClick={entrar}>
-              {estado === 'enviando' ? 'Salvando…' : 'Entrar na lista'}
+        <span className="sd-eyebrow">INTUITIVE COMPLETO</span>
+        <h2 id="sd-modal-titulo">Tudo liberado, numa assinatura só.</h2>
+        <ul className="sd-lista-beneficios sd-lista-compacta">
+          <li><Icone nome="check" /> Seu Dia completo, com aviso às 7h</li>
+          <li><Icone nome="check" /> Previsão do Ano, Human Design e Compatibilidade Completa</li>
+          <li><Icone nome="check" /> Oráculo ilimitado</li>
+          <li><Icone nome="check" /> No anual: o Manual Completo</li>
+        </ul>
+        <div role="radiogroup" aria-label="Plano" className="sd-planos">
+          {planos.map((p) => (
+            <button key={p.id} type="button" role="radio" aria-checked={plano === p.id} className={`sd-plano${plano === p.id ? ' is-on' : ''}`} onClick={() => setPlano(p.id)}>
+              <span><strong>{p.nome}</strong><span className="sd-mudo">{p.sub}</span></span>
+              <strong>{p.preco}</strong>
             </button>
-          </>
-        )}
+          ))}
+        </div>
+        <a className="sd-btn sd-btn-link" href={`/assinar?plano=${plano}`} onClick={() => evento('sd_assinar_click', { plano })}>Continuar — Pix ou cartão</a>
       </div>
     </div>
   );
@@ -871,6 +884,7 @@ const CSS = `
 
   .sd-btn { min-height: 50px; border-radius: 999px; border: 0; background: #db2777; color: #fff; font-family: 'Cinzel', serif; font-weight: 700; font-size: 14px; letter-spacing: 0.04em; cursor: pointer; padding: 0 20px; }
   .sd-btn:disabled { opacity: 0.6; cursor: default; }
+  .sd-btn-link { display: flex; align-items: center; justify-content: center; text-decoration: none; }
   .sd-btn-sec { min-height: 48px; border-radius: 999px; border: 1px solid #4a2f6e; background: transparent; color: #faf5ff; font-family: 'Cinzel', serif; font-weight: 700; font-size: 13px; letter-spacing: 0.04em; cursor: pointer; padding: 0 18px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
   .sd-link-btn { background: none; border: 0; color: #f5a524; font: inherit; text-decoration: underline; cursor: pointer; padding: 0; min-height: 32px; text-align: left; }
 

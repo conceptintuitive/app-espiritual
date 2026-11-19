@@ -18,6 +18,7 @@ import BotaoCompartilharStory from '@/app/components/BotaoCompartilharStory';
 import { getPrecoManual, PRECO_BONUS_AVULSO, PRECO_BONUS_COMBO } from '@/lib/preco';
 import { offsetSalvo } from '@/lib/sky';
 import SiteNav from '@/app/components/SiteNav';
+import { useAssinatura } from '@/app/components/assinatura';
 
 // Olho Cósmico (abertura "Meu Mapa"): chunk separado, só baixa pra quem pagou.
 const OlhoCosmicoManual = dynamic(() => import('@/app/components/olho/OlhoCosmicoManual'), { ssr: false });
@@ -427,6 +428,14 @@ export default function ManualPage() {
   // VERIFICAR SE ESTÁ PAGO
   // ==============================================
   const hasPaid = useMemo(() => isPaid(row), [row]);
+
+  // Intuitive Completo ANUAL inclui o Manual: se o e-mail da análise tem o
+  // anual ativo, o servidor marca esta análise como paga (origem
+  // 'assinatura') e a página recarrega já liberada.
+  const assinaturaManual = useAssinatura(row && !hasPaid ? id : null);
+  useEffect(() => {
+    if (assinaturaManual?.manualLiberado) window.location.reload();
+  }, [assinaturaManual]);
 
   // ==============================================
   // CHEGOU DO REDIRECT DO MP (?payment_id=...) — confirmação pós-pagamento
@@ -1092,6 +1101,11 @@ e mostrar como sair dele.
 
             <div className="muted" style={{ textAlign: 'center', marginTop: 12, fontSize: 13 }}>
               Pagamento seguro • Acesso imediato • Garantia de 7 dias
+            </div>
+            <div style={{ textAlign: 'center', marginTop: 10 }}>
+              <a href={`/assinar?a=${id}&plano=anual`} style={{ color: '#f5a524', fontSize: 15 }}>
+                Ou assine o Intuitive Completo anual — o Manual vem incluso
+              </a>
             </div>
           </div>
         )}

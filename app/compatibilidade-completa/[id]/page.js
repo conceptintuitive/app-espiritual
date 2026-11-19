@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { calcularSignosPessoa, gerarCompatibilidadeCompleta } from '@/lib/compatibilidadeCompleta';
 import { offsetSalvo, buscarOffsetNascimento } from '@/lib/sky';
 import SiteNav from '@/app/components/SiteNav';
+import { useAssinatura, CtaAssinatura } from '@/app/components/assinatura';
 
 function getSupabaseClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -23,6 +24,7 @@ function pickFirstName(fullName) {
 export default function CompatibilidadeCompletaPage() {
   const { id } = useParams();
   const [row, setRow] = useState(null);
+  const assinatura = useAssinatura(id);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState(false);
 
@@ -66,7 +68,8 @@ export default function CompatibilidadeCompletaPage() {
   }, [minhasSignos, pessoa2Signos]);
 
   const manualPago = row?.payment_status === 'paid';
-  const desbloqueado = manualPago || row?.compat_payment_status === 'paid';
+  const assinante = !!assinatura?.ativa;
+  const desbloqueado = manualPago || assinante || row?.compat_payment_status === 'paid';
 
   // Quem já tem o manual ganha esse bônus de graça — salva em segundo plano
   // assim que nome + data válidos forem preenchidos, sem checkout.
@@ -141,14 +144,14 @@ export default function CompatibilidadeCompletaPage() {
                   placeholder="Nome da pessoa"
                   value={pessoa2Nome}
                   onChange={(e) => setPessoa2Nome(e.target.value)}
-                  disabled={desbloqueado && !manualPago}
+                  disabled={desbloqueado && !manualPago && !assinante}
                 />
                 <input
                   className="input"
                   type="date"
                   value={pessoa2Data}
                   onChange={(e) => setPessoa2Data(e.target.value)}
-                  disabled={desbloqueado && !manualPago}
+                  disabled={desbloqueado && !manualPago && !assinante}
                 />
               </div>
             </div>
@@ -180,8 +183,9 @@ export default function CompatibilidadeCompletaPage() {
                       <div className="locked-row">🔒 Marte · Ação — como conflitos e decisões acontecem entre vocês</div>
                       <div className="locked-row">🔒 Compatibilidade geral (média dos 4 pontos)</div>
                     </div>
-                    <Link href={`/resultado/${id}`} className="btn btn-cta" style={{ marginTop: 16, textAlign: 'center' }}>
-                      🎁 Desbloquear com o Manual completo →
+                    <CtaAssinatura analiseId={id} origem="compat_completa" />
+                    <Link href={`/resultado/${id}`} className="btn" style={{ marginTop: 8, textAlign: 'center' }}>
+                      🎁 ou desbloquear com o Manual completo →
                     </Link>
                   </>
                 )}

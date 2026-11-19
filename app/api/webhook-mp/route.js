@@ -17,6 +17,12 @@ import { sendTikTokPurchase } from "@/lib/tiktok";
 import { sendMetaPurchase } from "@/lib/meta";
 import { getOrigemVenda } from "@/lib/testEmails";
 import { liberarAcessoManual, dispararPosPagamentoManual } from "@/lib/mpPagamentoManual";
+import { processarPagamento, sincronizarPreapproval, sincronizarPagamentoAutorizado } from "@/lib/assinatura";
+import { idDaRef } from "@/lib/assinaturaRegras";
+
+function supabaseAdmin() {
+  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+}
 
 export const runtime = "nodejs";
 
@@ -24,6 +30,17 @@ export async function POST(request) {
   try {
     const body = await request.json();
     console.log("📩 Webhook MP recebido:", JSON.stringify(body));
+
+    // Assinatura Intuitive Completo no cartão (preapproval sem plano): o MP
+    // avisa por estes tópicos, configurados no painel (Suas integrações).
+    if (body.type === "subscription_preapproval" && body.data?.id) {
+      await sincronizarPreapproval(supabaseAdmin(), body.data.id);
+      return NextResponse.json({ received: true, assinatura: true });
+    }
+    if (body.type === "subscription_authorized_payment" && body.data?.id) {
+      await sincronizarPagamentoAutorizado(supabaseAdmin(), body.data.id);
+      return NextResponse.json({ received: true, assinatura: true });
+    }
 
     // O MP manda vários tipos de notificação; só nos interessa "payment"
     if (body.type !== "payment" && body.action !== "payment.updated") {
@@ -52,6 +69,13 @@ export async function POST(request) {
 
     const payment = await mpResponse.json();
     console.log("💰 Status do pagamento:", payment.status, "| external_reference:", payment.external_reference);
+
+    // Pagamento da assinatura (external_reference "assin__<id>"): tratado à
+    // parte — não é uma análise e não pode cair no fluxo do Manual abaixo.
+    if (idDaRef(payment.external_reference)) {
+      const r = await processarPagamento(supabaseAdmin(), payment);
+      return NextResponse.json({ received: true, assinatura: true, ...r });
+    }
 
     // MP só preenche payer.phone quando o checkout pediu/coletou esse dado
     // (varia por método de pagamento) — nem toda transação vai ter isso.

@@ -9,6 +9,7 @@ import { TIPO_DESCRICAO, AUTORIDADE_DESCRICAO, gerarIntegracaoHumanDesign } from
 import { PRECO_BONUS_AVULSO, PRECO_BONUS_COMBO } from '@/lib/preco';
 import { offsetSalvo, buscarOffsetNascimento } from '@/lib/sky';
 import SiteNav from '@/app/components/SiteNav';
+import { useAssinatura, CtaAssinatura } from '@/app/components/assinatura';
 
 function getSupabaseClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -29,6 +30,7 @@ export default function HumanDesignPage() {
   const [erro, setErro] = useState(false);
   const [processando, setProcessando] = useState(false);
   const [combo, setCombo] = useState(false);
+  const assinatura = useAssinatura(id);
 
   useEffect(() => {
     const supabase = getSupabaseClient();
@@ -120,7 +122,7 @@ export default function HumanDesignPage() {
           const hd = calcularHumanDesign(row.data_nascimento, row.hora_nascimento, offsetSalvo(row) ?? -3);
           if (!hd) return <div className="card"><p className="p">Não foi possível calcular seu mapa.</p></div>;
 
-          const desbloqueado = row.hd_payment_status === 'paid';
+          const desbloqueado = row.hd_payment_status === 'paid' || !!assinatura?.ativa;
           const tipoInfo = TIPO_DESCRICAO[hd.tipo];
           const autoridadeInfo = AUTORIDADE_DESCRICAO[hd.autoridade];
           const integracao = gerarIntegracaoHumanDesign({
@@ -218,6 +220,8 @@ export default function HumanDesignPage() {
                       🔒 Como seu Human Design conversa com seu Sol em {row.signo || 'seu Signo'} e seu Número de Vida
                     </div>
                   </div>
+                  <CtaAssinatura analiseId={id} origem="human_design" />
+                  <p className="p" style={{ fontSize: 14, textAlign: 'center', margin: '4px 0' }}>ou</p>
                   {row.payment_status !== 'paid' ? (
                     <>
                       <p className="p" style={{ fontSize: 14 }}>

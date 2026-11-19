@@ -55,7 +55,7 @@ export default function ChatAssistente({ analiseId, isPaid, firstName, autoOpen,
         setPerguntasRestantes(0);
         setMessages((m) => [
           ...m,
-          { role: 'assistant', content: 'Você usou suas 3 perguntas grátis. Desbloqueie o manual completo pra continuar conversando sem limite.' },
+          { role: 'assistant', content: 'Você usou suas 3 perguntas grátis. Com o Intuitive Completo (ou o Manual), as perguntas ficam livres.' },
         ]);
         return;
       }
@@ -128,9 +128,14 @@ export default function ChatAssistente({ analiseId, isPaid, firstName, autoOpen,
           </div>
 
           {esgotado && !isPaid && (
-            <button className="chat-upsell" onClick={irParaOferta}>
-              Desbloquear perguntas ilimitadas — R$ {precoManual}
-            </button>
+            <>
+              <button className="chat-upsell" onClick={irParaOferta}>
+                Desbloquear perguntas ilimitadas — R$ {precoManual}
+              </button>
+              <a className="chat-upsell" href={`/assinar?a=${encodeURIComponent(analiseId)}`} style={{ display: 'block', textAlign: 'center', textDecoration: 'none', marginTop: 8 }}>
+                ou assinar o Intuitive Completo
+              </a>
+            </>
           )}
         </div>
       )}
