@@ -3,6 +3,7 @@
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { salvarCeuDados } from '@/lib/ceuDados';
+import SiteNav from '@/app/components/SiteNav';
 
 // ssr:false — o Olho Cósmico depende de window/canvas e só existe nesta rota
 // e no /manual/[id]; o dynamic garante um chunk separado.
@@ -22,6 +23,7 @@ export default function CeuClient() {
 
   return (
     <main style={{ background: '#000', minHeight: '100dvh' }}>
+      <SiteNav active="ceu" sticky={false} />
       <OlhoCosmico mode="publico" onCta={abrirMapa} />
     </main>
   );

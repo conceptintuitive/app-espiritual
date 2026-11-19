@@ -35,7 +35,7 @@ export default async function NumeroPage({ params }) {
   if (!dados) {
     return (
       <div className="wrap">
-        <SiteNav active="explorar" />
+        <SiteNav active="numerologia" />
         <div className="content">
           <h1>Número não encontrado</h1>
           <Link href="/numerologia" className="back">← Ver todos os números</Link>
@@ -59,7 +59,7 @@ export default async function NumeroPage({ params }) {
         href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Cormorant+Garamond:wght@300;400;500;600;700&display=swap"
         rel="stylesheet"
       />
-      <SiteNav active="explorar" />
+      <SiteNav active="numerologia" />
 
       <article className="content">
         <Link href="/numerologia" className="back">← Todos os números</Link>

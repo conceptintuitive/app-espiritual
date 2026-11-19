@@ -2,11 +2,11 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { TESTIMONIALS } from '@/lib/testimonials';
 import { emailValido, sugestaoEmail } from '@/lib/emailValidacao';
 import CidadeAutocomplete from '@/app/components/CidadeAutocomplete';
 import { lerCeuDados, consumirAbrirQuiz, limparCeuDados } from '@/lib/ceuDados';
+import SiteNav from '@/app/components/SiteNav';
 
 // ── FAQ accordion ─────────────────────────────────────────────────────────────
 function FaqItem({ q, a }) {
@@ -558,27 +558,6 @@ function QuizOverlay({ onClose }) {
 // ── Main page ──────────────────────────────────────────────────────────────────
 export default function Home() {
   const [quizOpen, setQuizOpen] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef(null);
-  const [ultimaAnaliseId, setUltimaAnaliseId] = useState(null);
-
-  useEffect(() => {
-    try {
-      setUltimaAnaliseId(window.localStorage.getItem('ic_ultima_analise_id'));
-    } catch {}
-  }, []);
-
-  const menuItems = [
-    { href: ultimaAnaliseId ? `/resultado/${ultimaAnaliseId}` : '/', icon: '🔮', label: 'Meu Mapa' },
-    { href: '/oraculo', icon: '✦', label: 'Oráculo' },
-    { href: '/explorar', icon: '🔮', label: 'Explorar' },
-    { href: '/compatibilidade', icon: '♡', label: 'Compatibilidade' },
-    { href: ultimaAnaliseId ? `/previsao-do-ano/${ultimaAnaliseId}` : '/', icon: '🔮', label: 'Previsão do Ano' },
-    { href: ultimaAnaliseId ? `/human-design/${ultimaAnaliseId}` : '/', icon: '🧬', label: 'Human Design' },
-    { href: ultimaAnaliseId ? `/compatibilidade-completa/${ultimaAnaliseId}` : '/', icon: '💞', label: 'Compatibilidade Completa' },
-    { href: '/blog', icon: '✎', label: 'Blog' },
-  ];
-
   const openQuiz = () => setQuizOpen(true);
   const closeQuiz = () => setQuizOpen(false);
 
@@ -590,15 +569,6 @@ export default function Home() {
     // Veio do CTA "Abrir meu mapa" do /ceu: abre o quiz já preenchido (uma vez)
     else if (consumirAbrirQuiz()) setQuizOpen(true);
   }, []);
-
-  useEffect(() => {
-    if (!menuOpen) return;
-    const onClickOutside = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false);
-    };
-    document.addEventListener('mousedown', onClickOutside);
-    return () => document.removeEventListener('mousedown', onClickOutside);
-  }, [menuOpen]);
 
   // Orbs ref
   const orbsBuilt = useRef(false);
@@ -768,59 +738,8 @@ export default function Home() {
       {/* Quiz overlay */}
       {quizOpen && <QuizOverlay onClose={closeQuiz} />}
 
-      {/* Barra de topo — visível antes do quiz. Botão de menu abre Explorar / Compatibilidade / Blog */}
-      <div style={{
-        position: 'relative', zIndex: 20,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        maxWidth: 1100, margin: '0 auto', padding: '18px clamp(16px,4vw,28px) 0',
-      }}>
-        <span style={{
-          fontFamily: 'var(--T)', fontWeight: 700, fontSize: 15,
-          letterSpacing: '0.04em', color: 'var(--t1)',
-        }}>
-          ✦ Intuitive Concept
-        </span>
-
-        <div ref={menuRef} style={{ position: 'relative' }}>
-          <button
-            onClick={() => setMenuOpen(o => !o)}
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 8,
-              padding: '9px 18px', borderRadius: 999, border: 'none', cursor: 'pointer',
-              background: 'linear-gradient(90deg,#7c3aed,#8b5cf6)',
-              boxShadow: '0 8px 26px rgba(139,92,246,.4)',
-              fontFamily: 'var(--F)', fontWeight: 600, fontSize: 14, color: '#fff',
-            }}
-          >
-            ☰ Explorar
-          </button>
-
-          {menuOpen && (
-            <div style={{
-              position: 'absolute', top: 'calc(100% + 10px)', right: 0, zIndex: 30,
-              minWidth: 210, borderRadius: 16, overflow: 'hidden',
-              border: '1px solid rgba(139,92,246,.25)', background: 'var(--card)',
-              boxShadow: '0 24px 60px rgba(0,0,0,.5)',
-            }}>
-              {menuItems.map(({ href, icon, label }, i) => (
-                <Link
-                  key={label}
-                  href={href}
-                  onClick={() => setMenuOpen(false)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 10,
-                    padding: '14px 18px', fontFamily: 'var(--F)', fontSize: 15,
-                    color: 'var(--t1)', textDecoration: 'none',
-                    borderBottom: i < menuItems.length - 1 ? '1px solid rgba(255,255,255,.05)' : 'none',
-                  }}
-                >
-                  <span>{icon}</span>{label}
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+      {/* Menu do site (mesmo de todas as páginas) */}
+      <SiteNav />
 
       {/* ═══════════════ HERO ═══════════════════════════════════════════════ */}
       <section className="sec" style={{ minHeight: '88vh', display: 'flex', alignItems: 'center', paddingBottom: 'clamp(32px,5vh,56px)' }}>

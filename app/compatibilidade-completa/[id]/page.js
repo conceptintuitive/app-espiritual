@@ -6,6 +6,7 @@ import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
 import { calcularSignosPessoa, gerarCompatibilidadeCompleta } from '@/lib/compatibilidadeCompleta';
 import { offsetSalvo, buscarOffsetNascimento } from '@/lib/sky';
+import SiteNav from '@/app/components/SiteNav';
 
 function getSupabaseClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -93,6 +94,8 @@ export default function CompatibilidadeCompletaPage() {
         rel="stylesheet"
       />
       <div id="stars" className="stars" />
+
+      <SiteNav active="compat-completa" />
 
       <div className="container">
         <div className="hero">

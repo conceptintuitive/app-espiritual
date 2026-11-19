@@ -3,10 +3,13 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
-// Menu fixo usado nas páginas de conteúdo/exploração (hub, blog, compatibilidade).
-// NÃO aparece em / (venda), /resultado/[id] ou /manual/[id] — essas páginas
-// ficam focadas só na conversão, sem links concorrendo com o CTA principal.
-export default function SiteNav({ active }) {
+// Menu do site — aparece em TODAS as páginas (decisão de nov/2026, inclusive
+// /, /resultado/[id] e /manual/[id]). `active` = chave do item da página atual
+// (destaca o botão); páginas fora da lista passam null.
+// `sticky={false}` nas páginas com Olho Cósmico (/ceu, /manual/[id]): o palco
+// da animação fica fixo na tela e o menu precisa sair de cena rolando.
+// O menu carrega a própria fonte (Cinzel) pra ficar igual em qualquer página.
+export default function SiteNav({ active = null, sticky = true }) {
   const [ultimaAnaliseId, setUltimaAnaliseId] = useState(null);
 
   useEffect(() => {
@@ -25,9 +28,14 @@ export default function SiteNav({ active }) {
   // logo abaixo.
   const outrosItems = [
     { href: meuMapaHref, label: 'Meu Mapa', key: 'meu-mapa' },
+    { href: '/seu-dia', label: 'Seu Dia', key: 'seu-dia' },
     { href: '/oraculo', label: 'Oráculo', key: 'oraculo' },
     { href: '/hexagrama-do-dia', label: 'Hexagrama do Dia', key: 'hexagrama' },
     { href: '/compatibilidade', label: 'Compatibilidade', key: 'compatibilidade' },
+    { href: '/ceu', label: 'Céu do Nascimento', key: 'ceu' },
+    { href: '/astrologia-chinesa', label: 'Astrologia Chinesa', key: 'astrologia-chinesa' },
+    { href: '/signos', label: 'Signos', key: 'signos' },
+    { href: '/numerologia', label: 'Numerologia', key: 'numerologia' },
     { href: previsaoHref, label: 'Previsão do Ano', key: 'previsao' },
     { href: humanDesignHref, label: 'Human Design', key: 'human-design' },
     { href: compatCompletaHref, label: 'Compatibilidade Completa', key: 'compat-completa' },
@@ -35,7 +43,12 @@ export default function SiteNav({ active }) {
   ];
 
   return (
-    <nav className="site-nav">
+    <nav className={`site-nav${sticky ? '' : ' site-nav-static'}`}>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;800;900&display=swap"
+        precedence="default"
+      />
       <div className="site-nav-top">
         <Link href="/explorar" className="site-nav-brand">✦ Intuitive Concept</Link>
         <Link
@@ -70,6 +83,7 @@ export default function SiteNav({ active }) {
           border-bottom: 1px solid rgba(216, 180, 254, 0.22);
           box-shadow: 0 4px 30px rgba(0, 0, 0, 0.25);
         }
+        .site-nav.site-nav-static { position: relative; }
         .site-nav-top {
           display: grid;
           grid-template-columns: 1fr auto 1fr;
@@ -148,7 +162,8 @@ export default function SiteNav({ active }) {
           transform: translateY(-1px);
         }
         @media (max-width: 640px) {
-          .site-nav { padding: 16px 16px 14px; }
+          /* No celular o menu ocupa ~40% da tela: rola junto com a página em vez de ficar preso no topo. */
+          .site-nav { padding: 16px 16px 14px; position: relative; }
           .site-nav-top {
             grid-template-columns: 1fr;
             justify-items: center;

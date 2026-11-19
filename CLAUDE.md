@@ -15,7 +15,7 @@ npm run dev      # Servidor de desenvolvimento (localhost:3000)
 npm run build    # Build de produção
 npm run lint     # ESLint (flat config nativa do eslint-config-next 16; 0 erros, avisos tolerados)
 npm run start    # Servidor de produção
-npm test         # node --test em tests/*.test.js (lib/sky.js, lib/fusoBR.js, lib/municipios.js, planetas/HD legado x fuso real) — sem dependências
+npm test         # node --test em tests/*.test.js (lib/sky.js, lib/fusoBR.js, lib/municipios.js, lib/bazi.js, lib/baziCompat.js, lib/seuDia.js, lib/seuDiaServidor.js, planetas/HD legado x fuso real) — sem dependências
 node scripts/gerar-municipios.mjs  # regenera public/data/municipios-br.json (base IBGE)
 ```
 
@@ -36,7 +36,7 @@ node scripts/gerar-municipios.mjs  # regenera public/data/municipios-br.json (ba
 ```
 Checkout **Stripe** (`/api/criar-checkout` → `/api/webhook`) ainda funciona, mas só é chamado pelo botão "Desbloquear" do paywall dentro de `/manual/[id]` (quem chega ao manual sem ter pago). Upsells (Previsão do Ano/tier2, Human Design, combo) usam `/api/criar-checkout-upsell-mp`; Compatibilidade Completa avulsa usa `/api/criar-checkout-compat-mp` (R$29,90) e é grátis via `/api/salvar-compat-pessoa2` para quem já comprou o Manual.
 
-O item "Meu Mapa" do menu (`app/components/SiteNav.js`) aponta para `/resultado/[ultimaAnaliseId]` (lido de `localStorage.ic_ultima_analise_id`), **não** para `/manual/[id]`.
+**Menu (`app/components/SiteNav.js`) em todas as páginas**, inclusive `/`, `/resultado/[id]` e `/manual/[id]` (decisão de nov/2026). Cada página passa `active` com a chave do seu item (ex.: `signos`, `astrologia-chinesa`, `meu-mapa`); legais e home passam nada. `/ceu` e `/manual/[id]` usam `sticky={false}` por causa do palco fixo do Olho Cósmico; no celular (≤640px) o menu nunca é sticky. Página nova = item novo no `outrosItems` do SiteNav + `<SiteNav active="..." />` na página. O item "Meu Mapa" do menu (`app/components/SiteNav.js`) aponta para `/resultado/[ultimaAnaliseId]` (lido de `localStorage.ic_ultima_analise_id`), **não** para `/manual/[id]`.
 
 ### Key Files
 
@@ -68,6 +68,17 @@ O item "Meu Mapa" do menu (`app/components/SiteNav.js`) aponta para `/resultado/
 | `lib/ceuDados.js` | Repasse `/ceu` → quiz via localStorage `ic_ceu_dados` (validade 24h, flag `abrirQuiz` consumido uma vez). Nunca por query string. |
 | `app/resultado/[id]/page.js` | Prévia gratuita — página de vendas em PT-BR, chama `criar-checkout-mp`. |
 | `app/manual/[id]/page.js` | Manual completo; chama `generateManual()` com `pendingFields`, confirma pagamento MP pós-redirect, dispara `gerar-manual-completo`. **Não exporta PDF** (`jspdf` está no package.json sem uso); `html2canvas` só é usado em `app/components/SeloArquetipo.js` para exportar o selo como imagem. |
+| `app/astrologia-chinesa/` | Rota pública `/astrologia-chinesa` — mapa BaZi (4 Pilares) grátis, calculado 100% no browser, sem API/banco/IA. CTA leva pro quiz pré-preenchido via `lib/ceuDados.js`. |
+| `lib/bazi.js` | Cálculo BaZi: ano/mês pelos termos solares (Lichun ~4/fev), dia pelo ciclo de 60, hora pelo **horário solar verdadeiro** (fuso histórico via `localToUTC` + longitude + equação do tempo; virada do dia às 23h solares). Dez Deuses, relações entre ramos, contagem de elementos, leitura de ano. Testes em `tests/bazi.test.js`. |
+| `app/astrologia-chinesa/compatibilidade/` | Rota pública `/astrologia-chinesa/compatibilidade` — compatibilidade BaZi entre duas pessoas, grátis, 100% no browser, sem IA. Pessoa 1 chega pré-preenchida do `/astrologia-chinesa` via sessionStorage (`CHAVE_COMPAT_PESSOA1`), nunca query string. Compartilhar manda só a nota (sem dados de nascimento). Usa `active="astrologia-chinesa"` no menu (sem item próprio). |
+| `lib/baziCompat.js` | `compatibilidadeBazi(a, b)`: Day Masters (combinação/choque/geração/controle), palácio do cônjuge, atração oculta, clima (inverno pede Fogo, verão pede Água), animais do ano, cruzamentos; nota 35–97 simétrica. Sem gênero de propósito. Testes em `tests/baziCompat.test.js`. |
+| `lib/baziCompatTextos.js` | Textos fixos da compatibilidade BaZi (funções que recebem o resultado + nomes). |
+| `lib/baziTextos.js` | Textos fixos do BaZi (Day Masters, 12 animais por posição, Dez Deuses, relações, elementos). Mesmo tom do Manual, sem hedge. |
+| `app/seu-dia/` | **Seu Dia** (`/seu-dia`) — app diário/PWA. Fase 1: resumo do dia grátis pra sempre, 7 dias de Completo grátis (desde o 1º salvamento dos dados), depois "Desbloquear" → lista de espera (ainda não cobra). Cliente do Manual (alguma análise paga com o mesmo e-mail) tem Completo. Leitura calculada no browser; gate de acesso é só visual na fase 1. `app/seu-dia/entrar/route.js` troca o token do e-mail por cookie. |
+| `lib/seuDia.js` | Motor do Seu Dia: mistura 4 lentes pessoais (Deus do dia BaZi peso 2 + relações com os ramos, dia pessoal, Lua do dia × Sol natal, tarô pessoal por hash) + hexagrama coletivo. Tema = mais votado (empate: o do Deus), tom = soma dos sinais (≥2 fluxo, ≤−2 tensão). Horas do dia no relógio da cidade (longitude + equação do tempo). Textos em `lib/seuDiaTextos.js`. Testes em `tests/seuDia.test.js`. |
+| `lib/seuDiaServidor.js` | **Só servidor.** Login sem Supabase Auth: token HMAC no link do e-mail (30 min) → cookie `ic_sd` assinado (180 dias). Segredo = `SEU_DIA_SECRET` ou derivado da `SUPABASE_SERVICE_ROLE_KEY`. `perfilParaFront` decide `acesso` (completo/resumo). E-mail casado com `ilike` escapado (`emailExato`). |
+| `app/api/seu-dia/*`, `app/api/cron/seu-dia-push` | entrar (manda link via Resend), perfil (GET/POST), visita (1 por dia → métrica de retorno), lista-espera, push (inscrição Web Push), sair. Cron do aviso das 7h: cron externo chamando `/api/cron/seu-dia-push?secret=CRON_SECRET` às 7h de Brasília; precisa de `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`. Sem VAPID, o botão de aviso mostra "Em breve". |
+| `app/manifest.js`, `public/sw.js`, `public/icons/` | PWA: instalar abre no `/seu-dia`. O service worker só cuida de push e clique no aviso — **sem cache de propósito**. |
 | `app/api/card/route.js`, `app/api/og/[id]/route.js` | Card 1080x1920 de story (fontes em `app/api/card/fonts`) e imagem OG de fallback. |
 
 ### manualgenerator.js — como funciona
@@ -88,6 +99,8 @@ Colunas relevantes:
 Offset do nascimento (migração `0016_utc_offset_nascimento.sql`): `utc_offset_nascimento` (numeric, horas, ex. `-2`) — só em análises novas com hora; null em todo o resto (ver convenção "Fuso horário de nascimento"). Gravado em update separado best effort.
 
 Local de nascimento (migração `0015_municipio_fuso.sql`, opcionais): `municipio_ibge`, `fuso_iana` — preenchidas só quando a cidade foi escolhida no autocomplete; gravadas por `gerar-analise` num update separado best effort (mesmo padrão do `telefone`), então o insert nunca falha se a migração não tiver rodado.
+
+Seu Dia (migração `0017_seu_dia.sql`): `seu_dia_perfis` (PK e-mail; dados de nascimento, `teste_inicio`, `lista_espera_*`), `seu_dia_visitas` (e-mail, dia), `seu_dia_push`; view `seu_dia_metricas` (retorno em 7 dias, lista de espera). RLS ligado sem policy — só service role.
 
 Outras tabelas (ver `supabase/migrations/`): `chat_mensagens`, `leads_parciais`, `tiktok_oauth_tokens`, `tiktok_publishes`, `manual_feedback`.
 
@@ -115,6 +128,10 @@ TIKTOK_OAUTH_REDIRECT_URI=
 TIKTOK_OAUTH_SCOPES=
 TIKTOK_PUBLISH_API_SECRET=
 TEST_EMAILS=
+SEU_DIA_SECRET=                 # opcional (sem ela, deriva da service role)
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=   # aviso das 7h do Seu Dia
+VAPID_PRIVATE_KEY=
+VAPID_SUBJECT=                  # ex.: mailto:conceptintuitive@gmail.com
 ```
 
 `ANTHROPIC_API_KEY` gera o Manual (`lib/ia.js`); `GROQ_API_KEY` é só do Oráculo (`lib/assistente.js`). `NEXT_PUBLIC_BASE_URL` é a URL base usada nos checkouts e no cron (fallback: `VERCEL_URL`, depois `localhost:3000`) — não existe `NEXT_PUBLIC_SITE_URL` no código. `SUPABASE_SERVICE_ROLE_KEY` é usada apenas em API routes (server-side). As variáveis `NEXT_PUBLIC_*` ficam expostas no cliente. `CRON_SECRET` protege `/api/cron/lembretes` e `/api/cron/tiktok-refresh` contra chamadas não autorizadas — o disparo é feito por um cron externo (ex: cron-job.org), já que o plano Vercel Hobby não permite cron com intervalo menor que 1x/dia.
@@ -132,6 +149,7 @@ Três integrações distintas com o TikTok, não confundir: `TIKTOK_ACCESS_TOKEN
 - **Local de nascimento**: com município escolhido no autocomplete, o quiz manda `municipio_ibge`/`latitude`/`longitude`/`fuso_iana`; `gerar-analise` valida (`municipioDoBody`: IBGE, caixa do Brasil, fuso na whitelist) e pula o Nominatim. Texto livre segue o caminho antigo (geocoding). O fuso entra no Ascendente (ver "Fuso horário de nascimento").
 - **Código morto conhecido**: `_callGroq`/`gerarAnaliseEspiritual` em `lib/ia.js`, dependência `jspdf`/`jspdf-autotable`.
 - O webhook valida `stripe-signature` antes de processar; qualquer alteração deve manter essa validação.
+- **Preço do Seu Dia** (fase 2, ainda sem cobrança): `PRECO_SEU_DIA_MENSAL`/`PRECO_SEU_DIA_ANUAL` em `lib/preco.js`. Plano pra cobrança: cartão = assinatura recorrente do MP; Pix = pré-pago (acesso até uma data + Pix novo antes de vencer).
 - **Preço do Manual**: R$27 nas primeiras 24h desde `created_at` da análise, R$47 depois (sem tier de R$97). Regra única em `lib/preco.js` (`getPrecoManual`) — nunca hardcode 27/47 em outro lugar; importe de lá. Usada pelos checkouts (MP e Stripe), pela página de resultado (`precoAtual`), pelo Oráculo (prop `precoManual` do `ChatAssistente`), pelo e-mail de recuperação de +20h e pelo card do `/explorar` (via `/api/status-analise`, que devolve `precoAtual` já calculado).
 - **`valor_pago` e `origem`**: `app/api/webhook-mp/route.js` e `app/api/webhook/route.js` gravam `valor_pago` (valor real cobrado na transação — `payment.transaction_amount` no MP, `session.amount_total / 100` no Stripe) em todo `.update()` que confirma pagamento (Manual, upsell de bônus avulso, Compatibilidade Completa). `valor_pago` reflete a transação mais recente confirmada, não um total acumulado. `origem` vem de `getOrigemVenda(email)` (`lib/testEmails.js`): `'venda'` por padrão, ou `'teste'` se o e-mail do pagador estiver na env `TEST_EMAILS` (lista separada por vírgula — compras de teste da própria autora, pra não sujar os números). Pagamento marcado como pago manualmente (fora de webhook, ex. `scripts/test-ia.mjs`) deve gravar `origem = 'cortesia'` e `paid_at`. Nunca marcar como pago sem esses dois campos. `scripts/backfill-origem-mp.mjs` resolve os registros antigos que a migração `0013_valor_pago_origem.sql` deixou com `origem` nulo (precisam consultar a API do MP) — roda em dry-run por padrão, `--apply` pra escrever. **Temporário**: `GET /api/admin/backfill-origem?secret=CRON_SECRET[&apply=1]` expõe essa mesma lógica como rota (criada pra rodar o backfill sem ambiente local) — remover depois do backfill único em produção.
 - **Confirmação de pagamento MP pós-redirect**: `criar-checkout-mp` seta `notification_url` explícito (`/api/webhook-mp`) na preference, pra não depender só da config do painel do MP. `/manual/[id]` nunca mostra o paywall ("Desbloquear") pra quem chega com `?payment_id=...` do redirect do MP — mostra "Confirmando..." e chama `POST /api/confirmar-pagamento-mp` (consulta a API do MP direto e libera na hora se `approved`, sem esperar o webhook), com polling de 3s por até 2min como fallback; depois disso mostra timeout + botão "Verificar de novo" + contato de suporte (conceptintuitive@gmail.com). `back_urls.failure` do checkout MP leva de volta pro `/resultado/[id]?pagamento=recusado`, que mostra um aviso sugerindo Pix.
