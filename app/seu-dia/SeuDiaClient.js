@@ -12,6 +12,11 @@ import { montarPerfil, leituraDoDia, proximosDias, hojeNoFuso, somarDias } from 
 import { emailValido, sugestaoEmail } from '@/lib/emailValidacao';
 import { oAnimal } from '@/lib/seuDiaTextos';
 import { PRECO_ASSINATURA_ANUAL, PRECO_ASSINATURA_MENSAL } from '@/lib/preco';
+import { kinDaData, nomeDoKin, seloDoKin, tomDoKin, relacaoDoDia } from '@/lib/kin';
+import { TEXTO_SELO, TEXTO_TOM, TEXTO_RELACAO_DIA } from '@/lib/kinTextos';
+import { calcularAnjos, dadosDoAnjo, anjoPorLongitude } from '@/lib/anjos';
+import { TEXTO_ANJO } from '@/lib/anjosTextos';
+import { longitudeSolar } from '@/lib/bazi';
 
 const TOM = {
   fluxo: { rotulo: 'Dia a favor', classe: 'sd-tom-fluxo' },
@@ -23,6 +28,27 @@ const brl = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL
 
 function evento(nome, params = {}) {
   try { window.gtag?.('event', nome, { event_category: 'seu_dia', ...params }); } catch {}
+}
+
+// Camadas extras do Completo (só exibição, não votam no tema/tom do dia):
+// Kin Maia do dia cruzado com o da pessoa e o anjo do quinário do Sol.
+function camadasExtras(perfil, dataISO) {
+  try {
+    const [y, m, d] = dataISO.split('-').map(Number);
+    const kinPessoa = kinDaData(perfil.dataNascimento, perfil.hora);
+    const kinDia = kinDaData(dataISO);
+    const anjos = calcularAnjos({ data: perfil.dataNascimento, hora: perfil.hora, tz: perfil.cidade?.tz || 'America/Sao_Paulo' });
+    return {
+      kinPessoa,
+      kinDia,
+      relacao: relacaoDoDia(kinPessoa, kinDia),
+      anjoDia: anjoPorLongitude(longitudeSolar(Date.UTC(y, m - 1, d, 15))),
+      guardiao: anjos.guardiao,
+      mente: anjos.mente,
+    };
+  } catch {
+    return null;
+  }
 }
 
 async function api(path, { method = 'GET', body } = {}) {
@@ -316,6 +342,7 @@ function AbaHoje({ perfil, leitura, completo, onDesbloquear }) {
   const tom = TOM[l.tom];
   const [copiado, setCopiado] = useState(false);
   const [ola] = useState(() => saudacao(perfil.nome));
+  const extras = useMemo(() => camadasExtras(perfil, l.data), [perfil, l.data]);
 
   async function compartilhar() {
     const texto = `Meu dia hoje: ${l.titulo}. ${l.frase}`;
@@ -409,6 +436,7 @@ function AbaHoje({ perfil, leitura, completo, onDesbloquear }) {
             <p>{l.hexagrama.movimento}</p>
             <p className="sd-mudo">É a única lente igual pra todo mundo: sai só da data de hoje, não do seu mapa.</p>
           </Lente>
+          {extras && <LentesExtras e={extras} />}
         </>
       ) : (
         <section className="sd-card sd-travado">
@@ -421,6 +449,7 @@ function AbaHoje({ perfil, leitura, completo, onDesbloquear }) {
             <li>Suas horas de força e de atenção</li>
             <li>A semana e os próximos 30 dias</li>
             <li>Como o dia mexe com cada parte do seu mapa</li>
+            <li>O Kin Maia e o anjo do dia, cruzados com os seus</li>
           </ul>
           <p className="sd-borrado" aria-hidden="true">{l.chinesa.texto} {l.numerologia.texto}</p>
           <button type="button" className="sd-btn" onClick={onDesbloquear}>Desbloquear Seu Dia Completo</button>
@@ -430,6 +459,39 @@ function AbaHoje({ perfil, leitura, completo, onDesbloquear }) {
       <button type="button" className="sd-btn-sec sd-compartilhar" onClick={compartilhar}>
         <Icone nome="compartilhar" /> {copiado ? 'Copiado!' : 'Compartilhar meu dia'}
       </button>
+    </>
+  );
+}
+
+function LentesExtras({ e }) {
+  const s = seloDoKin(e.kinDia);
+  const t = tomDoKin(e.kinDia);
+  const a = dadosDoAnjo(e.anjoDia);
+  const ta = TEXTO_ANJO[a.n];
+  return (
+    <>
+      <Lente titulo="Kin Maia do dia" destaque={<span className="sd-numero">{e.kinDia}</span>}>
+        <p className="sd-lente-sub">Kin {e.kinDia} · {nomeDoKin(e.kinDia)}</p>
+        <p>{TEXTO_SELO[s.codigo].hoje} No tom {t.numero}: {TEXTO_TOM[t.numero].hoje}.</p>
+        <p>
+          {e.relacao
+            ? TEXTO_RELACAO_DIA[e.relacao]
+            : 'Hoje o Kin do dia não cruza com o seu oráculo: um dia neutro pra você no Tzolkin.'}
+        </p>
+        <p className="sd-mudo">
+          O seu Kin é o {e.kinPessoa}, {nomeDoKin(e.kinPessoa)}. <a href="/kin-maia">Entender meu Kin →</a>
+        </p>
+      </Lente>
+      <Lente titulo="Anjo destes dias" destaque={<span className="sd-numero">✶</span>}>
+        <p className="sd-lente-sub">{a.nome} · {ta.dom}</p>
+        <p>O Sol está no ponto do céu que {a.nome} rege. Bom momento pra pedir {ta.pedir[0]}.</p>
+        <p>
+          {e.anjoDia === e.guardiao
+            ? `São os dias do seu anjo da guarda: a proteção de ${a.nome} está mais forte em você.`
+            : `Seu anjo da guarda é ${dadosDoAnjo(e.guardiao).nome}${e.mente ? ` e o da sua mente, ${dadosDoAnjo(e.mente).nome}` : ''}.`}
+        </p>
+        <p className="sd-mudo"><a href={`/anjo-da-guarda/${a.slug}`}>Tudo sobre {a.nome} →</a></p>
+      </Lente>
     </>
   );
 }
@@ -874,6 +936,7 @@ const CSS = `
   .sd-hero-entrar h1 { font-size: 40px; }
   .sd-lead { font-size: 20px; line-height: 1.5; color: #e9dcff; margin: 0; }
   .sd-mudo { color: #cdbbe8; font-size: 16px; margin: 0; }
+  .sd-mudo a { color: #f5d48a; }
   .sd-dica { text-transform: none; letter-spacing: 0; font-family: 'Cormorant Garamond', serif; font-size: 14px; color: #cdbbe8; }
 
   .sd-card { background: #150a28; border: 1px solid #2e1f4a; border-radius: 18px; padding: 18px 16px; display: flex; flex-direction: column; gap: 10px; }

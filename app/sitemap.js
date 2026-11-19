@@ -17,6 +17,7 @@ export default function sitemap() {
     { url: `${BASE_URL}/ceu`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
     { url: `${BASE_URL}/astrologia-chinesa`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
     { url: `${BASE_URL}/astrologia-chinesa/compatibilidade`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${BASE_URL}/kin-maia`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.8 },
     { url: `${BASE_URL}/anjo-da-guarda`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.8 },
     ...ANJOS.map((a) => ({ url: `${BASE_URL}/anjo-da-guarda/${a.slug}`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.5 })),
   ];
