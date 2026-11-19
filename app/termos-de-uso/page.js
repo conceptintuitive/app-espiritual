@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import SiteNav from '@/app/components/SiteNav';
 
 export const metadata = {
   title: 'Termos de Uso | Intuitive Concept',
@@ -28,6 +29,8 @@ const styles = {
 
 export default function TermosDeUsoPage() {
   return (
+    <>
+    <SiteNav />
     <div style={styles.page}>
       <div style={styles.container}>
         <Link href="/" style={styles.back}>← Voltar para o início</Link>
@@ -130,5 +133,6 @@ export default function TermosDeUsoPage() {
         </p>
       </div>
     </div>
+    </>
   );
 }

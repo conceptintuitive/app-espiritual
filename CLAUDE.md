@@ -36,7 +36,7 @@ node scripts/gerar-municipios.mjs  # regenera public/data/municipios-br.json (ba
 ```
 Checkout **Stripe** (`/api/criar-checkout` → `/api/webhook`) ainda funciona, mas só é chamado pelo botão "Desbloquear" do paywall dentro de `/manual/[id]` (quem chega ao manual sem ter pago). Upsells (Previsão do Ano/tier2, Human Design, combo) usam `/api/criar-checkout-upsell-mp`; Compatibilidade Completa avulsa usa `/api/criar-checkout-compat-mp` (R$29,90) e é grátis via `/api/salvar-compat-pessoa2` para quem já comprou o Manual.
 
-O item "Meu Mapa" do menu (`app/components/SiteNav.js`) aponta para `/resultado/[ultimaAnaliseId]` (lido de `localStorage.ic_ultima_analise_id`), **não** para `/manual/[id]`.
+**Menu (`app/components/SiteNav.js`) em todas as páginas**, inclusive `/`, `/resultado/[id]` e `/manual/[id]` (decisão de nov/2026). Cada página passa `active` com a chave do seu item (ex.: `signos`, `astrologia-chinesa`, `meu-mapa`); legais e home passam nada. `/ceu` e `/manual/[id]` usam `sticky={false}` por causa do palco fixo do Olho Cósmico; no celular (≤640px) o menu nunca é sticky. Página nova = item novo no `outrosItems` do SiteNav + `<SiteNav active="..." />` na página. O item "Meu Mapa" do menu (`app/components/SiteNav.js`) aponta para `/resultado/[ultimaAnaliseId]` (lido de `localStorage.ic_ultima_analise_id`), **não** para `/manual/[id]`.
 
 ### Key Files
 

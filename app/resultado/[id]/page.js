@@ -12,6 +12,7 @@ import SeloArquetipo from '@/app/components/SeloArquetipo';
 import BotaoCompartilharStory from '@/app/components/BotaoCompartilharStory';
 import { PRECO_MANUAL_JANELA, PRECO_MANUAL_PADRAO, PRECO_BONUS_COMBO } from '@/lib/preco';
 import { emailValido } from '@/lib/emailValidacao';
+import SiteNav from '@/app/components/SiteNav';
 
 // ── Supabase ──────────────────────────────────────────────────────────────────
 function getSupabaseClient() {
@@ -624,6 +625,7 @@ export default function ResultadoPage() {
       <style jsx global>{globalCss}</style>
       <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Cormorant+Garamond:wght@300;400;500&display=swap" rel="stylesheet" />
       <div id="stars" className="stars" />
+      <SiteNav active="meu-mapa" />
 
       <div className="container">
 

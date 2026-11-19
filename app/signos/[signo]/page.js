@@ -31,7 +31,7 @@ export default async function SignoPage({ params }) {
   if (!dados) {
     return (
       <div className="wrap">
-        <SiteNav active="explorar" />
+        <SiteNav active="signos" />
         <div className="content">
           <h1>Signo não encontrado</h1>
           <Link href="/signos" className="back">← Ver todos os signos</Link>
@@ -55,7 +55,7 @@ export default async function SignoPage({ params }) {
         href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Cormorant+Garamond:wght@300;400;500;600;700&display=swap"
         rel="stylesheet"
       />
-      <SiteNav active="explorar" />
+      <SiteNav active="signos" />
 
       <article className="content">
         <Link href="/signos" className="back">← Todos os signos</Link>
