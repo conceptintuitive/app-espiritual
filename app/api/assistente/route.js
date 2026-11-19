@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { responderPergunta } from '@/lib/assistente';
+import { acessoPorEmail, emailDaAnalise } from '@/lib/assinatura';
 
 export const runtime = 'nodejs';
 
@@ -37,7 +38,13 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Análise não encontrada.' }, { status: 404 });
     }
 
-    const pago = analise.payment_status === 'paid';
+    // Manual pago ou Intuitive Completo ativo = perguntas ilimitadas (com teto diário).
+    let pago = analise.payment_status === 'paid';
+    if (!pago) {
+      try {
+        pago = (await acessoPorEmail(supabase, await emailDaAnalise(supabase, analiseId))).ativa;
+      } catch {}
+    }
 
     if (pago) {
       const inicioHoje = new Date();

@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { gerarProjecao12Meses } from '@/lib/transitos12meses';
 import { PRECO_BONUS_AVULSO, PRECO_BONUS_COMBO } from '@/lib/preco';
 import SiteNav from '@/app/components/SiteNav';
+import { useAssinatura, CtaAssinatura } from '@/app/components/assinatura';
 
 function getSupabaseClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -62,6 +63,7 @@ export default function PrevisaoDoAnoPage() {
   const [erro, setErro] = useState(false);
   const [processando, setProcessando] = useState(false);
   const [combo, setCombo] = useState(false);
+  const assinatura = useAssinatura(id);
 
   useEffect(() => {
     const supabase = getSupabaseClient();
@@ -149,22 +151,26 @@ export default function PrevisaoDoAnoPage() {
 
         {!loading && row && row.data_nascimento && (() => {
           const projecao = gerarProjecao12Meses(row.data_nascimento);
-          const desbloqueado = row.tier2_payment_status === 'paid';
+          const desbloqueado = row.tier2_payment_status === 'paid' || !!assinatura?.ativa;
           return (
             <>
               {desbloqueado ? (
                 projecao.map((m, i) => <MesCard key={`${m.ano}-${m.mes}`} m={m} i={i} />)
               ) : (
                 <>
+                  {/* Gostinho grátis: o mês atual inteiro + o tema dos 2 seguintes */}
+                  <MesCard m={projecao[0]} i={0} />
                   <div className="mes-chip-row">
-                    {projecao.slice(0, 3).map((m, i) => <MesChip key={`${m.ano}-${m.mes}`} m={m} i={i} />)}
+                    {projecao.slice(1, 3).map((m, i) => <MesChip key={`${m.ano}-${m.mes}`} m={m} i={i + 1} />)}
                   </div>
                   <div className="card paywall">
                     <h2 className="h2">🔒 Descubra o que vem por aí</h2>
                     <p className="p">
-                      {pickFirstName(row.nome)}, isso foi só o tema de 3 dos 12 meses. Desbloqueie pra ver
-                      o texto completo, o que favorece e o que pede cuidado em cada um dos próximos 12 meses.
+                      {pickFirstName(row.nome)}, esse foi o seu mês atual. Desbloqueie pra ver o texto completo,
+                      o que favorece e o que pede cuidado em cada um dos próximos 12 meses.
                     </p>
+                    <CtaAssinatura analiseId={id} origem="previsao" />
+                    <p className="p" style={{ fontSize: 14, textAlign: 'center', margin: '4px 0' }}>ou</p>
                     {row.payment_status !== 'paid' ? (
                       <>
                         <p className="p" style={{ fontSize: 14 }}>

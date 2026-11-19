@@ -118,7 +118,7 @@ export default function ExplorarClient() {
     if (pagoStatus === null) return 'Carregando…';
     if (bonusPago) return 'Já é seu';
     if (pagoStatus) return `R$${PRECO_BONUS_AVULSO} · complemento do seu Manual`;
-    return 'Desbloqueia com o Manual';
+    return 'Prévia grátis · completo no Intuitive Completo';
   }
   const previsaoTag = tagBonus(tier2Pago);
   const humanDesignTag = tagBonus(hdPago);
@@ -147,6 +147,14 @@ export default function ExplorarClient() {
             <p>{meuMapaDesc}</p>
           </div>
           <span className="cta">{meuMapaCta}</span>
+        </Link>
+
+        <Link href="/assinar" className="card assinar">
+          <div className="icon-badge">✦</div>
+          <span className="tag">Assinatura · tudo liberado</span>
+          <h3>Intuitive Completo</h3>
+          <p>Seu Dia completo, Previsão do Ano, Human Design, Compatibilidade Completa e Oráculo ilimitado. O anual inclui o Manual.</p>
+          <span className="cta">Ver planos →</span>
         </Link>
 
         <Link href="/seu-dia" className="card seudia">
@@ -295,6 +303,7 @@ export default function ExplorarClient() {
         .card.septenary::before { background: radial-gradient(circle at 20% 0%, rgba(236,72,153,0.2), rgba(139,92,246,0.12), rgba(19,8,40,0.95) 70%); }
         .card.octonary::before { background: radial-gradient(circle at 20% 0%, rgba(245,158,11,0.2), rgba(19,8,40,0.95) 70%); }
         .card.nonary::before { background: radial-gradient(circle at 20% 0%, rgba(139,92,246,0.2), rgba(236,72,153,0.1), rgba(19,8,40,0.95) 70%); }
+        .card.assinar::before { background: radial-gradient(circle at 20% 0%, rgba(236,72,153,0.26), rgba(245,165,36,0.12), rgba(19,8,40,0.95) 70%); }
         .card.seudia::before { background: radial-gradient(circle at 20% 0%, rgba(245,165,36,0.24), rgba(236,72,153,0.12), rgba(19,8,40,0.95) 70%); }
         .card.ceu::before { background: radial-gradient(circle at 20% 0%, rgba(242,199,123,0.22), rgba(96,165,250,0.12), rgba(19,8,40,0.95) 70%); }
         .card.denary::before { background: radial-gradient(circle at 20% 0%, rgba(245,158,11,0.22), rgba(139,92,246,0.14), rgba(19,8,40,0.95) 70%); }
