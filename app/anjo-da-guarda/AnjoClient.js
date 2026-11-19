@@ -132,7 +132,7 @@ export default function AnjoClient({ periodos, ano }) {
         </label>
         {erro && <p className="an-erro">{erro}</p>}
         <button type="submit" className="an-btn">Descobrir meu anjo ✶</button>
-        <p className="an-priv">Calculado no seu navegador. Nada é salvo.</p>
+        <p className="an-priv">Calculado no seu navegador. Seus dados ficam só neste aparelho.</p>
       </form>
 
       {anjos && entrada && (

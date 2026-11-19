@@ -153,7 +153,7 @@ export default function CompatBaziClient() {
         <PessoaForm titulo="Pessoa 2" p={p2} setP={setP2} placeholderNome="Ex: Leo" />
         {erro && <p className="erro">{erro}</p>}
         <button type="submit" className="btn">Ver nossa compatibilidade ✦</button>
-        <p className="privacidade">Calculado no seu navegador. Nada é salvo.</p>
+        <p className="privacidade">Calculado no seu navegador. Seus dados ficam só neste aparelho.</p>
       </form>
 
       {calc && entrada && (
