@@ -4,17 +4,21 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { createClient } from '@supabase/supabase-js';
 import { getTopMatches } from '@/lib/compatibilidade';
 import { TESTIMONIALS } from '@/lib/testimonials';
-import ChatAssistente from '@/app/components/ChatAssistente';
 import SeloArquetipo from '@/app/components/SeloArquetipo';
 import BotaoCompartilharStory from '@/app/components/BotaoCompartilharStory';
 import { PRECO_MANUAL_JANELA, PRECO_MANUAL_PADRAO, PRECO_BONUS_COMBO } from '@/lib/preco';
 import { emailValido } from '@/lib/emailValidacao';
 import SiteNav from '@/app/components/SiteNav';
-import VoceTambem from '@/app/components/VoceTambem';
 import { salvarSeForMeu } from '@/lib/perfilLocal';
+
+// Fora do pacote inicial: o chat é um botão flutuante e o "Você também é…"
+// fica no fim da página (puxa anjos, Kin e BaZi, ~25 KB gzip).
+const ChatAssistente = dynamic(() => import('@/app/components/ChatAssistente'), { ssr: false });
+const VoceTambem = dynamic(() => import('@/app/components/VoceTambem'), { ssr: false });
 
 // ── Supabase ──────────────────────────────────────────────────────────────────
 function getSupabaseClient() {
