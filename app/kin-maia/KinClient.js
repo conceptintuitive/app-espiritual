@@ -189,6 +189,7 @@ function Resultado({ k, entrada, onCta }) {
       <h3>Seu selo: {k.selo.nomeCompleto}</h3>
       <p>{ts.texto}</p>
       <p><strong>A sombra:</strong> {ts.sombra}</p>
+      <p><Link className="an-link" href={`/kin-maia/${k.selo.slug}`}>Tudo sobre {k.selo.nomeCompleto} e os 13 Kins do seu selo →</Link></p>
 
       <h3>Seu tom: {k.tom.numero}, {tomNome}</h3>
       <p className="kin-pergunta">“{tt.pergunta}”</p>
@@ -288,11 +289,11 @@ function Sobre() {
       <ul className="an-lista">
         {SELOS.map((s) => (
           <li key={s.codigo}>
-            <span className="kin-li">
+            <Link href={`/kin-maia/${s.slug}`}>
               <span className="n">{s.codigo}</span>
               {s.nomeCompleto}
               <span className="d">{TEXTO_SELO[s.codigo].palavras[0]}</span>
-            </span>
+            </Link>
           </li>
         ))}
       </ul>

@@ -6,6 +6,7 @@
 // (mesmo repasse do /ceu, via lib/ceuDados.js — nunca por query string).
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import SiteNav from '@/app/components/SiteNav';
 import CidadeAutocomplete from '@/app/components/CidadeAutocomplete';
@@ -22,6 +23,7 @@ import {
   TEXTO_RELACOES, TEXTO_ELEMENTOS, TEXTO_FORCA,
 } from '@/lib/baziTextos';
 import { CHAVE_COMPAT_PESSOA1 } from '@/lib/baziCompat';
+import { DEUSES } from '@/lib/seoChines';
 
 const ORDEM_TABELA = ['hora', 'dia', 'mes', 'ano']; // ordem tradicional: lê-se da direita pra esquerda
 const ORDEM_LEITURA = ['ano', 'mes', 'dia', 'hora'];
@@ -202,6 +204,17 @@ export default function AstrologiaChinesaClient() {
 
       {!mapa && <SobreBazi />}
 
+      <section className="sobre explorar-chines">
+        <h2>Os 12 animais</h2>
+        <div className="chips">
+          {RAMOS.map((r) => <Link key={r.slug} href={`/astrologia-chinesa/animal/${r.slug}`}><span lang="zh">{r.hanzi}</span> {r.animal}</Link>)}
+        </div>
+        <h2>Os Dez Deuses</h2>
+        <div className="chips">
+          {DEUSES.map((d) => <Link key={d.slug} href={`/astrologia-chinesa/dez-deuses/${d.slug}`}><span lang="zh">{d.hanzi}</span> {d.nome}</Link>)}
+        </div>
+      </section>
+
       <style jsx global>{`
         body { margin: 0; }
         :root {
@@ -231,6 +244,9 @@ export default function AstrologiaChinesaClient() {
         .btn { font-family: 'Cinzel', serif; font-weight: 700; font-size: 15px; letter-spacing: 0.06em; color: #fff; background: linear-gradient(135deg, var(--secondary), var(--primary)); border: 0; border-radius: 999px; padding: 15px 20px; cursor: pointer; }
         .privacidade { text-align: center; font-size: 14px; color: var(--muted); margin: 0; }
 
+        .explorar-chines .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+        .explorar-chines .chips a { color: var(--text); text-decoration: none; border: 1px solid var(--border-strong); border-radius: 999px; padding: 8px 14px; font-size: 17px; }
+        .explorar-chines .chips a:hover { border-color: var(--warning); }
         .resultado, .sobre { max-width: 760px; margin: 0 auto; padding: 40px 20px 0; scroll-margin-top: 16px; }
         .resultado h2, .sobre h2 { font-family: 'Cinzel', serif; font-size: clamp(20px, 4vw, 26px); margin: 44px 0 6px; text-wrap: balance; }
         .resultado h3, .sobre h3 { font-family: 'Cinzel', serif; font-size: 17px; margin: 22px 0 6px; color: var(--warning); letter-spacing: 0.04em; }
