@@ -33,6 +33,7 @@ export const CSS_ANJO = `
   .an-wrap h3 { font-family: 'Cinzel', serif; font-size: 16px; margin: 24px 0 6px; color: var(--ouro); letter-spacing: 0.05em; }
   .an-sec p, .an-sec li { font-size: 19px; line-height: 1.6; }
   .an-eyebrow { font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--ouro); }
+  .an-por { display: block; opacity: 0.7; margin-top: 4px; }
   .an-lead { font-size: 21px; color: var(--muted); }
   .an-nota { font-size: 16px; color: var(--muted); border-left: 2px solid var(--ouro); padding-left: 12px; }
 
@@ -45,6 +46,14 @@ export const CSS_ANJO = `
   .an-ficha li { border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px; font-size: 17px; line-height: 1.35; }
   .an-ficha b { display: block; font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); font-weight: 500; margin-bottom: 4px; }
 
+  .an-dois { border: 1px solid var(--border); border-radius: 16px; padding: 14px 18px; margin: 0 0 18px; background: rgba(139,92,246,0.06); }
+  .an-dois p { margin: 0 0 6px; font-size: 18px; }
+  .an-dois ul { margin: 0; padding-left: 18px; }
+  .an-dois li { font-size: 17px; line-height: 1.5; margin: 4px 0; }
+  .an-dois b { color: var(--ouro); font-weight: 600; }
+  .an-pratica { margin: 32px 0 0; padding: 20px; border: 1px solid var(--ouro); border-radius: 18px; background: rgba(245,212,138,0.07); }
+  .an-pratica p { margin: 10px 0 0; }
+  .an-pratica strong { color: var(--ouro); font-weight: 600; }
   .an-pedir { padding-left: 20px; }
   .an-duo { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-top: 12px; }
   .an-mini { display: block; border: 1px solid var(--border); border-radius: 16px; padding: 16px; text-decoration: none; color: var(--text); background: rgba(139,92,246,0.05); }

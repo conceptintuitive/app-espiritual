@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {
   ANJOS, anjoPorSlug, dadosDoAnjo, anjoPorLongitude, anjoDaHora, calcularAnjos, periodosDoAno, anjosDoMomento,
 } from '../lib/anjos.js';
-import { TEXTO_ANJO, TEXTO_CORO } from '../lib/anjosTextos.js';
+import { TEXTO_ANJO, TEXTO_CORO, BUSCA_CAMINHO } from '../lib/anjosTextos.js';
 
 test('72 anjos com slugs únicos (os dois Lauviah numerados)', () => {
   assert.equal(ANJOS.length, 72);
@@ -93,6 +93,7 @@ test('textos: 72 anjos completos e 9 coros', () => {
     assert.ok(t, `faltou o anjo ${n}`);
     for (const k of ['dom', 'essencia', 'sombra', 'pratica', 'mente']) assert.ok(t[k], `anjo ${n} sem ${k}`);
     assert.ok(Array.isArray(t.pedir) && t.pedir.length >= 2, `anjo ${n} sem pedir`);
+    assert.ok(BUSCA_CAMINHO[n]?.[0] && BUSCA_CAMINHO[n]?.[1], `anjo ${n} sem busca/caminho`);
   }
   for (let n = 1; n <= 72; n++) assert.ok(TEXTO_CORO[dadosDoAnjo(n).coro.nome]);
 });
