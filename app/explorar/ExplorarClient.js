@@ -149,6 +149,14 @@ export default function ExplorarClient() {
           <span className="cta">{meuMapaCta}</span>
         </Link>
 
+        <Link href="/seu-dia" className="card seudia">
+          <div className="icon-badge">☀</div>
+          <span className="tag">Novo · 7 dias do Completo grátis</span>
+          <h3>Seu Dia</h3>
+          <p>Seu mapa lido todo dia: astrologia chinesa, numerologia, a Lua e o tarô cruzados num recado só — com suas horas de força.</p>
+          <span className="cta">Ver meu dia →</span>
+        </Link>
+
         <Link href="/ceu" className="card ceu">
           <div className="icon-badge">👁</div>
           <span className="tag">Grátis · com o céu real</span>
@@ -287,6 +295,7 @@ export default function ExplorarClient() {
         .card.septenary::before { background: radial-gradient(circle at 20% 0%, rgba(236,72,153,0.2), rgba(139,92,246,0.12), rgba(19,8,40,0.95) 70%); }
         .card.octonary::before { background: radial-gradient(circle at 20% 0%, rgba(245,158,11,0.2), rgba(19,8,40,0.95) 70%); }
         .card.nonary::before { background: radial-gradient(circle at 20% 0%, rgba(139,92,246,0.2), rgba(236,72,153,0.1), rgba(19,8,40,0.95) 70%); }
+        .card.seudia::before { background: radial-gradient(circle at 20% 0%, rgba(245,165,36,0.24), rgba(236,72,153,0.12), rgba(19,8,40,0.95) 70%); }
         .card.ceu::before { background: radial-gradient(circle at 20% 0%, rgba(242,199,123,0.22), rgba(96,165,250,0.12), rgba(19,8,40,0.95) 70%); }
         .card.denary::before { background: radial-gradient(circle at 20% 0%, rgba(245,158,11,0.22), rgba(139,92,246,0.14), rgba(19,8,40,0.95) 70%); }
 

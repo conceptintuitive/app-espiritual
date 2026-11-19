@@ -28,6 +28,7 @@ export default function SiteNav({ active = null, sticky = true }) {
   // logo abaixo.
   const outrosItems = [
     { href: meuMapaHref, label: 'Meu Mapa', key: 'meu-mapa' },
+    { href: '/seu-dia', label: 'Seu Dia', key: 'seu-dia' },
     { href: '/oraculo', label: 'Oráculo', key: 'oraculo' },
     { href: '/hexagrama-do-dia', label: 'Hexagrama do Dia', key: 'hexagrama' },
     { href: '/compatibilidade', label: 'Compatibilidade', key: 'compatibilidade' },
