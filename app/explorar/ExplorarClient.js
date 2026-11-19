@@ -220,6 +220,14 @@ export default function ExplorarClient() {
           <p>Essência, força e sombra de cada Número de Vida, do 1 ao 9 e os Números Mestres.</p>
           <span className="cta">Ver os números →</span>
         </Link>
+
+        <Link href="/astrologia-chinesa" className="card nonary">
+          <div className="icon-badge">八</div>
+          <span className="tag">Grátis · na hora</span>
+          <h3>Astrologia Chinesa</h3>
+          <p>Seu animal, seu elemento e os 4 Pilares do Destino (BaZi), com a hora corrigida pelo horário de verão.</p>
+          <span className="cta">Ver meu mapa chinês →</span>
+        </Link>
       </div>
 
       <style jsx global>{`
