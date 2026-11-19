@@ -94,7 +94,7 @@ export default function AstrologiaChinesaClient() {
         href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Cormorant+Garamond:wght@300;400;500;600;700&family=Noto+Serif+SC:wght@500;700&display=swap"
         rel="stylesheet"
       />
-      <SiteNav active="explorar" />
+      <SiteNav active="astrologia-chinesa" />
 
       <header className="hero">
         <span className="glyph">八字</span>

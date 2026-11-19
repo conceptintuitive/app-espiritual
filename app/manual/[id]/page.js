@@ -17,6 +17,7 @@ import ChatAssistente from '@/app/components/ChatAssistente';
 import BotaoCompartilharStory from '@/app/components/BotaoCompartilharStory';
 import { getPrecoManual, PRECO_BONUS_AVULSO, PRECO_BONUS_COMBO } from '@/lib/preco';
 import { offsetSalvo } from '@/lib/sky';
+import SiteNav from '@/app/components/SiteNav';
 
 // Olho Cósmico (abertura "Meu Mapa"): chunk separado, só baixa pra quem pagou.
 const OlhoCosmicoManual = dynamic(() => import('@/app/components/olho/OlhoCosmicoManual'), { ssr: false });
@@ -949,6 +950,9 @@ export default function ManualPage() {
 
       {/* ESTRELAS */}
       <div id="stars" className="stars" />
+
+      {/* MENU — não-sticky: o palco do Olho Cósmico fica fixo na tela logo abaixo */}
+      <SiteNav active="meu-mapa" sticky={false} />
 
       {/* BARRA DE PROGRESSO DE LEITURA */}
       <div className="reading-progress-track">

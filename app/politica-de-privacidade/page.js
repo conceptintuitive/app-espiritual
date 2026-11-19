@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import SiteNav from '@/app/components/SiteNav';
 
 export const metadata = {
   title: 'Política de Privacidade | Intuitive Concept',
@@ -30,6 +31,8 @@ const styles = {
 
 export default function PoliticaDePrivacidadePage() {
   return (
+    <>
+    <SiteNav />
     <div style={styles.page}>
       <div style={styles.container}>
         <Link href="/" style={styles.back}>← Voltar para o início</Link>
@@ -141,5 +144,6 @@ export default function PoliticaDePrivacidadePage() {
         </p>
       </div>
     </div>
+    </>
   );
 }

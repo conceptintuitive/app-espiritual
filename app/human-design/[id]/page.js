@@ -8,6 +8,7 @@ import { calcularHumanDesign, CENTRO_NOME_AMIGAVEL } from '@/lib/humanDesign';
 import { TIPO_DESCRICAO, AUTORIDADE_DESCRICAO, gerarIntegracaoHumanDesign } from '@/lib/humanDesignTextos';
 import { PRECO_BONUS_AVULSO, PRECO_BONUS_COMBO } from '@/lib/preco';
 import { offsetSalvo, buscarOffsetNascimento } from '@/lib/sky';
+import SiteNav from '@/app/components/SiteNav';
 
 function getSupabaseClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -87,6 +88,8 @@ export default function HumanDesignPage() {
         rel="stylesheet"
       />
       <div id="stars" className="stars" />
+
+      <SiteNav active="human-design" />
 
       <div className="container">
         <div className="hero">
