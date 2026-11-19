@@ -19,6 +19,7 @@ import { TEXTO_ANJO } from '@/lib/anjosTextos';
 import { longitudeSolar } from '@/lib/bazi';
 import { salvarPerfil } from '@/lib/perfilLocal';
 import VoceTambem from '@/app/components/VoceTambem';
+import AbaMapa from './AbaMapa';
 
 const TOM = {
   fluxo: { rotulo: 'Dia a favor', classe: 'sd-tom-fluxo' },
@@ -293,6 +294,7 @@ function AppSeuDia({ perfil, setPerfil, onEditar, onSair }) {
         {aba === 'semana' && (
           <AbaSemana semana={semana} depois={depois} completo={completo} onDesbloquear={() => abrirModal('semana')} />
         )}
+        {aba === 'mapa' && <AbaMapa perfil={perfil} />}
         {aba === 'ajustes' && (
           <AbaAjustes perfil={perfil} onEditar={onEditar} onSair={onSair} onDesbloquear={() => abrirModal('ajustes')} />
         )}
@@ -301,6 +303,7 @@ function AppSeuDia({ perfil, setPerfil, onEditar, onSair }) {
       <nav className="sd-abas" aria-label="Seu Dia">
         <button type="button" className={aba === 'hoje' ? 'is-on' : ''} aria-current={aba === 'hoje' ? 'page' : undefined} onClick={() => setAba('hoje')}><Icone nome="sol" />Hoje</button>
         <button type="button" className={aba === 'semana' ? 'is-on' : ''} aria-current={aba === 'semana' ? 'page' : undefined} onClick={() => setAba('semana')}><Icone nome="calendario" />Semana</button>
+        <button type="button" className={aba === 'mapa' ? 'is-on' : ''} aria-current={aba === 'mapa' ? 'page' : undefined} onClick={() => { setAba('mapa'); evento('sd_aba_mapa'); }}><Icone nome="mapa" />Mapa</button>
         <a href="/oraculo"><Icone nome="chat" />Oráculo</a>
         <button type="button" className={aba === 'ajustes' ? 'is-on' : ''} aria-current={aba === 'ajustes' ? 'page' : undefined} onClick={() => setAba('ajustes')}><Icone nome="ajustes" />Ajustes</button>
       </nav>
@@ -902,6 +905,7 @@ function ModalListaEspera({ onFechar }) {
 
 const PATHS = {
   sol: <><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></>,
+  mapa: <path d="M12 3l2.4 6.6L21 12l-6.6 2.4L12 21l-2.4-6.6L3 12l6.6-2.4z" />,
   calendario: <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4" /></>,
   chat: <path d="M21 12a8 8 0 0 1-11.6 7.1L4 21l1.9-5.4A8 8 0 1 1 21 12z" />,
   ajustes: <><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" /></>,
@@ -1048,7 +1052,7 @@ const CSS = `
   .sd-ponto.sd-tom-tensao { background: #fb923c; }
   .sd-ponto.sd-tom-melhor { background: #fcd34d; }
 
-  .sd-abas { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); background: #0d0420; border-top: 1px solid #2e1f4a; padding: 6px 8px calc(10px + env(safe-area-inset-bottom)); }
+  .sd-abas { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); background: #0d0420; border-top: 1px solid #2e1f4a; padding: 6px 8px calc(10px + env(safe-area-inset-bottom)); }
   .sd-abas > * { min-height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; background: none; border: 0; color: #cdbbe8; text-decoration: none; font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.05em; cursor: pointer; }
   .sd-abas > .is-on { color: #f5a524; }
 
