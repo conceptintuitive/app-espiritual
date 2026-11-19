@@ -52,7 +52,7 @@ alter table seu_dia_push enable row level security;
 -- Métricas da fase 1, pra abrir no SQL Editor:  select * from seu_dia_metricas;
 -- "voltaram_em_7d" = entre quem abriu pela 1ª vez há 7+ dias, quantos voltaram
 -- em algum dia do 1º ao 7º depois. Meta pra ligar a cobrança: ~20%.
-create or replace view seu_dia_metricas with (security_invoker = true) as
+create or replace view seu_dia_metricas as
 with primeira as (
   select email, min(dia) as d0 from seu_dia_visitas group by email
 )
@@ -70,4 +70,6 @@ select
   (select count(*) from seu_dia_perfis where lista_espera_plano = 'mensal') as lista_espera_mensal,
   (select count(distinct email) from seu_dia_push) as pessoas_com_aviso;
 
+-- A view roda com permissão do dono; por isso ninguém além da service role
+-- (e do SQL Editor) pode lê-la pela API.
 revoke all on seu_dia_metricas from anon, authenticated;

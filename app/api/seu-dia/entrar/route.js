@@ -32,7 +32,9 @@ export async function POST(request) {
     if (error) {
       // Quase sempre: a migração 0017_seu_dia.sql ainda não rodou (tabela não existe).
       console.error('[seu-dia/entrar] Supabase:', error.code, error.message);
-      throw error;
+      const e = new Error(error.message);
+      e.codigo = error.code === '42P01' || /does not exist|schema cache/i.test(error.message || '') ? 'tabela' : 'banco';
+      throw e;
     }
 
     const link = `${getBaseUrl()}/seu-dia/entrar?t=${encodeURIComponent(tokenLogin(email))}`;
@@ -57,11 +59,16 @@ export async function POST(request) {
       console.error('[seu-dia/entrar] Resend:', erroEmail.name, erroEmail.message);
       // Libera um novo pedido na hora, em vez de segurar 60s por um envio que falhou.
       await sb.from('seu_dia_perfis').update({ link_enviado_em: null }).eq('email', email);
-      throw new Error('resend');
+      const e = new Error('resend');
+      e.codigo = 'email';
+      throw e;
     }
     return NextResponse.json({ ok: true });
   } catch (e) {
     console.error('[seu-dia/entrar]', e);
-    return NextResponse.json({ error: 'Não conseguimos enviar o link agora. Tente de novo em instantes.' }, { status: 500 });
+    // `codigo` não expõe nada sensível e ajuda a achar a causa sem abrir o log:
+    // tabela = migração 0017 não rodou; banco = outro erro do Supabase; email = Resend.
+    const codigo = e?.codigo || 'interno';
+    return NextResponse.json({ error: `Não conseguimos enviar o link agora (código: ${codigo}). Tente de novo em instantes.`, codigo }, { status: 500 });
   }
 }
