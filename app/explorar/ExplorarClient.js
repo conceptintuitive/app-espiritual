@@ -260,6 +260,14 @@ export default function ExplorarClient() {
           <p>Qual dos 72 anjos da Cabala rege o seu nascimento — pela posição exata do Sol, e o anjo da sua mente pela hora.</p>
           <span className="cta">Descobrir meu anjo →</span>
         </Link>
+
+        <Link href="/kin-maia" className="card nonary">
+          <div className="icon-badge">✺</div>
+          <span className="tag">Grátis · na hora</span>
+          <h3>Seu Kin Maia</h3>
+          <p>Sua assinatura galáctica do Sincronário: selo, tom, cor, onda encantada e o oráculo do seu Kin.</p>
+          <span className="cta">Descobrir meu Kin →</span>
+        </Link>
       </div>
 
       <style jsx global>{`
