@@ -282,9 +282,14 @@ function criarMotor(el, { mode, reduce, onGate, onVisto }) {
       }
       cx2.setLineDash([]);
       cx2.font = '300 9.5px "Geist Mono", monospace'; cx2.textAlign = 'center';
+      const Wc = el.sky.clientWidth || el.sky.width;
       for (const l of st.labels) {
+        const txt = l.t.toUpperCase().split('').join(' ');
+        // Nome que não cabe inteiro na tela (ex.: "…MAIOR" cortado na borda) não aparece.
+        const meia = cx2.measureText(txt).width / 2;
+        if (l.x - meia < 6 || l.x + meia > Wc - 6) continue;
         cx2.fillStyle = l.hi ? `rgba(255,220,160,${L})` : `rgba(230,215,190,${0.75 * L})`;
-        cx2.fillText(l.t.toUpperCase().split('').join(' '), l.x, l.y + (l.hi ? 30 : 14));
+        cx2.fillText(txt, l.x, l.y + (l.hi ? 30 : 14));
       }
     }
   }
@@ -591,7 +596,8 @@ export default function OlhoCosmico({ mode = 'publico', dados = null, onCta, onV
   const dotsOn = step - 1;
 
   return (
-    <section ref={refs.root} className={`${s.root} ${reduce ? s.estatico : ''}`} aria-label="O céu do seu nascimento">
+    <>
+    <section ref={refs.root} className={`${s.root} ${reduce ? s.estatico : ''} ${mode === 'manual' ? s.manual : ''}`} aria-label="O céu do seu nascimento">
       <div ref={refs.stageWrap} className={s.stageWrap}>
         <div ref={refs.stage} className={s.stage}>
           {/* eslint-disable @next/next/no-img-element -- camadas animadas por transform; next/image não ajuda aqui */}
@@ -622,7 +628,7 @@ export default function OlhoCosmico({ mode = 'publico', dados = null, onCta, onV
             <div ref={refs.num} className={s.num} />
             <div className={s.what}>Número do Caminho de Vida</div>
           </div>
-          <a ref={refs.cta} className={s.cta} href={mode === 'manual' ? '#manual' : '/'} onClick={clicarCta}>Abrir meu mapa</a>
+          <a ref={refs.cta} className={s.cta} href={mode === 'manual' ? '#manual' : '/'} onClick={clicarCta}>{mode === 'manual' ? 'Ler meu Manual ↓' : 'Abrir meu mapa'}</a>
           <div ref={refs.hint} className={s.hint}>role <span>↓</span></div>
         </div>
 
@@ -688,5 +694,7 @@ export default function OlhoCosmico({ mode = 'publico', dados = null, onCta, onV
         )}
       </div>
     </section>
+    {mode === 'manual' && <div className={s.emenda} aria-hidden="true" />}
+    </>
   );
 }
