@@ -149,6 +149,14 @@ export default function ExplorarClient() {
           <span className="cta">{meuMapaCta}</span>
         </Link>
 
+        <Link href="/ceu" className="card ceu">
+          <div className="icon-badge">👁</div>
+          <span className="tag">Grátis · com o céu real</span>
+          <h3>O Céu do Seu Nascimento</h3>
+          <p>Uma viagem pelo olho até as estrelas exatas que estavam no céu no minuto em que você nasceu — e o número que esse céu deixou em você.</p>
+          <span className="cta">Ver meu céu →</span>
+        </Link>
+
         <Link href="/oraculo" className="card quaternary">
           <div className="icon-badge">✦</div>
           <span className="tag">Grátis · 3 perguntas</span>
@@ -279,6 +287,7 @@ export default function ExplorarClient() {
         .card.septenary::before { background: radial-gradient(circle at 20% 0%, rgba(236,72,153,0.2), rgba(139,92,246,0.12), rgba(19,8,40,0.95) 70%); }
         .card.octonary::before { background: radial-gradient(circle at 20% 0%, rgba(245,158,11,0.2), rgba(19,8,40,0.95) 70%); }
         .card.nonary::before { background: radial-gradient(circle at 20% 0%, rgba(139,92,246,0.2), rgba(236,72,153,0.1), rgba(19,8,40,0.95) 70%); }
+        .card.ceu::before { background: radial-gradient(circle at 20% 0%, rgba(242,199,123,0.22), rgba(96,165,250,0.12), rgba(19,8,40,0.95) 70%); }
         .card.denary::before { background: radial-gradient(circle at 20% 0%, rgba(245,158,11,0.22), rgba(139,92,246,0.14), rgba(19,8,40,0.95) 70%); }
 
         .card.primary { grid-column: 1 / -1; }
