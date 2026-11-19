@@ -92,3 +92,11 @@ test('mapa da Bianca: Bing–Xin se combinam; Rato–Coelho punição; 2026 é f
   const pts = contarElementos(m);
   assert.equal(pts.length, 5);
 });
+
+test('sem cidade, no horário de verão, usa o meridiano do fuso padrão (não o do relógio)', () => {
+  // 07:25 de verão (UTC-2) = 09:25Z; meridiano padrão -45° → ~06:27 solar → Coelho, não Dragão.
+  const m = calcularBazi({ data: '1994-12-21', hora: '07:25', tz: 'America/Sao_Paulo' });
+  assert.equal(RAMOS[m.hora.ramo].animal, 'Coelho');
+  assert.equal(m.horarioDeVerao, true);
+  assert.equal(m.longitudeAproximada, true);
+});

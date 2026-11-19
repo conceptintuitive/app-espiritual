@@ -15,7 +15,7 @@ npm run dev      # Servidor de desenvolvimento (localhost:3000)
 npm run build    # Build de produção
 npm run lint     # ESLint (flat config nativa do eslint-config-next 16; 0 erros, avisos tolerados)
 npm run start    # Servidor de produção
-npm test         # node --test em tests/*.test.js (lib/sky.js, lib/fusoBR.js, lib/municipios.js, lib/bazi.js, planetas/HD legado x fuso real) — sem dependências
+npm test         # node --test em tests/*.test.js (lib/sky.js, lib/fusoBR.js, lib/municipios.js, lib/bazi.js, lib/baziCompat.js, planetas/HD legado x fuso real) — sem dependências
 node scripts/gerar-municipios.mjs  # regenera public/data/municipios-br.json (base IBGE)
 ```
 
@@ -70,6 +70,9 @@ Checkout **Stripe** (`/api/criar-checkout` → `/api/webhook`) ainda funciona, m
 | `app/manual/[id]/page.js` | Manual completo; chama `generateManual()` com `pendingFields`, confirma pagamento MP pós-redirect, dispara `gerar-manual-completo`. **Não exporta PDF** (`jspdf` está no package.json sem uso); `html2canvas` só é usado em `app/components/SeloArquetipo.js` para exportar o selo como imagem. |
 | `app/astrologia-chinesa/` | Rota pública `/astrologia-chinesa` — mapa BaZi (4 Pilares) grátis, calculado 100% no browser, sem API/banco/IA. CTA leva pro quiz pré-preenchido via `lib/ceuDados.js`. |
 | `lib/bazi.js` | Cálculo BaZi: ano/mês pelos termos solares (Lichun ~4/fev), dia pelo ciclo de 60, hora pelo **horário solar verdadeiro** (fuso histórico via `localToUTC` + longitude + equação do tempo; virada do dia às 23h solares). Dez Deuses, relações entre ramos, contagem de elementos, leitura de ano. Testes em `tests/bazi.test.js`. |
+| `app/astrologia-chinesa/compatibilidade/` | Rota pública `/astrologia-chinesa/compatibilidade` — compatibilidade BaZi entre duas pessoas, grátis, 100% no browser, sem IA. Pessoa 1 chega pré-preenchida do `/astrologia-chinesa` via sessionStorage (`CHAVE_COMPAT_PESSOA1`), nunca query string. Compartilhar manda só a nota (sem dados de nascimento). Usa `active="astrologia-chinesa"` no menu (sem item próprio). |
+| `lib/baziCompat.js` | `compatibilidadeBazi(a, b)`: Day Masters (combinação/choque/geração/controle), palácio do cônjuge, atração oculta, clima (inverno pede Fogo, verão pede Água), animais do ano, cruzamentos; nota 35–97 simétrica. Sem gênero de propósito. Testes em `tests/baziCompat.test.js`. |
+| `lib/baziCompatTextos.js` | Textos fixos da compatibilidade BaZi (funções que recebem o resultado + nomes). |
 | `lib/baziTextos.js` | Textos fixos do BaZi (Day Masters, 12 animais por posição, Dez Deuses, relações, elementos). Mesmo tom do Manual, sem hedge. |
 | `app/api/card/route.js`, `app/api/og/[id]/route.js` | Card 1080x1920 de story (fontes em `app/api/card/fonts`) e imagem OG de fallback. |
 

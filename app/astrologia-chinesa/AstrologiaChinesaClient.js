@@ -18,6 +18,7 @@ import {
   PAPEL_PILAR, DIA_MESTRE, ANIMAIS, SABOR_ELEMENTO_ANO, TEXTO_DEUSES,
   TEXTO_RELACOES, TEXTO_ELEMENTOS, TEXTO_FORCA,
 } from '@/lib/baziTextos';
+import { CHAVE_COMPAT_PESSOA1 } from '@/lib/baziCompat';
 
 const ORDEM_TABELA = ['hora', 'dia', 'mes', 'ano']; // ordem tradicional: lê-se da direita pra esquerda
 const ORDEM_LEITURA = ['ano', 'mes', 'dia', 'hora'];
@@ -88,6 +89,21 @@ export default function AstrologiaChinesaClient() {
     router.push('/');
   }
 
+  function irPraCompat() {
+    evento('bazi_cta_compat');
+    try {
+      window.sessionStorage.setItem(CHAVE_COMPAT_PESSOA1, JSON.stringify({
+        nome: entrada.nome,
+        data: entrada.data,
+        hora: entrada.hora,
+        cidade: entrada.cidade
+          ? { ibge: entrada.cidade.ibge, nome: entrada.cidade.nome, uf: entrada.cidade.uf, lat: entrada.cidade.lat, lon: entrada.cidade.lon, tz: entrada.cidade.tz }
+          : null,
+      }));
+    } catch {}
+    router.push('/astrologia-chinesa/compatibilidade');
+  }
+
   return (
     <div className="wrap">
       <link
@@ -140,7 +156,7 @@ export default function AstrologiaChinesaClient() {
 
       {mapa && entrada && (
         <section ref={resultadoRef} className="resultado">
-          <Resultado mapa={mapa} entrada={entrada} onCta={irProManual} />
+          <Resultado mapa={mapa} entrada={entrada} onCta={irProManual} onCompat={irPraCompat} />
         </section>
       )}
 
@@ -223,7 +239,7 @@ function rotuloDeus(chave) {
   return `${d.nome} (${d.hanzi})`;
 }
 
-function Resultado({ mapa, entrada, onCta }) {
+function Resultado({ mapa, entrada, onCta, onCompat }) {
   const eu = mapa.diaMestre;
   const dm = DIA_MESTRE[eu];
   const elemEu = ELEMENTOS[TRONCOS[eu].elemento];
@@ -341,6 +357,13 @@ function Resultado({ mapa, entrada, onCta }) {
       {anos.map((a) => (
         <CardAno key={a.ano} leitura={a} mapa={mapa} />
       ))}
+
+      <div className="card" style={{ textAlign: 'center', marginTop: 44 }}>
+        <span className="eyebrow">Compatibilidade</span>
+        <h3 style={{ marginTop: 8 }}>E com aquela pessoa, vocês combinam?</h3>
+        <p className="ocultos">Cruze o seu mapa com o de alguém: Day Masters, palácio do cônjuge e se um completa o outro.</p>
+        <button type="button" className="btn" style={{ marginTop: 10 }} onClick={onCompat}>Comparar com alguém ✦</button>
+      </div>
 
       <div className="cta-box">
         <span className="eyebrow">Próxima camada</span>
