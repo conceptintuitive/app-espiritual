@@ -91,7 +91,14 @@ export default function AbaInicio({ perfil, leitura, onIr }) {
           <ul className="ma-itens">
             {p.itens.map((it) => (
               <li key={it.chave}>
-                <a href={it.href} className={`ma-item ma-${it.estado}`} onClick={() => evento('ma_leitura', { item: it.chave, estado: it.estado })}>
+                <a href={it.href} className={`ma-item ma-${it.estado}`} onClick={() => {
+                  evento('ma_leitura', { item: it.chave, estado: it.estado });
+                  // Quem já está na Minha Área vai direto pro conteúdo do Manual: a abertura
+                  // (Olho Cósmico) fica pra quem chega pelo e-mail logo depois da compra.
+                  if (it.chave === 'manual' && it.estado === 'aberto') {
+                    try { window.localStorage.setItem(`ic_olho_visto_${p.id}`, '1'); } catch {}
+                  }
+                }}>
                   <span className="ma-icone" aria-hidden="true">{it.estado === 'aberto' ? '✓' : it.estado === 'travado' ? '🔒' : '◐'}</span>
                   <span className="ma-item-txt">
                     <strong>{it.titulo}</strong>

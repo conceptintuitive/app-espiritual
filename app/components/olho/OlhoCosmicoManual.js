@@ -47,17 +47,19 @@ async function resolverLocal(row) {
   let lat = num(row.latitude);
   let lon = num(row.longitude);
   let tz = FUSOS_BR.has(row.fuso_iana) ? row.fuso_iana : null;
-  let name = nomeDoTexto(row.local_nascimento);
-
-  if (lat !== null && lon !== null && tz && name) return { name, lat, lon, tz };
+  // "Vitoria ES" (texto livre, sem vírgula) → "Vitoria"; o nome oficial, com acento, vem da base abaixo.
+  let name = nomeDoTexto(row.local_nascimento).replace(/\s+[A-Za-z]{2}$/, '');
 
   try {
     const lista = await carregarMunicipios();
     const ibge = num(row.municipio_ibge);
-    const m = (ibge && lista.find((x) => x.ibge === ibge))
+    // Só renomeia com o município exato (IBGE ou nome digitado); o "mais
+    // próximo" por coordenada pode ser outro lugar e só serve pro fuso.
+    const exato = (ibge && lista.find((x) => x.ibge === ibge))
       || (row.local_nascimento && resolverMunicipio(lista, row.local_nascimento))
-      || (lat !== null && lon !== null && municipioMaisProximo(lista, lat, lon))
       || null;
+    if (exato) name = exato.nome;
+    const m = exato || (lat !== null && lon !== null && municipioMaisProximo(lista, lat, lon)) || null;
     if (m) {
       return {
         name: name || m.nome,

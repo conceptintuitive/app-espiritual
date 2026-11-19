@@ -53,6 +53,13 @@
 .skycap .l3 { margin-top: 8px; font-family: 'Instrument Serif', serif; font-style: italic; font-size: 17px; color: #e9dcc6; min-height: 1px; }
 .skycap .l2 { margin-top: 12px; font-size: 10.5px; letter-spacing: .24em; text-transform: uppercase; color: #d9cbb3; font-weight: 300; }
 .zen { position: absolute; left: 0; right: 0; top: calc(48.5% + 26px); text-align: center; font-size: 9.5px; letter-spacing: .3em; text-transform: uppercase; color: rgba(242,199,123,.85); opacity: 0; }
+/* No desktop a estrela do zênite (imagem e4) cresce com a largura: o rótulo desce junto. */
+.largo .zen { top: calc(48.5% + max(26px, 3.8vw)); }
+/* Modo manual: o fim da abertura (preto) se desfaz no fundo do Manual em vez de cortar seco. */
+.emenda { height: 120px; pointer-events: none;
+  background: linear-gradient(180deg, #000 0%, rgba(0,0,0,0.5) 45%, rgba(0,0,0,0) 100%); }
+.manual .stage::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 9%; pointer-events: none;
+  background: linear-gradient(180deg, rgba(0,0,0,0), #000); }
 .flash {
   position: absolute; inset: 0; opacity: 0; pointer-events: none;
   background: radial-gradient(circle at 50% 48%, rgba(255,226,170,.95) 0%, rgba(242,170,80,.45) 22%, transparent 60%);
