@@ -29,11 +29,15 @@ export async function POST(request) {
     const { error } = await sb
       .from('seu_dia_perfis')
       .upsert({ email, link_enviado_em: new Date().toISOString() }, { onConflict: 'email' });
-    if (error) throw error;
+    if (error) {
+      // Quase sempre: a migração 0017_seu_dia.sql ainda não rodou (tabela não existe).
+      console.error('[seu-dia/entrar] Supabase:', error.code, error.message);
+      throw error;
+    }
 
     const link = `${getBaseUrl()}/seu-dia/entrar?t=${encodeURIComponent(tokenLogin(email))}`;
     const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({
+    const { error: erroEmail } = await resend.emails.send({
       from: 'Intuitive Concept <acesso@intuitiveconcept.com.br>',
       to: email,
       subject: 'Seu link para entrar no Seu Dia ✦',
@@ -47,6 +51,14 @@ export async function POST(request) {
           <p style="margin:26px 0 0;font-size:12px;color:#9e8cbd">Se não foi você que pediu, ignore este e-mail.</p>
         </div>`,
     });
+    // O SDK do Resend não lança erro: devolve { error }. Sem esta checagem a
+    // pessoa via "link enviado" e o e-mail nunca saía.
+    if (erroEmail) {
+      console.error('[seu-dia/entrar] Resend:', erroEmail.name, erroEmail.message);
+      // Libera um novo pedido na hora, em vez de segurar 60s por um envio que falhou.
+      await sb.from('seu_dia_perfis').update({ link_enviado_em: null }).eq('email', email);
+      throw new Error('resend');
+    }
     return NextResponse.json({ ok: true });
   } catch (e) {
     console.error('[seu-dia/entrar]', e);
