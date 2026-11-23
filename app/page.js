@@ -1,42 +1,39 @@
 'use client';
 
+// Home = landing + quiz em 4 etapas (+ tela de carregamento).
+// Visual da Minha Área desde nov/2026 (app/home.module.css). A lógica do quiz
+// (estados, validação, sugestão de e-mail, /api/lead-parcial, /api/gerar-analise,
+// eventos GA4/Meta/TikTok, pré-preenchimento, ?quiz=1, ?refazer=1,
+// EVENTO_ABRIR_QUIZ) não mudou no redesign.
+// Peso: é a página dos anúncios. Nada de OlhoCosmico nem lib/manualgenerator.js
+// aqui; a prévia do Seu Dia (lib/seuDia.js) entra via next/dynamic.
+
 import { useState, useEffect, useRef } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { TESTIMONIALS } from '@/lib/testimonials';
 import { emailValido, sugestaoEmail } from '@/lib/emailValidacao';
 import CidadeAutocomplete from '@/app/components/CidadeAutocomplete';
 import { lerCeuDados, consumirAbrirQuiz, limparCeuDados } from '@/lib/ceuDados';
 import { lerPerfil, salvarPerfil } from '@/lib/perfilLocal';
+import { TESTE_SEU_DIA_ATIVO } from '@/lib/testeSeuDia';
 import SiteNav, { EVENTO_ABRIR_QUIZ } from '@/app/components/SiteNav';
+import h from './home.module.css';
 
-// ── FAQ accordion ─────────────────────────────────────────────────────────────
-function FaqItem({ q, a }) {
+const PreviaSeuDia = dynamic(() => import('@/app/components/home/PreviaSeuDia'), { ssr: false });
+
+const ROTULO_CTA = 'Fazer meu mapa grátis — 1 min';
+
+// ── Pergunta frequente (linha com divisor) ────────────────────────────────────
+function FaqItem({ q, a, id }) {
   const [open, setOpen] = useState(false);
   return (
-    <div style={{
-      borderRadius: 14, border: '1px solid rgba(139,92,246,.15)',
-      background: 'rgba(18,18,30,.7)', overflow: 'hidden', marginBottom: 10,
-    }}>
-      <button
-        onClick={() => setOpen(o => !o)}
-        style={{
-          width: '100%', padding: '18px 22px', background: 'none', border: 'none',
-          cursor: 'pointer', display: 'flex', justifyContent: 'space-between',
-          alignItems: 'center', gap: 12, textAlign: 'left',
-        }}
-      >
-        <span style={{ fontFamily: 'var(--F)', fontWeight: 600, fontSize: 16, color: '#f0eff4' }}>{q}</span>
-        <span style={{
-          fontSize: 22, color: '#d4a853', flexShrink: 0,
-          transform: open ? 'rotate(45deg)' : 'none',
-          transition: 'transform .25s ease',
-        }}>+</span>
+    <div className={`${h.faqItem} ${open ? h.faqAberto : ''}`}>
+      <button type="button" className={h.faqBotao} onClick={() => setOpen(o => !o)} aria-expanded={open} aria-controls={id}>
+        <span className={h.faqPergunta}>{q}</span>
+        <span className={h.faqMais} aria-hidden="true">+</span>
       </button>
-      {open && (
-        <div style={{ padding: '0 22px 18px', fontSize: 15, color: '#9896a8', lineHeight: 1.65, fontFamily: 'var(--F)' }}>
-          {a}
-        </div>
-      )}
+      {open && <p id={id} className={h.faqResposta}>{a}</p>}
     </div>
   );
 }
@@ -215,82 +212,39 @@ function QuizOverlay({ onClose }) {
     setEmailSugestao('');
   };
 
-  const AREAS = [
-    { emoji: '💔', label: 'Amor e Relacionamentos' },
-    { emoji: '💼', label: 'Carreira e Propósito' },
-    { emoji: '💰', label: 'Dinheiro e Abundância' },
-    { emoji: '🌀', label: 'Autoconhecimento' },
-  ];
+  const AREAS = ['Amor e Relacionamentos', 'Carreira e Propósito', 'Dinheiro e Abundância', 'Autoconhecimento'];
+  const PADROES = ['O tempo todo', 'Às vezes', 'Não tenho certeza'];
 
-  const PADROES = [
-    { emoji: '😩', label: 'O tempo todo' },
-    { emoji: '😐', label: 'Às vezes' },
-    { emoji: '🤔', label: 'Não tenho certeza' },
-  ];
-
-  const animClass = direction === 'forward' ? 'quiz-slide-in' : 'quiz-slide-back';
+  const animClass = direction === 'forward' ? h.slideIn : h.slideBack;
 
   return (
-    <div style={{
-      position: 'fixed', inset: 0, zIndex: 1000,
-      background: 'rgba(10,10,18,.96)', backdropFilter: 'blur(18px)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      padding: '16px',
-    }}>
-      {/* Close */}
-      <button
-        onClick={onClose}
-        style={{
-          position: 'absolute', top: 18, right: 18,
-          background: 'rgba(139,92,246,.12)', border: '1px solid rgba(139,92,246,.25)',
-          borderRadius: '50%', width: 40, height: 40,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          cursor: 'pointer', color: '#9896a8', fontSize: 20, lineHeight: 1,
-          transition: 'background .2s',
-        }}
-      >×</button>
+    <div className={h.quiz} role="dialog" aria-modal="true" aria-label="Fazer meu mapa">
+      <button type="button" className={h.fechar} onClick={onClose} aria-label="Fechar">×</button>
 
-      <div style={{ width: '100%', maxWidth: 520 }}>
+      <div className={h.quizCaixa}>
 
-        {/* Progress bar */}
-        <div style={{ marginBottom: 32 }}>
-          <div style={{ display: 'flex', gap: 6 }}>
-            {[1, 2, 3, 4].map(s => (
-              <div key={s} style={{
-                flex: 1, height: 4, borderRadius: 2,
-                background: s <= step ? 'linear-gradient(90deg,#8b5cf6,#a78bfa)' : 'rgba(139,92,246,.18)',
-                transition: 'background .3s ease',
-              }} />
-            ))}
+        {/* Progresso */}
+        <div className={h.topoQuiz}>
+          <div className={h.progresso} aria-hidden="true">
+            {[1, 2, 3, 4].map(s => <span key={s} className={s <= step ? h.on : ''} />)}
           </div>
-          <p style={{ textAlign: 'center', marginTop: 10, fontSize: 13, color: '#6b6980', fontFamily: 'var(--F)' }}>
-            Etapa {step} de 4
-          </p>
-          {step < 4 && (
-            <p style={{ textAlign: 'center', marginTop: 6, fontSize: 13, color: '#9896a8', fontFamily: 'var(--F)' }}>
-              Faltam só {4 - step} pergunta{4 - step > 1 ? 's' : ''}. O que vem depois muda como você vê os próximos 12 meses.
+          {step < 4 && !loading && (
+            <p className={h.faltam}>
+              {4 - step > 1 ? `Faltam só ${4 - step} perguntas.` : 'Falta só 1 pergunta.'} O que vem depois muda como você vê os próximos 12 meses.
             </p>
           )}
         </div>
 
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '20px 0' }}>
-            <div style={{ width: 52, height: 52, borderRadius: '50%', border: '3px solid rgba(139,92,246,.2)', borderTopColor: '#8b5cf6', animation: 'spin .9s linear infinite', margin: '0 auto 20px' }} />
-            <h3 style={{ fontFamily: 'var(--T)', fontWeight: 700, fontSize: 22, color: '#f0eff4', marginBottom: 18 }}>
-              Gerando seu mapa...
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, textAlign: 'left', maxWidth: 320, margin: '0 auto' }}>
+          <div className={h.carregando} role="status">
+            <div className={h.spinner} />
+            <h3 className={h.carregandoTitulo}>Gerando seu mapa...</h3>
+            <ul className={h.passos}>
               {['Calculando seu mapa astral…', 'Analisando seus padrões…', 'Gerando seu diagnóstico…', 'Preparando seu resultado…'].map((text, i) => (
-                <p key={i} style={{
-                  fontSize: 15, fontFamily: 'var(--F)',
-                  color: loadingStep > i ? '#d4a853' : 'rgba(152,150,168,.3)',
-                  transition: 'color .5s ease',
-                }}>✦ {text}</p>
+                <li key={i} className={`${h.passo} ${loadingStep > i ? h.passoOn : ''}`}>{text}</li>
               ))}
-            </div>
-            <p style={{ fontSize: 13, color: '#6b6980', fontFamily: 'var(--F)', marginTop: 18 }}>
-              Isso leva de 10 a 20 segundos.
-            </p>
+            </ul>
+            <p className={h.carregandoNota}>Isso leva de 10 a 20 segundos.</p>
           </div>
         ) : (
           <div className={animClass} key={step}>
@@ -298,30 +252,18 @@ function QuizOverlay({ onClose }) {
             {/* STEP 1 — Área travada */}
             {step === 1 && (
               <div>
-                <p style={{ fontSize: 13, color: '#8b5cf6', fontFamily: 'var(--F)', fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 10 }}>Etapa 1</p>
-                <h2 style={{ fontFamily: 'var(--T)', fontWeight: 800, fontSize: 'clamp(20px,4vw,26px)', color: '#f0eff4', marginBottom: 8, lineHeight: 1.25 }}>
-                  Qual área da sua vida está mais travada agora?
-                </h2>
-                <p style={{ fontSize: 15, color: '#9896a8', fontFamily: 'var(--F)', marginBottom: 16 }}>
-                  Escolha a que mais ressoa com você neste momento.
-                </p>
-                <p style={{ fontSize: 13, color: '#6b6980', fontFamily: 'var(--F)', marginBottom: 24, lineHeight: 1.5 }}>
+                <p className={h.etapa}>Etapa 1</p>
+                <h2 className={h.pergunta}>Qual área da sua vida está mais travada agora?</h2>
+                <p className={h.apoio}>Escolha a que mais ressoa com você neste momento.</p>
+                <p className={h.apoioMudo}>
                   Seu mapa está sendo calculado com base exatamente nesses números — não existe combinação igual à sua. Se você sair agora, vai precisar recomeçar do zero e perder o alinhamento do dia de hoje.
                 </p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {AREAS.map(({ emoji, label }) => (
-                    <button key={label}
+                <div className={h.opcoes}>
+                  {AREAS.map((label) => (
+                    <button key={label} type="button"
+                      className={`${h.opcao} ${areaTraada === label ? h.opcaoOn : ''}`}
                       onClick={() => { setAreaTravada(label); goNext(2); }}
-                      style={{
-                        padding: '16px 20px', borderRadius: 14, cursor: 'pointer', textAlign: 'left',
-                        border: `1px solid ${areaTraada === label ? '#8b5cf6' : 'rgba(139,92,246,.2)'}`,
-                        background: areaTraada === label ? 'rgba(139,92,246,.18)' : 'rgba(18,18,30,.8)',
-                        color: '#f0eff4', fontFamily: 'var(--F)', fontSize: 16, fontWeight: 500,
-                        display: 'flex', alignItems: 'center', gap: 12,
-                        transition: 'all .2s ease',
-                      }}
                     >
-                      <span style={{ fontSize: 22 }}>{emoji}</span>
                       {label}
                     </button>
                   ))}
@@ -332,226 +274,146 @@ function QuizOverlay({ onClose }) {
             {/* STEP 2 — Padrão */}
             {step === 2 && (
               <div>
-                <p style={{ fontSize: 13, color: '#8b5cf6', fontFamily: 'var(--F)', fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 10 }}>Etapa 2</p>
-                <h2 style={{ fontFamily: 'var(--T)', fontWeight: 800, fontSize: 'clamp(20px,4vw,26px)', color: '#f0eff4', marginBottom: 8, lineHeight: 1.25 }}>
-                  Você sente que repete os mesmos padrões, mesmo tentando mudar?
-                </h2>
-                <p style={{ fontSize: 15, color: '#9896a8', fontFamily: 'var(--F)', marginBottom: 24 }}>
-                  Seja honesto — não existe resposta errada.
-                </p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {PADROES.map(({ emoji, label }) => (
-                    <button key={label}
+                <p className={h.etapa}>Etapa 2</p>
+                <h2 className={h.pergunta}>Você sente que repete os mesmos padrões, mesmo tentando mudar?</h2>
+                <p className={h.apoio}>Seja honesto — não existe resposta errada.</p>
+                <div className={h.opcoes}>
+                  {PADROES.map((label) => (
+                    <button key={label} type="button"
+                      className={`${h.opcao} ${padrao === label ? h.opcaoOn : ''}`}
                       onClick={() => { setPadrao(label); goNext(3); }}
-                      style={{
-                        padding: '16px 20px', borderRadius: 14, cursor: 'pointer', textAlign: 'left',
-                        border: `1px solid ${padrao === label ? '#8b5cf6' : 'rgba(139,92,246,.2)'}`,
-                        background: padrao === label ? 'rgba(139,92,246,.18)' : 'rgba(18,18,30,.8)',
-                        color: '#f0eff4', fontFamily: 'var(--F)', fontSize: 16, fontWeight: 500,
-                        display: 'flex', alignItems: 'center', gap: 12,
-                        transition: 'all .2s ease',
-                      }}
                     >
-                      <span style={{ fontSize: 22 }}>{emoji}</span>
                       {label}
                     </button>
                   ))}
                 </div>
-                <button onClick={() => goBack(1)} style={{ background: 'none', border: 'none', color: '#6b6980', fontSize: 14, fontFamily: 'var(--F)', cursor: 'pointer', marginTop: 16, display: 'block', width: '100%', textAlign: 'center' }}>
-                  ← Voltar
-                </button>
+                <button type="button" className={h.voltar} onClick={() => goBack(1)}>← Voltar</button>
               </div>
             )}
 
             {/* STEP 3 — Dados de nascimento */}
             {step === 3 && (
               <div>
-                <p style={{ fontSize: 13, color: '#8b5cf6', fontFamily: 'var(--F)', fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 10 }}>Etapa 3</p>
-                <h2 style={{ fontFamily: 'var(--T)', fontWeight: 800, fontSize: 'clamp(20px,4vw,26px)', color: '#f0eff4', marginBottom: 8, lineHeight: 1.25 }}>
-                  Qual é a sua data de nascimento?
-                </h2>
-                <p style={{ fontSize: 15, color: '#9896a8', fontFamily: 'var(--F)', marginBottom: 24 }}>
-                  A data é obrigatória. Hora e cidade são opcionais.
-                </p>
+                <p className={h.etapa}>Etapa 3</p>
+                <h2 className={h.pergunta}>Qual é a sua data de nascimento?</h2>
+                <p className={h.apoio}>A data é obrigatória. Hora e cidade são opcionais.</p>
 
-                {/* Data */}
-                <input
-                  type="date"
-                  value={dataNasc}
-                  onChange={e => setDataNasc(e.target.value)}
-                  style={{
-                    width: '100%', padding: '15px 18px', borderRadius: 14,
-                    border: '1px solid rgba(139,92,246,.3)', background: 'rgba(18,18,30,.9)',
-                    color: '#f0eff4', fontFamily: 'var(--F)', fontSize: 17,
-                    outline: 'none', colorScheme: 'dark', marginBottom: 18, boxSizing: 'border-box',
-                  }}
-                />
+                <div className={h.campos}>
+                  {/* Data */}
+                  <div>
+                    <label className={h.rotulo} htmlFor="quiz-data">Data de nascimento</label>
+                    <input
+                      id="quiz-data"
+                      type="date"
+                      className={h.campo}
+                      value={dataNasc}
+                      onChange={e => setDataNasc(e.target.value)}
+                    />
+                  </div>
 
-                {/* Hora */}
-                <label style={{ display: 'block', fontSize: 13, color: '#9896a8', fontFamily: 'var(--F)', marginBottom: 6 }}>
-                  Hora de nascimento <span style={{ color: '#6b6980' }}>(opcional)</span>
-                </label>
-                <input
-                  type="time"
-                  value={horaNasc}
-                  onChange={e => setHoraNasc(e.target.value)}
-                  disabled={noSabeHora}
-                  style={{
-                    width: '100%', padding: '13px 18px', borderRadius: 14,
-                    border: '1px solid rgba(139,92,246,.3)', background: 'rgba(18,18,30,.9)',
-                    color: noSabeHora ? '#4a4860' : '#f0eff4', fontFamily: 'var(--F)', fontSize: 16,
-                    outline: 'none', colorScheme: 'dark', marginBottom: 10, boxSizing: 'border-box',
-                    opacity: noSabeHora ? 0.45 : 1, cursor: noSabeHora ? 'not-allowed' : 'auto',
-                    transition: 'opacity .2s',
-                  }}
-                />
-                <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18, cursor: 'pointer' }}>
-                  <input
-                    type="checkbox"
-                    checked={noSabeHora}
-                    onChange={e => { setNoSabeHora(e.target.checked); if (e.target.checked) setHoraNasc(''); }}
-                    style={{ width: 16, height: 16, accentColor: '#8b5cf6', cursor: 'pointer' }}
-                  />
-                  <span style={{ fontSize: 13, color: '#9896a8', fontFamily: 'var(--F)' }}>Não sei minha hora de nascimento</span>
-                </label>
+                  {/* Hora */}
+                  <div>
+                    <label className={h.rotulo} htmlFor="quiz-hora">
+                      Hora de nascimento <span className={h.dica}>(opcional)</span>
+                    </label>
+                    <input
+                      id="quiz-hora"
+                      type="time"
+                      className={h.campo}
+                      value={horaNasc}
+                      onChange={e => setHoraNasc(e.target.value)}
+                      disabled={noSabeHora}
+                    />
+                    <label className={h.check}>
+                      <input
+                        type="checkbox"
+                        checked={noSabeHora}
+                        onChange={e => { setNoSabeHora(e.target.checked); if (e.target.checked) setHoraNasc(''); }}
+                      />
+                      <span>Não sei minha hora de nascimento</span>
+                    </label>
+                  </div>
 
-                {/* Cidade */}
-                <label style={{ display: 'block', fontSize: 13, color: '#9896a8', fontFamily: 'var(--F)', marginBottom: 6 }}>
-                  Cidade onde nasceu <span style={{ color: '#6b6980' }}>(opcional)</span>
-                </label>
-                {/* Autocomplete com os municípios do IBGE; texto livre continua valendo */}
-                <div style={{ marginBottom: 10 }}>
-                  <CidadeAutocomplete
-                    value={localNasc}
-                    onChangeText={(t) => { setLocalNasc(t); setMunicipio(null); }}
-                    onSelect={(m) => { setLocalNasc(`${m.nome}, ${m.uf}`); setMunicipio(m); }}
-                    placeholder="Ex: São Paulo, SP"
-                    inputStyle={{
-                      width: '100%', padding: '13px 18px', borderRadius: 14,
-                      border: '1px solid rgba(139,92,246,.3)', background: 'rgba(18,18,30,.9)',
-                      color: '#f0eff4', fontFamily: 'var(--F)', fontSize: 16,
-                      outline: 'none', boxSizing: 'border-box',
-                    }}
-                  />
+                  {/* Cidade: autocomplete com os municípios do IBGE; texto livre continua valendo */}
+                  <div>
+                    <label className={h.rotulo} htmlFor="quiz-cidade">
+                      Cidade onde nasceu <span className={h.dica}>(opcional)</span>
+                    </label>
+                    <CidadeAutocomplete
+                      id="quiz-cidade"
+                      value={localNasc}
+                      onChangeText={(t) => { setLocalNasc(t); setMunicipio(null); }}
+                      onSelect={(m) => { setLocalNasc(`${m.nome}, ${m.uf}`); setMunicipio(m); }}
+                      placeholder="Ex: São Paulo, SP"
+                      inputClassName={h.campo}
+                      tema="ma"
+                    />
+                    <p className={h.ajuda}>Com hora e cidade calculamos seu Ascendente com precisão — mas não são obrigatórios.</p>
+                  </div>
                 </div>
 
-                {/* Texto de apoio */}
-                <p style={{ fontSize: 13, color: '#6b6980', fontFamily: 'var(--F)', marginBottom: 22, lineHeight: 1.5 }}>
-                  💡 Com hora e cidade calculamos seu Ascendente com precisão — mas não são obrigatórios.
-                </p>
-
                 <button
+                  type="button"
+                  className={`${h.btn} ${h.btnLargo}`}
+                  style={dataNasc ? undefined : { opacity: .55, cursor: 'not-allowed' }}
                   onClick={() => { if (!dataNasc) { setErro('Selecione sua data de nascimento.'); return; } goNext(4); }}
-                  style={{
-                    width: '100%', padding: '16px', borderRadius: 999, border: 'none',
-                    background: dataNasc ? 'linear-gradient(90deg,#7c3aed,#8b5cf6)' : 'rgba(139,92,246,.3)',
-                    color: '#fff', fontFamily: 'var(--T)', fontWeight: 700, fontSize: 17,
-                    cursor: dataNasc ? 'pointer' : 'not-allowed', transition: 'all .2s',
-                  }}
                 >
                   Continuar →
                 </button>
-                {erro && <p style={{ color: 'rgba(254,202,202,.9)', fontSize: 14, fontFamily: 'var(--F)', marginTop: 12, textAlign: 'center' }}>{erro}</p>}
-                <button onClick={() => goBack(2)} style={{ background: 'none', border: 'none', color: '#6b6980', fontSize: 14, fontFamily: 'var(--F)', cursor: 'pointer', marginTop: 14, display: 'block', width: '100%', textAlign: 'center' }}>
-                  ← Voltar
-                </button>
+                {erro && <p className={h.erro} style={{ textAlign: 'center' }}>{erro}</p>}
+                <button type="button" className={h.voltar} onClick={() => goBack(2)}>← Voltar</button>
               </div>
             )}
 
             {/* STEP 4 — Nome + Email */}
             {step === 4 && (
               <div>
-                <p style={{ fontSize: 13, color: '#8b5cf6', fontFamily: 'var(--F)', fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 10 }}>Etapa 4</p>
-                <h2 style={{ fontFamily: 'var(--T)', fontWeight: 800, fontSize: 'clamp(20px,4vw,26px)', color: '#f0eff4', marginBottom: 8, lineHeight: 1.25 }}>
-                  Quase lá! Onde enviamos seu resultado?
-                </h2>
-                <p style={{ fontSize: 15, color: '#9896a8', fontFamily: 'var(--F)', marginBottom: 24 }}>
-                  Seu mapa personalizado ficará pronto em instantes.
-                </p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 20 }}>
+                <p className={h.etapa}>Etapa 4</p>
+                <h2 className={h.pergunta}>Quase lá! Onde enviamos seu resultado?</h2>
+                <p className={h.apoio}>Seu mapa personalizado ficará pronto em instantes.</p>
+                <div className={h.campos}>
                   <div>
-                    <label style={{ display: 'block', fontSize: 14, color: '#9896a8', fontFamily: 'var(--F)', marginBottom: 7 }}>Seu nome completo (de nascimento)</label>
+                    <label className={h.rotulo} htmlFor="quiz-nome">Seu nome completo (de nascimento)</label>
                     <input
+                      id="quiz-nome"
                       type="text"
+                      className={h.campo}
                       value={nome}
                       onChange={e => setNome(e.target.value)}
                       placeholder="Ex: Maria da Silva Santos"
-                      style={{
-                        width: '100%', padding: '14px 16px', borderRadius: 14,
-                        border: '1px solid rgba(139,92,246,.3)', background: 'rgba(18,18,30,.9)',
-                        color: '#f0eff4', fontFamily: 'var(--F)', fontSize: 16,
-                        outline: 'none',
-                      }}
+                      autoComplete="name"
                     />
-                    <p style={{ fontSize: 12, color: '#6b6980', fontFamily: 'var(--F)', marginTop: 6, lineHeight: 1.4 }}>
-                      Use o nome que está na sua certidão de nascimento — ele é a base do seu mapa numerológico.
-                    </p>
-                    {nomeErro && (
-                      <p style={{ fontSize: 13, color: 'rgba(254,202,202,.9)', fontFamily: 'var(--F)', marginTop: 6 }}>
-                        {nomeErro}
-                      </p>
-                    )}
+                    <p className={h.ajuda}>Use o nome que está na sua certidão de nascimento — ele é a base do seu mapa numerológico.</p>
+                    {nomeErro && <p className={h.erro}>{nomeErro}</p>}
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: 14, color: '#9896a8', fontFamily: 'var(--F)', marginBottom: 7 }}>Seu e-mail</label>
+                    <label className={h.rotulo} htmlFor="quiz-email">Seu e-mail</label>
                     <input
+                      id="quiz-email"
                       type="email"
+                      className={`${h.campo} ${emailErro ? h.campoErro : ''}`}
                       value={email}
                       onChange={e => { setEmail(e.target.value.replace(/\s/g, '')); setEmailErro(''); setEmailSugestao(''); }}
                       onBlur={handleEmailBlur}
                       placeholder="seu@email.com"
-                      style={{
-                        width: '100%', padding: '14px 16px', borderRadius: 14,
-                        border: `1px solid ${emailErro ? 'rgba(239,68,68,.6)' : 'rgba(139,92,246,.3)'}`,
-                        background: 'rgba(18,18,30,.9)',
-                        color: '#f0eff4', fontFamily: 'var(--F)', fontSize: 16,
-                        outline: 'none',
-                      }}
+                      autoComplete="email"
                     />
                     {emailSugestao && (
-                      <p style={{ fontSize: 13, color: '#9896a8', fontFamily: 'var(--F)', marginTop: 6 }}>
+                      <p className={h.sugestao}>
                         Você quis dizer{' '}
-                        <button
-                          type="button"
-                          onClick={aplicarSugestaoEmail}
-                          style={{ background: 'none', border: 'none', padding: 0, color: '#d4a853', textDecoration: 'underline', cursor: 'pointer', fontFamily: 'var(--F)', fontSize: 13 }}
-                        >
-                          {emailSugestao}
-                        </button>
+                        <button type="button" onClick={aplicarSugestaoEmail}>{emailSugestao}</button>
                         ?
                       </p>
                     )}
-                    {emailErro && (
-                      <p style={{ fontSize: 13, color: 'rgba(254,202,202,.9)', fontFamily: 'var(--F)', marginTop: 6 }}>
-                        {emailErro}
-                      </p>
-                    )}
+                    {emailErro && <p className={h.erro}>{emailErro}</p>}
                   </div>
                 </div>
-                {erro && (
-                  <div style={{ borderRadius: 12, border: '1px solid rgba(239,68,68,.4)', background: 'rgba(127,29,29,.2)', padding: '12px 16px', color: 'rgba(254,202,202,.97)', fontSize: 14, fontFamily: 'var(--F)', marginBottom: 16 }}>
-                    ⚠️ {erro}
-                  </div>
-                )}
-                <button
-                  onClick={handleSubmit}
-                  disabled={loading}
-                  style={{
-                    width: '100%', padding: '17px', borderRadius: 999, border: 'none',
-                    background: 'linear-gradient(90deg,#7c3aed,#8b5cf6)',
-                    color: '#fff', fontFamily: 'var(--T)', fontWeight: 700, fontSize: 17,
-                    cursor: 'pointer', boxShadow: '0 16px 50px rgba(139,92,246,.3)',
-                    opacity: loading ? .6 : 1, transition: 'all .2s',
-                  }}
-                >
+                {erro && <div className={h.erroCaixa}>{erro}</div>}
+                <button type="button" className={`${h.btn} ${h.btnLargo}`} onClick={handleSubmit} disabled={loading}>
                   Ver meu mapa agora
                 </button>
-                <p style={{ textAlign: 'center', fontSize: 13, color: '#6b6980', fontFamily: 'var(--F)', marginTop: 12 }}>
-                  🔒 Dados seguros · Resultado imediato · Gratuito
-                </p>
-                <button onClick={() => goBack(3)} style={{ background: 'none', border: 'none', color: '#6b6980', fontSize: 14, fontFamily: 'var(--F)', cursor: 'pointer', marginTop: 10, display: 'block', width: '100%', textAlign: 'center' }}>
-                  ← Voltar
-                </button>
+                <p className={h.seguro}>Dados seguros · Resultado imediato · Gratuito</p>
+                <button type="button" className={h.voltar} onClick={() => goBack(3)}>← Voltar</button>
               </div>
             )}
 
@@ -581,8 +443,6 @@ export default function Home() {
     return () => window.removeEventListener(EVENTO_ABRIR_QUIZ, openQuiz);
   }, []);
 
-  // Orbs ref
-  const orbsBuilt = useRef(false);
   useEffect(() => {
     if (typeof document === 'undefined') return;
     document.body.style.overflow = quizOpen ? 'hidden' : '';
@@ -596,9 +456,16 @@ export default function Home() {
     { n: '04', title: 'Direção Prática', desc: 'Não só o diagnóstico — o que fazer agora, com plano de ação e rituais personalizados.' },
   ];
 
+  // "O que eu recebo de graça?" bate com os Termos (seção 5): o teste de 7 dias
+  // é sem cartão, começa quando a pessoa cria a Minha Área e não cobra sozinho.
+  const GRATIS = 'Seu Mapa: seu padrão central, seu arquétipo, seus principais bloqueios e uma direção prática, tudo personalizado com sua data de nascimento.'
+    + (TESTE_SEU_DIA_ATIVO
+      ? ' E, ao criar sua Minha Área depois do mapa, 7 dias do Seu Dia Completo (o que fazer, o que evitar e as melhores horas de cada dia), sem cartão e sem cobrança automática. Depois dos 7 dias, o resumo do seu dia continua grátis.'
+      : ' Depois do mapa, o resumo do seu dia na Minha Área também é grátis.');
+
   const FAQS = [
     { q: 'Como funciona o mapa espiritual?', a: 'Combinamos Numerologia e análise de padrões comportamentais para revelar o que se repete na sua vida, o que te trava e qual é o próximo passo mais alinhado. Sem misticismo — só clareza.' },
-    { q: 'O que eu recebo de graça?', a: 'Um diagnóstico completo do seu padrão central, seu arquétipo, seus principais bloqueios e uma direção prática. Tudo personalizado com sua data de nascimento.' },
+    { q: 'O que eu recebo de graça?', a: GRATIS },
     { q: 'Preciso saber minha hora de nascimento?', a: 'Não. A análise funciona perfeitamente só com sua data de nascimento. A hora é opcional e, quando informada, aprofunda a leitura astrológica.' },
     { q: 'Meus dados estão seguros?', a: 'Sim. Seus dados são usados exclusivamente para gerar seu mapa e nunca são compartilhados com terceiros. Você pode cancelar comunicações a qualquer momento.' },
     { q: 'Quanto tempo demora?', a: 'Menos de 1 minuto para preencher o quiz. O resultado aparece na tela imediatamente após a análise.' },
@@ -607,144 +474,8 @@ export default function Home() {
   return (
     <>
       <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;1,700&family=DM+Sans:wght@400;500;600&display=swap');
-
-        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body { max-width: 100%; overflow-x: hidden; }
-
-        :root {
-          --bg:   #0a0a12;
-          --card: #12121e;
-          --pu:   #8b5cf6;
-          --pg:   #a78bfa;
-          --gold: #d4a853;
-          --t1:   #f0eff4;
-          --t2:   #9896a8;
-          --t3:   #6b6980;
-          --T: 'Playfair Display', Georgia, serif;
-          --F: 'DM Sans', system-ui, sans-serif;
-        }
-
-        body {
-          font-family: var(--F);
-          color: var(--t1);
-          background: var(--bg);
-          min-height: 100vh;
-          line-height: 1.6;
-        }
-
-        /* Orbs */
-        .orb {
-          position: fixed; pointer-events: none; z-index: 0;
-          border-radius: 50%; filter: blur(120px);
-          animation: orbPulse 8s ease-in-out infinite;
-        }
-        .orb-purple { width: 600px; height: 600px; top: -200px; left: -200px; background: rgba(139,92,246,.12); animation-delay: 0s; }
-        .orb-gold   { width: 400px; height: 400px; bottom: -100px; right: -100px; background: rgba(212,168,83,.08); animation-delay: 4s; }
-
-        @keyframes orbPulse { 0%,100%{opacity:.6} 50%{opacity:1} }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes fadeUp { from{opacity:0;transform:translateY(28px)} to{opacity:1;transform:none} }
-        @keyframes shimmer { 0%{transform:translateX(-160%) skewX(-22deg)} 100%{transform:translateX(200%) skewX(-22deg)} }
-        @keyframes glow { 0%,100%{opacity:.4} 50%{opacity:.75} }
-        @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
-
-        .a1 { animation: fadeUp .7s .05s ease-out both; }
-        .a2 { animation: fadeUp .7s .15s ease-out both; }
-        .a3 { animation: fadeUp .7s .25s ease-out both; }
-        .a4 { animation: fadeUp .7s .35s ease-out both; }
-        .a5 { animation: fadeUp .7s .45s ease-out both; }
-
-        /* Slide transitions for quiz steps */
-        @keyframes slideIn   { from{opacity:0;transform:translateX(32px)} to{opacity:1;transform:none} }
-        @keyframes slideBack { from{opacity:0;transform:translateX(-32px)} to{opacity:1;transform:none} }
-        .quiz-slide-in   { animation: slideIn   .28s ease-out both; }
-        .quiz-slide-back { animation: slideBack .28s ease-out both; }
-
-        /* Layout */
-        .ctr    { width: 100%; max-width: 1100px; margin: 0 auto; padding: 0 clamp(16px,4vw,28px); }
-        .ctr-sm { width: 100%; max-width: 700px;  margin: 0 auto; padding: 0 clamp(16px,4vw,28px); }
-
-        /* Sections */
-        .sec { position: relative; z-index: 10; padding: clamp(56px,9vh,100px) 0; }
-        .sec-alt { background: rgba(16,16,28,.6); }
-        .divider { height: 1px; background: linear-gradient(90deg,transparent,rgba(139,92,246,.12),transparent); position: relative; z-index: 10; }
-
-        /* CTA button */
-        .btn-cta {
-          display: inline-flex; align-items: center; justify-content: center; gap: 10px;
-          padding: clamp(15px,2vw,18px) clamp(28px,4vw,48px);
-          border-radius: 999px; border: none; cursor: pointer;
-          font-family: var(--T); font-weight: 700; font-size: clamp(15px,2vw,18px); color: #fff;
-          background: linear-gradient(90deg,#7c3aed,#8b5cf6);
-          box-shadow: 0 16px 52px rgba(139,92,246,.32);
-          position: relative; overflow: hidden;
-          transition: transform .2s, box-shadow .2s;
-        }
-        .btn-cta::after {
-          content: ''; position: absolute; inset: 0;
-          background: linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent);
-          transform: translateX(-160%) skewX(-22deg);
-          animation: shimmer 2.4s ease-in-out infinite;
-        }
-        .btn-cta:hover { transform: translateY(-3px); box-shadow: 0 24px 64px rgba(139,92,246,.42); }
-
-        /* Cards grid */
-        .grid-2x2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-        @media (max-width: 640px) { .grid-2x2 { grid-template-columns: 1fr; } }
-
-        .grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
-        @media (max-width: 900px) { .grid-3 { grid-template-columns: 1fr 1fr; } }
-        @media (max-width: 560px) { .grid-3 { grid-template-columns: 1fr; } }
-
-        /* Glass card */
-        .card {
-          border-radius: 20px; padding: clamp(20px,3vw,28px);
-          border: 1px solid rgba(139,92,246,.14); background: var(--card);
-          transition: transform .25s, border-color .25s, box-shadow .25s;
-        }
-        .card:hover { transform: translateY(-5px); border-color: rgba(139,92,246,.35); box-shadow: 0 22px 56px rgba(0,0,0,.4); }
-
-        /* Testimonial */
-        .testi {
-          border-radius: 20px; padding: 24px;
-          border: 1px solid rgba(139,92,246,.14); background: var(--card);
-        }
-
-        /* Badge */
-        .badge {
-          display: inline-flex; align-items: center; gap: 8px;
-          padding: 8px 18px; border-radius: 999px;
-          border: 1px solid rgba(212,168,83,.2); background: rgba(212,168,83,.06);
-          color: var(--gold); font-size: 14px; font-family: var(--F); font-weight: 500;
-          letter-spacing: .04em;
-        }
-
-        /* Proof pills */
-        .proof-pills { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
-        .proof-pill  { padding: 8px 16px; border-radius: 999px; font-size: 13px; font-family: var(--F); border: 1px solid rgba(139,92,246,.15); background: rgba(139,92,246,.06); color: var(--t2); }
-
-        /* Section titles */
-        .sec-title { font-family: var(--T); font-weight: 700; font-size: clamp(26px,3.5vw,44px); color: var(--t1); text-align: center; margin-bottom: 12px; line-height: 1.2; }
-        .sec-sub   { font-size: clamp(15px,1.8vw,18px); color: var(--t2); text-align: center; margin-bottom: 40px; font-family: var(--F); max-width: 560px; margin-left: auto; margin-right: auto; }
-
-        /* Number label */
-        .card-num { font-family: var(--T); font-size: 38px; font-weight: 800; color: rgba(212,168,83,.15); line-height: 1; margin-bottom: 12px; }
-        .card-title { font-family: var(--T); font-size: 18px; font-weight: 700; color: var(--gold); margin-bottom: 8px; }
-        .card-desc { font-size: 15px; color: var(--t2); line-height: 1.6; font-family: var(--F); }
-
-        /* Date input */
-        input[type=date] { color-scheme: dark; }
-        input[type=date]::-webkit-calendar-picker-indicator { filter: invert(.6) sepia(.4) hue-rotate(230deg); cursor: pointer; }
-
-        @media (max-width: 480px) {
-          .btn-cta { width: 100%; font-size: 15px; padding: 15px 20px; }
-        }
+        html, body { background: #07040d; max-width: 100%; overflow-x: hidden; }
       `}</style>
-
-      {/* Ambient orbs */}
-      <div className="orb orb-purple" />
-      <div className="orb orb-gold" />
 
       {/* Quiz overlay */}
       {quizOpen && <QuizOverlay onClose={closeQuiz} />}
@@ -752,168 +483,127 @@ export default function Home() {
       {/* Menu do site (mesmo de todas as páginas) */}
       <SiteNav />
 
-      {/* ═══════════════ HERO ═══════════════════════════════════════════════ */}
-      <section className="sec" style={{ minHeight: '88vh', display: 'flex', alignItems: 'center', paddingBottom: 'clamp(32px,5vh,56px)' }}>
-        <div className="ctr" style={{ textAlign: 'center' }}>
+      <div className={h.home}>
 
-          <div className="a1" style={{ marginBottom: 24 }}>
-            <span className="badge">✦ Numerologia + Astrologia</span>
+        {/* ═══════════════ HERO ═══════════════════════════════════════════════ */}
+        <section className={h.hero}>
+          <div className={h.heroCeu} aria-hidden="true">
+            {/* Estrela: e4 no celular, e4w (16:9) a partir de 700px. Prioridade
+                alta: é o maior elemento da primeira tela (LCP). */}
+            <picture>
+              <source media="(min-width: 700px)" srcSet="/olho/e4w.webp" />
+              <img src="/olho/e4.webp" alt="" fetchPriority="high" loading="eager" decoding="async" />
+            </picture>
+            <div className={h.heroVeu} />
           </div>
 
-          <div className="a2">
-            <h1 style={{
-              fontFamily: 'var(--T)', fontWeight: 800,
-              fontSize: 'clamp(30px,5.2vw,62px)', lineHeight: 1.1,
-              maxWidth: 860, margin: '0 auto 20px', color: 'var(--t1)',
-            }}>
-              Você tenta mudar, mas algo invisível{' '}
-              <em style={{
-                fontStyle: 'italic',
-                background: 'linear-gradient(90deg,#d4a853,#f0c870)',
-                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-              }}>
-                te puxa de volta
-              </em>
+          <div className={`${h.ctr} ${h.heroConteudo}`}>
+            <span className={h.eyebrow}>Numerologia + Astrologia</span>
+            <h1 className={h.titulo}>
+              Você tenta mudar, mas algo invisível <em>te puxa de volta</em>
             </h1>
-          </div>
-
-          <div className="a3">
-            <p style={{
-              fontSize: 'clamp(16px,2vw,20px)', color: 'rgba(240,239,244,.8)',
-              maxWidth: 580, margin: '0 auto 32px', fontFamily: 'var(--F)', lineHeight: 1.7,
-            }}>
+            <p className={h.sub}>
               Seu mapa revela o padrão que te trava — e o que fazer agora.{' '}
-              <strong style={{ color: 'var(--t1)' }}>Gratuito. Resultado na hora. Funciona mesmo sem saber sua hora de nascimento.</strong>
+              <strong>Gratuito. Resultado na hora. Funciona mesmo sem saber sua hora de nascimento.</strong>
             </p>
-          </div>
-
-          <div className="a4" style={{ marginBottom: 24 }}>
-            <div style={{ position: 'relative', display: 'inline-block' }}>
-              <div style={{
-                position: 'absolute', inset: -6, borderRadius: 999,
-                background: 'linear-gradient(90deg,#7c3aed,#8b5cf6)',
-                filter: 'blur(24px)', opacity: .45, zIndex: -1,
-                animation: 'glow 2.8s ease-in-out infinite',
-              }} />
-              <button className="btn-cta" onClick={openQuiz}>
-                Fazer meu mapa grátis — 1 min
-              </button>
+            <div className={h.heroAcoes}>
+              <button type="button" className={h.btn} onClick={openQuiz}>{ROTULO_CTA}</button>
+              <p className={h.monoLinha}>1 minuto · grátis · funciona sem a hora</p>
             </div>
           </div>
+        </section>
 
-          <div className="a5 proof-pills">
-            {['⚡ Quiz rápido', '🔒 Dados seguros', '✦ 100% personalizado'].map(p => (
-              <span key={p} className="proof-pill">{p}</span>
-            ))}
+        {/* ═══════════════ O QUE VOCÊ VAI DESCOBRIR ══════════════════════════ */}
+        <section className={h.secao} aria-labelledby="home-descobrir">
+          <div className={h.ctr}>
+            <div className={h.secaoTopo}>
+              <span className={h.eyebrow}>No seu mapa</span>
+              <h2 id="home-descobrir" className={h.h2}>O que você vai descobrir</h2>
+              <p className={h.h2Sub}>Quatro dimensões que revelam quem você é — e o que está te impedindo de avançar.</p>
+            </div>
+            <ol className={h.linhas}>
+              {CARDS.map(({ n, title, desc }) => (
+                <li key={n} className={h.linha}>
+                  <span className={h.linhaNum}>{n}</span>
+                  <h3 className={h.linhaTitulo}>{title}</h3>
+                  <p className={h.linhaTexto}>{desc}</p>
+                </li>
+              ))}
+            </ol>
+            <div className={h.acao}>
+              <button type="button" className={h.btn} onClick={openQuiz}>{ROTULO_CTA}</button>
+            </div>
           </div>
+        </section>
 
-        </div>
-      </section>
+        {/* ═══════════════ DEPOIS DO MAPA: SEU DIA ═══════════════════════════ */}
+        <section className={h.secao} aria-labelledby="home-seu-dia">
+          <div className={`${h.ctr} ${h.seuDia}`}>
+            <div className={h.seuDiaTexto}>
+              <span className={h.eyebrow}>Minha Área</span>
+              <h2 id="home-seu-dia" className={h.h2}>Depois do mapa: <em>seu dia, todo dia</em></h2>
+              <p className={h.frase}>O que fazer, o que evitar e as melhores horas, lido pelo seu mapa.</p>
+              {TESTE_SEU_DIA_ATIVO && <p className={h.teste}>7 dias do Seu Dia Completo grátis, sem cartão</p>}
+            </div>
+            <div className={h.previaCaixa}>
+              <span className={h.exemplo}>exemplo</span>
+              <PreviaSeuDia />
+            </div>
+            {/* O caminho é mapa → Minha Área, então o botão abre o quiz. */}
+            <div className={h.acao}>
+              <button type="button" className={h.btn} onClick={openQuiz}>{ROTULO_CTA}</button>
+            </div>
+          </div>
+        </section>
 
-      <div className="divider" />
-
-      {/* ═══════════════ O QUE VOCÊ VAI DESCOBRIR ══════════════════════════ */}
-      <section className="sec sec-alt">
-        <div className="ctr">
-          <h2 className="sec-title">O que você vai descobrir</h2>
-          <p className="sec-sub">Quatro dimensões que revelam quem você é — e o que está te impedindo de avançar.</p>
-          <div className="grid-2x2" style={{ maxWidth: 840, margin: '0 auto 36px' }}>
-            {CARDS.map(({ n, title, desc }) => (
-              <div key={n} className="card">
-                <div className="card-num">{n}</div>
-                <h3 className="card-title">{title}</h3>
-                <p className="card-desc">{desc}</p>
+        {/* ═══════════════ DEPOIMENTOS — só aparece com conteúdo real em
+            lib/testimonials.js. Nunca inventar um depoimento aqui. ════════════ */}
+        {TESTIMONIALS.length > 0 && (
+          <section className={h.secao} aria-labelledby="home-relatos">
+            <div className={h.ctr}>
+              <div className={h.secaoTopo}>
+                <h2 id="home-relatos" className={h.h2}>Relatos de quem já fez o mapa</h2>
+                <p className={h.h2Sub}>Pessoas reais. Clareza real.</p>
               </div>
-            ))}
-          </div>
-          <div style={{ textAlign: 'center' }}>
-            <button className="btn-cta" onClick={openQuiz}>Fazer meu mapa grátis — 1 min</button>
-          </div>
-        </div>
-      </section>
-
-      <div className="divider" />
-
-      {/* ═══════════════ DEPOIMENTOS — só aparece com conteúdo real em
-          lib/testimonials.js. Nunca inventar um depoimento aqui. ════════════ */}
-      {TESTIMONIALS.length > 0 && (
-        <>
-          <section className="sec">
-            <div className="ctr">
-              <h2 className="sec-title">Relatos de quem já fez o mapa</h2>
-              <p className="sec-sub">Pessoas reais. Clareza real.</p>
-              <div className="grid-3" style={{ maxWidth: 1000, margin: '0 auto' }}>
+              <div className={h.relatos}>
                 {TESTIMONIALS.map(({ nome, cidade, texto }) => (
-                  <div key={nome} className="testi">
-                    <p style={{
-                      fontSize: 16, fontStyle: 'italic', color: 'rgba(240,239,244,.92)',
-                      fontFamily: 'var(--F)', lineHeight: 1.7, marginBottom: 18,
-                    }}>"{texto}"</p>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <div style={{
-                        width: 38, height: 38, borderRadius: '50%',
-                        background: 'linear-gradient(135deg,#7c3aed,#8b5cf6)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontWeight: 700, fontSize: 14, color: '#fff', fontFamily: 'var(--T)', flexShrink: 0,
-                      }}>{nome.charAt(0)}</div>
-                      <div>
-                        <p style={{ fontWeight: 600, color: 'var(--gold)', fontSize: 14, fontFamily: 'var(--F)' }}>{nome}</p>
-                        {cidade && <p style={{ fontSize: 13, color: 'var(--t3)', fontFamily: 'var(--F)' }}>{cidade}</p>}
-                      </div>
-                    </div>
-                  </div>
+                  <figure key={nome} className={h.relato} style={{ margin: 0 }}>
+                    <blockquote className={h.relatoTexto} style={{ margin: 0 }}>&ldquo;{texto}&rdquo;</blockquote>
+                    <figcaption className={h.relatoQuem}>{nome}{cidade ? ` · ${cidade}` : ''}</figcaption>
+                  </figure>
                 ))}
               </div>
             </div>
           </section>
+        )}
 
-          <div className="divider" />
-        </>
-      )}
-
-      {/* ═══════════════ FAQ ════════════════════════════════════════════════ */}
-      <section className="sec sec-alt">
-        <div className="ctr-sm">
-          <h2 className="sec-title">Perguntas frequentes</h2>
-          <p className="sec-sub">Transparência total — sem pegadinhas.</p>
-          <div>
-            {FAQS.map((item, i) => <FaqItem key={i} q={item.q} a={item.a} />)}
-          </div>
-        </div>
-      </section>
-
-      <div className="divider" />
-
-      {/* ═══════════════ CTA FINAL ══════════════════════════════════════════ */}
-      <section className="sec">
-        <div className="ctr">
-          <div style={{ maxWidth: 820, margin: '0 auto', textAlign: 'center' }}>
-            <h2 style={{
-              fontFamily: 'var(--T)', fontWeight: 800,
-              fontSize: 'clamp(26px,4vw,50px)', color: 'var(--t1)',
-              lineHeight: 1.15, marginBottom: 16,
-            }}>
-              O padrão que te trava não precisa continuar.{' '}
-              <em style={{ fontStyle: 'italic', color: 'var(--gold)' }}>Descubra o que está por trás.</em>
-            </h2>
-            <p style={{ fontSize: 18, color: 'var(--t2)', fontFamily: 'var(--F)', marginBottom: 36 }}>
-              Quiz de 1 minuto. Resultado imediato. Gratuito.
-            </p>
-            <div style={{ position: 'relative', display: 'inline-block' }}>
-              <div style={{
-                position: 'absolute', inset: -6, borderRadius: 999,
-                background: 'linear-gradient(90deg,#7c3aed,#8b5cf6)',
-                filter: 'blur(24px)', opacity: .4, zIndex: -1,
-                animation: 'glow 2.8s ease-in-out infinite',
-              }} />
-              <button className="btn-cta" onClick={openQuiz}>Fazer meu mapa grátis — 1 min</button>
+        {/* ═══════════════ FAQ ════════════════════════════════════════════════ */}
+        <section className={h.secao} aria-labelledby="home-faq">
+          <div className={`${h.ctr} ${h.ctrSm}`}>
+            <div className={h.secaoTopo}>
+              <h2 id="home-faq" className={h.h2}>Perguntas frequentes</h2>
+              <p className={h.h2Sub}>Transparência total — sem pegadinhas.</p>
             </div>
-            <p style={{ marginTop: 22, fontSize: 13, color: 'var(--t3)', fontFamily: 'var(--F)' }}>
-              🔒 Seus dados são protegidos e usados apenas para gerar seu mapa.
-            </p>
+            <div className={h.faq}>
+              {FAQS.map((item, i) => <FaqItem key={i} id={`faq-${i}`} q={item.q} a={item.a} />)}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+
+        {/* ═══════════════ CTA FINAL ══════════════════════════════════════════ */}
+        <section className={h.secao} style={{ paddingTop: 0, paddingBottom: 0 }}>
+          <div className={`${h.ctr} ${h.cta}`}>
+            <h2 className={h.ctaTitulo}>
+              O padrão que te trava não precisa continuar.{' '}
+              <em>Descubra o que está por trás.</em>
+            </h2>
+            <p className={h.ctaSub}>Quiz de 1 minuto. Resultado imediato. Gratuito.</p>
+            <button type="button" className={h.btn} onClick={openQuiz}>{ROTULO_CTA}</button>
+            <p className={h.nota}>Seus dados são protegidos e usados apenas para gerar seu mapa.</p>
+          </div>
+        </section>
+
+      </div>
     </>
   );
 }

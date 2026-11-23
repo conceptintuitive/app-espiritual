@@ -20,6 +20,7 @@ import { sistemasDaPessoa, sinteseDoMapa, TEMAS } from '@/lib/mapaSintese';
 import { resumoCeu, lugarDoPerfil } from '@/lib/ceuNascimento';
 import { cartoesLeitura } from '@/lib/minhaArea';
 import { PRECO_ASSINATURA_MENSAL } from '@/lib/preco';
+import { TituloDoDia } from './DiaResumo';
 import s from './minhaArea.module.css';
 
 const TOM = {
@@ -42,12 +43,6 @@ function saudacao() {
   return h < 5 ? 'Boa noite' : h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
 }
 
-// "Ação com direção." → "Ação com <i>direção.</i>" (última palavra em itálico dourado)
-export function TituloDoDia({ texto }) {
-  const i = texto.lastIndexOf(' ');
-  if (i < 0) return <i>{texto}</i>;
-  return <>{texto.slice(0, i + 1)}<i>{texto.slice(i + 1)}</i></>;
-}
 
 // Manual pago: quem vem da Minha Área vai direto pro conteúdo; a abertura
 // (Olho Cósmico) fica pra quem chega pelo e-mail logo depois da compra.

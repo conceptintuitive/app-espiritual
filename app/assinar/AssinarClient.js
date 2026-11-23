@@ -14,7 +14,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import SiteNav from '@/app/components/SiteNav';
 import FaixaCeu from '@/app/seu-dia/FaixaCeu';
-import { DiaResumo, LinhaHora } from '@/app/seu-dia/DiaResumo';
+import { DiaResumo, LinhaHora, EXEMPLO_DIA as EXEMPLO, TOM_ROTULO } from '@/app/seu-dia/DiaResumo';
 import { PRECO_ASSINATURA_ANUAL, PRECO_ASSINATURA_MENSAL, PRECO_MANUAL_PADRAO } from '@/lib/preco';
 import { emailValido, sugestaoEmail } from '@/lib/emailValidacao';
 import { lerPerfil } from '@/lib/perfilLocal';
@@ -29,9 +29,6 @@ function evento(nome, params = {}) {
   try { window.gtag?.('event', nome, { event_category: 'assinatura', ...params }); } catch {}
 }
 
-// Pessoa de exemplo da prévia "Como é por dentro" (não é ninguém real).
-const EXEMPLO = { dataNascimento: '1992-04-03', hora: '09:30', tz: 'America/Sao_Paulo', lon: -46.63 };
-const TOM_ROTULO = { fluxo: 'Dia a favor', misto: 'Dia misto', tensao: 'Dia de atenção' };
 
 // Economia do anual em relação a 12 meses do mensal (+ o Manual, que vem no anual).
 const centavos = (v) => Math.round(v * 100) / 100;

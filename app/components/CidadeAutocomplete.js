@@ -1,7 +1,8 @@
 'use client';
 
-// Autocomplete de município brasileiro — usado na etapa 3 do quiz (app/page.js)
-// e na pergunta "Em que cidade?" do Olho Cósmico (/ceu).
+// Autocomplete de município brasileiro — usado na etapa 3 do quiz (app/page.js,
+// tema 'ma'), na TelaDados do Seu Dia, nas ferramentas grátis e na pergunta
+// "Em que cidade?" do Olho Cósmico (/ceu).
 //
 // - A base (public/data/municipios-br.json, ~83 KB gzip) só é baixada no
 //   primeiro foco do campo, nunca no carregamento da página.
@@ -22,6 +23,16 @@ const TEMAS = {
     ativo: { background: 'rgba(139,92,246,.22)' },
     uf: { color: '#9896a8' },
   },
+  // Minha Área / home (nov/2026): dourado, Geist
+  ma: {
+    lista: {
+      background: '#110a1a', border: '1px solid rgba(242,199,123,.3)', borderRadius: 12,
+      boxShadow: '0 12px 32px rgba(0,0,0,.6)',
+    },
+    item: { fontFamily: "var(--font-geist-sans), 'Geist', system-ui, sans-serif", fontSize: 15, color: '#f3e9da', padding: '11px 16px', textAlign: 'left' },
+    ativo: { background: 'rgba(242,199,123,.14)' },
+    uf: { color: '#b9a9c9' },
+  },
   olho: {
     lista: {
       background: 'rgba(20,14,30,.96)', border: '1px solid rgba(242,199,123,.35)', borderRadius: 12,
@@ -38,7 +49,8 @@ const TEMAS = {
  *   value: string,
  *   onChangeText: (texto: string) => void,
  *   onSelect: (m: import('@/lib/municipios').Municipio) => void,
- *   tema?: 'quiz' | 'olho',
+ *   tema?: 'quiz' | 'ma' | 'olho',
+ *   id?: string,
  *   placeholder?: string,
  *   inputStyle?: object,
  *   inputClassName?: string,
@@ -48,7 +60,7 @@ const TEMAS = {
  * }} props
  */
 export default function CidadeAutocomplete({
-  value, onChangeText, onSelect, tema = 'quiz', placeholder = 'Ex: São Paulo, SP',
+  value, onChangeText, onSelect, tema = 'quiz', placeholder = 'Ex: São Paulo, SP', id,
   inputStyle, inputClassName, onKeyDown, inputRef, abrirPraCima = false,
 }) {
   const t = TEMAS[tema] || TEMAS.quiz;
@@ -82,6 +94,7 @@ export default function CidadeAutocomplete({
     <div style={{ position: 'relative' }}>
       <input
         ref={inputRef}
+        id={id}
         type="text"
         role="combobox"
         aria-expanded={mostrar}
