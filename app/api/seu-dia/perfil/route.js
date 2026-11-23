@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { admin, emailDaSessao, marcarConfirmado, perfilParaFront, validarDados } from '@/lib/seuDiaServidor';
+import { TESTE_SEU_DIA_ATIVO } from '@/lib/testeSeuDia';
+import { admin, emailDaSessao, gravarEmailDiario, marcarConfirmado, perfilParaFront, validarDados } from '@/lib/seuDiaServidor';
 
 export const runtime = 'nodejs';
 
@@ -16,16 +17,19 @@ export async function GET(request) {
 }
 
 // POST { nome, dataNascimento, hora, cidade } → salva os dados de nascimento.
-// Perfil novo NÃO ganha mais o teste de 7 dias do Seu Dia Completo (nov/2026);
-// quem já tinha teste_inicio continua com ele até o fim do prazo. Salvar
+// O 1º salvamento começa o teste de 7 dias do Seu Dia Completo (de volta em
+// nov/2026, sem cartão). `emailDiario` (opcional) grava o checkbox do e-mail das 7h. Salvar
 // também confirma o perfil (perfil_confirmado_em).
 export async function POST(request) {
   const email = emailDaSessao(request);
   if (!email) return NextResponse.json({ logado: false }, { status: 401 });
 
   let dados;
+  let emailDiario;
   try {
-    dados = validarDados(await request.json());
+    const body = await request.json();
+    if (typeof body?.emailDiario === 'boolean') emailDiario = body.emailDiario;
+    dados = validarDados(body);
   } catch {
     return NextResponse.json({ error: 'Pedido inválido' }, { status: 400 });
   }
@@ -46,13 +50,15 @@ export async function POST(request) {
       latitude: cidade?.lat ?? null,
       longitude: cidade?.lon ?? null,
       fuso_iana: cidade?.tz ?? null,
-      // Sem teste de 7 dias pra perfil novo (nov/2026): só mantém o de quem já tinha.
-      teste_inicio: atual?.teste_inicio ?? null,
+      // 1º salvamento começa o teste de 7 dias do Seu Dia Completo (de volta em nov/2026).
+      teste_inicio: atual?.teste_inicio ?? (TESTE_SEU_DIA_ATIVO ? new Date().toISOString() : null),
     }, { onConflict: 'email' });
     if (error) throw error;
     // Quem salvou os próprios dados já conferiu: não precisa ver "Esta é você?".
     // Update separado e best effort (migração 0021 opcional).
     await marcarConfirmado(sb, email);
+    // Checkbox "Quero receber meu dia às 7h por e-mail" (migração 0022, best effort).
+    if (emailDiario !== undefined) await gravarEmailDiario(sb, email, emailDiario);
     return NextResponse.json({ logado: true, perfil: await perfilParaFront(sb, email) });
   } catch (e) {
     console.error('[seu-dia/perfil POST]', e);

@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { admin, emailDoDescadastro } from "@/lib/seuDiaServidor";
 
 export const runtime = "nodejs";
 
@@ -23,6 +24,24 @@ function pagina(mensagem) {
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
+
+  // ?sd=<token>: e-mails do Seu Dia (o dia às 7h e os do fim do teste).
+  // Grava seu_dia_perfis.email_diario = false, que corta todos eles.
+  const sd = searchParams.get("sd");
+  if (sd) {
+    const email = emailDoDescadastro(sd);
+    if (!email) {
+      return new Response(pagina("Link inválido."), { status: 400, headers: { "Content-Type": "text/html; charset=utf-8" } });
+    }
+    try {
+      await admin().from("seu_dia_perfis").update({ email_diario: false }).eq("email", email);
+    } catch (error) {
+      console.error("❌ Erro ao descadastrar (Seu Dia):", error);
+    }
+    return new Response(pagina("Você não vai mais receber o seu dia por e-mail."), {
+      headers: { "Content-Type": "text/html; charset=utf-8" },
+    });
+  }
 
   if (!id) {
     return new Response(pagina("Link inválido."), {
