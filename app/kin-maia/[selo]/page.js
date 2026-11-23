@@ -76,7 +76,7 @@ export default async function SeloPage({ params }) {
 
         <div className="an-cta">
           <p>Descubra o seu Kin pela data de nascimento — selo, tom, oráculo e onda encantada.</p>
-          <div className="an-cta-btns"><Link href="/kin-maia" className="an-btn">Descobrir meu Kin ✺</Link></div>
+          <div className="an-cta-btns"><Link href="/kin-maia" className="an-btn">Descobrir meu Kin</Link></div>
         </div>
 
         <h2>Os 20 selos</h2>

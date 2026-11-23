@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import SiteNav from '@/app/components/SiteNav';
 import { getPostBySlug, formatPostDate } from '@/lib/blogPosts';
+import CtaMapa from '@/app/components/CtaMapa';
 
 export default function BlogPostClient({ slug }) {
   const router = useRouter();
@@ -68,7 +69,7 @@ export default function BlogPostClient({ slug }) {
 
         <div className="cta-box">
           <p>Quer ver como isso conversa com o seu próprio mapa?</p>
-          <Link href="/" className="cta">Descobrir meu mapa →</Link>
+          <CtaMapa className="cta" origem="blog" />
         </div>
       </article>
 

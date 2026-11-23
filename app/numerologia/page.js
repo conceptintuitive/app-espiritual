@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import SiteNav from '@/app/components/SiteNav';
 import { NUMEROS_VIDA, dadosDoNumero } from '@/lib/seoConteudo';
+import { CtaMapaBloco } from '@/app/components/CtaMapa';
 
 export const metadata = {
   title: 'Números de Vida na Numerologia: significado de 1 a 33 | Intuitive Concept',
@@ -36,6 +37,8 @@ export default function NumerologiaHubPage() {
           );
         })}
       </div>
+
+      <CtaMapaBloco origem="numerologia-indice" />
 
       <style>{`
         body { margin: 0; }

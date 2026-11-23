@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import SiteNav from '@/app/components/SiteNav';
 import { NUMEROS_VIDA, dadosDoNumero } from '@/lib/seoConteudo';
+import CtaMapa from '@/app/components/CtaMapa';
 
 function parseNumero(raw) {
   return parseInt(String(raw || '').replace(/^numero-/, ''), 10);
@@ -89,8 +90,8 @@ export default async function NumeroPage({ params }) {
         )}
 
         <div className="cta-box">
-          <p>Seu Número de Vida é só uma camada. Seu manual completo cruza esse número com seu Sol, Lua, Ascendente e objetivo de vida.</p>
-          <Link href="/" className="cta">Calcular meu Número de Vida →</Link>
+          <p>Seu Número de Vida é só uma camada. O Manual do seu Mapa cruza esse número com seu Sol, Lua, Ascendente e objetivo de vida.</p>
+          <CtaMapa className="cta" origem="numerologia" />
         </div>
 
         <section className="outros">

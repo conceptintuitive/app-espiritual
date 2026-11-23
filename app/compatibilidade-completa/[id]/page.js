@@ -120,7 +120,7 @@ export default function CompatibilidadeCompletaPage() {
         {!loading && (erro || !row) && (
           <div className="card">
             <p className="p">Não encontramos essa análise. Comece pelo formulário principal.</p>
-            <Link href="/" className="btn">Fazer minha análise →</Link>
+            <Link href="/?quiz=1" className="btn">Fazer meu mapa grátis</Link>
           </div>
         )}
 
@@ -183,10 +183,10 @@ export default function CompatibilidadeCompletaPage() {
                       <div className="locked-row">🔒 Marte · Ação — como conflitos e decisões acontecem entre vocês</div>
                       <div className="locked-row">🔒 Compatibilidade geral (média dos 4 pontos)</div>
                     </div>
-                    <CtaAssinatura analiseId={id} origem="compat_completa" />
-                    <Link href={`/resultado/${id}`} className="btn" style={{ marginTop: 8, textAlign: 'center' }}>
-                      🎁 ou desbloquear com o Manual completo →
+                    <Link href={`/resultado/${id}`} className="btn btn-cta" style={{ marginTop: 8, textAlign: 'center' }}>
+                      Desbloquear com o Manual do seu Mapa
                     </Link>
+                    <CtaAssinatura analiseId={id} origem="compat_completa" />
                   </>
                 )}
               </div>

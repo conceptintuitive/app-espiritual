@@ -43,7 +43,7 @@ export default function TermosDeUsoPage() {
         <p style={styles.p}>
           Estes Termos de Uso regem o acesso e uso do site <strong>Intuitive Concept</strong>
           {' '}(intuitiveconcept.com.br), que oferece análises personalizadas de numerologia e
-          astrologia. Ao usar o site, gerar sua análise gratuita ou comprar o Manual Premium,
+          astrologia. Ao usar o site, gerar o seu Mapa grátis ou comprar o Manual do seu Mapa,
           você concorda com os termos abaixo.
         </p>
 
@@ -52,7 +52,7 @@ export default function TermosDeUsoPage() {
           A Intuitive Concept gera conteúdo personalizado (relatórios, mapas e previsões) a partir
           de dados que você informa — nome, data de nascimento e, opcionalmente, hora e local de
           nascimento — combinando numerologia pitagórica, astrologia clássica e outras referências
-          simbólicas. Uma prévia é gratuita; o relatório completo ("Manual Premium") e alguns
+          simbólicas. Uma prévia é gratuita; o relatório completo ("Manual do seu Mapa") e alguns
           bônus são pagos.
         </p>
 
@@ -88,7 +88,7 @@ export default function TermosDeUsoPage() {
           completos de cartão de crédito em nossos servidores.
         </p>
         <p style={styles.p}>
-          Oferecemos <strong>garantia de 7 dias</strong>: se o Manual Premium não trouxer clareza
+          Oferecemos <strong>garantia de 7 dias</strong>: se o Manual do seu Mapa não trouxer clareza
           real sobre o seu padrão, devolvemos 100% do valor pago mediante solicitação simples pelo
           e-mail de contato abaixo, sem burocracia.
         </p>
@@ -98,7 +98,7 @@ export default function TermosDeUsoPage() {
           A assinatura <strong>Intuitive Completo</strong> custa {brl(PRECO_ASSINATURA_MENSAL)} por mês (plano
           mensal) ou {brl(PRECO_ASSINATURA_ANUAL)} por ano (plano anual). Ela libera, enquanto estiver ativa: o
           Seu Dia completo, a Previsão do Ano, o Human Design e a Compatibilidade Completa sem limites e o
-          Oráculo ilimitado. O plano anual também libera o Manual Completo da análise mais recente feita com
+          Oráculo ilimitado. O plano anual também libera o Manual do seu Mapa da análise mais recente feita com
           o mesmo e-mail.
         </p>
         <p style={styles.p}>
@@ -122,7 +122,7 @@ export default function TermosDeUsoPage() {
           meio de pagamento. Basta pedir pelo e-mail de contato.
         </p>
         <p style={styles.p}>
-          <strong>Cortesia para quem comprou o Manual:</strong> quem compra o Manual Completo ganha 30 dias
+          <strong>Cortesia para quem comprou o Manual:</strong> quem compra o Manual do seu Mapa ganha 30 dias
           de acesso aos recursos da assinatura, sem cobrança e sem renovação automática.
         </p>
         <p style={styles.p}>

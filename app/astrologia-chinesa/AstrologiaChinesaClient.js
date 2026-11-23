@@ -24,6 +24,7 @@ import {
 } from '@/lib/baziTextos';
 import { CHAVE_COMPAT_PESSOA1 } from '@/lib/baziCompat';
 import { DEUSES } from '@/lib/seoChines';
+import CtaMapa from '@/app/components/CtaMapa';
 
 const ORDEM_TABELA = ['hora', 'dia', 'mes', 'ano']; // ordem tradicional: lê-se da direita pra esquerda
 const ORDEM_LEITURA = ['ano', 'mes', 'dia', 'hora'];
@@ -182,7 +183,7 @@ export default function AstrologiaChinesaClient() {
           />
         </label>
         {erro && <p className="erro">{erro}</p>}
-        <button type="submit" className="btn">Ver meu mapa chinês ✦</button>
+        <button type="submit" className="btn">Ver meu mapa chinês</button>
         <p className="privacidade">Calculado no seu navegador. Seus dados ficam só neste aparelho.</p>
       </form>
 
@@ -418,17 +419,17 @@ function Resultado({ mapa, entrada, onCta, onCompat }) {
         <span className="eyebrow">Compatibilidade</span>
         <h3 style={{ marginTop: 8 }}>E com aquela pessoa, vocês combinam?</h3>
         <p className="ocultos">Cruze o seu mapa com o de alguém: Day Masters, palácio do cônjuge e se um completa o outro.</p>
-        <button type="button" className="btn" style={{ marginTop: 10 }} onClick={onCompat}>Comparar com alguém ✦</button>
+        <button type="button" className="btn" style={{ marginTop: 10 }} onClick={onCompat}>Comparar com alguém</button>
       </div>
 
       <div className="cta-box">
         <span className="eyebrow">Próxima camada</span>
-        <h2 style={{ marginTop: 8 }}>O BaZi é um mapa. O Manual é a leitura inteira.</h2>
+        <h2 style={{ marginTop: 8 }}>O BaZi é uma camada. O Manual do seu Mapa é a leitura inteira.</h2>
         <p>
           Seu Manual cruza o que você viu aqui com seu mapa astral (Sol, Lua, Ascendente) e sua numerologia —
           e transforma tudo num plano: ponto cego, amor, dinheiro e o que fazer nas próximas 4 semanas.
         </p>
-        <button type="button" className="btn" onClick={onCta}>Abrir meu Manual ✦</button>
+        <CtaMapa className="btn" onFazer={onCta} origem="astrologia-chinesa" />
       </div>
     </>
   );

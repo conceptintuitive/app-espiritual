@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import SiteNav from '@/app/components/SiteNav';
 import { SIGNOS, signoSlug, dadosDoSigno } from '@/lib/seoConteudo';
+import { CtaMapaBloco } from '@/app/components/CtaMapa';
 
 export const metadata = {
   title: 'Os 12 Signos do Zodíaco: o que cada um revela | Intuitive Concept',
@@ -36,6 +37,8 @@ export default function SignosHubPage() {
           );
         })}
       </div>
+
+      <CtaMapaBloco origem="signos-indice" />
 
       <style>{`
         body { margin: 0; }

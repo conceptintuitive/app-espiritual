@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import SiteNav from '@/app/components/SiteNav';
 import { SIGNOS, signoSlug, signoPorSlug, dadosDoSigno } from '@/lib/seoConteudo';
+import CtaMapa from '@/app/components/CtaMapa';
 
 export function generateStaticParams() {
   return SIGNOS.map((signo) => ({ signo: signoSlug(signo) }));
@@ -95,8 +96,8 @@ export default async function SignoPage({ params }) {
         </section>
 
         <div className="cta-box">
-          <p>Isso é só o Sol. Seu mapa completo cruza Sol, Lua, Ascendente, Número de Vida e muito mais.</p>
-          <Link href="/" className="cta">Descobrir meu mapa completo →</Link>
+          <p>Isso é só o Sol. O Manual do seu Mapa cruza Sol, Lua, Ascendente, Número de Vida e muito mais.</p>
+          <CtaMapa className="cta" origem="signos" />
         </div>
 
         <section className="outros">

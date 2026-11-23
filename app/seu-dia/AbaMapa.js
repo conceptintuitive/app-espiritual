@@ -115,7 +115,7 @@ export default function AbaMapa({ perfil }) {
           <p>Um card com o seu mapa inteiro, no tamanho do story.</p>
           <div>
             <button type="button" className={ma.btn} onClick={compartilharCard} disabled={gerando}>
-              {gerando ? 'Gerando…' : 'Gerar meu card ✦'}
+              {gerando ? 'Gerando…' : 'Gerar meu card'}
             </button>
           </div>
           {aviso && <p>{aviso}</p>}

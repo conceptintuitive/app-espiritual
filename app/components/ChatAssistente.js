@@ -79,7 +79,11 @@ export default function ChatAssistente({ analiseId, isPaid, firstName, autoOpen,
   return (
     <>
       <button className="chat-fab" onClick={() => setOpen((o) => !o)} aria-label={open ? 'Fechar assistente' : 'Abrir assistente'}>
-        {open ? '✕' : '✦'}
+        {open ? '✕' : (
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M21 12a8 8 0 0 1-11.6 7.1L4 21l1.9-5.4A8 8 0 1 1 21 12z" />
+          </svg>
+        )}
       </button>
 
       {open && (
@@ -124,7 +128,9 @@ export default function ChatAssistente({ analiseId, isPaid, firstName, autoOpen,
               placeholder={esgotado ? 'Limite grátis atingido' : 'Escreva sua pergunta...'}
               disabled={loading || esgotado}
             />
-            <button onClick={handleSend} disabled={loading || esgotado || !input.trim()} aria-label="Enviar">➤</button>
+            <button onClick={handleSend} disabled={loading || esgotado || !input.trim()} aria-label="Enviar">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+            </button>
           </div>
 
           {esgotado && !isPaid && (

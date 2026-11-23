@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
 import SiteNav from '@/app/components/SiteNav';
 import { SIGNOS, getCompatibilidade } from '@/lib/compatibilidade';
+import CtaMapa from '@/app/components/CtaMapa';
 
 export default function CompatibilidadeClient() {
   const [signoA, setSignoA] = useState('Sagitário');
@@ -67,10 +67,10 @@ export default function CompatibilidadeClient() {
 
         <div className="upsell">
           <p>
-            Isso é uma leitura geral pelo Sol. Seu mapa completo cruza também Lua, Ascendente, Vênus e Marte —
+            Isso é uma leitura geral pelo Sol. O Manual do seu Mapa cruza também Lua, Ascendente, Vênus e Marte —
             muito mais específico que só o signo solar.
           </p>
-          <Link href="/" className="upsell-cta">Ver meu mapa completo →</Link>
+          <CtaMapa className="upsell-cta" origem="compatibilidade" />
         </div>
       </div>
 

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import SiteNav from '@/app/components/SiteNav';
 import { PRECO_MANUAL_PADRAO, PRECO_BONUS_AVULSO } from '@/lib/preco';
+import { CtaMapaBloco } from '@/app/components/CtaMapa';
 
 export default function ExplorarClient() {
   const [ultimaAnaliseId, setUltimaAnaliseId] = useState(null);
@@ -91,15 +92,15 @@ export default function ExplorarClient() {
   const meuMapaCta =
     cardState === 'pago' ? 'Abrir meu Manual →' :
     cardState === 'carregando' ? 'Ver meu mapa →' :
-    cardState === 'sem-previa' ? 'Descobrir meu mapa →' :
-    'Desbloquear meu Manual →';
+    cardState === 'sem-previa' ? 'Fazer meu mapa grátis →' :
+    'Desbloquear o Manual do seu Mapa →';
 
   const meuMapaDesc =
     cardState === 'sem-previa'
-      ? 'Numerologia e astrologia personalizadas a partir da sua data de nascimento — sua análise gratuita em poucos minutos.'
+      ? 'Numerologia e astrologia personalizadas a partir da sua data de nascimento — seu Mapa grátis em poucos minutos.'
       : cardState === 'nao-pago'
       ? 'A prévia é só o começo. Faltam seu Ponto Cego, os Bloqueios Invisíveis que se repetem na sua vida e um calendário guiado de 4 semanas.'
-      : 'Sua análise personalizada, com tudo que já revelamos sobre seu Sol, Lua, Ascendente e os pontos que mais importam agora.';
+      : 'O seu Manual, com tudo que já revelamos sobre seu Sol, Lua, Ascendente e os pontos que mais importam agora.';
 
   // Previsão do Ano e Human Design não são mais avulsos — só liberam junto
   // com o Manual (R$17 cada, complemento). Cada um tem sua própria página
@@ -143,7 +144,7 @@ export default function ExplorarClient() {
           <div className="icon-badge">🔮</div>
           <div className="primary-content">
             <span className="tag">{meuMapaTag}</span>
-            <h3>Seu Manual Completo</h3>
+            <h3>{cardState === 'sem-previa' ? 'Seu Mapa' : 'O Manual do seu Mapa'}</h3>
             <p>{meuMapaDesc}</p>
           </div>
           <span className="cta">{meuMapaCta}</span>
@@ -269,6 +270,8 @@ export default function ExplorarClient() {
           <span className="cta">Descobrir meu Kin →</span>
         </Link>
       </div>
+
+      <CtaMapaBloco origem="explorar" />
 
       <style jsx global>{`
         body { margin: 0; }

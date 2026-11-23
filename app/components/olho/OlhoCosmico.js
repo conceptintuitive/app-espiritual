@@ -30,6 +30,7 @@ import s from './OlhoCosmico.module.css';
 import { localToUTC, julianDay, localSiderealDeg, altAz, sunRaDec, makeProjector } from '@/lib/sky';
 import { calcularNumeroVida } from '@/lib/calculos';
 import CidadeAutocomplete from '@/app/components/CidadeAutocomplete';
+import { useEstadoMapa } from '@/app/components/CtaMapa';
 
 /* Cada camada tem keyframes: [progresso, escala, opacidade, rotação(graus), blur(px)] */
 // Retrato (celular): imagens 9:16 e1–e4.webp
@@ -501,6 +502,7 @@ export default function OlhoCosmico({ mode = 'publico', dados = null, onCta, onV
     digits: useRef(null), reveal: useRef(null), who: useRef(null), num: useRef(null), cta: useRef(null), hint: useRef(null),
   };
   const motor = useRef(null);
+  const mapa = useEstadoMapa({ ativo: mode === 'publico' });
   // ssr:false — dá pra ler a janela já no 1º render. useState pra não mudar
   // depois: quem troca as imagens no resize é o motor, direto no DOM.
   const [largoInicial] = useState(ehLargo);
@@ -579,6 +581,9 @@ export default function OlhoCosmico({ mode = 'publico', dados = null, onCta, onV
   function clicarCta(e) {
     e.preventDefault();
     if (mode === 'manual') { motor.current?.rolarProFim(); return; }
+    // Botão final do /ceu = mesma regra do CtaMapa: quem já tem mapa ou Manual
+    // neste aparelho vai direto pra ele; quem não tem abre o quiz pré-preenchido.
+    if (mapa.estado !== 'sem-mapa') { window.location.href = mapa.href; return; }
     onCta?.({
       nome: nome.trim(),
       dataNascimento: data,
@@ -628,7 +633,7 @@ export default function OlhoCosmico({ mode = 'publico', dados = null, onCta, onV
             <div ref={refs.num} className={s.num} />
             <div className={s.what}>Número do Caminho de Vida</div>
           </div>
-          <a ref={refs.cta} className={s.cta} href={mode === 'manual' ? '#manual' : '/'} onClick={clicarCta}>{mode === 'manual' ? 'Ler meu Manual ↓' : 'Abrir meu mapa'}</a>
+          <a ref={refs.cta} className={s.cta} href={mode === 'manual' ? '#manual' : mapa.href} onClick={clicarCta}>{mode === 'manual' ? 'Ler meu Manual ↓' : mapa.rotulo}</a>
           <div ref={refs.hint} className={s.hint}>role <span>↓</span></div>
         </div>
 
@@ -638,7 +643,7 @@ export default function OlhoCosmico({ mode = 'publico', dados = null, onCta, onV
 
         {mode === 'publico' && (
           <>
-            <button type="button" className={`${s.edit} ${respondido ? '' : s.off}`} onClick={editar}>✎ trocar dados</button>
+            <button type="button" className={`${s.edit} ${respondido ? '' : s.off}`} onClick={editar}>trocar dados</button>
 
             <div className={`${s.intro} ${introAberta ? '' : s.hide}`}>
               <form
@@ -682,7 +687,7 @@ export default function OlhoCosmico({ mode = 'publico', dados = null, onCta, onV
                     onSelect={(m) => { setCidade(m); setCidadeTexto(m.nome); }}
                   />
                   <button type="button" className={`${s.skip} ${s.fora}`} onClick={(e) => revelar(e, true)}>Nasci fora do Brasil</button>
-                  <button type="submit" className={s.go} disabled={step === 4 && !valido}>Revelar meu céu ✦</button>
+                  <button type="submit" className={s.go} disabled={step === 4 && !valido}>Revelar meu céu</button>
                 </div>
                 <button type="button" className={`${s.back} ${step === 0 ? s.backOff : ''}`} onClick={() => step > 0 && setStep(step - 1)}>← voltar</button>
                 <div className={s.dots} style={{ opacity: step === 0 ? 0 : 1 }}>

@@ -32,11 +32,11 @@ export async function POST(req) {
 
     const titulo = ehPresente ? `Você recebeu um presente ${presenteDe ? `de ${presenteDe} ` : ""}🎁` : "Seu acesso está liberado ✨";
     const corpo = ehPresente
-      ? `${presenteDe || "Alguém"} preparou um Manual dos Poderes Ocultos personalizado pra você. Já está disponível.`
-      : "O seu Manual dos Poderes Ocultos já está disponível.";
+      ? `${presenteDe || "Alguém"} preparou o Manual do seu Mapa pra você. Já está disponível.`
+      : "O Manual do seu Mapa já está disponível.";
     const subject = ehPresente
       ? `🎁 Você recebeu um presente${presenteDe ? ` de ${presenteDe}` : ""}!`
-      : "Seu acesso ao Manual dos Poderes Ocultos 🔮";
+      : "Seu acesso ao Manual do seu Mapa 🔮";
 
     const html = `
 <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;background:#0f0f14;padding:40px 20px;">
@@ -49,7 +49,7 @@ export async function POST(req) {
 
     <a href="${link}"
       style="display:inline-block;padding:14px 24px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;text-decoration:none;border-radius:12px;font-weight:600;font-size:14px;">
-      Acessar meu Manual
+      Abrir meu Manual
     </a>
 
     <p style="margin:28px 0 0;font-size:12px;color:#777;">

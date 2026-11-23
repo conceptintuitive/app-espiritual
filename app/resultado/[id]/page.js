@@ -485,7 +485,7 @@ export default function ResultadoPage() {
   const handleShareWhatsapp = () => {
     try { window?.gtag?.('event', 'compartilhar_whatsapp', { event_category: 'engagement' }); } catch {}
     const shareUrl = `${window.location.origin}/?utm_source=whatsapp_share&utm_medium=referral`;
-    const text = `Acabei de fazer uma análise espiritual personalizada (numerologia + astrologia) e o resultado foi certeiro ✨🔮 Faz a sua grátis aqui: ${shareUrl}`;
+    const text = `Acabei de fazer meu mapa (numerologia + astrologia) e o resultado foi certeiro ✨🔮 Faz o seu grátis aqui: ${shareUrl}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
   };
 
@@ -611,14 +611,14 @@ export default function ResultadoPage() {
           <h1 style={{ marginBottom: 10 }}>Quase lá…</h1>
           <p className="muted">
             Ainda estamos confirmando seu pagamento — isso pode levar alguns minutos.
-            Você também vai receber o link do seu manual por e-mail assim que for confirmado.
+            Você também vai receber o link do seu Manual por e-mail assim que for confirmado.
           </p>
           <button
             className="btn-cta btn-cta-sm"
             style={{ marginTop: 8 }}
             onClick={() => setPendingRetryKey((k) => k + 1)}
           >
-            🔄 Verificar de novo
+            Verificar de novo
           </button>
           <Link href={`/resultado/${id}`} className="muted" style={{ fontSize: 14, textDecoration: 'underline' }}>
             Voltar para a oferta
@@ -637,8 +637,8 @@ export default function ResultadoPage() {
   // um valor exibido diferente do que é cobrado.
   const precoAtual = ofertaExpirada ? PRECO_MANUAL_PADRAO : PRECO_MANUAL_JANELA;
   const cargoLabel = incluirTier2
-    ? `DESBLOQUEAR MANUAL + PROJEÇÃO 12 MESES + HUMAN DESIGN — R$ ${precoAtual + PRECO_BONUS_COMBO}`
-    : `DESBLOQUEAR MEU MANUAL — R$ ${precoAtual}`;
+    ? `Desbloquear o Manual do seu Mapa + Projeção 12 meses + Human Design — R$ ${precoAtual + PRECO_BONUS_COMBO}`
+    : `Desbloquear o Manual do seu Mapa — R$ ${precoAtual}`;
 
   return (
     <div className="wrap">
@@ -704,7 +704,7 @@ export default function ResultadoPage() {
             className="mini-cta-link"
             onClick={() => document.querySelector('.offer-card')?.scrollIntoView({ behavior: 'smooth' })}
           >
-            Ver meu diagnóstico completo →
+            Desbloquear o Manual do seu Mapa — R$ {precoAtual}
           </button>
         </div>
         )}
@@ -733,14 +733,14 @@ export default function ResultadoPage() {
             <div className="locked-card">
               <div className="locked-icon">🔒</div>
               <p className="locked-text">
-                O mecanismo que mantém esse ciclo rodando e o ajuste que muda o resultado estão no diagnóstico completo.
+                O mecanismo que mantém esse ciclo rodando e o ajuste que muda o resultado estão no seu Manual.
               </p>
               <button className="btn-cta" onClick={() => handleComprar()} disabled={processando}>
-                {processando ? '⏳ Abrindo…' : cargoLabel}
+                {processando ? 'Abrindo…' : cargoLabel}
               </button>
               <Tier2AddonToggle checked={incluirTier2} onChange={setIncluirTier2} precoTotal={precoAtual + PRECO_BONUS_COMBO} />
               <p className="pos-compra" style={{ marginTop: 10 }}>
-                Após o pagamento, você receberá o link do seu manual por email em poucos minutos. Verifique também a caixa de spam.
+                Após o pagamento, você receberá o link do seu Manual por email em poucos minutos. Verifique também a caixa de spam.
               </p>
             </div>
           </div>
@@ -791,9 +791,9 @@ export default function ResultadoPage() {
               )}
             </div>
             <button className="btn-cta" onClick={() => handleComprar()} disabled={processando}>
-              {processando ? '⏳ Abrindo…' : cargoLabel}
+              {processando ? 'Abrindo…' : cargoLabel}
             </button>
-            <p className="offer-compact-note">Manual completo com 14 seções · Pix: acesso liberado na hora</p>
+            <p className="offer-compact-note">Manual do seu Mapa com 14 seções · Pix: acesso liberado na hora</p>
           </div>
         )}
 
@@ -811,7 +811,7 @@ export default function ResultadoPage() {
             )}
             <div className="locked-card locked-card-quiet">
               <p className="locked-text">
-                O que parar de fazer e o que começar no amor está no manual completo.
+                O que parar de fazer e o que começar no amor está no seu Manual.
               </p>
             </div>
           </div>
@@ -834,7 +834,7 @@ export default function ResultadoPage() {
               )}
               <div className="locked-card locked-card-quiet">
                 <p className="locked-text">
-                  Seus bloqueios financeiros e o caminho para destravar estão no manual completo.
+                  Seus bloqueios financeiros e o caminho para destravar estão no seu Manual.
                 </p>
               </div>
             </div>
@@ -846,10 +846,10 @@ export default function ResultadoPage() {
             <div className="locked-card">
               <div className="locked-icon">🔒</div>
               <p className="locked-text">
-                Seus bloqueios financeiros e o caminho para destravar estão no manual completo.
+                Seus bloqueios financeiros e o caminho para destravar estão no seu Manual.
               </p>
               <button className="btn-cta" onClick={() => handleComprar()} disabled={processando}>
-                {processando ? '⏳ Abrindo…' : cargoLabel}
+                {processando ? 'Abrindo…' : cargoLabel}
               </button>
               <Tier2AddonToggle checked={incluirTier2} onChange={setIncluirTier2} precoTotal={precoAtual + PRECO_BONUS_COMBO} />
             </div>
@@ -914,7 +914,7 @@ export default function ResultadoPage() {
             </div>
             <div className="locked-card locked-card-quiet" style={{ marginTop: 16 }}>
               <p className="locked-text">
-                No manual completo: sua compatibilidade cruzando Sol, Lua, Ascendente, Vênus e Marte — os 5 pontos que mais importam.
+                No seu Manual: sua compatibilidade cruzando Sol, Lua, Ascendente, Vênus e Marte — os 5 pontos que mais importam.
               </p>
             </div>
           </div>
@@ -935,10 +935,10 @@ export default function ResultadoPage() {
             <div className="locked-card" style={{ borderColor: 'rgba(212,168,83,0.25)' }}>
               <div className="locked-icon">🔒</div>
               <p className="locked-text">
-                A interpretação completa de como {cartaTarot.nome}{cartaTarot.invertida ? ' Invertida' : ''} se conecta ao seu perfil e objetivo está no manual completo.
+                A interpretação completa de como {cartaTarot.nome}{cartaTarot.invertida ? ' Invertida' : ''} se conecta ao seu perfil e objetivo está no seu Manual.
               </p>
               <button className="btn-cta" onClick={() => handleComprar()} disabled={processando}>
-                {processando ? '⏳ Abrindo…' : cargoLabel}
+                {processando ? 'Abrindo…' : cargoLabel}
               </button>
               <Tier2AddonToggle checked={incluirTier2} onChange={setIncluirTier2} precoTotal={precoAtual + PRECO_BONUS_COMBO} />
             </div>
@@ -957,7 +957,7 @@ export default function ResultadoPage() {
                 </li>
               ))}
             </ul>
-            <p className="plano-lock-note">Os 6 dias restantes estão no manual completo.</p>
+            <p className="plano-lock-note">Os 6 dias restantes estão no seu Manual.</p>
           </div>
         )}
 
@@ -965,8 +965,8 @@ export default function ResultadoPage() {
         <div className="section-card social-proof-card">
           <p className="social-proof-text">
             {roundedStatsCount
-              ? `✨ Mais de ${roundedStatsCount} pessoas já geraram sua análise por aqui`
-              : '✨ Análise gerada com nosso método exclusivo de numerologia e astrologia'}
+              ? `✨ Mais de ${roundedStatsCount} pessoas já fizeram o seu mapa por aqui`
+              : '✨ Mapa feito com o nosso método exclusivo de numerologia e astrologia'}
           </p>
         </div>
 
@@ -975,7 +975,7 @@ export default function ResultadoPage() {
           <div className="section-label">O Que Tem no Seu Manual</div>
           <ul className="manual-index-list">
             {[
-              { check: true,  label: 'Seu Mapa Completo', desc: 'Sua personalidade, forças e padrões centrais, tudo em um só lugar.' },
+              { check: true,  label: 'Seu Mapa em detalhe', desc: 'Sua personalidade, forças e padrões centrais, tudo em um só lugar.' },
               { check: true,  label: 'Diagnóstico Profundo', desc: 'O mecanismo que mantém seu ciclo atual rodando — e o ajuste que muda o resultado.' },
               { check: false, label: 'Tipo de Pessoa', desc: 'Quem você é no seu melhor momento — e quem você é fora do eixo.' },
               { check: true,  label: '3 Arquétipos', desc: 'As três energias que mais influenciam suas decisões hoje.' },
@@ -1003,7 +1003,7 @@ export default function ResultadoPage() {
               </li>
             ))}
           </ul>
-          <p className="manual-index-footer">Você viu fragmentos de 7 seções. Seu manual completo tem 14 seções e 30+ páginas escritas só pra você.</p>
+          <p className="manual-index-footer">Você viu fragmentos de 7 seções. O Manual do seu Mapa tem 14 seções e 30+ páginas escritas só pra você.</p>
         </div>
 
         {/* ══ DEPOIMENTOS — logo antes da oferta. Só aparece com conteúdo
@@ -1059,13 +1059,13 @@ export default function ResultadoPage() {
             📖 Seu manual tem 14 seções escritas exclusivamente para {firstName}. Nenhum outro manual é igual ao seu.
           </div>
           <button className="btn-cta" onClick={() => handleComprar()} disabled={processando}>
-            {processando ? '⏳ Abrindo…' : cargoLabel}
+            {processando ? 'Abrindo…' : cargoLabel}
           </button>
           <Tier2AddonToggle checked={incluirTier2} onChange={setIncluirTier2} precoTotal={precoAtual + PRECO_BONUS_COMBO} />
 
           <label className={`presente-toggle${ehPresente ? ' is-checked' : ''}`}>
             <input type="checkbox" checked={ehPresente} onChange={(e) => setEhPresente(e.target.checked)} />
-            <span>{ehPresente ? '✅' : '🎁'} Isso é um presente pra outra pessoa?</span>
+            <span>Isso é um presente pra outra pessoa?</span>
           </label>
           {ehPresente && (
             <div className="presente-campos">
@@ -1099,7 +1099,7 @@ export default function ResultadoPage() {
           </div>
           {analise.ano_pessoal && (
             <p className="countdown-real">
-              ⏳ Seu Ano Pessoal é {analise.ano_pessoal}. Essa análise reflete seu ciclo atual — quanto antes aplicar, mais resultado no tempo certo.
+              ⏳ Seu Ano Pessoal é {analise.ano_pessoal}. Esse mapa reflete seu ciclo atual — quanto antes aplicar, mais resultado no tempo certo.
             </p>
           )}
           <p className="pos-compra">Após o pagamento, seu manual aparece na tela e você recebe o link por email. Verifique também sua caixa de spam.</p>
@@ -1107,24 +1107,24 @@ export default function ResultadoPage() {
 
         {/* ══ AUTORIDADE ══ */}
         <p className="autoridade-text">
-          Análise gerada combinando astrologia clássica, numerologia pitagórica e padrões comportamentais. Cada manual é único — gerado exclusivamente para o seu perfil.
+          Mapa feito combinando astrologia clássica, numerologia pitagórica e padrões comportamentais. Cada Manual é único — gerado exclusivamente para o seu perfil.
         </p>
 
         {/* ══ BLOCO 8 — REFORÇO ══ */}
         <div className="reforco-block">
-          <p className="reforco-text">Se as 3 primeiras frases já te descreveram, imagina o diagnóstico completo.</p>
+          <p className="reforco-text">Se as 3 primeiras frases já te descreveram, imagina o Manual do seu Mapa inteiro.</p>
           <button className="btn-cta btn-cta-sm" onClick={() => handleComprar()} disabled={processando}>
-            {processando ? '⏳ Abrindo…' : cargoLabel}
+            {processando ? 'Abrindo…' : cargoLabel}
           </button>
           <p className="pos-compra" style={{ marginTop: 10 }}>
-            Após o pagamento, você receberá o link do seu manual por email em poucos minutos. Verifique também a caixa de spam.
+            Após o pagamento, você receberá o link do seu Manual por email em poucos minutos. Verifique também a caixa de spam.
           </p>
         </div>
 
         <BotaoCompartilharStory analiseId={id} pago={analise.payment_status === 'paid'} numero={numeroVidaFinal} origem="resultado" />
 
         <button className="share-whatsapp-btn" onClick={handleShareWhatsapp}>
-          📲 Mandar pra uma amiga no WhatsApp
+          Mandar pra uma amiga no WhatsApp
         </button>
 
         {dadosDaAnalise(analise) && <VoceTambem dados={dadosDaAnalise(analise)} atual="resultado" />}
@@ -1141,7 +1141,7 @@ export default function ResultadoPage() {
           <div className="muted">Precisa de ajuda? Email: <strong>conceptintuitive@gmail.com</strong></div>
         </div>
 
-        <Link href="/?refazer=1" className="refazer-link">↺ Refazer minha análise com outros dados</Link>
+        <Link href="/?refazer=1" className="refazer-link">↺ Refazer meu mapa com outros dados</Link>
 
       </div>
 
@@ -1172,7 +1172,7 @@ export default function ResultadoPage() {
             className="sticky-btn"
             onClick={() => document.querySelector('.offer-card')?.scrollIntoView({ behavior: 'smooth' })}
           >
-            VER DIAGNÓSTICO COMPLETO →
+            Desbloquear o Manual do seu Mapa — R$ {precoAtual}
           </button>
         </div>
       )}
@@ -1184,7 +1184,7 @@ export default function ResultadoPage() {
             <button className="exit-close" aria-label="Fechar" onClick={() => setShowExitModal(false)}>✕</button>
             <div className="exit-title">Espera, {firstName || 'você'} 👋</div>
             <p className="exit-desc">
-              Antes de sair: seu manual completo continua disponível por <strong>R$ {precoAtual}</strong>
+              Antes de sair: o Manual do seu Mapa continua disponível por <strong>R$ {precoAtual}</strong>
               {!ofertaExpirada && (
                 <> e leva de bônus o <strong>Ritual de Ativação Personalizado</strong> — mas só se você garantir agora, nesta sessão.</>
               )}
@@ -1194,7 +1194,7 @@ export default function ResultadoPage() {
               onClick={() => { setShowExitModal(false); handleComprar(); }}
               disabled={processando}
             >
-              {processando ? '⏳ Abrindo…' : `QUERO GARANTIR — R$ ${precoAtual}`}
+              {processando ? 'Abrindo…' : `Desbloquear o Manual do seu Mapa — R$ ${precoAtual}`}
             </button>
           </div>
         </div>
@@ -1219,7 +1219,7 @@ export default function ResultadoPage() {
               }}
             />
             <button className="btn-cta" onClick={handleConfirmarNovoEmail} disabled={processando}>
-              {processando ? '⏳ Abrindo…' : 'Confirmar e continuar'}
+              {processando ? 'Abrindo…' : 'Confirmar e continuar'}
             </button>
           </div>
         </div>

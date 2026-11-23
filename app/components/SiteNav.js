@@ -75,7 +75,7 @@ export default function SiteNav({ active = null, sticky = true, transparente = f
   // Meu Mapa = a leitura deste aparelho (a prévia manda pro Manual se já foi pago);
   // sem leitura, a home, que explica o mapa.
   const meuMapaHref = ultimaAnaliseId ? `/resultado/${ultimaAnaliseId}` : '/';
-  const meuMapaRotulo = ultimaAnaliseId ? 'Meu Manual' : 'Como funciona o mapa';
+  const meuMapaRotulo = ultimaAnaliseId ? 'Ver meu mapa' : 'Como funciona o mapa';
 
   function fazerMapa(e) {
     evento('menu_fazer_mapa', { pagina: pathname });

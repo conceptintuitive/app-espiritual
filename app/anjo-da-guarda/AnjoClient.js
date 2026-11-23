@@ -15,6 +15,7 @@ import VoceTambem from '@/app/components/VoceTambem';
 import { ANJOS, calcularAnjos, dadosDoAnjo, anjosDoMomento } from '@/lib/anjos';
 import { TEXTO_ANJO, TEXTO_CORO, TEXTO_ELEMENTO_ANJO, BUSCA_CAMINHO } from '@/lib/anjosTextos';
 import { CSS_ANJO, FONTES_ANJO } from './estilo';
+import CtaMapa from '@/app/components/CtaMapa';
 
 function hojeISO() {
   const d = new Date();
@@ -131,7 +132,7 @@ export default function AnjoClient({ periodos, ano }) {
           Não sei a hora
         </label>
         {erro && <p className="an-erro">{erro}</p>}
-        <button type="submit" className="an-btn">Descobrir meu anjo ✶</button>
+        <button type="submit" className="an-btn">Descobrir meu anjo</button>
         <p className="an-priv">Calculado no seu navegador. Seus dados ficam só neste aparelho.</p>
       </form>
 
@@ -262,11 +263,11 @@ function Resultado({ anjos, entrada, periodos, ano, onCta }) {
 
       <div className="an-cta">
         <p>
-          Seu anjo é uma camada. O Manual Intuitive cruza numerologia, astrologia e arquétipos pra mostrar quem você é
+          Seu anjo é uma camada. O Manual do seu Mapa cruza numerologia, astrologia e arquétipos pra mostrar quem você é
           no amor, no trabalho e no que está travando agora.
         </p>
         <div className="an-cta-btns">
-          <button type="button" className="an-btn" onClick={onCta}>Ver minha prévia grátis ✦</button>
+          <CtaMapa className="an-btn" onFazer={onCta} origem="anjo" />
           <Link href="/seu-dia" className="an-btn sec" onClick={() => evento('anjo_cta_seu_dia')}>Meu dia de hoje</Link>
         </div>
       </div>

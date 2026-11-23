@@ -107,7 +107,7 @@ if (analise.payment_status === "paid") {
       price_data: {
         currency: "brl",
         product_data: {
-          name: "Manual Premium Personalizado",
+          name: "Manual do seu Mapa — Intuitive Concept",
           description: `Relatório personalizado completo para ${analise.nome ?? "você"}`,
         },
         unit_amount: precoManual,

@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import Link from 'next/link';
 import SiteNav from '@/app/components/SiteNav';
 import { BLOG_POSTS, formatPostDate } from '@/lib/blogPosts';
+import { CtaMapaBloco } from '@/app/components/CtaMapa';
 
 export default function BlogIndexClient() {
   useEffect(() => {
@@ -51,6 +52,8 @@ export default function BlogIndexClient() {
           ))}
         </div>
       </div>
+
+      <CtaMapaBloco origem="blog-indice" />
 
       <style jsx global>{`
         body { margin: 0; }

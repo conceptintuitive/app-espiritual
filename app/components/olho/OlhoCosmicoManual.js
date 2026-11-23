@@ -118,7 +118,7 @@ export default function OlhoCosmicoManual({ row }) {
             fontFamily: 'inherit',
           }}
         >
-          ✦ rever minha abertura
+          rever minha abertura
         </button>
       </div>
     );

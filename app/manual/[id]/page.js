@@ -248,7 +248,7 @@ function ListenButton({ text, label = 'Ouvir', pauseLabel = 'Pausar áudio' }) {
 
   return (
     <button type="button" className="listen-btn" onClick={handleToggle}>
-      {playing ? `⏸️ ${pauseLabel}` : `🔊 ${label}`}
+      {playing ? pauseLabel : label}
     </button>
   );
 }
@@ -877,7 +877,7 @@ export default function ManualPage() {
         <div id="stars" className="stars" />
         <div className="center card">
           <div className="spinner" />
-          <div className="muted">Carregando seu Manual Premium…</div>
+          <div className="muted">Carregando seu Manual…</div>
         </div>
       </div>
     );
@@ -998,7 +998,7 @@ export default function ManualPage() {
         {/* ========== HERO ========== */}
         <div className="hero">
           <div className="badge">
-            🔒 Manual Completo • Premium • Personalizado
+            🔒 Manual do seu Mapa • Personalizado
           </div>
           <h1 className="title">
             {firstName}, SEU PADRÃO FICOU CLARO.
@@ -1045,7 +1045,7 @@ e mostrar como sair dele.
                   style={{ marginTop: 16 }}
                   onClick={() => setMpConfirmRetryKey((k) => k + 1)}
                 >
-                  🔄 Verificar de novo
+                  Verificar de novo
                 </button>
                 <p className="muted" style={{ marginTop: 12, fontSize: 13 }}>
                   Se demorar mais do que isso,{' '}
@@ -1066,7 +1066,7 @@ e mostrar como sair dele.
           <div className="card paywall">
             <h2 className="h2">🔒 Acesso Bloqueado</h2>
             <p className="p">
-              Este é o <b>Manual Premium completo</b>. Para liberar todo o conteúdo 
+              Este é o <b>Manual do seu Mapa</b>. Para liberar todo o conteúdo 
               (amor + dinheiro + calendário + plano de 7 dias), finalize o pagamento.
             </p>
 
@@ -1097,7 +1097,7 @@ e mostrar como sair dele.
               onClick={handleComprar} 
               disabled={processando}
             >
-              {processando ? '⏳ Abrindo checkout…' : '🚀 Desbloquear Manual Premium'}
+              {processando ? 'Abrindo checkout…' : 'Desbloquear o Manual do seu Mapa'}
             </button>
 
             <div className="muted" style={{ textAlign: 'center', marginTop: 12, fontSize: 13 }}>
@@ -1227,7 +1227,7 @@ e mostrar como sair dele.
                   onClick={copyMarkdown} 
                   disabled={!markdown}
                 >
-                  ✍️ Copiar Manual (Markdown)
+                  Copiar Manual (Markdown)
                 </button>
               </div>
 
@@ -1718,7 +1718,7 @@ e mostrar como sair dele.
                         disabled={!markdown} 
                         style={{ marginTop: 14 }}
                       >
-                        ✍️ Copiar Manual Completo (Markdown)
+                        Copiar Manual (Markdown)
                       </button>
                     </div>
                   );
@@ -1834,10 +1834,10 @@ e mostrar como sair dele.
                   style={{ marginTop: 10 }}
                 >
                   {processandoUpsell
-                    ? '⏳ Abrindo…'
+                    ? 'Abrindo…'
                     : comboProjecao
-                    ? `🔓 Desbloquear os Dois — R$ ${PRECO_BONUS_COMBO}`
-                    : `🔓 Desbloquear Projeção de 12 Meses — R$ ${PRECO_BONUS_AVULSO}`}
+                    ? `Desbloquear os dois — R$ ${PRECO_BONUS_COMBO}`
+                    : `Desbloquear a Projeção de 12 meses — R$ ${PRECO_BONUS_AVULSO}`}
                 </button>
               </div>
             )}
@@ -1966,10 +1966,10 @@ e mostrar como sair dele.
                     style={{ marginTop: 10 }}
                   >
                     {processandoUpsell
-                      ? '⏳ Abrindo…'
+                      ? 'Abrindo…'
                       : comboHumanDesign
-                      ? `🔓 Desbloquear os Dois — R$ ${PRECO_BONUS_COMBO}`
-                      : `🔓 Desbloquear Mapa de Human Design — R$ ${PRECO_BONUS_AVULSO}`}
+                      ? `Desbloquear os dois — R$ ${PRECO_BONUS_COMBO}`
+                      : `Desbloquear o Human Design — R$ ${PRECO_BONUS_AVULSO}`}
                   </button>
                 </div>
               )}

@@ -84,7 +84,7 @@ export default async function AnjoPage({ params }) {
         <div className="an-cta">
           <p>Descubra se {g.nome} é mesmo o seu — e qual anjo rege a sua mente pela hora em que você nasceu.</p>
           <div className="an-cta-btns">
-            <Link href="/anjo-da-guarda" className="an-btn">Descobrir meus anjos ✶</Link>
+            <Link href="/anjo-da-guarda" className="an-btn">Descobrir meus anjos</Link>
           </div>
         </div>
 

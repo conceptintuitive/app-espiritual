@@ -30,21 +30,25 @@ export function useAssinatura(analiseId) {
   return acesso;
 }
 
-/** Bloco de oferta pra pôr dentro do paywall de cada ferramenta. */
+/**
+ * Assinatura como caminho SECUNDÁRIO no paywall de Previsão do Ano, Human
+ * Design e Compatibilidade Completa (nov/2026): o botão principal é sempre
+ * "Desbloquear com o Manual do seu Mapa" (ou a compra do complemento, pra quem
+ * já tem o Manual); a assinatura aparece aqui como link.
+ */
 export function CtaAssinatura({ analiseId, origem }) {
   const href = `/assinar?${analiseId ? `a=${encodeURIComponent(analiseId)}&` : ''}plano=anual`;
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, margin: '6px 0 4px' }}>
+    <p className="p" style={{ fontSize: 14, margin: '10px 0 0', textAlign: 'center', opacity: 0.9 }}>
+      ou{' '}
       <a
         href={href}
-        className="btn btn-cta"
+        style={{ color: 'inherit', textDecoration: 'underline', textUnderlineOffset: 3 }}
         onClick={() => { try { window.gtag?.('event', 'assinar_click', { event_category: 'assinatura', origem }); } catch {} }}
       >
-        ✦ Liberar tudo com o Intuitive Completo
+        libere tudo com o Intuitive Completo
       </a>
-      <p className="p" style={{ fontSize: 14, margin: 0, opacity: 0.85, textAlign: 'center' }}>
-        {brl(PRECO_ASSINATURA_MENSAL)}/mês ou {brl(PRECO_ASSINATURA_ANUAL)}/ano (o anual inclui o Manual). Seu Dia, Previsão do Ano, Human Design, Compatibilidade e Oráculo ilimitado.
-      </p>
-    </div>
+      {' '}— {brl(PRECO_ASSINATURA_MENSAL)}/mês ou {brl(PRECO_ASSINATURA_ANUAL)}/ano (o anual inclui o Manual).
+    </p>
   );
 }

@@ -1,19 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import SiteNav from '@/app/components/SiteNav';
 import { hexagramaDoDia } from '@/lib/iching';
+import CtaMapa from '@/app/components/CtaMapa';
 
 export default function HexagramaClient() {
   const [hexagrama, setHexagrama] = useState(null);
-  const [ultimaAnaliseId, setUltimaAnaliseId] = useState(null);
 
   useEffect(() => {
     setHexagrama(hexagramaDoDia());
-    try {
-      setUltimaAnaliseId(window.localStorage.getItem('ic_ultima_analise_id'));
-    } catch {}
   }, []);
 
   useEffect(() => {
@@ -33,8 +29,6 @@ export default function HexagramaClient() {
     return () => { stars.innerHTML = ''; };
   }, []);
 
-  const ctaHref = ultimaAnaliseId ? `/resultado/${ultimaAnaliseId}` : '/';
-  const ctaLabel = ultimaAnaliseId ? 'Ver meu mapa completo →' : 'Descobrir meu mapa completo →';
 
   return (
     <div className="wrap">
@@ -114,7 +108,7 @@ export default function HexagramaClient() {
           <div className="carregando">Consultando o hexagrama de hoje…</div>
         )}
 
-        <Link href={ctaHref} className="cta">{ctaLabel}</Link>
+        <CtaMapa className="cta" origem="hexagrama" />
       </div>
 
       <style jsx global>{`

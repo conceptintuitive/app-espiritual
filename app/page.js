@@ -544,7 +544,7 @@ function QuizOverlay({ onClose }) {
                     opacity: loading ? .6 : 1, transition: 'all .2s',
                   }}
                 >
-                  ✦ Ver meu padrão agora
+                  Ver meu mapa agora
                 </button>
                 <p style={{ textAlign: 'center', fontSize: 13, color: '#6b6980', fontFamily: 'var(--F)', marginTop: 12 }}>
                   🔒 Dados seguros · Resultado imediato · Gratuito
@@ -796,7 +796,7 @@ export default function Home() {
                 animation: 'glow 2.8s ease-in-out infinite',
               }} />
               <button className="btn-cta" onClick={openQuiz}>
-                ✦ Descobrir meu padrão — 1 min
+                Fazer meu mapa grátis — 1 min
               </button>
             </div>
           </div>
@@ -827,7 +827,7 @@ export default function Home() {
             ))}
           </div>
           <div style={{ textAlign: 'center' }}>
-            <button className="btn-cta" onClick={openQuiz}>✦ Descobrir meu padrão — 1 min</button>
+            <button className="btn-cta" onClick={openQuiz}>Fazer meu mapa grátis — 1 min</button>
           </div>
         </div>
       </section>
@@ -906,7 +906,7 @@ export default function Home() {
                 filter: 'blur(24px)', opacity: .4, zIndex: -1,
                 animation: 'glow 2.8s ease-in-out infinite',
               }} />
-              <button className="btn-cta" onClick={openQuiz}>✦ Descobrir meu padrão — 1 min</button>
+              <button className="btn-cta" onClick={openQuiz}>Fazer meu mapa grátis — 1 min</button>
             </div>
             <p style={{ marginTop: 22, fontSize: 13, color: 'var(--t3)', fontFamily: 'var(--F)' }}>
               🔒 Seus dados são protegidos e usados apenas para gerar seu mapa.

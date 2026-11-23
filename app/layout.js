@@ -25,7 +25,7 @@ export const viewport = {
 export const metadata = {
   title: 'Intuitive Concept | Seu Mapa de Numerologia e Astrologia',
   description: 'Descubra seu padrão no amor, no dinheiro e o que trava seu momento atual. Numerologia + Astrologia + Padrões Comportamentais. Teste grátis em 1 minuto.',
-  keywords: 'numerologia, astrologia, mapa astral, número da vida, autoconhecimento, padrões comportamentais, manual completo',
+  keywords: 'numerologia, astrologia, mapa astral, número da vida, autoconhecimento, padrões comportamentais, manual do seu mapa',
   authors: [{ name: 'Intuitive Concept' }],
   creator: 'Intuitive Concept',
   publisher: 'Intuitive Concept',
@@ -149,7 +149,7 @@ export default function RootLayout({ children }) {
               '@context': 'https://schema.org',
               '@type': 'WebApplication',
               name: 'Intuitive Concept',
-              description: 'Manual Completo personalizado de Numerologia e Astrologia: padrão no amor, no dinheiro e no momento atual.',
+              description: 'O Manual do seu Mapa, personalizado de Numerologia e Astrologia: o seu padrão no amor, no dinheiro e no momento atual.',
               url: 'https://intuitiveconcept.com.br',
               applicationCategory: 'LifestyleApplication',
               offers: {
