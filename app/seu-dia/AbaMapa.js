@@ -201,6 +201,7 @@ export default function AbaMapa({ perfil }) {
           <BotoesCadeado
             perfil={perfil}
             origem="mapa"
+            modo="manual"
             rotuloResultado="Desbloquear o Manual do seu Mapa"
             rotuloQuiz="Ver a prévia grátis do meu Manual"
             nota="e ganhe 30 dias do Seu Dia Completo"
