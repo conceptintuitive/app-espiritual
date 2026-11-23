@@ -230,7 +230,7 @@ function QuizOverlay({ onClose }) {
           </div>
           {step < 4 && !loading && (
             <p className={h.faltam}>
-              Faltam só {4 - step} pergunta{4 - step > 1 ? 's' : ''}. O que vem depois muda como você vê os próximos 12 meses.
+              {4 - step > 1 ? `Faltam só ${4 - step} perguntas.` : 'Falta só 1 pergunta.'} O que vem depois muda como você vê os próximos 12 meses.
             </p>
           )}
         </div>
