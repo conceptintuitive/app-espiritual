@@ -1,5 +1,19 @@
-
 'use client';
+
+// /resultado/[id] — o Mapa grátis (prévia) + a venda do Manual do seu Mapa.
+// Visual da Minha Área desde nov/2026 (resultado.module.css). Ordem:
+//   1. Topo: céu do nascimento, nome, arquétipo, signo · número · anjo · Kin
+//   2. Leitura grátis inteira (preview, citação do diagnóstico, carta, 1º passo)
+//   3. Seu dia de hoje (DiaResumo, motor do Seu Dia) → /seu-dia
+//   4. O Manual do seu Mapa (#comprar): as 14 seções com título da pessoa,
+//      1 trecho borrado, preço + contador, combo, garantia, UM botão
+//   5. Fim: compatibilidade, Você também é…, card do story, presente, FAQ
+// NÃO MUDOU: checkout (/api/criar-checkout-mp, modal de e-mail inválido,
+// ?pagamento=recusado, ?pending=true), preço (lib/preco.js + contador de 24h),
+// combo, eventos GA4/Meta. Peso: nada de lib/manualgenerator.js; céu, anjo,
+// Kin, Seu Dia, ChatAssistente e VoceTambem entram via next/dynamic.
+// Oráculo: só abre com ?chat=1 (link do /oraculo); sem o balão flutuante nem
+// a abertura automática no fim da página. Exit-intent: removido.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
@@ -8,15 +22,22 @@ import dynamic from 'next/dynamic';
 import { createClient } from '@supabase/supabase-js';
 import { getTopMatches } from '@/lib/compatibilidade';
 import { TESTIMONIALS } from '@/lib/testimonials';
-import SeloArquetipo from '@/app/components/SeloArquetipo';
+import { getArquetipoPrincipal } from '@/lib/arquetipoCard';
 import BotaoCompartilharStory from '@/app/components/BotaoCompartilharStory';
 import { PRECO_MANUAL_JANELA, PRECO_MANUAL_PADRAO, PRECO_BONUS_COMBO } from '@/lib/preco';
 import { emailValido } from '@/lib/emailValidacao';
 import SiteNav from '@/app/components/SiteNav';
 import { salvarSeForMeu } from '@/lib/perfilLocal';
+import { salvarEmailSeuDia } from '@/lib/seuDiaRepasse';
+import { TESTE_SEU_DIA_ATIVO } from '@/lib/testeSeuDia';
+import { secoesDoManual, rotuloContador, faqResultado } from '@/lib/resultadoManual';
+import r from './resultado.module.css';
 
-// Fora do pacote inicial: o chat é um botão flutuante e o "Você também é…"
-// fica no fim da página (puxa anjos, Kin e BaZi, ~25 KB gzip).
+// Fora do pacote inicial: o céu e a linha anjo/Kin do topo, o dia de hoje
+// (lib/seuDia.js), o Oráculo (só com ?chat=1) e o "Você também é…".
+const CeuFundo = dynamic(() => import('./TopoCeu').then((m) => m.CeuFundo), { ssr: false });
+const ExtrasTopo = dynamic(() => import('./TopoCeu').then((m) => m.ExtrasTopo), { ssr: false });
+const DiaHoje = dynamic(() => import('./DiaHoje'), { ssr: false });
 const ChatAssistente = dynamic(() => import('@/app/components/ChatAssistente'), { ssr: false });
 const VoceTambem = dynamic(() => import('@/app/components/VoceTambem'), { ssr: false });
 
@@ -109,17 +130,31 @@ function firstSentences(text, n = 2) {
   return result || text;
 }
 
-// Checkbox de add-on do tier2 (Projeção de 12 Meses) — reaproveitado em cada
-// CTA de compra da página, não só na oferta final, pra dar a opção de bundle
-// assim que a pessoa vê o primeiro botão de comprar.
-function Tier2AddonToggle({ checked, onChange, precoTotal }) {
+const semAspas = (t) => String(t || '').trim().replace(/^["“”']+|["“”']+$/g, '').trim();
+
+function parseJson(txt, montar) {
+  if (!txt) return null;
+  try { return montar(JSON.parse(txt)); } catch { return null; }
+}
+
+// Add-on do combo (Projeção de 12 Meses + Human Design) junto com o Manual.
+function ComboToggle({ checked, onChange, precoTotal }) {
   return (
-    <label className={`tier2-addon${checked ? ' is-checked' : ''}`}>
+    <label className={`${r.combo} ${checked ? r.comboOn : ''}`}>
       <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
       <span>
-        {checked ? '✅' : '🔮'} Incluir também <strong>Projeção de 12 Meses + Mapa de Human Design</strong> (+R$ {PRECO_BONUS_COMBO} — R$ {precoTotal} no total)
+        Incluir também a <strong>Projeção de 12 Meses + Mapa de Human Design</strong> (+R$ {PRECO_BONUS_COMBO}, R$ {precoTotal} no total)
       </span>
     </label>
+  );
+}
+
+function Pagina({ children }) {
+  return (
+    <div className={r.pagina}>
+      <style jsx global>{`html, body { background: #07040d; max-width: 100%; overflow-x: hidden; }`}</style>
+      {children}
+    </div>
   );
 }
 
@@ -136,7 +171,6 @@ export default function ResultadoPage() {
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState('');
   const [processando, setProcessando] = useState(false);
-  const [showSticky, setShowSticky]   = useState(false);
   const [retryCount, setRetryCount]   = useState(0);
   const [retrying,   setRetrying]     = useState(false);
   const [pendingTimedOut, setPendingTimedOut] = useState(false);
@@ -144,39 +178,21 @@ export default function ResultadoPage() {
   const [secondsLeft, setSecondsLeft] = useState(null);
   const [statsCount, setStatsCount] = useState(null);
   const [ofertaExpirada, setOfertaExpirada] = useState(false);
-  const [showExitModal, setShowExitModal] = useState(false);
   const [incluirTier2, setIncluirTier2] = useState(false);
-  const [nudgeChat, setNudgeChat] = useState(false);
+  const [presenteAberto, setPresenteAberto] = useState(false);
   const [ehPresente, setEhPresente] = useState(false);
   const [presenteEmail, setPresenteEmail] = useState('');
   const [presenteDe, setPresenteDe] = useState('');
+  // Barra fixa do celular: aparece depois do topo, some com o bloco do Manual na tela.
+  const [passouTopo, setPassouTopo] = useState(false);
+  const [manualNaTela, setManualNaTela] = useState(false);
   // Link manual de reserva: alguns navegadores internos (Instagram/Facebook)
   // bloqueiam o redirecionamento automático pro Mercado Pago sem gerar erro
   // de JS nenhum — a pessoa só fica parada na mesma página. Guardando a URL
   // aqui garante que sempre exista um link real e clicável como alternativa.
   const [checkoutUrl, setCheckoutUrl] = useState(null);
-
-  // estrelas
-  const starsBuiltRef = useRef(false);
-  useEffect(() => {
-    if (starsBuiltRef.current) return;
-    starsBuiltRef.current = true;
-    const stars = document.getElementById('stars');
-    if (!stars) return;
-    stars.innerHTML = '';
-    const count = window.innerWidth < 768 ? 55 : 120;
-    for (let i = 0; i < count; i++) {
-      const s = document.createElement('div');
-      s.className = 'star';
-      s.style.left = Math.random() * 100 + '%';
-      s.style.top = Math.random() * 100 + '%';
-      s.style.opacity = String(0.25 + Math.random() * 0.75);
-      s.style.transform = `scale(${0.7 + Math.random() * 1.6})`;
-      s.style.animationDelay = Math.random() * 3 + 's';
-      stars.appendChild(s);
-    }
-    return () => { stars.innerHTML = ''; starsBuiltRef.current = false; };
-  }, []);
+  const topoRef = useRef(null);
+  const manualRef = useRef(null);
 
   // fetch
   useEffect(() => {
@@ -209,7 +225,7 @@ export default function ResultadoPage() {
   useEffect(() => {
     let mounted = true;
     fetch('/api/stats')
-      .then((r) => r.json())
+      .then((res) => res.json())
       .then((data) => { if (mounted) setStatsCount(data?.count ?? null); })
       .catch(() => {});
     return () => { mounted = false; };
@@ -269,50 +285,13 @@ export default function ResultadoPage() {
     return analise.numero_vida || calcularNumeroVida(analise.data_nascimento);
   }, [analise]);
 
-  const diagnosticoParsed = useMemo(() => {
-    if (!analise?.diagnostico_gerado) return null;
-    try {
-      const p = JSON.parse(analise.diagnostico_gerado);
-      return { frase: p?.frase_diagnostico || null, combinacao: p?.combinacao || null };
-    } catch { return null; }
-  }, [analise]);
-
-  const amorParsed = useMemo(() => {
-    if (!analise?.amor_gerado) return null;
-    try {
-      const p = JSON.parse(analise.amor_gerado);
-      return { headline: p?.headline || null, pattern: p?.pattern || null };
-    } catch { return null; }
-  }, [analise]);
-
-  const arquetiposParsed = useMemo(() => {
-    if (!analise?.arquetipos_gerado) return null;
-    try {
-      const p = JSON.parse(analise.arquetipos_gerado);
-      return { dominante: p?.dominante || null, emocional: p?.emocional || null, sombra: p?.sombra || null };
-    } catch { return null; }
-  }, [analise]);
-
-  const cartaTarot = useMemo(() => {
-    if (!analise?.carta_tarot) return null;
-    try { return JSON.parse(analise.carta_tarot); } catch { return null; }
-  }, [analise]);
-
-  const cartaTarotInterp = useMemo(() => {
-    if (!analise?.carta_tarot_interpretacao) return null;
-    try {
-      const p = JSON.parse(analise.carta_tarot_interpretacao);
-      return { titulo: p?.titulo || null, body: p?.body || null };
-    } catch { return null; }
-  }, [analise]);
-
-  const plano7Parsed = useMemo(() => {
-    if (!analise?.plano7_gerado) return null;
-    try {
-      const p = JSON.parse(analise.plano7_gerado);
-      return { headline: p?.headline || null, hook: p?.hook || null, days: Array.isArray(p?.days) ? p.days : [] };
-    } catch { return null; }
-  }, [analise]);
+  const diagnosticoParsed = useMemo(() => parseJson(analise?.diagnostico_gerado, (p) => ({ frase: p?.frase_diagnostico || null, combinacao: p?.combinacao || null })), [analise]);
+  const amorParsed = useMemo(() => parseJson(analise?.amor_gerado, (p) => ({ headline: p?.headline || null })), [analise]);
+  const dinheiroParsed = useMemo(() => parseJson(analise?.dinheiro_gerado, (p) => ({ headline: p?.headline || null })), [analise]);
+  const arquetiposParsed = useMemo(() => parseJson(analise?.arquetipos_gerado, (p) => ({ dominante: p?.dominante || null, emocional: p?.emocional || null, sombra: p?.sombra || null })), [analise]);
+  const cartaTarot = useMemo(() => parseJson(analise?.carta_tarot, (p) => p), [analise]);
+  const cartaTarotInterp = useMemo(() => parseJson(analise?.carta_tarot_interpretacao, (p) => ({ titulo: p?.titulo || null, body: p?.body || null })), [analise]);
+  const plano7Parsed = useMemo(() => parseJson(analise?.plano7_gerado, (p) => ({ headline: p?.headline || null, hook: p?.hook || null, days: Array.isArray(p?.days) ? p.days : [] })), [analise]);
 
   const iaCompleta = Boolean(
     analise?.diagnostico_gerado && analise?.amor_gerado && analise?.arquetipos_gerado
@@ -323,6 +302,8 @@ export default function ResultadoPage() {
     const matches = getTopMatches(signoFinal, 1);
     return matches[0] || null;
   }, [signoFinal]);
+
+  const dados = useMemo(() => dadosDaAnalise(analise), [analise]);
 
   // polling — refetch até diagnostico + amor + arquetipos chegarem (até 10 tentativas × 4s = 40s)
   useEffect(() => {
@@ -338,41 +319,33 @@ export default function ResultadoPage() {
       setRetrying(false);
     }, 4000);
     return () => clearTimeout(timer);
-  }, [analise, retryCount, id]);
+  }, [analise, retryCount, id, iaCompleta]);
 
-  // sticky CTA observer
+  // Barra fixa do celular: topo fora da tela e bloco do Manual fora da tela.
   useEffect(() => {
     if (!analise) return;
-    const previewEl = document.querySelector('.preview-card');
-    const offerEl   = document.querySelector('.offer-card');
-    if (!previewEl || !offerEl) return;
-
-    const previewObs = new IntersectionObserver(
-      ([e]) => setShowSticky(!e.isIntersecting),
-      { threshold: 0 }
-    );
-    const offerObs = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) setShowSticky(false); },
-      { threshold: 0.1 }
-    );
-    previewObs.observe(previewEl);
-    offerObs.observe(offerEl);
-    return () => { previewObs.disconnect(); offerObs.disconnect(); };
+    const topo = topoRef.current, manual = manualRef.current;
+    if (!topo || !manual) return;
+    const obsTopo = new IntersectionObserver(([e]) => setPassouTopo(!e.isIntersecting), { threshold: 0 });
+    const obsManual = new IntersectionObserver(([e]) => setManualNaTela(e.isIntersecting), { threshold: 0 });
+    obsTopo.observe(topo);
+    obsManual.observe(manual);
+    return () => { obsTopo.disconnect(); obsManual.disconnect(); };
   }, [analise]);
 
   // Vindo do cadeado da Minha Área (/resultado/<id>#comprar): o conteúdo só
   // aparece depois do fetch, então o navegador não acha a âncora sozinho.
   useEffect(() => {
     if (!analise || typeof window === 'undefined' || window.location.hash !== '#comprar') return;
-    const t = setTimeout(() => document.querySelector('.offer-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
+    const t = setTimeout(() => manualRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
     return () => clearTimeout(t);
   }, [analise]);
 
-  // Instrumentação: primeira vez que a oferta final entra na tela — separa
+  // Instrumentação: primeira vez que a oferta entra na tela — separa
   // "não leu até lá" de "leu e não clicou". Dispara só 1x por visita.
   useEffect(() => {
     if (!analise) return;
-    const offerEl = document.querySelector('.offer-card');
+    const offerEl = manualRef.current;
     if (!offerEl) return;
     const obs = new IntersectionObserver(
       ([entry]) => {
@@ -433,61 +406,7 @@ export default function ResultadoPage() {
     return () => clearInterval(interval);
   }, [analise?.created_at]);
 
-  const countdownLabel = useMemo(() => {
-    if (secondsLeft === null) return null;
-    const h = Math.floor(secondsLeft / 3600).toString().padStart(2, '0');
-    const m = Math.floor((secondsLeft % 3600) / 60).toString().padStart(2, '0');
-    const s = (secondsLeft % 60).toString().padStart(2, '0');
-    return `${h}:${m}:${s}`;
-  }, [secondsLeft]);
-
-  // exit-intent — desktop (mouse saindo pelo topo) + intercepta 1x o botão voltar
-  useEffect(() => {
-    if (!analise || analise.payment_status === 'paid' || typeof window === 'undefined') return;
-    const shownKey = 'ic_exit_modal_shown';
-    if (window.sessionStorage.getItem(shownKey)) return;
-
-    const trigger = () => {
-      if (window.sessionStorage.getItem(shownKey)) return;
-      window.sessionStorage.setItem(shownKey, '1');
-      setShowExitModal(true);
-    };
-
-    const onMouseLeave = (e) => { if (e.clientY <= 0) trigger(); };
-    document.addEventListener('mouseleave', onMouseLeave);
-
-    window.history.pushState({ icGuard: true }, '');
-    const onPopState = () => { trigger(); window.history.pushState({ icGuard: true }, ''); };
-    window.addEventListener('popstate', onPopState);
-
-    return () => {
-      document.removeEventListener('mouseleave', onMouseLeave);
-      window.removeEventListener('popstate', onPopState);
-    };
-  }, [analise]);
-
-  // Oráculo proativo — abre sozinho (1x por sessão) se a pessoa rolar até
-  // perto do fim (bloco de reforço) sem comprar, com sugestões de pergunta.
-  useEffect(() => {
-    if (!analise || analise.payment_status === 'paid' || typeof window === 'undefined') return;
-    const shownKey = 'ic_oraculo_nudge_shown';
-    if (window.sessionStorage.getItem(shownKey)) return;
-    const el = document.querySelector('.reforco-block');
-    if (!el) return;
-
-    const obs = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          window.sessionStorage.setItem(shownKey, '1');
-          setNudgeChat(true);
-          obs.disconnect();
-        }
-      },
-      { threshold: 0.4 }
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, [analise]);
+  const countdownLabel = useMemo(() => rotuloContador(secondsLeft), [secondsLeft]);
 
   // compra
   const handleShareWhatsapp = () => {
@@ -563,80 +482,73 @@ export default function ResultadoPage() {
     handleComprar(trimmed);
   };
 
+  // "Receber meu dia todo dia às 7h": o e-mail da análise vai pro login por
+  // código do /seu-dia por localStorage (lib/seuDiaRepasse.js), nunca na URL.
+  const irProSeuDia = () => {
+    try { window?.gtag?.('event', 'resultado_teste_clique', { event_category: 'seu_dia', pago: analise?.payment_status === 'paid' }); } catch {}
+    salvarEmailSeuDia(analise?.email || '');
+  };
+
   // Previsão do Ano e Human Design não têm mais compra avulsa — só liberam
-  // junto com o Manual (ver checkbox "Incluir também" nos CTAs acima e
-  // app/api/criar-checkout-upsell-mp/route.js, que agora exige o Manual
-  // pago). handleComprarAvulso/processandoAvulso foram removidos daqui.
+  // junto com o Manual (combo acima e app/api/criar-checkout-upsell-mp/route.js,
+  // que exige o Manual pago).
 
   // loading / erro
   if (loading) {
     return (
-      <div className="wrap">
-        <style jsx global>{globalCss}</style>
-        <div id="stars" className="stars" />
-        <div className="center">
-          <div className="spinner" />
-          <p className="muted">Carregando seu resultado…</p>
+      <Pagina>
+        <div className={r.centro}>
+          <div className={r.spinner} />
+          <p className={r.texto}>Carregando seu Mapa…</p>
         </div>
-      </div>
+      </Pagina>
     );
   }
 
   if (erro || !analise) {
     return (
-      <div className="wrap">
-        <style jsx global>{globalCss}</style>
-        <div id="stars" className="stars" />
-        <div className="center">
-          <h1 style={{ marginBottom: 10 }}>Ops…</h1>
-          <p className="muted">{erro || 'Erro ao carregar'}</p>
-          <button className="btn" onClick={() => router.push('/')}>Voltar</button>
+      <Pagina>
+        <div className={r.centro}>
+          <h1 className={r.centroTitulo}>Ops…</h1>
+          <p className={r.texto}>{erro || 'Erro ao carregar'}</p>
+          <button className={r.btn} onClick={() => router.push('/')}>Voltar</button>
         </div>
-      </div>
+      </Pagina>
     );
   }
 
   if (isPending && !pendingTimedOut) {
     return (
-      <div className="wrap">
-        <style jsx global>{globalCss}</style>
-        <div id="stars" className="stars" />
-        <div className="center">
-          <div className="spinner" />
-          <p className="muted">Confirmando seu pagamento…</p>
-          <p className="muted" style={{ fontSize: 14 }}>Isso pode levar alguns instantes.</p>
+      <Pagina>
+        <div className={r.centro}>
+          <div className={r.spinner} />
+          <p className={r.texto}>Confirmando seu pagamento…</p>
+          <p className={r.rotulo}>Isso pode levar alguns instantes.</p>
         </div>
-      </div>
+      </Pagina>
     );
   }
 
   if (isPending && pendingTimedOut) {
     return (
-      <div className="wrap">
-        <style jsx global>{globalCss}</style>
-        <div id="stars" className="stars" />
-        <div className="center">
-          <h1 style={{ marginBottom: 10 }}>Quase lá…</h1>
-          <p className="muted">
+      <Pagina>
+        <div className={r.centro}>
+          <h1 className={r.centroTitulo}>Quase lá…</h1>
+          <p className={r.texto} style={{ maxWidth: 460 }}>
             Ainda estamos confirmando seu pagamento — isso pode levar alguns minutos.
             Você também vai receber o link do seu Manual por e-mail assim que for confirmado.
           </p>
-          <button
-            className="btn-cta btn-cta-sm"
-            style={{ marginTop: 8 }}
-            onClick={() => setPendingRetryKey((k) => k + 1)}
-          >
+          <button className={r.btn} onClick={() => setPendingRetryKey((k) => k + 1)}>
             Verificar de novo
           </button>
-          <Link href={`/resultado/${id}`} className="muted" style={{ fontSize: 14, textDecoration: 'underline' }}>
-            Voltar para a oferta
-          </Link>
+          <Link href={`/resultado/${id}`} className={r.link}>Voltar para a oferta</Link>
         </div>
-      </div>
+      </Pagina>
     );
   }
 
   const firstName = pickFirstName(analise.nome);
+  const pago = analise.payment_status === 'paid';
   // "mais de X" sempre arredondado pra baixo (nunca infla o número real); só mostra a partir de um mínimo plausível
   const roundedStatsCount = statsCount && statsCount >= 15 ? Math.floor(statsCount / 10) * 10 : null;
   // Preço de verdade, não só visual: depois que a janela de 24h expira, o
@@ -644,1265 +556,323 @@ export default function ResultadoPage() {
   // regra, usada aqui e nos dois checkouts (MP e Stripe), então nunca fica
   // um valor exibido diferente do que é cobrado.
   const precoAtual = ofertaExpirada ? PRECO_MANUAL_PADRAO : PRECO_MANUAL_JANELA;
-  const cargoLabel = incluirTier2
-    ? `Desbloquear o Manual do seu Mapa + Projeção 12 meses + Human Design — R$ ${precoAtual + PRECO_BONUS_COMBO}`
-    : `Desbloquear o Manual do seu Mapa — R$ ${precoAtual}`;
+  const precoTotal = incluirTier2 ? precoAtual + PRECO_BONUS_COMBO : precoAtual;
+  const rotuloComprar = incluirTier2
+    ? `Desbloquear o Manual + Projeção e Human Design · R$ ${precoTotal}`
+    : `Desbloquear o Manual do seu Mapa · R$ ${precoAtual}`;
+  const arquetipo = signoFinal && numeroVidaFinal
+    ? getArquetipoPrincipal({ signo: signoFinal, numeroVida: numeroVidaFinal, objetivoPrincipal: analise.objetivo_principal })
+    : null;
+  const secoes = secoesDoManual({
+    nome: firstName, signo: signoFinal, numero: numeroVidaFinal, anoPessoal: analise.ano_pessoal,
+    objetivo: analise.objetivo_principal, arquetipo: arquetipo?.nome,
+    diagnostico: diagnosticoParsed, amor: amorParsed, dinheiro: dinheiroParsed, arquetipos: arquetiposParsed, plano7: plano7Parsed,
+  });
+  const trechoBorrado = !pago && diagnosticoParsed?.combinacao ? truncateAtWord(diagnosticoParsed.combinacao, 220) : null;
+  // Manual pago há menos de 30 dias = Seu Dia Completo de cortesia (Termos, seção 5).
+  const cortesiaAtiva = pago && analise.paid_at && Date.now() - new Date(analise.paid_at).getTime() < 30 * 86400000;
+  const primeiroPasso = plano7Parsed?.days?.[0] || null;
+  const mostrarBarra = !pago && passouTopo && !manualNaTela;
 
   return (
-    <div className="wrap">
-      <style jsx global>{globalCss}</style>
-      <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Cormorant+Garamond:wght@300;400;500&display=swap" rel="stylesheet" />
-      <div id="stars" className="stars" />
+    <Pagina>
       <SiteNav active="meu-mapa" />
 
-      <div className="container">
-
-        {/* ══ Pagamento recusado no MP — volta aqui via back_urls.failure ══ */}
-        {pagamentoRecusado && (
-          <div className="banner-recusado">
-            <strong>Seu pagamento não foi aprovado.</strong>
-            <p style={{ marginTop: 4 }}>
-              Tente outro cartão ou pague com <span className="pix-destaque">Pix</span> — costuma ser mais rápido e sem recusa.
-            </p>
-          </div>
-        )}
-
-        {/* ══ BLOCO 1 — HERO ══ */}
-        <div className="hero">
-          <h1 className="hero-title">{firstName}, olha o que apareceu no seu mapa.</h1>
-
-          {/* Pills de signos */}
-          <div className="pills pills-signos">
-            {signoFinal        && <span className="pill pill-signo">☀️ {signoFinal} (Sol)</span>}
-            {analise.signo_lua        && <span className="pill pill-signo">🌙 Lua em {analise.signo_lua}</span>}
-            {analise.signo_ascendente && <span className="pill pill-signo">⬆️ Asc. em {analise.signo_ascendente}</span>}
-            {analise.signo_venus      && <span className="pill pill-signo">💞 Vênus em {analise.signo_venus}</span>}
-            {analise.signo_marte      && <span className="pill pill-signo">⚔️ Marte em {analise.signo_marte}</span>}
-          </div>
-
-          {/* Pills de números */}
-          <div className="pills pills-numeros">
-            {numeroVidaFinal           && <span className="pill pill-numero">🔢 Vida: {numeroVidaFinal}</span>}
-            {analise.numero_alma       && <span className="pill pill-numero">🔢 Alma: {analise.numero_alma}</span>}
-            {analise.numero_expressao  && <span className="pill pill-numero">🔢 Expressão: {analise.numero_expressao}</span>}
-            {analise.ano_pessoal       && <span className="pill pill-numero">📅 Ano Pessoal: {analise.ano_pessoal}</span>}
-          </div>
+      {/* Pagamento recusado no MP — volta aqui via back_urls.failure */}
+      {pagamentoRecusado && (
+        <div className={r.banner} role="alert">
+          <strong>Seu pagamento não foi aprovado.</strong> Tente outro cartão ou pague com Pix — costuma ser mais rápido e sem recusa.
         </div>
+      )}
 
-        {/* ══ SELO DO ARQUÉTIPO — cartão compartilhável ══ */}
-        <SeloArquetipo
-          firstName={firstName}
-          signo={signoFinal}
-          numeroVida={numeroVidaFinal}
-          objetivoPrincipal={analise.objetivo_principal}
-        />
-
-        {/* ══ ABERTURA — antes do conteúdo bloqueado ══ */}
-        <p style={{ textAlign: 'center', fontSize: 15, color: 'var(--muted)', lineHeight: 1.7, margin: '24px 0 0', padding: '0 8px' }}>
-          Você não caiu nessa página por acaso — seu mapa numerológico revelou um padrão pouco comum. A parte mais importante do seu resultado, o que isso significa pra sua fase atual, está logo abaixo.
-        </p>
-
-        {/* ══ BLOCO 2 — PREVIEW ══ */}
-        {analise.preview_gerado && (
-          <div className="preview-card">
-            <p className="preview-quote">"{analise.preview_gerado}"</p>
-            <hr className="preview-divider" />
-            <p className="micro-pergunta">Isso te descreveu?</p>
-          <button
-            className="mini-cta-link"
-            onClick={() => document.querySelector('.offer-card')?.scrollIntoView({ behavior: 'smooth' })}
-          >
-            Desbloquear o Manual do seu Mapa — R$ {precoAtual}
-          </button>
+      {/* ══ 1. TOPO ══ */}
+      <header ref={topoRef} className={r.hero}>
+        {dados && <CeuFundo dados={dados} />}
+        <div className={r.heroVeu} aria-hidden="true" />
+        <div className={r.heroConteudo}>
+          <div className={r.heroTexto}>
+            <span className={r.eyebrow}>Seu Mapa</span>
+            <h1 className={`${r.nome} ${firstName.length > 7 ? r.nomeLongo : ''}`}>{firstName || 'Você'}</h1>
+            {arquetipo && <p className={r.arquetipo}>{arquetipo.nome}</p>}
+            {dados
+              ? <ExtrasTopo dados={dados} signo={signoFinal} numero={numeroVidaFinal} />
+              : <p className={r.chips}>{[signoFinal, numeroVidaFinal].filter(Boolean).join(' · ')}</p>}
+          </div>
+          {numeroVidaFinal ? (
+            <div className={r.heroNumero} aria-hidden="true">
+              <span className={r.numeroGrande}>{numeroVidaFinal}</span>
+              <span className={r.rotulo}>Número de vida</span>
+            </div>
+          ) : null}
         </div>
-        )}
+      </header>
 
-        {/* spinner de polling enquanto diagnóstico + amor + arquétipos não chegarem */}
-        {!iaCompleta && (retrying || retryCount < 3) && (
-          <div className="gerando-card">
-            <div className="gerando-spinner" />
-            <p className="gerando-text">Gerando seu diagnóstico…</p>
-            <p className="gerando-sub">Isso leva alguns segundos.</p>
+      <main className={r.corpo}>
+
+        {/* ══ 2. LEITURA GRÁTIS — inteira, sem borrão ══ */}
+        <section className={r.secao} aria-labelledby="leitura">
+          <div className={r.secaoTopo}>
+            <span className={r.eyebrow}>Sua leitura grátis</span>
+            <h2 id="leitura" className={r.h2}>{firstName}, olha o que apareceu <em>no seu mapa</em></h2>
           </div>
-        )}
+          {analise.preview_gerado && <p className={r.citacao}>“{semAspas(analise.preview_gerado)}”</p>}
 
-        {/* ══ BLOCO 3 — DIAGNÓSTICO (parcial) ══ */}
-        {diagnosticoParsed && (
-          <div className="section-card">
-            <div className="section-label">Seu Diagnóstico Profundo</div>
-            {diagnosticoParsed.frase && (
-              <p className="frase-destaque">"{diagnosticoParsed.frase}"</p>
-            )}
-            {diagnosticoParsed.combinacao && (
-              <div className="content-fade" style={{ maxHeight: '140px' }}>
-                <p className="body-text">{truncateAtWord(diagnosticoParsed.combinacao, 260)}</p>
+          <div className={r.linhas}>
+            {diagnosticoParsed?.frase && (
+              <div className={r.linhaLeitura}>
+                <span className={r.rotulo}>Seu diagnóstico</span>
+                <p className={r.linhaTitulo}><em>“{semAspas(diagnosticoParsed.frase)}”</em></p>
               </div>
             )}
-            <div className="locked-card">
-              <div className="locked-icon">🔒</div>
-              <p className="locked-text">
-                O mecanismo que mantém esse ciclo rodando e o ajuste que muda o resultado estão no seu Manual.
-              </p>
-              <button className="btn-cta" onClick={() => handleComprar()} disabled={processando}>
-                {processando ? 'Abrindo…' : cargoLabel}
-              </button>
-              <Tier2AddonToggle checked={incluirTier2} onChange={setIncluirTier2} precoTotal={precoAtual + PRECO_BONUS_COMBO} />
-              <p className="pos-compra" style={{ marginTop: 10 }}>
-                Após o pagamento, você receberá o link do seu Manual por email em poucos minutos. Verifique também a caixa de spam.
-              </p>
-            </div>
-          </div>
-        )}
 
-        {/* ══ IMAGEM IA (Pollinations) + fallback SVG ══ */}
-        {cartaTarot && (
-          <div style={{ position: 'relative', marginTop: 28, borderRadius: 16, overflow: 'hidden', border: '1px solid rgba(212,168,83,0.2)', aspectRatio: '1200/630', background: 'linear-gradient(135deg, #0a0118 0%, #2d0a4e 50%, #0d0125 100%)' }}>
-            {/* Imagem real ou fallback SVG enquanto gera */}
-            <img
-              src={analise.imagem_ia_url || `/api/og/${id}`}
-              alt=""
-              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-            />
-            {/* Overlay com nome + carta via HTML/CSS */}
-            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(5,0,15,0.85) 0%, rgba(5,0,15,0.05) 55%, rgba(5,0,15,0.4) 100%)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', padding: 28, gap: 8 }}>
-              <p style={{ fontFamily: 'Georgia, serif', fontSize: 22, fontWeight: 700, color: '#f0eff4', margin: 0, textAlign: 'center', textShadow: '0 2px 14px rgba(0,0,0,0.9)' }}>{firstName}</p>
-              <p style={{ fontSize: 13, color: 'rgba(240,200,112,0.85)', letterSpacing: '0.08em', textTransform: 'uppercase', margin: 0 }}>
-                {cartaTarot.simbolo} {cartaTarot.nome}{cartaTarot.invertida ? ' — Invertida' : ''}
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* ══ OFERTA COMPACTA — logo após a primeira seção forte da prévia
-             (Diagnóstico + imagem), pra quem não rola até a oferta completa
-             no final. Classe offer-card-compact DE PROPÓSITO diferente de
-             .offer-card: esse seletor já é usado pelo observer do sticky-bar
-             e pelo evento GA4 resultado_oferta_visivel — reaproveitar o nome
-             aqui corromperia os dois (métrica que esse bloco existe pra
-             melhorar). handleComprar() já dispara clique_comprar sozinho,
-             não precisa de evento próprio aqui. ══ */}
-        {diagnosticoParsed && (
-          <div className="card offer-card-compact">
-            {!ofertaExpirada && countdownLabel && (
-              <p className="countdown-badge">
-                🗓️ R$ {PRECO_MANUAL_JANELA} só hoje — depois vira R$ {PRECO_MANUAL_PADRAO} <strong>({countdownLabel})</strong>
-              </p>
-            )}
-            <div className="offer-price-row">
-              {ofertaExpirada ? (
-                <span className="price-now-sm">R$ {PRECO_MANUAL_PADRAO},00</span>
-              ) : (
-                <>
-                  <span className="price-old-sm">de R$ {PRECO_MANUAL_PADRAO},00</span>
-                  <span className="price-now-sm">por R$ {PRECO_MANUAL_JANELA},00</span>
-                </>
-              )}
-            </div>
-            <button className="btn-cta" onClick={() => handleComprar()} disabled={processando}>
-              {processando ? 'Abrindo…' : cargoLabel}
-            </button>
-            <p className="offer-compact-note">Manual do seu Mapa com 14 seções · Pix: acesso liberado na hora</p>
-          </div>
-        )}
-
-        {/* ══ BLOCO 4 — AMOR (parcial) ══ */}
-        {amorParsed && (
-          <div className="section-card">
-            <div className="section-label">Seu Padrão no Amor</div>
-            {amorParsed.headline && (
-              <p className="amor-headline">"{amorParsed.headline}"</p>
-            )}
-            {amorParsed.pattern && (
-              <div className="content-fade content-fade-sm" style={{ maxHeight: '120px' }}>
-                <p className="body-text">{truncateAtWord(amorParsed.pattern, 200)}</p>
-              </div>
-            )}
-            <div className="locked-card locked-card-quiet">
-              <p className="locked-text">
-                O que parar de fazer e o que começar no amor está no seu Manual.
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* ══ BLOCO A — MAPA DO DINHEIRO ══ */}
-        {analise.dinheiro_gerado ? (() => {
-          let dinheiroParsed = null;
-          try { dinheiroParsed = JSON.parse(analise.dinheiro_gerado); } catch {}
-          return dinheiroParsed ? (
-            <div className="section-card">
-              <div className="section-label">Seu Mapa do Dinheiro</div>
-              {dinheiroParsed.headline && (
-                <p className="amor-headline">"{dinheiroParsed.headline}"</p>
-              )}
-              {dinheiroParsed.pattern && (
-                <div className="content-fade content-fade-sm" style={{ maxHeight: '120px' }}>
-                  <p className="body-text">{truncateAtWord(dinheiroParsed.pattern, 200)}</p>
-                </div>
-              )}
-              <div className="locked-card locked-card-quiet">
-                <p className="locked-text">
-                  Seus bloqueios financeiros e o caminho para destravar estão no seu Manual.
-                </p>
-              </div>
-            </div>
-          ) : null;
-        })() : (
-          <div className="section-card">
-            <div className="section-label">Seu Mapa do Dinheiro</div>
-            <p className="amor-headline">"Seus bloqueios financeiros ocultos"</p>
-            <div className="locked-card">
-              <div className="locked-icon">🔒</div>
-              <p className="locked-text">
-                Seus bloqueios financeiros e o caminho para destravar estão no seu Manual.
-              </p>
-              <button className="btn-cta" onClick={() => handleComprar()} disabled={processando}>
-                {processando ? 'Abrindo…' : cargoLabel}
-              </button>
-              <Tier2AddonToggle checked={incluirTier2} onChange={setIncluirTier2} precoTotal={precoAtual + PRECO_BONUS_COMBO} />
-            </div>
-          </div>
-        )}
-
-        {/* ══ BLOCO B — RITUAIS ══ */}
-        <div className="section-card">
-          <div className="section-label">3 Rituais Para Seu Perfil</div>
-          <div className="arq-grid">
-            {[
-              { emoji: '🕯️', label: 'Ritual de Clareza' },
-              { emoji: '🌊', label: 'Ritual de Limpeza' },
-              { emoji: '🔮', label: 'Ritual de Ativação' },
-            ].map(({ emoji, label }) => (
-              <div key={label} className="arq-card">
-                <div className="arq-emoji">{emoji}</div>
-                <div className="arq-label">{label}</div>
-                <div className="arq-desc-wrap">
-                  <p className="arq-desc blur-content">ritual personalizado para o seu perfil</p>
-                  <div className="arq-overlay">Desbloqueie no manual</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* ══ BLOCO 5 — ARQUÉTIPOS ══ */}
-        {arquetiposParsed && (
-          <div className="section-card">
-            <div className="section-label">Seus 3 Arquétipos</div>
-            <div className="arq-grid">
-              {[
-                { emoji: '🔥', label: 'Dominante', data: arquetiposParsed.dominante },
-                { emoji: '💧', label: 'Emocional',  data: arquetiposParsed.emocional },
-                { emoji: '🌑', label: 'Sombra',     data: arquetiposParsed.sombra },
-              ].map(({ emoji, label, data }) => data && (
-                <div key={label} className="arq-card">
-                  <div className="arq-emoji">{emoji}</div>
-                  <div className="arq-label">{label}</div>
-                  <div className="arq-nome">{data.nome}</div>
-                  <div className="arq-desc-wrap">
-                    <p className="arq-desc blur-content">{data.descricao}</p>
-                    <div className="arq-overlay">Desbloqueie no manual</div>
+            {cartaTarot && (
+              <div className={`${r.linhaLeitura} ${r.carta}`}>
+                <div className={r.cartaImg}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={analise.imagem_ia_url || `/api/og/${id}`} alt="" />
+                  <div className={r.cartaImgVeu}>
+                    <span className={r.cartaImgNome}>{firstName}</span>
+                    <span className={r.rotulo} style={{ color: 'var(--ouro-2)' }}>{cartaTarot.nome}{cartaTarot.invertida ? ' · invertida' : ''}</span>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ══ BLOCO — COMPATIBILIDADE ASTRAL (teaser) ══ */}
-        {compatTeaser && (
-          <div className="section-card">
-            <div className="section-label">Compatibilidade Astral</div>
-            <p className="amor-headline">
-              {compatTeaser.signo.simbolo} {signoFinal} + {compatTeaser.signo.simbolo} {compatTeaser.signo.nome}
-            </p>
-            <div className="arq-desc-wrap" style={{ marginTop: 4 }}>
-              <p className="arq-desc blur-content" style={{ fontSize: 15 }}>{compatTeaser.headline} ({compatTeaser.score}%)</p>
-              <div className="arq-overlay">Desbloqueie no manual</div>
-            </div>
-            <div className="locked-card locked-card-quiet" style={{ marginTop: 16 }}>
-              <p className="locked-text">
-                No seu Manual: sua compatibilidade cruzando Sol, Lua, Ascendente, Vênus e Marte — os 5 pontos que mais importam.
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* ══ BLOCO TAROT — teaser carta ══ */}
-        {cartaTarot && (
-          <div className="section-card" style={{ background: 'linear-gradient(135deg, rgba(17,7,32,0.85) 0%, rgba(55,15,90,0.3) 100%)', borderColor: 'rgba(212,168,83,0.25)' }}>
-            <div className="section-label" style={{ color: '#f0c870' }}>Sua Carta do Dia</div>
-            {cartaTarotInterp?.titulo && (
-              <p className="amor-headline">"{cartaTarotInterp.titulo}"</p>
-            )}
-            {cartaTarotInterp?.body && (
-              <div className="content-fade content-fade-sm" style={{ maxHeight: '120px' }}>
-                <p className="body-text">{firstSentences(cartaTarotInterp.body, 2)}</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <span className={r.rotulo}>Sua carta do dia · {cartaTarot.nome}{cartaTarot.invertida ? ' invertida' : ''}</span>
+                  {cartaTarotInterp?.titulo && <p className={r.linhaTitulo}>{semAspas(cartaTarotInterp.titulo)}</p>}
+                  {cartaTarotInterp?.body && <p className={r.texto}>{firstSentences(cartaTarotInterp.body, 2)}</p>}
+                </div>
               </div>
             )}
-            <div className="locked-card" style={{ borderColor: 'rgba(212,168,83,0.25)' }}>
-              <div className="locked-icon">🔒</div>
-              <p className="locked-text">
-                A interpretação completa de como {cartaTarot.nome}{cartaTarot.invertida ? ' Invertida' : ''} se conecta ao seu perfil e objetivo está no seu Manual.
-              </p>
-              <button className="btn-cta" onClick={() => handleComprar()} disabled={processando}>
-                {processando ? 'Abrindo…' : cargoLabel}
-              </button>
-              <Tier2AddonToggle checked={incluirTier2} onChange={setIncluirTier2} precoTotal={precoAtual + PRECO_BONUS_COMBO} />
+
+            {primeiroPasso && (
+              <div className={r.linhaLeitura}>
+                <span className={r.rotulo}>Seu primeiro passo</span>
+                <p className={r.texto}>{primeiroPasso}</p>
+              </div>
+            )}
+
+            {/* enquanto diagnóstico + amor + arquétipos não chegam */}
+            {!iaCompleta && (retrying || retryCount < 3) && (
+              <div className={r.gerando}>
+                <div className={r.spinner} />
+                <span>Gerando o resto da sua leitura… leva alguns segundos.</span>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* ══ 3. SEU DIA DE HOJE ══ */}
+        {dados && (
+          <section className={r.secao} aria-labelledby="dia-hoje">
+            <div className={r.dia}>
+              <div className={r.diaTexto}>
+                <span className={r.eyebrow}>Seu dia de hoje</span>
+                <h2 id="dia-hoje" className={r.h2}>O seu mapa, <em>lido pro dia de hoje</em></h2>
+                <p className={r.diaFrase}>O que fazer, o que evitar e as melhores horas, todo dia, a partir do seu nascimento.</p>
+                <a className={r.btn} href="/seu-dia" onClick={irProSeuDia}>Receber meu dia todo dia às 7h</a>
+                {cortesiaAtiva
+                  ? <p className={r.teste}>Seu Dia Completo incluso por 30 dias com o seu Manual</p>
+                  : TESTE_SEU_DIA_ATIVO && !pago && <p className={r.teste}>7 dias do Seu Dia Completo grátis, sem cartão</p>}
+              </div>
+              <div className={r.diaPrevia}>
+                <span className={r.selo}>hoje, pra você</span>
+                <DiaHoje dados={dados} />
+              </div>
             </div>
-          </div>
+          </section>
         )}
 
-        {/* ══ BLOCO 6 — PLANO 7 DIAS (parcial) ══ */}
-        {plano7Parsed && plano7Parsed.days.length > 0 && (
-          <div className="section-card">
-            <div className="section-label">Seu Plano de 7 Dias</div>
-            {plano7Parsed.hook && <p className="plano-hook">{plano7Parsed.hook}</p>}
-            <ul className="days-list">
-              {plano7Parsed.days.map((day, i) => (
-                <li key={i} className={i >= 1 ? 'day-item day-blurred' : 'day-item'}>
-                  {day}
-                </li>
-              ))}
-            </ul>
-            <p className="plano-lock-note">Os 6 dias restantes estão no seu Manual.</p>
+        {/* ══ 4. O MANUAL DO SEU MAPA (#comprar) ══ */}
+        <section ref={manualRef} id="comprar" className={`${r.secao} ${r.manual}`} aria-labelledby="manual">
+          <div className={`${r.secaoTopo} ${r.manualTopo}`}>
+            <span className={r.eyebrow}>{pago ? 'Liberado' : 'O Manual do seu Mapa'}</span>
+            <h2 id="manual" className={r.h2}>
+              {pago ? <>O seu Manual <em>já está liberado</em></> : <>14 seções escritas <em>só pra {firstName || 'você'}</em></>}
+            </h2>
           </div>
-        )}
 
-        {/* ══ SOCIAL PROOF ══ */}
-        <div className="section-card social-proof-card">
-          <p className="social-proof-text">
-            {roundedStatsCount
-              ? `✨ Mais de ${roundedStatsCount} pessoas já fizeram o seu mapa por aqui`
-              : '✨ Mapa feito com o nosso método exclusivo de numerologia e astrologia'}
-          </p>
-        </div>
-
-        {/* ══ BLOCO C — O QUE TEM NO MANUAL ══ */}
-        <div className="section-card">
-          <div className="section-label">O Que Tem no Seu Manual</div>
-          <ul className="manual-index-list">
-            {[
-              { check: true,  label: 'Seu Mapa em detalhe', desc: 'Sua personalidade, forças e padrões centrais, tudo em um só lugar.' },
-              { check: true,  label: 'Diagnóstico Profundo', desc: 'O mecanismo que mantém seu ciclo atual rodando — e o ajuste que muda o resultado.' },
-              { check: false, label: 'Tipo de Pessoa', desc: 'Quem você é no seu melhor momento — e quem você é fora do eixo.' },
-              { check: true,  label: '3 Arquétipos', desc: 'As três energias que mais influenciam suas decisões hoje.' },
-              { check: false, label: 'Objetivo do Ciclo Atual', desc: 'Pra onde sua fase de vida está te empurrando agora.' },
-              { check: false, label: 'Leitura Integrada', desc: 'O que te potencializa e o que te sabota, lado a lado.' },
-              { check: false, label: 'Seu Ponto Cego', desc: 'O padrão que você repete sem perceber.' },
-              { check: false, label: 'Bloqueios Invisíveis', desc: 'O que trava seu progresso, com passos práticos de destravamento.' },
-              { check: true,  label: 'Plano de 7 Dias', desc: 'Ações diárias pra aplicar o que você descobriu nesta semana.' },
-              { check: true,  label: '3 Rituais Personalizados', desc: 'Práticas específicas pro seu perfil, com áudio guiado.' },
-              { check: true,  label: 'Padrão no Amor', desc: 'Seu padrão afetivo real: o que parar de fazer e o que começar.' },
-              { check: true,  label: 'Mapa do Dinheiro', desc: 'Seus bloqueios financeiros e ações práticas pra destravar.' },
-              { check: true,  label: 'Compatibilidade Astral', desc: 'Como você se conecta com outras pessoas: Sol, Lua, Ascendente, Vênus e Marte.' },
-              { check: false, label: 'Calendário de 4 Semanas', desc: 'Seu mês planejado dia a dia, alinhado ao seu ciclo pessoal.' },
-              { check: false, label: 'Fechamento e Mantra Pessoal', desc: 'Sua síntese final e uma frase-guia só sua.' },
-            ].map(({ check, label, desc }) => (
-              <li key={label} className={`manual-index-item ${check ? 'manual-index-seen' : 'manual-index-locked'}`}>
-                <span className="manual-index-icon">{check ? '👁️' : '🔒'}</span>
-                <span className="manual-index-text">
-                  <span className="manual-index-label">
-                    {label}
-                    {check && <span className="manual-index-tag"> — prévia liberada</span>}
-                  </span>
-                  <span className="manual-index-desc">{desc}</span>
-                </span>
+          <ol className={r.secoes}>
+            {secoes.map((s, i) => (
+              <li key={s.chave} className={r.secaoManual}>
+                <span className={r.secaoNum}>{String(i + 1).padStart(2, '0')}</span>
+                <span className={r.rotulo}>{s.rotulo}</span>
+                <p className={r.secaoTitulo}>{s.titulo}</p>
+                {/* O único trecho borrado da página: o começo do diagnóstico
+                    (o mesmo texto que a prévia antiga já mostrava legível). */}
+                {i === 0 && trechoBorrado && <p className={r.borrado} aria-hidden="true">{trechoBorrado}</p>}
               </li>
             ))}
-          </ul>
-          <p className="manual-index-footer">Você viu fragmentos de 7 seções. O Manual do seu Mapa tem 14 seções e 30+ páginas escritas só pra você.</p>
-        </div>
+          </ol>
 
-        {/* ══ DEPOIMENTOS — logo antes da oferta. Só aparece com conteúdo
-             real em lib/testimonials.js (nunca invente um depoimento). ══ */}
-        {TESTIMONIALS.length > 0 && (
-          <div className="testi-block">
-            {TESTIMONIALS.slice(0, 3).map((t, i) => (
-              <div key={i} className="testi-item">
-                <p className="testi-text">"{t.texto}"</p>
-                <span className="testi-author">{t.nome}{t.cidade ? ` — ${t.cidade}` : ''}</span>
+          {pago ? (
+            <div className={r.oferta}>
+              <span className={r.liberado}>Pago · acesso liberado</span>
+              <p className={r.texto}>As 14 seções estão prontas pra você ler, quantas vezes quiser.</p>
+              <Link className={`${r.btn} ${r.btnLargo}`} href={`/manual/${id}`}>Abrir meu Manual</Link>
+              {cortesiaAtiva && <p className={r.nota}>Com ele vêm 30 dias do Seu Dia Completo, sem cobrança e sem renovação automática.</p>}
+            </div>
+          ) : (
+            <div className={r.oferta}>
+              <div className={r.precoLinha}>
+                {!ofertaExpirada && <span className={r.precoDe}>de R$ {PRECO_MANUAL_PADRAO},00</span>}
+                <span className={r.precoPor}>R$ {precoAtual}</span>
               </div>
-            ))}
+              {!ofertaExpirada && countdownLabel && (
+                <p className={r.contador}>
+                  R$ {PRECO_MANUAL_JANELA} só nas primeiras 24h, depois R$ {PRECO_MANUAL_PADRAO} · <strong>{countdownLabel}</strong>
+                </p>
+              )}
+              <ul className={r.inclui}>
+                <li>14 seções, 30+ páginas, só sobre você</li>
+                <li>3 rituais com áudio guiado</li>
+                <li>De bônus: a Compatibilidade Completa com uma pessoa (vendida por R$ 29,90)</li>
+                <li>30 dias do Seu Dia Completo, sem cobrança</li>
+                {!ofertaExpirada && <li>Enquanto esse preço valer: o Ritual de Ativação Personalizado</li>}
+              </ul>
+              <ComboToggle checked={incluirTier2} onChange={setIncluirTier2} precoTotal={precoAtual + PRECO_BONUS_COMBO} />
+              <button className={`${r.btn} ${r.btnLargo}`} onClick={() => handleComprar()} disabled={processando}>
+                {processando ? 'Abrindo…' : rotuloComprar}
+              </button>
+              <p className={r.nota}>Pix: acesso liberado na hora. Cartão: o link chega por e-mail em poucos minutos (confira o spam).</p>
+              <div className={r.garantia}>
+                <span className={r.garantiaTitulo}>Garantia de 7 dias</span>
+                <p className={r.nota}>Se o Manual não trouxer clareza real sobre o seu padrão, devolvemos 100%. Sem perguntas.</p>
+              </div>
+              {roundedStatsCount && <p className={r.prova}>Mais de {roundedStatsCount} mapas feitos por aqui</p>}
+            </div>
+          )}
+
+          {/* Depoimentos: só com conteúdo real em lib/testimonials.js (nunca inventar). */}
+          {TESTIMONIALS.length > 0 && (
+            <div className={r.fimLinhas} style={{ gridColumn: '1 / -1' }}>
+              {TESTIMONIALS.slice(0, 3).map((t, i) => (
+                <div key={i} className={r.fimLinha}>
+                  <p className={r.linhaTitulo}><em>“{t.texto}”</em></p>
+                  <span className={r.rotulo}>{t.nome}{t.cidade ? ` · ${t.cidade}` : ''}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* ══ 5. FIM ══ */}
+        <section className={r.secao} aria-label="Mais do seu mapa">
+          <div className={r.fimLinhas}>
+            {compatTeaser && (
+              <div className={r.fimLinha}>
+                <span className={r.rotulo}>Compatibilidade</span>
+                <p className={r.linhaTitulo}>{signoFinal} + {compatTeaser.signo.nome}: <em>{compatTeaser.score}%</em>, o par mais forte do seu signo</p>
+                <Link className={r.link} href="/compatibilidade">Testar com outra pessoa</Link>
+              </div>
+            )}
+            <div className={r.fimLinha}>
+              <span className={r.rotulo}>Compartilhar</span>
+              <p className={r.linhaTitulo}>O seu número, no story</p>
+              <div className={r.compartilhar}>
+                <BotaoCompartilharStory analiseId={id} pago={pago} numero={numeroVidaFinal} origem="resultado" className={r.btnSec} />
+                <button type="button" className={r.btnSec} onClick={handleShareWhatsapp}>Mandar pra uma amiga</button>
+              </div>
+            </div>
           </div>
+        </section>
+
+        {dados && <VoceTambem dados={dados} atual="resultado" visual="ma" />}
+
+        {!pago && (
+          <section className={r.secao} aria-label="Presente">
+            {!presenteAberto ? (
+              <button type="button" className={r.link} onClick={() => { setPresenteAberto(true); setEhPresente(true); }}>
+                Dar um Manual de presente
+              </button>
+            ) : (
+              <div className={r.presente}>
+                <span className={r.rotulo}>Dar um Manual de presente</span>
+                <p className={r.nota}>O Manual continua sendo sobre os dados que você preencheu; o acesso vai direto pro e-mail abaixo, com uma mensagem de presente.</p>
+                <label className={r.presenteCheck}>
+                  <input type="checkbox" checked={ehPresente} onChange={(e) => setEhPresente(e.target.checked)} />
+                  <span>É um presente pra outra pessoa</span>
+                </label>
+                {ehPresente && (
+                  <>
+                    <input type="email" className={r.campo} placeholder="E-mail de quem vai receber" value={presenteEmail} onChange={(e) => setPresenteEmail(e.target.value)} />
+                    <input type="text" className={r.campo} placeholder="Seu nome (aparece no e-mail, opcional)" value={presenteDe} onChange={(e) => setPresenteDe(e.target.value)} />
+                  </>
+                )}
+                <button type="button" className={r.btnSec} onClick={() => handleComprar()} disabled={processando}>
+                  {processando ? 'Abrindo…' : ehPresente ? `Comprar de presente · R$ ${precoTotal}` : rotuloComprar}
+                </button>
+              </div>
+            )}
+          </section>
         )}
 
-        {/* ══ BLOCO 7 — OFERTA FINAL ══ */}
-        <div className="card offer-card">
-          <div className="offer-badge-sm">Seu plano completo</div>
-          {!ofertaExpirada && countdownLabel && (
-            <p className="countdown-badge">
-              🗓️ R$ {PRECO_MANUAL_JANELA} só nas primeiras 24h — depois vira R$ {PRECO_MANUAL_PADRAO} <strong>({countdownLabel})</strong>
-            </p>
-          )}
-          <p className="ancora-valor">14 seções personalizadas · 30+ páginas · feito só pra você</p>
-          <div className="offer-price-row">
-            {ofertaExpirada ? (
-              <span className="price-now-sm">R$ {PRECO_MANUAL_PADRAO},00</span>
-            ) : (
-              <>
-                <span className="price-old-sm">de R$ {PRECO_MANUAL_PADRAO},00</span>
-                <span className="price-now-sm">por R$ {PRECO_MANUAL_JANELA},00</span>
-              </>
-            )}
+        <section className={r.secao} aria-labelledby="faq">
+          <div className={r.secaoTopo}>
+            <h2 id="faq" className={r.h2}>Perguntas frequentes</h2>
           </div>
-          <div className="pix-badge">⚡ Pague com Pix: aprovação na hora, manual liberado na mesma hora</div>
+          <div className={r.faq}>
+            {faqResultado({ testeAtivo: TESTE_SEU_DIA_ATIVO }).map((f) => (
+              <details key={f.q} className={r.faqItem}>
+                <summary>{f.q}</summary>
+                <p>{f.a}</p>
+              </details>
+            ))}
+          </div>
+        </section>
 
-          <ul className="list-check compact offer-list">
-            <li>✓ Diagnóstico profundo do seu padrão</li>
-            <li>✓ Mapa do amor (seu padrão afetivo real)</li>
-            <li>✓ Mapa do dinheiro (bloqueios e direção)</li>
-            <li>✓ Plano de 7 dias personalizado</li>
-            <li>✓ Calendário de 4 semanas</li>
-            <li>✓ 3 rituais específicos pro seu perfil — com áudio guiado 🔊</li>
-            <li>✓ 🎁 Compatibilidade Astral (Sol, Lua, Ascendente, Vênus e Marte)</li>
-            <li>✓ 🎁 Compatibilidade Completa com uma pessoa específica (vendida por R$ 29,90) — de bônus no seu Manual</li>
-          </ul>
-          {!ofertaExpirada && (
-            <div className="bonus-badge">
-              🎁 <strong>Bônus incluso enquanto esse preço estiver ativo:</strong> Ritual de Ativação Personalizado — some junto com o preço de hoje.
-            </div>
-          )}
-          <div className="manual-preview-note">
-            📖 Seu manual tem 14 seções escritas exclusivamente para {firstName}. Nenhum outro manual é igual ao seu.
+        <footer className={r.rodape}>
+          <p>Precisa de ajuda? <strong>conceptintuitive@gmail.com</strong></p>
+          <Link href="/?refazer=1" className={r.link}>Refazer meu mapa com outros dados</Link>
+        </footer>
+      </main>
+
+      {/* Oráculo: só com ?chat=1 (link do /oraculo) */}
+      {abrirChat && (
+        <ChatAssistente analiseId={id} isPaid={false} firstName={firstName} autoOpen nudge={false} precoManual={precoAtual} />
+      )}
+
+      {/* Barra fixa do celular */}
+      {mostrarBarra && (
+        <div className={r.barra}>
+          <div className={r.barraPreco}>
+            <span className={r.barraValor}>R$ {precoAtual}</span>
+            {!ofertaExpirada && countdownLabel && <span className={r.barraContador}>Esse preço por {countdownLabel}</span>}
           </div>
-          <button className="btn-cta" onClick={() => handleComprar()} disabled={processando}>
-            {processando ? 'Abrindo…' : cargoLabel}
+          <button type="button" className={r.btn} onClick={() => manualRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
+            Ver o Manual
           </button>
-          <Tier2AddonToggle checked={incluirTier2} onChange={setIncluirTier2} precoTotal={precoAtual + PRECO_BONUS_COMBO} />
-
-          <label className={`presente-toggle${ehPresente ? ' is-checked' : ''}`}>
-            <input type="checkbox" checked={ehPresente} onChange={(e) => setEhPresente(e.target.checked)} />
-            <span>Isso é um presente pra outra pessoa?</span>
-          </label>
-          {ehPresente && (
-            <div className="presente-campos">
-              <input
-                type="email"
-                className="presente-input"
-                placeholder="Email de quem vai receber"
-                value={presenteEmail}
-                onChange={(e) => setPresenteEmail(e.target.value)}
-              />
-              <input
-                type="text"
-                className="presente-input"
-                placeholder="Seu nome (aparece no email, opcional)"
-                value={presenteDe}
-                onChange={(e) => setPresenteDe(e.target.value)}
-              />
-              <p className="pos-compra" style={{ marginTop: 6 }}>
-                O manual continua sendo sobre os dados que você preencheu — só o acesso vai direto pro email acima, com uma mensagem de presente.
-              </p>
-            </div>
-          )}
-
-          <p className="pos-compra">
-            Pix: acesso liberado na hora. Cartão: você recebe o link do manual por email em poucos minutos (verifique a caixa de spam).
-          </p>
-          <div className="garantia-nova">
-            <div className="garantia-icon">🛡️</div>
-            <div className="garantia-titulo">Garantia de 7 dias sem risco</div>
-            <p className="garantia-desc">Se o manual não trouxer clareza real sobre seu padrão, devolvemos 100%. Sem perguntas, sem burocracia.</p>
-          </div>
-          {analise.ano_pessoal && (
-            <p className="countdown-real">
-              ⏳ Seu Ano Pessoal é {analise.ano_pessoal}. Esse mapa reflete seu ciclo atual — quanto antes aplicar, mais resultado no tempo certo.
-            </p>
-          )}
-          <p className="pos-compra">Após o pagamento, seu manual aparece na tela e você recebe o link por email. Verifique também sua caixa de spam.</p>
         </div>
+      )}
 
-        {/* ══ AUTORIDADE ══ */}
-        <p className="autoridade-text">
-          Mapa feito combinando astrologia clássica, numerologia pitagórica e padrões comportamentais. Cada Manual é único — gerado exclusivamente para o seu perfil.
-        </p>
-
-        {/* ══ BLOCO 8 — REFORÇO ══ */}
-        <div className="reforco-block">
-          <p className="reforco-text">Se as 3 primeiras frases já te descreveram, imagina o Manual do seu Mapa inteiro.</p>
-          <button className="btn-cta btn-cta-sm" onClick={() => handleComprar()} disabled={processando}>
-            {processando ? 'Abrindo…' : cargoLabel}
-          </button>
-          <p className="pos-compra" style={{ marginTop: 10 }}>
-            Após o pagamento, você receberá o link do seu Manual por email em poucos minutos. Verifique também a caixa de spam.
-          </p>
-        </div>
-
-        <BotaoCompartilharStory analiseId={id} pago={analise.payment_status === 'paid'} numero={numeroVidaFinal} origem="resultado" />
-
-        <button className="share-whatsapp-btn" onClick={handleShareWhatsapp}>
-          Mandar pra uma amiga no WhatsApp
-        </button>
-
-        {dadosDaAnalise(analise) && <VoceTambem dados={dadosDaAnalise(analise)} atual="resultado" />}
-
-        <div className="footer-links">
-          <Link href="/explorar">Explorar</Link>
-          <span className="footer-links-dot">·</span>
-          <Link href="/compatibilidade">Compatibilidade</Link>
-          <span className="footer-links-dot">·</span>
-          <Link href="/blog">Blog</Link>
-        </div>
-
-        <div className="footer-note">
-          <div className="muted">Precisa de ajuda? Email: <strong>conceptintuitive@gmail.com</strong></div>
-        </div>
-
-        <Link href="/?refazer=1" className="refazer-link">↺ Refazer meu mapa com outros dados</Link>
-
-      </div>
-
-      {/* ══ ASSISTENTE DE IA — 3 perguntas grátis na prévia ══ */}
-      <ChatAssistente analiseId={id} isPaid={false} firstName={firstName} autoOpen={abrirChat} nudge={nudgeChat} precoManual={precoAtual} />
-
-      {/* ══ LINK MANUAL DE CHECKOUT — reserva pra quando o redirecionamento
-           automático é bloqueado silenciosamente (comum em navegadores
-           internos do Instagram/Facebook), sem gerar nenhum erro de JS. ══ */}
+      {/* LINK MANUAL DE CHECKOUT — reserva pra quando o redirecionamento
+          automático é bloqueado silenciosamente (comum em navegadores
+          internos do Instagram/Facebook), sem gerar nenhum erro de JS. */}
       {checkoutUrl && (
-        <div className="checkout-fallback">
-          <p className="checkout-fallback-text">A tela de pagamento não abriu sozinha?</p>
-          <a
-            href={checkoutUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="checkout-fallback-link"
-          >
-            Abrir pagamento →
-          </a>
+        <div className={r.reserva}>
+          <span>A tela de pagamento não abriu sozinha?</span>
+          <a href={checkoutUrl} target="_blank" rel="noopener noreferrer" className={r.link}>Abrir pagamento →</a>
         </div>
       )}
 
-      {/* ══ STICKY CTA — mobile only ══ */}
-      {showSticky && (
-        <div className="sticky-bar">
-          <button
-            className="sticky-btn"
-            onClick={() => document.querySelector('.offer-card')?.scrollIntoView({ behavior: 'smooth' })}
-          >
-            Desbloquear o Manual do seu Mapa — R$ {precoAtual}
-          </button>
-        </div>
-      )}
-
-      {/* ══ EXIT-INTENT MODAL ══ */}
-      {showExitModal && (
-        <div className="exit-overlay" onClick={() => setShowExitModal(false)}>
-          <div className="exit-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="exit-close" aria-label="Fechar" onClick={() => setShowExitModal(false)}>✕</button>
-            <div className="exit-title">Espera, {firstName || 'você'} 👋</div>
-            <p className="exit-desc">
-              Antes de sair: o Manual do seu Mapa continua disponível por <strong>R$ {precoAtual}</strong>
-              {!ofertaExpirada && (
-                <> e leva de bônus o <strong>Ritual de Ativação Personalizado</strong> — mas só se você garantir agora, nesta sessão.</>
-              )}
-            </p>
-            <button
-              className="btn-cta"
-              onClick={() => { setShowExitModal(false); handleComprar(); }}
-              disabled={processando}
-            >
-              {processando ? 'Abrindo…' : `Desbloquear o Manual do seu Mapa — R$ ${precoAtual}`}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ══ CORRIGIR E-MAIL — criar-checkout-mp recusou por e-mail inválido salvo ══ */}
+      {/* CORRIGIR E-MAIL — criar-checkout-mp recusou por e-mail inválido salvo */}
       {emailCorrecaoInfo && (
-        <div className="exit-overlay" onClick={() => setEmailCorrecaoInfo(null)}>
-          <div className="exit-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="exit-close" aria-label="Fechar" onClick={() => setEmailCorrecaoInfo(null)}>✕</button>
-            <div className="exit-title">Confere seu e-mail?</div>
-            <p className="exit-desc">{emailCorrecaoInfo.mensagem}</p>
+        <div className={r.modalFundo} onClick={() => setEmailCorrecaoInfo(null)}>
+          <div className={r.modal} role="dialog" aria-modal="true" aria-labelledby="corrigir-email" onClick={(e) => e.stopPropagation()}>
+            <button className={r.fechar} aria-label="Fechar" onClick={() => setEmailCorrecaoInfo(null)}>✕</button>
+            <h2 id="corrigir-email" className={r.modalTitulo}>Confere seu e-mail?</h2>
+            <p className={r.texto}>{emailCorrecaoInfo.mensagem}</p>
             <input
               type="email"
+              className={r.campo}
               value={novoEmailInput}
               onChange={(e) => setNovoEmailInput(e.target.value.trim())}
               placeholder="seu@email.com"
-              style={{
-                width: '100%', padding: '14px 16px', borderRadius: 14, marginBottom: 14,
-                border: '1px solid rgba(139,92,246,.4)', background: 'rgba(18,18,30,.9)',
-                color: 'var(--text)', fontSize: 16, outline: 'none',
-              }}
             />
-            <button className="btn-cta" onClick={handleConfirmarNovoEmail} disabled={processando}>
+            <button className={`${r.btn} ${r.btnLargo}`} onClick={handleConfirmarNovoEmail} disabled={processando}>
               {processando ? 'Abrindo…' : 'Confirmar e continuar'}
             </button>
           </div>
         </div>
       )}
-
-    </div>
+    </Pagina>
   );
 }
-
-// ── CSS ───────────────────────────────────────────────────────────────────────
-const globalCss = `
-  :root {
-    --bg1: #0a0118;
-    --bg2: #130828;
-    --primary: #ec4899;
-    --secondary: #8b5cf6;
-    --success: #10b981;
-    --warning: #f59e0b;
-    --text: #faf5ff;
-    --muted: rgba(233, 213, 255, 0.75);
-    --card: rgba(17, 7, 32, 0.65);
-    --border: rgba(216, 180, 254, 0.14);
-    --fade-bg: #0e0420;
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { max-width: 100%; overflow-x: hidden; }
-
-  body {
-    font-family: 'Cormorant Garamond', serif;
-    color: var(--text);
-    background: linear-gradient(160deg, var(--bg1) 0%, var(--bg2) 60%, var(--bg1) 100%);
-    min-height: 100vh;
-    line-height: 1.65;
-  }
-
-  .wrap { min-height: 100vh; position: relative; }
-
-  .container {
-    max-width: 660px;
-    margin: 0 auto;
-    padding: 28px 16px 80px;
-    position: relative;
-    z-index: 5;
-  }
-
-  /* Stars */
-  .stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
-  .star {
-    position: absolute; width: 2px; height: 2px;
-    background: rgba(255,255,255,0.9); border-radius: 50%;
-    animation: twinkle 3s infinite;
-  }
-  @keyframes twinkle { 0%,100%{opacity:0.3} 50%{opacity:1} }
-
-  /* ── Banner de pagamento recusado ── */
-  .banner-recusado {
-    background: rgba(245, 158, 11, 0.12);
-    border: 1px solid var(--warning);
-    border-radius: 14px;
-    padding: 14px 16px;
-    margin-bottom: 16px;
-    text-align: center;
-  }
-  .banner-recusado strong { color: var(--warning); }
-  .banner-recusado .pix-destaque {
-    display: inline-block;
-    margin-top: 4px;
-    font-weight: 700;
-    color: var(--success);
-  }
-
-  /* ── Hero ── */
-  .hero { padding: 16px 0 12px; text-align: center; }
-
-  .hero-title {
-    font-family: 'Cinzel', serif;
-    font-size: clamp(20px, 4.5vw, 32px);
-    line-height: 1.25;
-    background: linear-gradient(90deg, #fb7185, #a855f7, #fbbf24);
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-    margin-bottom: 4px;
-  }
-
-  .pills {
-    display: flex; gap: 8px; justify-content: center;
-    flex-wrap: wrap; margin-top: 10px;
-  }
-  .pills-signos { margin-top: 14px; }
-  .pills-numeros { margin-top: 8px; }
-
-  .pill {
-    padding: 7px 13px; border-radius: 999px;
-    background: rgba(17,7,32,0.4);
-    color: rgba(216,180,254,0.9); font-size: 13px;
-  }
-  .pill-signo {
-    border: 1px solid rgba(139,92,246,0.3);
-  }
-  .pill-numero {
-    border: 1px solid rgba(245,158,11,0.3);
-    color: rgba(253,230,138,0.85);
-  }
-
-  .share-whatsapp-btn {
-    display: block;
-    margin: 32px auto 0;
-    padding: 10px 20px;
-    border-radius: 999px;
-    border: 1px solid rgba(37,211,102,0.4);
-    background: rgba(37,211,102,0.1);
-    color: rgba(167,243,208,0.95);
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 15px; font-weight: 600;
-    cursor: pointer;
-  }
-  .share-whatsapp-btn:hover { background: rgba(37,211,102,0.18); }
-
-  /* ── Preview card ── */
-  .preview-card {
-    margin-top: 28px; border-radius: 20px; padding: 28px 28px 20px;
-    background: rgba(245,158,11,0.06);
-    border-left: 3px solid var(--warning);
-    border-top: 1px solid rgba(245,158,11,0.2);
-    border-right: 1px solid rgba(245,158,11,0.1);
-    border-bottom: 1px solid rgba(245,158,11,0.1);
-  }
-  .preview-quote {
-    font-size: clamp(17px, 2.5vw, 20px); line-height: 1.8;
-    color: var(--text); font-style: italic;
-  }
-  .preview-divider {
-    border: none; border-top: 1px solid rgba(216,180,254,0.15);
-    margin: 18px 0 14px;
-  }
-  .micro-pergunta { font-size: 14px; color: var(--muted); text-align: center; letter-spacing: 0.04em; }
-
-  /* ── Section cards (blocos com conteúdo parcial) ── */
-  .section-card {
-    margin-top: 28px; border-radius: 22px; padding: 26px 22px;
-    background: var(--card); border: 1px solid var(--border);
-    backdrop-filter: blur(12px);
-    box-shadow: 0 16px 50px rgba(0,0,0,0.3);
-  }
-
-  .section-label {
-    font-family: 'Cinzel', serif;
-    font-size: clamp(16px, 2.5vw, 19px);
-    color: var(--warning);
-    margin-bottom: 16px;
-    letter-spacing: 0.04em;
-  }
-
-  .frase-destaque {
-    font-size: clamp(16px, 2.5vw, 20px);
-    font-style: italic;
-    color: rgba(253,230,138,0.95);
-    line-height: 1.7;
-    margin-bottom: 18px;
-    padding: 14px 16px;
-    border-radius: 12px;
-    background: rgba(245,158,11,0.07);
-    border-left: 2px solid rgba(245,158,11,0.4);
-  }
-
-  .body-text {
-    font-size: clamp(15px, 2vw, 17px);
-    line-height: 1.85;
-    color: rgba(250,245,255,0.92);
-  }
-
-  /* ── Fade effect ── */
-  .content-fade {
-    position: relative;
-    overflow: hidden;
-    max-height: 380px;
-  }
-  .content-fade::after {
-    content: '';
-    position: absolute; bottom: 0; left: 0; right: 0;
-    height: 130px;
-    background: linear-gradient(to bottom, transparent, var(--fade-bg));
-    pointer-events: none;
-  }
-  .content-fade-sm { max-height: 200px; }
-  .content-fade-sm::after { height: 90px; }
-
-  /* ── Locked card ── */
-  .locked-card {
-    margin-top: 16px; position: relative; z-index: 2;
-    text-align: center; padding: 22px 20px; border-radius: 16px;
-    background: rgba(17,7,32,0.92);
-    border: 1px solid rgba(139,92,246,0.3);
-    backdrop-filter: blur(8px);
-  }
-  .locked-card-quiet {
-    background: rgba(17,7,32,0.6);
-    border-color: rgba(139,92,246,0.15);
-    padding: 14px 16px;
-  }
-  .locked-icon { font-size: 26px; margin-bottom: 10px; }
-  .locked-text {
-    font-size: 15px; color: var(--muted);
-    line-height: 1.65; margin-bottom: 18px;
-  }
-  .locked-card-quiet .locked-text { margin-bottom: 0; font-size: 15px; }
-
-  /* ── Amor headline ── */
-  .amor-headline {
-    font-size: clamp(16px, 2.5vw, 19px);
-    font-family: 'Cinzel', serif;
-    color: rgba(216,180,254,0.95);
-    margin-bottom: 14px;
-    line-height: 1.4;
-  }
-
-  /* ── Arquétipos ── */
-  .arq-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 14px;
-    margin-top: 4px;
-  }
-  @media (min-width: 560px) {
-    .arq-grid { grid-template-columns: repeat(3, 1fr); }
-  }
-
-  .arq-card {
-    border-radius: 18px; padding: 18px 16px;
-    background: rgba(10,1,24,0.6);
-    border: 1px solid rgba(139,92,246,0.2);
-    display: flex; flex-direction: column; gap: 6px;
-  }
-  .arq-emoji { font-size: 20px; }
-  .arq-label { font-size: 11px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
-  .arq-nome {
-    font-family: 'Cinzel', serif; font-size: 13px;
-    color: rgba(216,180,254,0.95); line-height: 1.35;
-  }
-  .arq-desc-wrap { position: relative; margin-top: 6px; }
-  .arq-desc {
-    font-size: 13px; color: var(--muted); line-height: 1.55;
-    filter: blur(5px); user-select: none; pointer-events: none;
-  }
-  .arq-overlay {
-    position: absolute; inset: 0;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase;
-    color: rgba(139,92,246,0.8);
-    background: rgba(10,1,24,0.25);
-    border-radius: 8px;
-  }
-
-  /* ── Plano 7 dias ── */
-  .plano-hook {
-    font-size: 15px; color: var(--muted); line-height: 1.7;
-    margin-bottom: 16px; font-style: italic;
-  }
-  .days-list { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 10px; }
-  .day-item {
-    font-size: 15px; color: var(--text); line-height: 1.6;
-    padding: 10px 14px; border-radius: 12px;
-    background: rgba(139,92,246,0.07);
-    border: 1px solid rgba(139,92,246,0.15);
-  }
-  .day-blurred {
-    filter: blur(4px); user-select: none; pointer-events: none;
-    color: var(--muted);
-  }
-  .plano-lock-note {
-    margin-top: 14px; font-size: 13px; color: var(--muted);
-    text-align: center; letter-spacing: 0.03em;
-  }
-
-  /* ── Offer card ── */
-  .card {
-    margin-top: 28px; border-radius: 24px; padding: 28px 22px;
-    background: var(--card); border: 1px solid var(--border);
-    backdrop-filter: blur(12px);
-    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-  }
-  .offer-card {
-    margin-top: 40px;
-    border-color: rgba(168,85,247,0.35);
-    background: linear-gradient(135deg, rgba(17,7,32,0.75), rgba(88,28,135,0.15));
-    display: flex; flex-direction: column; align-items: center;
-    text-align: center; gap: 18px;
-  }
-  .offer-badge-sm {
-    display: inline-block; padding: 6px 18px; border-radius: 999px;
-    background: rgba(139,92,246,0.2); border: 1px solid rgba(139,92,246,0.4);
-    color: #c4b5fd; font-size: 12px; letter-spacing: 0.08em;
-    text-transform: uppercase; font-family: 'Cinzel', serif;
-  }
-  .offer-price-row { display: flex; align-items: center; gap: 16px; justify-content: center; }
-  .price-old-sm { font-size: 16px; color: var(--muted); text-decoration: line-through; }
-  .price-now-sm {
-    font-size: 32px; font-family: 'Cinzel', serif;
-    color: var(--warning); font-weight: 700;
-  }
-  .offer-card-compact {
-    display: flex; flex-direction: column; align-items: center;
-    text-align: center; gap: 12px;
-    border-color: rgba(168,85,247,0.35);
-    background: linear-gradient(135deg, rgba(17,7,32,0.75), rgba(88,28,135,0.15));
-  }
-  .offer-compact-note { font-size: 13px; color: var(--muted); margin: -4px 0 0; }
-  .offer-list { text-align: left; width: 100%; max-width: 340px; }
-  .list-check { list-style: none; padding: 0; margin: 8px 0; }
-  .list-check li {
-    padding: 9px 0; color: var(--text); font-size: 17px;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-  }
-  .list-check li:last-child { border-bottom: none; }
-  .list-check.compact li { padding: 7px 0; font-size: 16px; }
-  .offer-trust { font-size: 14px; color: var(--muted); margin-top: -4px; }
-
-  /* ── CTA button ── */
-  @keyframes cta-pulse {
-    0%, 100% { box-shadow: 0 8px 32px rgba(168,85,247,0.5); }
-    50%       { box-shadow: 0 10px 40px rgba(168,85,247,0.7); }
-  }
-
-  .btn-cta {
-    width: 100%; max-width: 420px; padding: 18px 24px;
-    border-radius: 16px; border: none;
-    background: linear-gradient(135deg, #9333ea, #c026d3);
-    color: white; font-family: 'Cinzel', serif;
-    font-size: 15px; font-weight: 700; letter-spacing: 0.05em;
-    cursor: pointer; box-shadow: 0 8px 32px rgba(168,85,247,0.6);
-    transition: transform 0.15s, box-shadow 0.15s;
-    animation: cta-pulse 2.5s ease-in-out infinite;
-  }
-  .btn-cta:hover:not(:disabled) {
-    transform: translateY(-2px); box-shadow: 0 14px 44px rgba(168,85,247,0.75);
-    animation: none;
-  }
-  .btn-cta:disabled { opacity: 0.65; cursor: not-allowed; animation: none; }
-
-  .btn-cta-sm {
-    max-width: 340px; padding: 14px 20px; font-size: 13px;
-    background: transparent; border: 1px solid rgba(139,92,246,0.5);
-    box-shadow: none; color: #c4b5fd;
-  }
-  .btn-cta-sm:hover:not(:disabled) { background: rgba(139,92,246,0.1); transform: none; box-shadow: none; }
-
-  /* ── Reforço ── */
-  .reforco-block {
-    margin-top: 48px; padding: 28px 16px;
-    display: flex; flex-direction: column; align-items: center; gap: 20px;
-    text-align: center;
-  }
-  .reforco-text { font-size: 17px; color: var(--muted); max-width: 420px; line-height: 1.7; font-style: italic; }
-
-
-  /* ── Loading / erro ── */
-  .center {
-    min-height: 70vh; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; gap: 14px;
-    position: relative; z-index: 5; padding: 0 20px; text-align: center;
-  }
-  .spinner {
-    width: 48px; height: 48px; border-radius: 50%;
-    border: 3px solid rgba(255,255,255,0.2);
-    border-top-color: white; animation: spin 0.8s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  .btn {
-    padding: 12px 20px; border-radius: 14px;
-    border: 1px solid var(--border); background: rgba(17,7,32,0.6);
-    color: var(--text); cursor: pointer; font-family: 'Cinzel', serif;
-    font-weight: 700; font-size: 15px; transition: all 0.2s;
-  }
-  .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(139,92,246,0.3); }
-
-  .muted { color: var(--muted); }
-  .footer-note { margin-top: 32px; text-align: center; font-size: 14px; }
-
-  .footer-links {
-    margin-top: 40px;
-    display: flex; align-items: center; justify-content: center; gap: 10px;
-    font-family: 'Cinzel', serif; font-size: 12.5px; letter-spacing: 0.06em;
-  }
-  .footer-links a { color: var(--muted); text-decoration: none; }
-  .footer-links a:hover { color: var(--text); }
-  .footer-links-dot { color: rgba(216,180,254,0.3); }
-
-  .refazer-link {
-    display: block; margin-top: 18px; text-align: center;
-    font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 0.06em;
-    color: var(--muted); text-decoration: none;
-  }
-  .refazer-link:hover { color: var(--text); }
-
-  /* Spinner de polling */
-  .gerando-card {
-    margin-top: 24px; border-radius: 20px; padding: 32px 24px;
-    background: var(--card); border: 1px solid var(--border);
-    display: flex; flex-direction: column; align-items: center; gap: 12px;
-    text-align: center;
-  }
-  .gerando-spinner {
-    width: 36px; height: 36px; border-radius: 50%;
-    border: 3px solid rgba(139,92,246,0.2);
-    border-top-color: rgba(139,92,246,0.8);
-    animation: spin 0.9s linear infinite;
-  }
-  .gerando-text { font-size: 16px; color: rgba(216,180,254,0.9); }
-  .gerando-sub  { font-size: 13px; color: var(--muted); }
-
-  /* Âncora de valor */
-  .ancora-valor {
-    font-size: 14px; color: var(--muted);
-    letter-spacing: 0.04em; margin-bottom: 4px; margin-top: -4px;
-  }
-
-  /* Preview do manual */
-  .manual-preview-note {
-    width: 100%; max-width: 380px;
-    font-size: 14px; padding: 12px 16px; border-radius: 12px;
-    background: rgba(139,92,246,0.08);
-    border: 1px solid rgba(139,92,246,0.2);
-    text-align: center; color: rgba(216,180,254,0.9);
-    line-height: 1.6; margin: 4px 0;
-  }
-
-  /* Garantia melhorada */
-  .garantia-nova {
-    width: 100%; max-width: 380px;
-    padding: 16px; border-radius: 14px;
-    border: 1px solid rgba(16,185,129,0.25);
-    background: rgba(16,185,129,0.05);
-    text-align: center; margin-top: 4px;
-    display: flex; flex-direction: column; align-items: center; gap: 6px;
-  }
-  .garantia-icon { font-size: 24px; }
-  .garantia-titulo { font-size: 15px; font-weight: 700; color: rgba(167,243,208,0.95); }
-  .garantia-desc { font-size: 14px; color: var(--muted); line-height: 1.6; }
-
-  /* Countdown real */
-  .countdown-real {
-    font-size: 14px; color: var(--muted);
-    text-align: center; line-height: 1.6; max-width: 380px;
-  }
-
-  /* Countdown de oferta */
-  .countdown-badge {
-    font-size: 14px; color: rgba(253,230,138,0.95);
-    background: rgba(245,158,11,0.1);
-    border: 1px solid rgba(245,158,11,0.3);
-    border-radius: 999px; padding: 6px 16px;
-    margin: 6px 0 2px; text-align: center;
-  }
-  .countdown-badge strong { font-variant-numeric: tabular-nums; }
-
-  /* Bônus */
-  .bonus-badge {
-    font-size: 14px; color: var(--text);
-    background: rgba(139,92,246,0.1);
-    border: 1px dashed rgba(139,92,246,0.4);
-    border-radius: 12px; padding: 10px 14px;
-    margin-top: 4px; text-align: center; line-height: 1.6;
-  }
-
-  .pix-badge {
-    font-size: 13px; font-weight: 600;
-    color: rgba(167,243,208,0.95);
-    background: rgba(16,185,129,0.1);
-    border: 1px solid rgba(16,185,129,0.3);
-    border-radius: 999px; padding: 6px 14px;
-    margin: 2px 0 4px; text-align: center;
-  }
-
-  .tier2-addon {
-    display: flex; align-items: center; justify-content: center; gap: 10px;
-    width: 100%; max-width: 420px;
-    margin: 14px auto 0;
-    padding: 14px 20px; border-radius: 999px;
-    background: linear-gradient(135deg, rgba(139,92,246,0.16), rgba(236,72,153,0.12));
-    border: 1.5px solid rgba(139,92,246,0.55);
-    box-shadow: 0 6px 20px rgba(139,92,246,0.18);
-    text-align: center; cursor: pointer;
-    font-size: 14.5px; color: var(--text); line-height: 1.45;
-    transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
-  }
-  .tier2-addon:hover {
-    border-color: rgba(139,92,246,0.8);
-    transform: translateY(-1px);
-    box-shadow: 0 8px 26px rgba(139,92,246,0.28);
-  }
-  .tier2-addon.is-checked {
-    background: linear-gradient(135deg, rgba(139,92,246,0.32), rgba(236,72,153,0.24));
-    border-color: rgba(16,185,129,0.6);
-    box-shadow: 0 6px 22px rgba(16,185,129,0.2);
-  }
-  .tier2-addon input { flex-shrink: 0; accent-color: var(--secondary); width: 17px; height: 17px; cursor: pointer; }
-
-  .presente-toggle {
-    display: flex; align-items: center; justify-content: center; gap: 10px;
-    width: 100%; max-width: 420px;
-    margin: 12px auto 0;
-    padding: 12px 18px; border-radius: 999px;
-    background: rgba(245,158,11,0.08);
-    border: 1.5px solid rgba(245,158,11,0.4);
-    text-align: center; cursor: pointer;
-    font-size: 14px; color: var(--text); line-height: 1.4;
-    transition: border-color 0.2s ease, background 0.2s ease;
-  }
-  .presente-toggle:hover { border-color: rgba(245,158,11,0.7); }
-  .presente-toggle.is-checked { background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.5); }
-  .presente-toggle input { flex-shrink: 0; accent-color: var(--warning); width: 16px; height: 16px; cursor: pointer; }
-  .presente-campos { max-width: 420px; margin: 10px auto 0; display: flex; flex-direction: column; gap: 8px; }
-  .presente-input {
-    width: 100%; box-sizing: border-box; padding: 11px 14px; border-radius: 10px;
-    border: 1px solid rgba(216,180,254,0.3); background: rgba(255,255,255,0.03);
-    color: var(--text); font-family: inherit; font-size: 14.5px;
-  }
-
-  /* Exit-intent modal */
-  .exit-overlay {
-    position: fixed; inset: 0; z-index: 50;
-    background: rgba(5,2,15,0.82);
-    display: flex; align-items: center; justify-content: center;
-    padding: 20px;
-  }
-  .exit-modal {
-    position: relative; max-width: 420px; width: 100%;
-    background: var(--bg2); border: 1px solid rgba(216,180,254,0.2);
-    border-radius: 20px; padding: 28px 24px; text-align: center;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-  }
-  .exit-close {
-    position: absolute; top: 12px; right: 16px;
-    background: none; border: none; color: var(--muted);
-    font-size: 20px; cursor: pointer; line-height: 1;
-  }
-  .exit-title {
-    font-family: 'Cinzel', serif; font-size: 19px;
-    margin-bottom: 10px; color: var(--text);
-  }
-  .exit-desc { font-size: 15px; color: var(--muted); line-height: 1.7; margin-bottom: 18px; }
-
-  /* Pós-compra */
-  .pos-compra {
-    font-size: 13px; color: var(--muted);
-    text-align: center; margin-top: -4px;
-  }
-
-  /* Frase de transição */
-  .transicao-text {
-    text-align: center; font-size: 16px; color: var(--muted);
-    margin: 24px 0; font-style: italic;
-  }
-
-  /* Link manual de checkout — reserva pro redirecionamento automático */
-  .checkout-fallback {
-    position: fixed; bottom: 0; left: 0; right: 0; z-index: 110;
-    background: rgba(16,185,129,0.14);
-    backdrop-filter: blur(12px);
-    border-top: 1px solid rgba(16,185,129,0.4);
-    padding: 14px 16px calc(14px + env(safe-area-inset-bottom));
-    display: flex; flex-direction: column; align-items: center; gap: 8px;
-    text-align: center;
-  }
-  .checkout-fallback-text { margin: 0; font-size: 14px; color: var(--text); }
-  .checkout-fallback-link {
-    display: inline-block; font-family: 'Cinzel', serif; font-size: 14px; font-weight: 700;
-    letter-spacing: 0.04em; color: #fff;
-    background: linear-gradient(135deg, #10b981, #059669);
-    padding: 12px 26px; border-radius: 999px; text-decoration: none;
-    box-shadow: 0 8px 24px rgba(16,185,129,0.4);
-  }
-
-  /* Sticky CTA — mobile only */
-  .sticky-bar {
-    display: none;
-    position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
-    min-height: 64px;
-    background: rgba(10,1,24,0.95);
-    backdrop-filter: blur(12px);
-    border-top: 1px solid rgba(139,92,246,0.3);
-    align-items: center; justify-content: center;
-    padding: 0 16px env(safe-area-inset-bottom);
-  }
-  @media (max-width: 767px) {
-    .sticky-bar { display: flex; }
-  }
-  .sticky-btn {
-    width: 100%; max-width: 300px; padding: 12px 20px;
-    border-radius: 12px; border: none;
-    background: linear-gradient(135deg, #7c3aed, #a855f7);
-    color: white; font-family: 'Cinzel', serif;
-    font-size: 13px; font-weight: 700; letter-spacing: 0.04em;
-    cursor: pointer; box-shadow: 0 4px 20px rgba(139,92,246,0.4);
-  }
-
-  /* Mini-CTA link */
-  .mini-cta-link {
-    display: block; margin-top: 14px;
-    background: none; border: none; cursor: pointer;
-    color: rgba(139,92,246,0.9); font-size: 14px;
-    font-family: 'Cormorant Garamond', serif;
-    letter-spacing: 0.03em; text-decoration: none;
-    transition: color 0.15s;
-  }
-  .mini-cta-link:hover { color: rgba(168,85,247,1); }
-
-  /* Social proof */
-  .social-block { margin-top: 24px; display: flex; flex-direction: column; gap: 12px; }
-  .testimonial-item {
-    padding: 14px 18px; border-radius: 14px;
-    background: transparent;
-    border-left: 2px solid rgba(139,92,246,0.35);
-  }
-  .testimonial-text {
-    font-size: 16px; font-style: italic;
-    color: var(--text); line-height: 1.65; margin-bottom: 6px;
-  }
-  .testimonial-author { font-size: 13px; color: var(--muted); font-weight: 600; }
-
-  /* Garantia */
-  .garantia-card {
-    width: 100%; max-width: 420px;
-    padding: 14px 16px; border-radius: 12px;
-    border: 1px solid rgba(16,185,129,0.3);
-    background: transparent;
-    color: rgba(167,243,208,0.85); font-size: 14px;
-    line-height: 1.6; text-align: center;
-  }
-
-  /* ── Social proof ── */
-  .social-proof-card {
-    background: transparent; border-color: rgba(216,180,254,0.08);
-    padding: 16px 22px; text-align: center;
-  }
-  .social-proof-text { font-size: 14px; color: var(--muted); letter-spacing: 0.04em; }
-
-  /* ── Depoimentos ── */
-  .testi-block { margin-top: 28px; display: flex; flex-direction: column; gap: 14px; }
-  .testi-item {
-    padding: 18px 20px; border-radius: 16px;
-    background: rgba(139,92,246,0.05); border-left: 2px solid rgba(139,92,246,0.4);
-  }
-  .testi-text { font-size: 16px; font-style: italic; color: var(--text); line-height: 1.65; margin: 0 0 8px; }
-  .testi-author { font-size: 13px; color: var(--muted); font-weight: 600; letter-spacing: 0.02em; }
-
-  /* ── Índice do manual ── */
-  .manual-index-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; }
-  .manual-index-item {
-    display: flex; align-items: flex-start; gap: 10px;
-    font-size: 15px; line-height: 1.5;
-    padding: 9px 0;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-  }
-  .manual-index-item:last-child { border-bottom: none; }
-  .manual-index-seen { color: rgba(250,245,255,0.95); }
-  .manual-index-locked { color: var(--muted); opacity: 0.7; }
-  .manual-index-icon { font-size: 14px; width: 18px; text-align: center; flex-shrink: 0; margin-top: 2px; }
-  .manual-index-seen .manual-index-icon { color: #f0c870; font-weight: 700; }
-  .manual-index-text { display: flex; flex-direction: column; gap: 2px; }
-  .manual-index-label { font-weight: 500; }
-  .manual-index-desc { font-size: 13px; font-weight: 400; line-height: 1.4; color: var(--muted); }
-  .manual-index-seen .manual-index-desc { color: rgba(250,245,255,0.55); }
-  .manual-index-tag { color: #f0c870; font-size: 12px; font-style: italic; opacity: 0.85; }
-  .manual-index-footer {
-    margin-top: 18px; font-size: 14px; font-style: italic;
-    color: var(--muted); text-align: center; line-height: 1.65;
-  }
-
-  /* Autoridade */
-  .autoridade-text {
-    margin-top: 40px;
-    font-size: 14px; color: var(--muted);
-    text-align: center; line-height: 1.7;
-    max-width: 480px; margin-left: auto; margin-right: auto;
-  }
-`;

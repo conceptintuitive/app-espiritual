@@ -30,6 +30,7 @@ import Cadeado from './Cadeado';
 import { textoTeste } from '@/lib/testeSeuDia';
 import TelaConfirmar from './TelaConfirmar';
 import { precisaConfirmar, marcaConfirmacao } from '@/lib/minhaArea';
+import { consumirEmailSeuDia } from '@/lib/seuDiaRepasse';
 import ma from './minhaArea.module.css';
 
 // "Esta é você?": a confirmação também fica no aparelho (migração 0021 opcional).
@@ -172,6 +173,13 @@ function TelaEntrar({ erroLink, onEntrou }) {
   const [erro, setErro] = useState('');
   const [podeReenviar, setPodeReenviar] = useState(false);
   const sugestao = sugestaoEmail(email);
+
+  // Veio do /resultado ("Receber meu dia todo dia às 7h"): o e-mail da análise
+  // chega por localStorage (lib/seuDiaRepasse.js), nunca pela URL.
+  useEffect(() => {
+    const repassado = consumirEmailSeuDia();
+    if (repassado) setEmail((atual) => atual || repassado); // eslint-disable-line react-hooks/set-state-in-effect
+  }, []);
 
   useEffect(() => {
     if (etapa !== 'codigo') return;
