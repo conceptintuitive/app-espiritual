@@ -28,6 +28,48 @@ const GRATIS_EXTRA = [
   { chave: 'oraculo', sistema: 'Oráculo', valor: 'Pergunte o que quiser', sub: 'Respostas a partir do seu mapa', href: '/oraculo' },
 ];
 
+// Um cartão de leitura. Leitura de outra pessoa: título "Leitura de Ana ·
+// 03/09/1995" (pra não parecer que é a dona do perfil) + botão de ocultar.
+function CartaoLeitura({ p, outra = false, onOcultar, onMostrar }) {
+  return (
+    <section className={`sd-card ma-pessoa${outra ? ' ma-outra' : ''}`}>
+      <div className="ma-linha">
+        {outra
+          ? <h3 className="ma-de">Leitura de {p.nome} · {dataBR(p.dataNascimento)}</h3>
+          : <><h3>{p.nome}</h3><span className="ma-data">{dataBR(p.dataNascimento)}</span></>}
+      </div>
+      {p.presenteDe && <p className="sd-mudo">Presente de {p.presenteDe} ✦</p>}
+      <ul className="ma-itens">
+        {p.itens.map((it) => (
+          <li key={it.chave}>
+            <a href={it.href} className={`ma-item ma-${it.estado}`} onClick={() => {
+              evento('ma_leitura', { item: it.chave, estado: it.estado, outra });
+              // Quem já está na Minha Área vai direto pro conteúdo do Manual: a abertura
+              // (Olho Cósmico) fica pra quem chega pelo e-mail logo depois da compra.
+              if (it.chave === 'manual' && it.estado === 'aberto') {
+                try { window.localStorage.setItem(`ic_olho_visto_${p.id}`, '1'); } catch {}
+              }
+            }}>
+              <span className="ma-icone" aria-hidden="true">{it.estado === 'aberto' ? '✓' : it.estado === 'travado' ? '🔒' : '◐'}</span>
+              <span className="ma-item-txt">
+                <strong>{it.titulo}</strong>
+                <span>{it.rotulo}</span>
+              </span>
+              <span aria-hidden="true">→</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+      {outra && onOcultar && (
+        <button type="button" className="ma-ocultar" onClick={() => onOcultar(p)}>ocultar daqui</button>
+      )}
+      {outra && onMostrar && (
+        <button type="button" className="ma-ocultar" onClick={() => onMostrar(p)}>voltar a mostrar</button>
+      )}
+    </section>
+  );
+}
+
 export default function AbaInicio({ perfil, leitura, onIr }) {
   const nome = (perfil.nome || '').split(' ')[0];
   const sistemas = useMemo(() => sistemasDaPessoa({
@@ -49,6 +91,32 @@ export default function AbaInicio({ perfil, leitura, onIr }) {
       .catch(() => { if (vivo) setProdutos([]); });
     return () => { vivo = false; };
   }, []);
+
+  // Ocultar/mostrar leituras de outra pessoa: muda na hora e desfaz se o
+  // servidor falhar (ex.: migração 0020 ainda não rodou).
+  const [verOcultas, setVerOcultas] = useState(false);
+  const [avisoOcultar, setAvisoOcultar] = useState('');
+  function alternarOculta(p, ocultar) {
+    const marcar = (valor) => setProdutos((lista) => lista.map((x) => (x.chave === p.chave ? { ...x, oculta: valor } : x)));
+    marcar(ocultar);
+    setAvisoOcultar('');
+    evento(ocultar ? 'ma_ocultar' : 'ma_mostrar');
+    fetch('/api/seu-dia/produtos/ocultar', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chave: p.chave, ocultar }),
+    })
+      .then((r) => { if (!r.ok) throw new Error(String(r.status)); })
+      .catch(() => {
+        marcar(!ocultar);
+        setAvisoOcultar('Não deu pra salvar agora. Tente de novo em instantes.');
+      });
+  }
+
+  const suas = produtos ? produtos.filter((p) => p.propria) : [];
+  const outras = produtos ? produtos.filter((p) => !p.propria && !p.oculta) : [];
+  const ocultas = produtos ? produtos.filter((p) => !p.propria && p.oculta) : [];
 
   const tom = TOM[leitura.tom];
 
@@ -73,44 +141,40 @@ export default function AbaInicio({ perfil, leitura, onIr }) {
         <span className="ma-ir">Ver meu dia →</span>
       </button>
 
-      <h2 className="sd-secao">Minhas leituras</h2>
+      <h2 className="sd-secao">Suas leituras</h2>
       {produtos === null && <div className="sd-card ma-carregando">Carregando suas leituras…</div>}
-      {produtos && produtos.length === 0 && (
+      {produtos && suas.length === 0 && (
         <div className="sd-card">
-          <p>Você ainda não tem leituras no seu e-mail. O Manual começa por uma prévia grátis, já com os seus dados.</p>
+          <p>
+            {produtos.length === 0
+              ? 'Você ainda não tem leituras no seu e-mail.'
+              : 'Ainda não há uma leitura sua neste e-mail.'}
+            {' '}O Manual começa por uma prévia grátis, já com os seus dados.
+          </p>
           <Link className="sd-btn sd-btn-link" href="/" onClick={() => evento('ma_fazer_quiz')}>Ver minha prévia grátis</Link>
         </div>
       )}
-      {produtos && produtos.map((p) => (
-        <section key={p.id} className="sd-card ma-pessoa">
-          <div className="ma-linha">
-            <h3>{p.nome}</h3>
-            <span className="ma-data">{dataBR(p.dataNascimento)}</span>
-          </div>
-          {p.presenteDe && <p className="sd-mudo">Presente de {p.presenteDe} ✦</p>}
-          <ul className="ma-itens">
-            {p.itens.map((it) => (
-              <li key={it.chave}>
-                <a href={it.href} className={`ma-item ma-${it.estado}`} onClick={() => {
-                  evento('ma_leitura', { item: it.chave, estado: it.estado });
-                  // Quem já está na Minha Área vai direto pro conteúdo do Manual: a abertura
-                  // (Olho Cósmico) fica pra quem chega pelo e-mail logo depois da compra.
-                  if (it.chave === 'manual' && it.estado === 'aberto') {
-                    try { window.localStorage.setItem(`ic_olho_visto_${p.id}`, '1'); } catch {}
-                  }
-                }}>
-                  <span className="ma-icone" aria-hidden="true">{it.estado === 'aberto' ? '✓' : it.estado === 'travado' ? '🔒' : '◐'}</span>
-                  <span className="ma-item-txt">
-                    <strong>{it.titulo}</strong>
-                    <span>{it.rotulo}</span>
-                  </span>
-                  <span aria-hidden="true">→</span>
-                </a>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ))}
+      {suas.map((p) => <CartaoLeitura key={p.id} p={p} />)}
+
+      {(outras.length > 0 || ocultas.length > 0) && (
+        <>
+          <h2 className="sd-secao">Outras leituras neste e-mail</h2>
+          {avisoOcultar && <p className="ma-aviso" role="status">{avisoOcultar}</p>}
+          {outras.map((p) => (
+            <CartaoLeitura key={p.id} p={p} outra onOcultar={(x) => alternarOculta(x, true)} />
+          ))}
+          {ocultas.length > 0 && (
+            <button type="button" className="ma-ver-ocultas" onClick={() => setVerOcultas((v) => !v)}>
+              {verOcultas
+                ? 'Esconder as ocultas'
+                : `Mostrar ${ocultas.length === 1 ? '1 leitura oculta' : `${ocultas.length} leituras ocultas`}`}
+            </button>
+          )}
+          {verOcultas && ocultas.map((p) => (
+            <CartaoLeitura key={p.id} p={p} outra onMostrar={(x) => alternarOculta(x, false)} />
+          ))}
+        </>
+      )}
 
       {perfil.assinatura ? (
         <div className="sd-card ma-assin">
@@ -161,6 +225,14 @@ const CSS_INICIO = `
   .ma-carregando { color: #cdbbe8; font-size: 16px; }
   .ma-pessoa h3 { margin: 0; font-family: 'Cinzel', serif; font-size: 18px; }
   .ma-data { color: #cdbbe8; font-size: 15px; }
+  .ma-outra { border-style: dashed; }
+  .ma-pessoa h3.ma-de { font-size: 15px; letter-spacing: 0.02em; color: #e9dcff; }
+  .ma-ocultar { align-self: flex-end; margin-top: 2px; background: none; border: 0; padding: 4px 2px; color: #a78bcf;
+    font: inherit; font-size: 14px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+  .ma-ocultar:hover { color: #f5a524; }
+  .ma-ver-ocultas { background: none; border: 0; padding: 6px 0; color: #a78bcf; font: inherit; font-size: 15px;
+    text-decoration: underline; text-underline-offset: 3px; cursor: pointer; text-align: left; }
+  .ma-aviso { margin: 0; font-size: 15px; color: #f5a524; }
   .ma-itens { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
   .ma-item { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 14px; border: 1px solid #2e1f4a; background: #0f0620; color: #faf5ff; text-decoration: none; }
   .ma-item:hover { border-color: #f5a524; }

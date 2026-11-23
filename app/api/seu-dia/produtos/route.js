@@ -31,13 +31,23 @@ export async function GET(request) {
       if (error) throw error;
     }
 
-    const [assinatura, { data: perfil }] = await Promise.all([
+    const [assinatura, { data: perfil }, ocultas] = await Promise.all([
       acessoPorEmail(sb, email),
-      sb.from('seu_dia_perfis').select('data_nascimento').eq('email', email).maybeSingle(),
+      sb.from('seu_dia_perfis').select('nome, data_nascimento').eq('email', email).maybeSingle(),
+      // Consulta separada: sem a migração 0020 a coluna não existe e a lista
+      // tem que continuar funcionando (só sem nada oculto).
+      sb.from('seu_dia_perfis').select('leituras_ocultas').eq('email', email).maybeSingle()
+        .then(({ data: o, error: e }) => (e ? [] : o?.leituras_ocultas || []), () => []),
     ]);
 
     return NextResponse.json({
-      pessoas: agruparProdutos(data || [], { email, assinaturaAtiva: !!assinatura?.ativa, dataNascimentoPerfil: perfil?.data_nascimento || null }),
+      pessoas: agruparProdutos(data || [], {
+        email,
+        assinaturaAtiva: !!assinatura?.ativa,
+        dataNascimentoPerfil: perfil?.data_nascimento || null,
+        nomePerfil: perfil?.nome || null,
+        ocultas,
+      }),
     });
   } catch (e) {
     console.error('[seu-dia/produtos]', e);
