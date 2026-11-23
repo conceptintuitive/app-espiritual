@@ -53,7 +53,7 @@ export default function PoliticaDePrivacidadePage() {
           <li style={styles.li}><strong>Dados que você informa diretamente:</strong> nome completo, e-mail, data de nascimento e, se você preencher, hora e local de nascimento — usados para gerar sua análise de numerologia e astrologia.</li>
           <li style={styles.li}><strong>E-mail parcial:</strong> se você começar a preencher o formulário e sair antes de concluir, podemos registrar o e-mail digitado até aquele ponto, para eventualmente entrar em contato sobre a análise que ficou pela metade.</li>
           <li style={styles.li}><strong>Dados de pagamento:</strong> ao comprar o Manual do seu Mapa, o processamento é feito pelo Stripe ou pelo Mercado Pago — não armazenamos número de cartão de crédito completo em nossos servidores.</li>
-          <li style={styles.li}><strong>Minha Área e Seu Dia:</strong> e-mail, nome, data, hora e cidade de nascimento, os dias em que você abriu a Minha Área (para medir o uso) e, se você ativar, a inscrição do aviso diário no seu aparelho. O código de entrada enviado por e-mail é guardado só em forma cifrada e apagado depois do uso ou em 15 minutos.</li>
+          <li style={styles.li}><strong>Minha Área e Seu Dia:</strong> e-mail, nome, data, hora e cidade de nascimento, os dias em que você abriu a Minha Área (para medir o uso) se você quer receber o seu dia por e-mail (e quando foi o último envio) e, se você ativar, a inscrição do aviso diário no seu aparelho. O código de entrada enviado por e-mail é guardado só em forma cifrada e apagado depois do uso ou em 15 minutos.</li>
           <li style={styles.li}><strong>Assinatura:</strong> plano, forma de pagamento (cartão recorrente ou pré-pago), situação e datas de acesso, e os identificadores da cobrança no Mercado Pago. Não guardamos número de cartão.</li>
           <li style={styles.li}><strong>Dados de navegação:</strong> endereço IP, tipo de navegador, páginas visitadas e interações no site, coletados automaticamente por ferramentas de análise.</li>
         </ul>
@@ -63,6 +63,7 @@ export default function PoliticaDePrivacidadePage() {
           <li style={styles.li}>Gerar sua análise personalizada de numerologia e astrologia;</li>
           <li style={styles.li}>Processar pagamentos e liberar o acesso ao conteúdo comprado;</li>
           <li style={styles.li}>Enviar por e-mail o link de acesso ao seu manual e, quando aplicável, comunicações sobre sua análise;</li>
+          <li style={styles.li}>Se você deixou marcada a opção no cadastro da Minha Área, enviar o seu dia às 7h por e-mail e, durante o teste grátis de 7 dias, os avisos de que ele está acabando. Todo e-mail tem um link para parar de receber;</li>
           <li style={styles.li}>Entender como o site é usado, para corrigir problemas e melhorar a experiência;</li>
           <li style={styles.li}>Medir a eficácia de campanhas de anúncios (Google, Meta/Instagram/Facebook e TikTok).</li>
         </ul>

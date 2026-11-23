@@ -126,6 +126,18 @@ export default function TermosDeUsoPage() {
           de acesso aos recursos da assinatura, sem cobrança e sem renovação automática.
         </p>
         <p style={styles.p}>
+          <strong>Teste grátis de 7 dias do Seu Dia Completo:</strong> quem cria a Minha Área ganha 7 dias do
+          Seu Dia completo, sem cartão e sem cobrança. O teste começa quando você salva seus dados de nascimento
+          pela primeira vez e vale até o fim do 7º dia (horário de Brasília). Depois disso o Seu Dia volta pro
+          resumo grátis; nada é cobrado automaticamente. É um teste por e-mail.
+        </p>
+        <p style={styles.p}>
+          <strong>E-mails do Seu Dia:</strong> se você deixar marcada a opção &ldquo;Quero receber meu dia às 7h
+          por e-mail&rdquo; no cadastro, enviamos todo dia, por volta das 7h, o tema do seu dia. Durante o teste
+          também avisamos no 5º e no 7º dia que ele está acabando. Todo e-mail tem um link para parar de receber,
+          e você pode mudar a opção a qualquer momento em Minha Área → Conta → Editar dados.
+        </p>
+        <p style={styles.p}>
           <strong>Mudança de preço:</strong> se o preço mudar, avisamos por e-mail com pelo menos 30 dias de
           antecedência da próxima cobrança. Um período já pago nunca é alterado.
         </p>

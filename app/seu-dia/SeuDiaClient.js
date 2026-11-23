@@ -26,6 +26,7 @@ import AbaMapa from './AbaMapa';
 import AbaInicio, { TituloDoDia } from './AbaInicio';
 import FaixaCeu from './FaixaCeu';
 import Cadeado from './Cadeado';
+import { textoTeste } from '@/lib/testeSeuDia';
 import TelaConfirmar from './TelaConfirmar';
 import { precisaConfirmar, marcaConfirmacao } from '@/lib/minhaArea';
 import ma from './minhaArea.module.css';
@@ -104,7 +105,10 @@ export default function SeuDiaClient() {
 
   useEffect(() => {
     try {
-      if (new URLSearchParams(window.location.search).get('erro') === 'link') setErroLink(true);
+      const q = new URLSearchParams(window.location.search);
+      if (q.get('erro') === 'link') setErroLink(true);
+      // Veio do e-mail do dia às 7h (link com utm_medium=seu_dia_7h).
+      if (q.get('utm_medium') === 'seu_dia_7h') evento('email_7h_clique');
     } catch {}
     let vivo = true;
     carregarPerfil(() => vivo);
@@ -288,6 +292,8 @@ function TelaDados({ perfil, onSalvo, onCancelar }) {
   const [cidadeTexto, setCidadeTexto] = useState(cidadeBase ? `${cidadeBase.nome}, ${cidadeBase.uf}` : '');
   const [erro, setErro] = useState('');
   const [salvando, setSalvando] = useState(false);
+  // E-mail do seu dia às 7h: marcado por padrão no cadastro (migração 0022).
+  const [emailDiario, setEmailDiario] = useState(perfil?.emailDiario !== false);
 
   async function salvar(e) {
     e.preventDefault();
@@ -302,11 +308,14 @@ function TelaDados({ perfil, onSalvo, onCancelar }) {
         dataNascimento: data,
         hora: naoSei ? null : hora,
         cidade: cidade ? { ibge: cidade.ibge, nome: cidade.nome, uf: cidade.uf, lat: cidade.lat, lon: cidade.lon, tz: cidade.tz } : null,
+        emailDiario,
       },
     });
     setSalvando(false);
     if (!ok) { setErro(json?.error || 'Não conseguimos salvar agora.'); return; }
-    evento('sd_dados_salvos', { com_hora: !naoSei, com_cidade: !!cidade });
+    evento('sd_dados_salvos', { com_hora: !naoSei, com_cidade: !!cidade, email_diario: emailDiario });
+    // 1º salvamento = começo do teste de 7 dias do Seu Dia Completo.
+    if (perfil?.precisaDados && json.perfil?.motivoAcesso === 'teste') evento('teste_inicio');
     onSalvo(json.perfil);
   }
 
@@ -342,6 +351,10 @@ function TelaDados({ perfil, onSalvo, onCancelar }) {
           onSelect={(m) => { setCidade(m); setCidadeTexto(`${m.nome}, ${m.uf}`); }}
         />
         {!cidade && cidadeTexto && <p className="sd-mudo">Escolha a cidade na lista — sem ela, as horas ficam aproximadas.</p>}
+
+        <label className="sd-check">
+          <input type="checkbox" checked={emailDiario} onChange={(e) => setEmailDiario(e.target.checked)} /> Quero receber meu dia às 7h por e-mail
+        </label>
 
         {erro && <p className="sd-erro">{erro}</p>}
         <button type="submit" className="sd-btn" disabled={salvando}>{salvando ? 'Salvando…' : perfil?.precisaDados ? 'Criar minha área' : 'Salvar'}</button>
@@ -483,9 +496,8 @@ function BannerAcesso({ perfil, onDesbloquear }) {
     );
   }
   if (perfil.motivoAcesso === 'teste') {
-    // Só existe pra quem começou o teste antes de ele acabar (nov/2026).
-    const dias = perfil.testeDiasRestantes || 1;
-    return <p className={ma.linhaMono}>Teste do Seu Dia Completo: {dias === 1 ? 'último dia' : `faltam ${dias} dias`}.</p>;
+    // Teste de 7 dias (lib/testeSeuDia.js): dias que faltam depois de hoje.
+    return <p className={ma.linhaMono}>{textoTeste(perfil.testeDiasRestantes ?? 0)}</p>;
   }
   // Sem Completo: nada aqui — os cadeados de cada aba explicam o que falta.
   return null;
