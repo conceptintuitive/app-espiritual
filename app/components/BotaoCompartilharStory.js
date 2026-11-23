@@ -107,10 +107,10 @@ export default function BotaoCompartilharStory({ analiseId, pago, numero, origem
       disabled={estado === 'gerando'}
     >
       {estado === 'gerando'
-        ? '⏳ Gerando imagem…'
+        ? 'Gerando imagem…'
         : estado === 'erro'
-        ? '⚠️ Não deu — tentar de novo'
-        : '📸 Compartilhar no story'}
+        ? 'Não deu — tentar de novo'
+        : 'Compartilhar no story'}
     </button>
   );
 }

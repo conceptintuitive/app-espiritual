@@ -341,7 +341,7 @@ function TelaDados({ perfil, onSalvo, onCancelar }) {
         {!cidade && cidadeTexto && <p className="sd-mudo">Escolha a cidade na lista — sem ela, as horas ficam aproximadas.</p>}
 
         {erro && <p className="sd-erro">{erro}</p>}
-        <button type="submit" className="sd-btn" disabled={salvando}>{salvando ? 'Salvando…' : perfil?.precisaDados ? 'Criar minha área ✦' : 'Salvar'}</button>
+        <button type="submit" className="sd-btn" disabled={salvando}>{salvando ? 'Salvando…' : perfil?.precisaDados ? 'Criar minha área' : 'Salvar'}</button>
         {onCancelar && <button type="button" className="sd-btn-sec" onClick={onCancelar}>Cancelar</button>}
       </form>
     </main>
@@ -1037,7 +1037,7 @@ function ModalListaEspera({ onFechar }) {
           <li><Icone nome="check" /> Seu Dia completo, com aviso às 7h</li>
           <li><Icone nome="check" /> Previsão do Ano, Human Design e Compatibilidade Completa</li>
           <li><Icone nome="check" /> Oráculo ilimitado</li>
-          <li><Icone nome="check" /> No anual: o Manual Completo</li>
+          <li><Icone nome="check" /> No anual: o Manual do seu Mapa</li>
         </ul>
         <div role="radiogroup" aria-label="Plano" className="sd-planos">
           {planos.map((p) => (

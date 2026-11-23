@@ -115,7 +115,7 @@ export async function POST(request) {
     const items = [
       {
         id: analiseId,
-        title: "Manual Completo — Intuitive Concept",
+        title: "Manual do seu Mapa — Intuitive Concept",
         description: `Relatório personalizado completo para ${analise.nome ?? "você"}`,
         quantity: 1,
         currency_id: "BRL",

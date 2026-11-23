@@ -77,7 +77,7 @@ export default function OraculoClient() {
             <span className="passo-num">2</span>
             <div>
               <h3>Livre pra quem já tem o manual</h3>
-              <p>Depois que você desbloqueia o manual completo, as perguntas ficam livres (com um teto diário só pra evitar abuso).</p>
+              <p>Depois que você desbloqueia o Manual do seu Mapa, as perguntas ficam livres (com um teto diário só pra evitar abuso).</p>
             </div>
           </div>
           <div className="passo">

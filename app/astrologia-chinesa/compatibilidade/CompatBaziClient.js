@@ -14,6 +14,7 @@ import CidadeAutocomplete from '@/app/components/CidadeAutocomplete';
 import { salvarCeuDados } from '@/lib/ceuDados';
 import { calcularBazi, TRONCOS, RAMOS, ELEMENTOS, NOMES_POSICAO } from '@/lib/bazi';
 import { compatibilidadeBazi, CHAVE_COMPAT_PESSOA1 } from '@/lib/baziCompat';
+import CtaMapa from '@/app/components/CtaMapa';
 import {
   NIVEL_COMPAT, textoDiaMestre, textoDeuses, textoPalacio, textosOcultos, textosClima,
   resumoClima, textoAnimais, textoCruzada, pontosResumo, conselhoFinal,
@@ -152,7 +153,7 @@ export default function CompatBaziClient() {
         <PessoaForm titulo="Pessoa 1" p={p1} setP={setP1} placeholderNome="Ex: Bianca" />
         <PessoaForm titulo="Pessoa 2" p={p2} setP={setP2} placeholderNome="Ex: Leo" />
         {erro && <p className="erro">{erro}</p>}
-        <button type="submit" className="btn">Ver nossa compatibilidade ✦</button>
+        <button type="submit" className="btn">Ver nossa compatibilidade</button>
         <p className="privacidade">Calculado no seu navegador. Seus dados ficam só neste aparelho.</p>
       </form>
 
@@ -400,18 +401,18 @@ function Resultado({ a, b, c, nomeA, nomeB, onCompartilhar, copiado, onCta }) {
       <p className="nota" style={{ marginTop: 32 }}>{conselhoFinal(c, nomeA, nomeB)}</p>
 
       <div className="acoes">
-        <button type="button" className="btn-sec" onClick={onCompartilhar}>Mandar pra {nomeB} ✦</button>
+        <button type="button" className="btn-sec" onClick={onCompartilhar}>Mandar pra {nomeB}</button>
         {copiado && <p className="privacidade">Só o resultado vai na mensagem — datas e horas não saem do seu celular.</p>}
       </div>
 
       <div className="cta-box">
         <span className="eyebrow">Próxima camada</span>
-        <h2 style={{ marginTop: 8 }}>Isso é o encontro. O Manual é a leitura inteira.</h2>
+        <h2 style={{ marginTop: 8 }}>Isso é o encontro. O Manual do seu Mapa é a leitura inteira.</h2>
         <p>
-          O Manual de {nomeA} cruza o BaZi com o mapa astral (Sol, Lua, Ascendente) e a numerologia — e mostra o
+          O Manual do Mapa de {nomeA} cruza o BaZi com o mapa astral (Sol, Lua, Ascendente) e a numerologia — e mostra o
           seu jeito de amar, o seu ponto cego nas relações e o que fazer nas próximas 4 semanas.
         </p>
-        <button type="button" className="btn" onClick={onCta}>Abrir o Manual de {nomeA} ✦</button>
+        <CtaMapa className="btn" onFazer={onCta} origem="compat-bazi" />
       </div>
     </>
   );

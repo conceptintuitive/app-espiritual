@@ -70,7 +70,7 @@ export default function SeloArquetipo({ firstName, signo, numeroVida, objetivoPr
       </div>
 
       <button className="selo-btn" onClick={handleBaixar} disabled={baixando}>
-        {baixando ? '⏳ Gerando…' : '📥 Baixar meu selo'}
+        {baixando ? 'Gerando…' : 'Baixar meu selo'}
       </button>
 
       <style jsx>{`

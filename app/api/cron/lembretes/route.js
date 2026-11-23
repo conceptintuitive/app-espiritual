@@ -51,16 +51,16 @@ function emailTemplate({ nome, link, variant, unsubUrl }) {
 
   if (variant === "1h") {
     return {
-      subject: "Sua análise espiritual ficou te esperando 👀",
+      subject: "Seu mapa ficou te esperando 👀",
       html: `
 <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;background:#0f0f14;padding:40px 20px;">
   <div style="max-width:520px;margin:0 auto;background:#1a1a24;border-radius:18px;padding:32px;color:#fff;text-align:center;">
-    <h1 style="margin:0 0 12px;font-size:22px;font-weight:600;">${primeiroNome}, sua análise ainda está aberta ✨</h1>
+    <h1 style="margin:0 0 12px;font-size:22px;font-weight:600;">${primeiroNome}, seu mapa ainda está aberto ✨</h1>
     <p style="color:#bbb;font-size:14px;margin:0 0 24px;">
-      Você chegou até a prévia do seu mapa espiritual, mas não finalizou. Seu diagnóstico completo continua disponível.
+      Você viu o seu Mapa, mas não abriu o resto. O Manual do seu Mapa continua disponível.
     </p>
     <a href="${link}" style="display:inline-block;padding:14px 24px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;text-decoration:none;border-radius:12px;font-weight:600;font-size:14px;">
-      Ver meu resultado
+      Ver meu mapa
     </a>
     <p style="margin:28px 0 0;font-size:12px;color:#777;">
       Se o botão não funcionar, copie e cole no navegador:<br/>
@@ -70,7 +70,7 @@ function emailTemplate({ nome, link, variant, unsubUrl }) {
   </div>
   <p style="text-align:center;font-size:12px;color:#666;margin-top:24px;">Com carinho,<br/>Equipe Intuitive ✨</p>
 </div>`.trim(),
-      text: `${primeiroNome}, sua análise ainda está aberta.\n\nVeja seu resultado aqui: ${link}${unsubscribeFooterText(unsubUrl)}`,
+      text: `${primeiroNome}, seu mapa ainda está aberto.\n\nVeja seu mapa aqui: ${link}${unsubscribeFooterText(unsubUrl)}`,
     };
   }
 
@@ -81,10 +81,10 @@ function emailTemplate({ nome, link, variant, unsubUrl }) {
   <div style="max-width:520px;margin:0 auto;background:#1a1a24;border-radius:18px;padding:32px;color:#fff;text-align:center;">
     <h1 style="margin:0 0 12px;font-size:22px;font-weight:600;">${primeiroNome}, seu padrão continua sem nome 🌙</h1>
     <p style="color:#bbb;font-size:14px;margin:0 0 24px;">
-      Seu mapa já foi lido. Falta você ver o resto: seu Ponto Cego, os Bloqueios Invisíveis e o calendário guiado. O valor de R$${PRECO_MANUAL_JANELA} vale até completar 24h da sua análise. Depois disso, o Manual passa para R$${PRECO_MANUAL_PADRAO}.
+      Seu mapa já foi lido. Falta você ver o resto: seu Ponto Cego, os Bloqueios Invisíveis e o calendário guiado. O valor de R$${PRECO_MANUAL_JANELA} vale até completar 24h do seu mapa. Depois disso, o Manual do seu Mapa passa para R$${PRECO_MANUAL_PADRAO}.
     </p>
     <a href="${link}" style="display:inline-block;padding:14px 24px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;text-decoration:none;border-radius:12px;font-weight:600;font-size:14px;">
-      Ver meu Manual por R$${PRECO_MANUAL_JANELA}
+      Desbloquear o Manual do seu Mapa — R$${PRECO_MANUAL_JANELA}
     </a>
     <p style="margin:28px 0 0;font-size:12px;color:#777;">
       Se o botão não funcionar, copie e cole no navegador:<br/>
@@ -244,10 +244,10 @@ function emailLeadSemanalTemplate({ nome, mes, gancho, link, unsubUrl }) {
     <h1 style="margin:0 0 12px;font-size:22px;font-weight:600;">${primeiroNome}, seu ciclo atual é sobre ${mes.titulo.toLowerCase()}</h1>
     ${ganchoParagrafo}
     <p style="color:#bbb;font-size:14px;margin:0 0 20px;line-height:1.6;">
-      Isso é só o começo do que o seu mapa mostra pra esse momento. O diagnóstico completo — com seus bloqueios, plano de 7 dias e rituais — ainda está esperando por você.
+      Isso é só o começo do que o seu mapa mostra pra esse momento. O Manual do seu Mapa — com seus bloqueios, plano de 7 dias e rituais — ainda está esperando por você.
     </p>
     <a href="${link}" style="display:inline-block;padding:14px 24px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;text-decoration:none;border-radius:12px;font-weight:600;font-size:14px;">
-      Ver meu diagnóstico completo
+      Desbloquear o Manual do seu Mapa
     </a>
     <p style="margin:28px 0 0;font-size:12px;color:#777;">
       Se o botão não funcionar, copie e cole no navegador:<br/>
@@ -257,7 +257,7 @@ function emailLeadSemanalTemplate({ nome, mes, gancho, link, unsubUrl }) {
   </div>
   <p style="text-align:center;font-size:12px;color:#666;margin-top:24px;">Com carinho,<br/>Equipe Intuitive ✨</p>
 </div>`.trim(),
-    text: `${primeiroNome}, seu ciclo atual (Mês Pessoal ${mes.mesPessoal}) é sobre ${mes.titulo}.${gancho ? ` ${gancho}` : ""} Veja seu diagnóstico completo: ${link}${unsubscribeFooterText(unsubUrl)}`,
+    text: `${primeiroNome}, seu ciclo atual (Mês Pessoal ${mes.mesPessoal}) é sobre ${mes.titulo}.${gancho ? ` ${gancho}` : ""} Desbloqueie o Manual do seu Mapa: ${link}${unsubscribeFooterText(unsubUrl)}`,
   };
 }
 

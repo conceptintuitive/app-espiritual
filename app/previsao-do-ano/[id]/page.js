@@ -139,7 +139,7 @@ export default function PrevisaoDoAnoPage() {
         {!loading && (erro || !row) && (
           <div className="card">
             <p className="p">Não encontramos essa análise. Comece pelo formulário principal.</p>
-            <Link href="/" className="btn">Fazer minha análise →</Link>
+            <Link href="/?quiz=1" className="btn">Fazer meu mapa grátis</Link>
           </div>
         )}
 
@@ -169,15 +169,13 @@ export default function PrevisaoDoAnoPage() {
                       {pickFirstName(row.nome)}, esse foi o seu mês atual. Desbloqueie pra ver o texto completo,
                       o que favorece e o que pede cuidado em cada um dos próximos 12 meses.
                     </p>
-                    <CtaAssinatura analiseId={id} origem="previsao" />
-                    <p className="p" style={{ fontSize: 14, textAlign: 'center', margin: '4px 0' }}>ou</p>
                     {row.payment_status !== 'paid' ? (
                       <>
                         <p className="p" style={{ fontSize: 14 }}>
-                          Esse bônus é liberado junto com o <strong>Manual Premium</strong> — ainda não tem o seu?
+                          A Previsão do Ano é liberada junto com o <strong>Manual do seu Mapa</strong>.
                         </p>
                         <Link href={`/resultado/${id}`} className="btn btn-cta">
-                          🔓 Desbloquear meu Manual →
+                          Desbloquear com o Manual do seu Mapa
                         </Link>
                       </>
                     ) : (
@@ -185,14 +183,15 @@ export default function PrevisaoDoAnoPage() {
                         {row.hd_payment_status !== 'paid' && (
                           <label className={`combo${combo ? ' is-checked' : ''}`}>
                             <input type="checkbox" checked={combo} onChange={(e) => setCombo(e.target.checked)} />
-                            <span>{combo ? '✅' : '🧬'} Incluir também o <strong>Mapa de Human Design</strong> — os dois por <strong>R$ {PRECO_BONUS_COMBO}</strong></span>
+                            <span>Incluir também o <strong>Mapa de Human Design</strong> — os dois por <strong>R$ {PRECO_BONUS_COMBO}</strong></span>
                           </label>
                         )}
                         <button className="btn btn-cta" onClick={handleComprar} disabled={processando}>
-                          {processando ? '⏳ Abrindo…' : combo ? `🔓 Desbloquear os Dois — R$ ${PRECO_BONUS_COMBO}` : `🔓 Desbloquear Previsão do Ano — R$ ${PRECO_BONUS_AVULSO}`}
+                          {processando ? 'Abrindo…' : combo ? `Desbloquear os dois — R$ ${PRECO_BONUS_COMBO}` : `Desbloquear a Previsão do Ano — R$ ${PRECO_BONUS_AVULSO}`}
                         </button>
                       </>
                     )}
+                    <CtaAssinatura analiseId={id} origem="previsao" />
                   </div>
                 </>
               )}

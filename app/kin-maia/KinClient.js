@@ -16,6 +16,7 @@ import VoceTambem from '@/app/components/VoceTambem';
 import { calcularKin, kinDaData, nomeDoKin, seloDoKin, tomDoKin, ondaEncantada, SELOS } from '@/lib/kin';
 import { TEXTO_SELO, TEXTO_TOM, TEXTO_COR, TEXTO_ORACULO } from '@/lib/kinTextos';
 import { CSS_ANJO, FONTES_ANJO } from '@/app/anjo-da-guarda/estilo';
+import CtaMapa from '@/app/components/CtaMapa';
 
 const doSelo = (s) => `${s.feminino ? 'da' : 'do'} ${s.nomeCompleto}`;
 
@@ -126,7 +127,7 @@ export default function KinClient() {
           </label>
         )}
         {erro && <p className="an-erro">{erro}</p>}
-        <button type="submit" className="an-btn">Descobrir meu Kin ✺</button>
+        <button type="submit" className="an-btn">Descobrir meu Kin</button>
         <p className="an-priv">Calculado no seu navegador. Seus dados ficam só neste aparelho.</p>
       </form>
 
@@ -224,11 +225,11 @@ function Resultado({ k, entrada, onCta }) {
 
       <div className="an-cta">
         <p>
-          Seu Kin é uma camada. O Manual Intuitive cruza numerologia, astrologia e arquétipos pra mostrar quem você é
+          Seu Kin é uma camada. O Manual do seu Mapa cruza numerologia, astrologia e arquétipos pra mostrar quem você é
           no amor, no trabalho e no que está travando agora.
         </p>
         <div className="an-cta-btns">
-          <button type="button" className="an-btn" onClick={onCta}>Ver minha prévia grátis ✦</button>
+          <CtaMapa className="an-btn" onFazer={onCta} origem="kin" />
           <Link href="/seu-dia" className="an-btn sec" onClick={() => evento('kin_cta_seu_dia')}>Meu dia de hoje</Link>
         </div>
       </div>

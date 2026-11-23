@@ -109,7 +109,7 @@ export default function AssinarClient() {
             {ITENS.map((i) => (
               <li key={i.titulo}><strong>{i.titulo}</strong><span>{i.texto}</span></li>
             ))}
-            <li className="as-destaque"><strong>No anual: o Manual Completo</strong><span>O seu Manual dos Poderes Ocultos liberado junto.</span></li>
+            <li className="as-destaque"><strong>No anual: o Manual do seu Mapa</strong><span>Liberado junto com a assinatura.</span></li>
           </ul>
         </section>
 

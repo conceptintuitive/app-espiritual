@@ -35,7 +35,7 @@ export async function POST(request) {
     }
     if (analise.payment_status !== "paid") {
       return NextResponse.json(
-        { error: "Esse bônus é grátis só pra quem já tem o manual completo" },
+        { error: "Esse bônus é grátis só pra quem já tem o Manual do seu Mapa" },
         { status: 400 }
       );
     }
