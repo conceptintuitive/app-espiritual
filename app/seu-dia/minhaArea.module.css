@@ -391,3 +391,14 @@
 .previaManual .cadeadoAcoes { margin-top: 20px; }
 .previaTitulo { margin: 0; font-family: var(--serif); font-size: 22px; line-height: 1.15; color: var(--texto); }
 .cadeadoNota { margin: 0; font-family: var(--mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--ouro-2); }
+
+/* Faixa alta (/assinar) e visitante sem perfil (imagem da estrela) */
+.faixaImg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 48%; }
+.faixaAlta { height: 330px; }
+@media (min-width: 960px) { .faixaAlta { height: 380px; } }
+
+/* Base da linha das horas (o Seu Dia tem isso no CSS global; aqui vale também fora dele) */
+.abaCorpo :global(.sd-hora) { display: flex; gap: 12px; }
+.abaCorpo :global(.sd-hora-faixa) { flex: none; width: 104px; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.abaCorpo :global(.sd-tag) { border-radius: 999px; white-space: nowrap; text-transform: uppercase; }
+.abaCorpo :global(.sd-hora p) { margin: 0; font-size: 15px; line-height: 1.6; color: var(--areia); }

@@ -5,18 +5,38 @@
 //   ?plano=anual|mensal (pré-seleciona)
 //   ?renovar=<token>    (link do e-mail de renovação do Pix)
 // Quem está logado no Seu Dia já é identificado pelo cookie.
+// Visual da Minha Área (nov/2026): céu no topo (perfil do aparelho; sem perfil,
+// a imagem da estrela), prévia do Hoje com dados de exemplo, o que entra,
+// planos, pagamento com Pix primeiro e garantia colada no botão. Checkout,
+// preços (lib/preco.js) e regras da assinatura não mudaram.
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import SiteNav from '@/app/components/SiteNav';
-import { PRECO_ASSINATURA_ANUAL, PRECO_ASSINATURA_MENSAL } from '@/lib/preco';
+import FaixaCeu from '@/app/seu-dia/FaixaCeu';
+import { DiaResumo, LinhaHora } from '@/app/seu-dia/DiaResumo';
+import { PRECO_ASSINATURA_ANUAL, PRECO_ASSINATURA_MENSAL, PRECO_MANUAL_PADRAO } from '@/lib/preco';
 import { emailValido, sugestaoEmail } from '@/lib/emailValidacao';
+import { lerPerfil } from '@/lib/perfilLocal';
+import { montarPerfil, leituraDoDia, hojeNoFuso } from '@/lib/seuDia';
+import { TESTE_SEU_DIA_ATIVO } from '@/lib/testeSeuDia';
+import ma from '@/app/seu-dia/minhaArea.module.css';
+import a from './assinar.module.css';
 
 const brl = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
 function evento(nome, params = {}) {
   try { window.gtag?.('event', nome, { event_category: 'assinatura', ...params }); } catch {}
 }
+
+// Pessoa de exemplo da prévia "Como é por dentro" (não é ninguém real).
+const EXEMPLO = { dataNascimento: '1992-04-03', hora: '09:30', tz: 'America/Sao_Paulo', lon: -46.63 };
+const TOM_ROTULO = { fluxo: 'Dia a favor', misto: 'Dia misto', tensao: 'Dia de atenção' };
+
+// Economia do anual em relação a 12 meses do mensal (+ o Manual, que vem no anual).
+const centavos = (v) => Math.round(v * 100) / 100;
+const ECONOMIA_COM_MANUAL = centavos(PRECO_ASSINATURA_MENSAL * 12 + PRECO_MANUAL_PADRAO - PRECO_ASSINATURA_ANUAL);
+const ECONOMIA_SEM_MANUAL = centavos(PRECO_ASSINATURA_MENSAL * 12 - PRECO_ASSINATURA_ANUAL);
 
 const ITENS = [
   { titulo: 'Seu Dia completo', texto: 'As 5 lentes do seu dia, suas horas de força, a semana e os próximos 30 dias — com aviso às 7h.' },
@@ -32,13 +52,29 @@ export default function AssinarClient() {
   const renovar = params.get('renovar');
   const erroPagamento = params.get('erro') === 'pagamento';
 
-  const [plano, setPlano] = useState(params.get('plano') === 'mensal' ? 'mensal' : 'anual');
-  const [metodo, setMetodo] = useState('prepago');
+  // Forma de pagamento padrão por plano: mensal → cartão que renova sozinho;
+  // anual → Pix (liberado na hora). Trocar de plano volta pro padrão dele.
+  const METODO_PADRAO = { mensal: 'recorrente', anual: 'prepago' };
+  const planoInicial = params.get('plano') === 'mensal' ? 'mensal' : 'anual';
+  const [plano, setPlanoEstado] = useState(planoInicial);
+  const [metodo, setMetodo] = useState(METODO_PADRAO[planoInicial]);
+  const setPlano = (p) => { setPlanoEstado(p); setMetodo(METODO_PADRAO[p]); };
+  const [semSessao, setSemSessao] = useState(false);
   const [email, setEmail] = useState('');
   const [precisaEmail, setPrecisaEmail] = useState(false);
   const [acesso, setAcesso] = useState(null);
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState('');
+  const [perfilLocal, setPerfilLocal] = useState(null);
+  useEffect(() => { setPerfilLocal(lerPerfil()); }, []);
+
+  // Prévia do Hoje: a leitura real do motor do Seu Dia, pra pessoa de exemplo.
+  const exemplo = useMemo(() => {
+    try {
+      const calc = montarPerfil(EXEMPLO);
+      return leituraDoDia(calc, hojeNoFuso(EXEMPLO.tz), { horas: true });
+    } catch { return null; }
+  }, []);
 
   useEffect(() => {
     let vivo = true;
@@ -52,8 +88,9 @@ export default function AssinarClient() {
       .catch(() => {});
     // Sem sessão do Seu Dia, sem análise e sem token, precisamos do e-mail.
     fetch('/api/seu-dia/perfil').then((r) => {
+      if (vivo && r.status === 401) setSemSessao(true);
       if (vivo && r.status === 401 && !analiseId && !renovar) setPrecisaEmail(true);
-    }).catch(() => vivo && !analiseId && !renovar && setPrecisaEmail(true));
+    }).catch(() => { if (vivo) { setSemSessao(true); if (!analiseId && !renovar) setPrecisaEmail(true); } });
     evento('assinar_ver');
     return () => { vivo = false; };
   }, [analiseId, renovar]);
@@ -81,120 +118,166 @@ export default function AssinarClient() {
 
   const sugestao = sugestaoEmail(email);
   const ativa = acesso?.ativa && acesso.origem === 'assinatura';
-  const ateTexto = acesso?.acessoAte ? new Date(acesso.acessoAte).toLocaleDateString('pt-BR') : '';
+  const cortesia = acesso?.ativa && acesso.origem === 'manual';
+  const ateData = acesso?.acessoAte ? new Date(acesso.acessoAte) : null;
+  const ateTexto = ateData ? ateData.toLocaleDateString('pt-BR') : '';
+  const ateCurto = ateData ? ateData.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : '';
+  const porMes = brl(PRECO_ASSINATURA_ANUAL / 12);
+  const precoBotao = plano === 'anual' ? `${brl(PRECO_ASSINATURA_ANUAL)}/ano` : `${brl(PRECO_ASSINATURA_MENSAL)}/mês`;
+  const hora = exemplo?.horas?.forca?.[0] || exemplo?.horas?.atencao || null;
 
   return (
-    <div className="as-wrap">
-      <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Cormorant+Garamond:wght@400;500;600&display=swap" rel="stylesheet" />
-      <SiteNav active="assinar" />
+    // O menu fica fora do .ma: as cores de link da Minha Área não podem pintar o botão dele.
+    <div style={{ position: 'relative', minHeight: '100vh', background: '#07040d' }}>
+      <SiteNav active="assinar" transparente />
+      <div className={ma.ma}>
 
-      <main className="as-col">
-        <header className="as-hero">
-          <span className="as-eyebrow">INTUITIVE COMPLETO</span>
-          <h1>Tudo liberado, numa assinatura só.</h1>
-          <p className="as-lead">O grátis te mostra o começo. Assinando, você vê tudo — todo dia, sobre você.</p>
-        </header>
+      <FaixaCeu perfil={perfilLocal} eyebrow="Intuitive Completo" titulo="Seu mapa, todo dia." alta>
+        <p className={a.sub}>Seu dia lido pelo seu mapa: o que fazer, o que evitar e as melhores horas, todo dia.</p>
+        {cortesia && ateCurto && <p className={a.cortesia}>Seu mês de cortesia vai até {ateCurto}</p>}
+      </FaixaCeu>
 
-        {erroPagamento && <p className="as-aviso">O pagamento não foi concluído. Tente de novo ou escolha Pix.</p>}
+      <main className={a.corpo}>
+        {erroPagamento && <p className={a.aviso}>O pagamento não foi concluído. Tente de novo ou escolha Pix.</p>}
         {ativa && (
-          <p className="as-ok">Você já é Intuitive Completo até {ateTexto}{acesso.renovaSozinha ? ' (renova sozinho no cartão)' : ''}. Pode renovar abaixo pra somar mais tempo.</p>
-        )}
-        {acesso?.ativa && acesso.origem === 'manual' && (
-          <p className="as-ok">Seu 1º mês já está liberado por conta do Manual, até {ateTexto}. Assine pra continuar depois disso.</p>
+          <p className={a.ok}>Você já é Intuitive Completo até {ateTexto}{acesso.renovaSozinha ? ' (renova sozinho no cartão)' : ''}. Pode renovar abaixo pra somar mais tempo.</p>
         )}
 
-        <section className="as-card">
-          <h2>O que entra</h2>
-          <ul className="as-itens">
-            {ITENS.map((i) => (
-              <li key={i.titulo}><strong>{i.titulo}</strong><span>{i.texto}</span></li>
-            ))}
-            <li className="as-destaque"><strong>No anual: o Manual do seu Mapa</strong><span>Liberado junto com a assinatura.</span></li>
-          </ul>
-        </section>
+        <div className={a.duas}>
+          {exemplo && (
+            <section className={a.secao} aria-labelledby="as-dentro">
+              <div className={a.topoSecao}>
+                <h2 id="as-dentro" className={a.h2}>Como é por dentro</h2>
+                <span className={a.exemplo}>exemplo</span>
+              </div>
+              <div className={`${ma.abaCorpo} ${a.previa}`}>
+                <DiaResumo l={exemplo} rotuloTom={TOM_ROTULO[exemplo.tom] || 'Dia misto'} />
+                {hora && (
+                  <div className={a.previaHoras}>
+                    <span className={a.previaHorasRotulo}>Suas horas hoje</span>
+                    <LinhaHora h={hora} />
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
 
-        <form className="as-card" onSubmit={assinar}>
-          <h2>Escolha o plano</h2>
-          <div role="radiogroup" aria-label="Plano" className="as-opcoes">
-            <button type="button" role="radio" aria-checked={plano === 'anual'} className={`as-opcao${plano === 'anual' ? ' is-on' : ''}`} onClick={() => setPlano('anual')}>
-              <span><strong>Anual</strong><small>{brl(PRECO_ASSINATURA_ANUAL / 12)} por mês · inclui o Manual</small></span>
-              <strong>{brl(PRECO_ASSINATURA_ANUAL)}/ano</strong>
+          <section className={a.secao} aria-labelledby="as-entra">
+            <h2 id="as-entra" className={a.h2}>O que entra</h2>
+            <ul className={a.itens}>
+              {ITENS.map((i) => (
+                <li key={i.titulo} className={a.item}>
+                  <span className={a.itemRotulo}>{i.titulo}</span>
+                  <p className={a.itemTexto}>{i.texto}</p>
+                </li>
+              ))}
+              <li className={`${a.item} ${a.itemDestaque}`}>
+                <span className={a.itemRotulo}>No anual: o Manual do seu Mapa</span>
+                <p className={a.itemTexto}>Liberado junto com a assinatura.</p>
+              </li>
+            </ul>
+          </section>
+        </div>
+
+        <form className={a.form} onSubmit={assinar} aria-labelledby="as-planos">
+          <h2 id="as-planos" className={a.h2}>Escolha o plano</h2>
+          <div role="radiogroup" aria-label="Plano" className={a.planos}>
+            <button type="button" role="radio" aria-checked={plano === 'anual'} className={`${a.plano} ${plano === 'anual' ? a.planoOn : ''}`} onClick={() => setPlano('anual')}>
+              <span className={a.selo}>Melhor custo-benefício</span>
+              <span className={a.planoNome}>Anual</span>
+              {cortesia ? (
+                <>
+                  <span className={a.planoPreco}>{porMes}<small>/mês</small></span>
+                  <p className={a.planoLinha}>Continue com tudo por {porMes}/mês: {brl(PRECO_ASSINATURA_ANUAL)} por ano.</p>
+                  <p className={a.planoEconomia}>Você economiza {brl(ECONOMIA_SEM_MANUAL)} em relação a 12 meses do mensal</p>
+                </>
+              ) : (
+                <>
+                  <span className={a.planoPreco}>{brl(PRECO_ASSINATURA_ANUAL)}<small>/ano</small></span>
+                  <p className={a.planoLinha}>Equivale a {porMes}/mês · inclui o Manual do seu Mapa (valor: {brl(PRECO_MANUAL_PADRAO)})</p>
+                  <p className={a.planoEconomia}>Você economiza {brl(ECONOMIA_COM_MANUAL)} em relação a 12 meses do mensal + Manual</p>
+                </>
+              )}
             </button>
-            <button type="button" role="radio" aria-checked={plano === 'mensal'} className={`as-opcao${plano === 'mensal' ? ' is-on' : ''}`} onClick={() => setPlano('mensal')}>
-              <span><strong>Mensal</strong><small>Sem fidelidade</small></span>
-              <strong>{brl(PRECO_ASSINATURA_MENSAL)}/mês</strong>
+            <button type="button" role="radio" aria-checked={plano === 'mensal'} className={`${a.plano} ${plano === 'mensal' ? a.planoOn : ''}`} onClick={() => setPlano('mensal')}>
+              <span className={a.planoNome}>Mensal</span>
+              <span className={a.planoPreco}>{brl(PRECO_ASSINATURA_MENSAL)}<small>/mês</small></span>
+              <p className={a.planoLinha}>Sem fidelidade.</p>
             </button>
           </div>
 
-          <h2>Como pagar</h2>
-          <div role="radiogroup" aria-label="Forma de pagamento" className="as-opcoes">
-            <button type="button" role="radio" aria-checked={metodo === 'prepago'} className={`as-opcao${metodo === 'prepago' ? ' is-on' : ''}`} onClick={() => setMetodo('prepago')}>
-              <span><strong>Pix ou cartão à vista</strong><small>{plano === 'anual' ? 'Paga 1 ano agora' : 'Paga 1 mês agora'}; avisamos antes de vencer</small></span>
-            </button>
-            <button type="button" role="radio" aria-checked={metodo === 'recorrente'} className={`as-opcao${metodo === 'recorrente' ? ' is-on' : ''}`} onClick={() => setMetodo('recorrente')}>
-              <span><strong>Cartão — renova sozinho</strong><small>Cobra {plano === 'anual' ? 'todo ano' : 'todo mês'}; cancele quando quiser</small></span>
-            </button>
+          <span className={a.rotulo}>Forma de pagamento</span>
+          <div role="radiogroup" aria-label="Forma de pagamento" className={a.metodos}>
+            {(plano === 'mensal' ? ['recorrente', 'prepago'] : ['prepago', 'recorrente']).map((m) => (
+              <button key={m} type="button" role="radio" aria-checked={metodo === m} className={`${a.metodo} ${metodo === m ? a.metodoOn : ''}`} onClick={() => setMetodo(m)}>
+                <span className={a.bolinha} aria-hidden="true" />
+                {m === 'prepago' ? (
+                  <span className={a.metodoTexto}>
+                    <span className={a.metodoNome}>Pix ou cartão à vista {plano === 'anual' && <span className={a.pix}>Pix: liberado na hora</span>}</span>
+                    <span className={a.metodoSub}>
+                      {plano === 'anual'
+                        ? 'Paga 1 ano agora; avisamos antes de vencer. Sem renovação automática.'
+                        : 'Pix: você renova manualmente todo mês. Avisamos antes de vencer.'}
+                    </span>
+                  </span>
+                ) : (
+                  <span className={a.metodoTexto}>
+                    <span className={a.metodoNome}>Cartão, renova sozinho</span>
+                    <span className={a.metodoSub}>Cobra {plano === 'anual' ? 'todo ano' : 'todo mês'}; cancele quando quiser.</span>
+                  </span>
+                )}
+              </button>
+            ))}
           </div>
           {metodo === 'recorrente' && (
-            <p className="as-mudo">No Mercado Pago, entre com a conta do mesmo e-mail da sua assinatura.</p>
+            <p className={a.mudo}>No Mercado Pago, entre com a conta do mesmo e-mail da sua assinatura.</p>
           )}
 
           {precisaEmail && (
             <>
-              <label htmlFor="as-email">Seu e-mail <span className="as-mudo">(é por ele que liberamos o acesso)</span></label>
-              <input id="as-email" type="email" autoComplete="email" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="voce@email.com" required />
-              {sugestao && <button type="button" className="as-link" onClick={() => setEmail(sugestao)}>Você quis dizer {sugestao}?</button>}
+              <label htmlFor="as-email" className={a.rotulo}>Seu e-mail (é por ele que liberamos o acesso)</label>
+              <input id="as-email" className={a.campo} type="email" autoComplete="email" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="voce@email.com" required />
+              {sugestao && <button type="button" className={a.link} onClick={() => setEmail(sugestao)}>Você quis dizer {sugestao}?</button>}
             </>
           )}
 
-          {erro && <p className="as-erro">{erro}</p>}
-          <button type="submit" className="as-btn" disabled={enviando}>
-            {enviando ? 'Abrindo o pagamento…' : `Assinar ${plano === 'anual' ? `por ${brl(PRECO_ASSINATURA_ANUAL)}/ano` : `por ${brl(PRECO_ASSINATURA_MENSAL)}/mês`}`}
+          {erro && <p className={a.erro}>{erro}</p>}
+          <button type="submit" className={`${ma.btn} ${a.botao}`} disabled={enviando}>
+            {enviando ? 'Abrindo o pagamento…' : `Assinar por ${precoBotao}`}
           </button>
-          <p className="as-mudo as-centro">Pagamento pelo Mercado Pago. Arrependeu? Até 7 dias depois, devolvemos — é só escrever pra conceptintuitive@gmail.com.</p>
+          {/* Visitante sem perfil e sem sessão: o teste de 7 dias da Minha Área (mesma
+              chave que decide o teste no cadastro, lib/testeSeuDia.js). */}
+          {TESTE_SEU_DIA_ATIVO && semSessao && !perfilLocal && (
+            <a className={a.teste} href="/seu-dia" onClick={() => evento('assinar_teste_click')}>ou teste 7 dias grátis, sem cartão</a>
+          )}
+          <p className={a.garantia}>
+            <strong>Garantia de 7 dias:</strong> desistiu em até 7 dias, devolvemos o valor pago, pelo mesmo meio de pagamento. É só escrever pra conceptintuitive@gmail.com. Pagamento pelo Mercado Pago.
+          </p>
         </form>
 
-        <section className="as-card">
-          <h2>Dúvidas rápidas</h2>
-          <p><strong>Como cancelar?</strong> No cartão, em Seu Dia → Ajustes, ou no app do Mercado Pago. O acesso continua até o fim do que já foi pago. No Pix não há cobrança automática: se não renovar, só volta pro grátis.</p>
-          <p><strong>Já comprei o Manual.</strong> Você ganhou o 1º mês do Intuitive Completo. O Manual continua seu pra sempre.</p>
-          <p><strong>Uso em qual aparelho?</strong> Em qualquer um: o acesso é pelo seu e-mail.</p>
+        <section className={a.secao} aria-labelledby="as-duvidas" style={{ borderBottom: 0 }}>
+          <h2 id="as-duvidas" className={a.h2}>Dúvidas rápidas</h2>
+          <div className={a.duvidas}>
+            <div className={a.duvida}>
+              <h3>Como cancelar?</h3>
+              <p>No cartão: em Minha Área → Conta → Cancelar renovação, ou pelo e-mail de contato. O acesso continua até o fim do período já pago. No Pix não há cobrança automática: avisamos 3 dias antes de vencer e, se não renovar, você volta pro grátis.</p>
+            </div>
+            <div className={a.duvida}>
+              <h3>Já comprei o Manual.</h3>
+              <p>Você ganhou 30 dias do Intuitive Completo, sem cobrança e sem renovação automática. O Manual continua seu pra sempre.</p>
+            </div>
+            <div className={a.duvida}>
+              <h3>Uso em qual aparelho?</h3>
+              <p>Em qualquer um: o acesso é pelo seu e-mail.</p>
+            </div>
+            <div className={a.duvida}>
+              <h3>E se o preço mudar?</h3>
+              <p>Avisamos por e-mail com pelo menos 30 dias de antecedência. Um período já pago nunca muda.</p>
+            </div>
+          </div>
         </section>
       </main>
-
-      <style jsx global>{`
-        body { margin: 0; background: #0a0118; }
-        .as-wrap { min-height: 100vh; background: #0a0118; color: #faf5ff; font-family: 'Cormorant Garamond', Georgia, serif; }
-        .as-col { max-width: 560px; margin: 0 auto; padding: 28px 18px 64px; display: flex; flex-direction: column; gap: 16px; box-sizing: border-box; }
-        .as-hero { text-align: center; display: flex; flex-direction: column; gap: 8px; }
-        .as-eyebrow { font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.22em; color: #f5a524; }
-        .as-hero h1 { margin: 0; font-family: 'Cinzel', serif; font-weight: 700; font-size: clamp(26px, 6vw, 34px); line-height: 1.2; text-wrap: balance; }
-        .as-lead { margin: 0; font-size: 20px; color: #e9dcff; }
-        .as-card { background: #150a28; border: 1px solid #2e1f4a; border-radius: 18px; padding: 18px 16px; display: flex; flex-direction: column; gap: 12px; }
-        .as-card h2 { margin: 4px 0 0; font-family: 'Cinzel', serif; font-weight: 700; font-size: 16px; letter-spacing: 0.04em; }
-        .as-card p { margin: 0; font-size: 18px; line-height: 1.45; }
-        .as-itens { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
-        .as-itens li { display: flex; flex-direction: column; gap: 2px; padding: 10px 0; border-top: 1px solid #2e1f4a; font-size: 17px; }
-        .as-itens li strong { font-size: 18px; }
-        .as-itens li span { color: #e9dcff; }
-        .as-destaque strong { color: #f5a524; }
-        .as-opcoes { display: flex; flex-direction: column; gap: 10px; }
-        .as-opcao { min-height: 64px; border-radius: 16px; border: 1px solid #2e1f4a; background: #10061f; color: #faf5ff; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; text-align: left; cursor: pointer; font-family: 'Cormorant Garamond', serif; font-size: 17px; }
-        .as-opcao > span { display: flex; flex-direction: column; gap: 2px; }
-        .as-opcao strong { font-family: 'Cinzel', serif; font-size: 15px; }
-        .as-opcao small { font-size: 15px; color: #cdbbe8; }
-        .as-opcao.is-on { border: 2px solid #f5a524; }
-        .as-card label { font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 0.06em; color: #cdbbe8; }
-        .as-card input { width: 100%; box-sizing: border-box; min-height: 48px; background: #0a0118; color: #faf5ff; border: 1px solid #4a2f6e; border-radius: 12px; padding: 10px 14px; font-family: 'Cormorant Garamond', serif; font-size: 18px; }
-        .as-btn { min-height: 54px; border-radius: 999px; border: 0; background: #db2777; color: #fff; font-family: 'Cinzel', serif; font-weight: 700; font-size: 15px; letter-spacing: 0.04em; cursor: pointer; }
-        .as-btn:disabled { opacity: 0.6; }
-        .as-link { background: none; border: 0; color: #f5a524; text-decoration: underline; font: inherit; cursor: pointer; padding: 0; text-align: left; }
-        .as-mudo { color: #cdbbe8 !important; font-size: 15px !important; }
-        .as-centro { text-align: center; }
-        .as-erro { color: #fca5a5 !important; font-size: 16px !important; }
-        .as-aviso { margin: 0; padding: 12px 14px; border-radius: 12px; background: #3a2208; color: #fdba74; font-size: 17px; }
-        .as-ok { margin: 0; padding: 12px 14px; border-radius: 12px; background: #12331f; color: #bbf7d0; font-size: 17px; }
-      `}</style>
+      </div>
     </div>
   );
 }
