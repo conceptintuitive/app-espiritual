@@ -7,6 +7,7 @@
 
 import { useMemo, useState } from 'react';
 import { sistemasDaPessoa, sinteseDoMapa, TEMAS } from '@/lib/mapaSintese';
+import ma from './minhaArea.module.css';
 
 function evento(nome, params = {}) {
   try { window.gtag?.('event', nome, { event_category: 'seu_dia', ...params }); } catch {}
@@ -51,65 +52,76 @@ export default function AbaMapa({ perfil }) {
   }
 
   return (
-    <>
-      <header className="sd-cabecalho">
-        <span className="sd-eyebrow">MEU MAPA</span>
-        <h1>{nome ? `${nome}, este é você` : 'Este é você'}</h1>
-        <p className="sd-mudo">{sistemas.length - 1} sistemas lidos juntos. Onde eles concordam é o que mais define você.</p>
-      </header>
+    <div className={ma.duas}>
+      <div className={ma.coluna}>
+        <p className={ma.intro}>
+          {nome ? `${nome}, ` : ''}{sistemas.length - 1} sistemas lidos juntos. Onde eles concordam é o que mais define você.
+        </p>
 
-      <section className="sd-card mp-repete">
-        <span className="sd-eyebrow">O QUE SEU MAPA REPETE</span>
-        {s.repete.length > 0 ? s.repete.map((r) => (
-          <div key={r.tema} className="mp-tema">
-            <h2>{r.nome}</h2>
-            <p className="mp-quem">{r.sistemas.length} sistemas dizem isso: {listaHumana(r.sistemas)}.</p>
-            <p>{r.frase}</p>
-          </div>
-        )) : (
-          <>
-            <p>Seu mapa é plural: cada sistema puxa pra um lado, e isso também é uma assinatura. Seus temas mais fortes:</p>
-            <ul className="sd-lista-simples">
-              {s.ranking.slice(0, 3).map((r) => <li key={r.tema}><strong>{TEMAS[r.tema].nome}</strong> — {TEMAS[r.tema].frase}</li>)}
-            </ul>
-          </>
-        )}
-      </section>
-
-      {s.tensao && (
-        <section className="sd-card">
-          <span className="sd-eyebrow">ONDE VOCÊ SE DIVIDE</span>
-          <h2 className="mp-tensao">{s.tensao.nomeA} <span>×</span> {s.tensao.nomeB}</h2>
-          <p>{s.tensao.texto}</p>
-          <p className="sd-mudo">
-            {s.tensao.nomeA}: {listaHumana(s.tensao.sistemasA)}. {s.tensao.nomeB}: {listaHumana(s.tensao.sistemasB)}.
-          </p>
+        <section className={ma.secaoEd} aria-labelledby="mp-repete">
+          <span id="mp-repete" className={ma.eyebrow}>O que seu mapa repete</span>
+          {s.repete.length > 0 ? s.repete.map((r) => (
+            <div key={r.tema} className={ma.temaGrande}>
+              <h2 className={ma.temaNome}>{r.nome}</h2>
+              <span className={ma.temaQuem}>{r.sistemas.length} sistemas dizem isso: {listaHumana(r.sistemas)}</span>
+              <p className={ma.temaFrase}>{r.frase}</p>
+            </div>
+          )) : (
+            <>
+              <p className={ma.temaFrase}>Seu mapa é plural: cada sistema puxa pra um lado, e isso também é uma assinatura. Seus temas mais fortes:</p>
+              {s.ranking.slice(0, 3).map((r) => (
+                <div key={r.tema} className={ma.temaGrande}>
+                  <h2 className={ma.temaNome}>{TEMAS[r.tema].nome}</h2>
+                  <p className={ma.temaFrase}>{TEMAS[r.tema].frase}</p>
+                </div>
+              ))}
+            </>
+          )}
         </section>
-      )}
 
-      <h2 className="sd-secao">Seus sistemas</h2>
-      <div className="mp-grade">
-        {sistemas.map((c) => (
-          <a key={c.chave} href={c.href} className="mp-sis" onClick={() => evento('sd_mapa_sistema', { destino: c.chave })}>
-            <span className="mp-sis-nome">{c.sistema}</span>
-            <strong>{c.valor}</strong>
-            <span className="mp-sis-sub">{c.sub}</span>
-            {c.temas.length > 0 && <span className="mp-sis-temas">{c.temas.map((t) => TEMAS[t].nome).join(' · ')}</span>}
-          </a>
-        ))}
+        {s.tensao && (
+          <section className={ma.secaoEd} aria-labelledby="mp-tensao">
+            <span id="mp-tensao" className={ma.eyebrow}>Onde você se divide</span>
+            <div className={ma.temaGrande}>
+              <h2 className={ma.temaNome}>{s.tensao.nomeA} <span>×</span> {s.tensao.nomeB}</h2>
+              <span className={ma.temaQuem}>
+                {s.tensao.nomeA}: {listaHumana(s.tensao.sistemasA)} · {s.tensao.nomeB}: {listaHumana(s.tensao.sistemasB)}
+              </span>
+              <p className={ma.temaFrase}>{s.tensao.texto}</p>
+            </div>
+          </section>
+        )}
       </div>
 
-      <section className="sd-card mp-story">
-        <span className="sd-eyebrow">PRO SEU STORY</span>
-        <p>Um card com o seu mapa inteiro, no tamanho do story.</p>
-        <button type="button" className="sd-btn" onClick={compartilharCard} disabled={gerando}>
-          {gerando ? 'Gerando…' : 'Gerar meu card ✦'}
-        </button>
-        {aviso && <p className="sd-mudo">{aviso}</p>}
-      </section>
+      <div className={ma.coluna}>
+        <section className={ma.secaoEd} aria-labelledby="mp-sistemas">
+          <h2 id="mp-sistemas" className={ma.h2Ed}>Seus sistemas</h2>
+          <div>
+            {sistemas.map((c) => (
+              <a key={c.chave} href={c.href} className={ma.mapaLinha} onClick={() => evento('sd_mapa_sistema', { destino: c.chave })}>
+                <span className={ma.mapaRotulo}>{c.sistema}</span>
+                <span className={ma.mapaValor}>
+                  {c.valor}
+                  <span className={ma.sistemasSub} style={{ display: 'block' }}>{c.sub}</span>
+                </span>
+                <span className={ma.seta} aria-hidden="true">→</span>
+              </a>
+            ))}
+          </div>
+        </section>
 
-      <style>{CSS_MAPA}</style>
-    </>
+        <section className={ma.secaoEd} aria-labelledby="mp-story">
+          <span id="mp-story" className={ma.eyebrow}>Pro seu story</span>
+          <p>Um card com o seu mapa inteiro, no tamanho do story.</p>
+          <div>
+            <button type="button" className={ma.btn} onClick={compartilharCard} disabled={gerando}>
+              {gerando ? 'Gerando…' : 'Gerar meu card ✦'}
+            </button>
+          </div>
+          {aviso && <p>{aviso}</p>}
+        </section>
+      </div>
+    </div>
   );
 }
 
@@ -209,20 +221,3 @@ async function gerarCardMapa({ nome, sistemas, sintese }) {
 
   return await new Promise((resolve, reject) => c.toBlob((b) => (b ? resolve(b) : reject(new Error('canvas'))), 'image/png'));
 }
-
-const CSS_MAPA = `
-  .mp-repete { gap: 14px; }
-  .mp-tema h2 { margin: 2px 0 2px; font-family: 'Cinzel', serif; font-weight: 700; font-size: 30px; color: #f5d48a; }
-  .mp-tema + .mp-tema { border-top: 1px solid #2e1f4a; padding-top: 14px; }
-  .mp-quem { font-size: 16px !important; color: #cdbbe8; margin-bottom: 6px !important; }
-  .mp-tensao { font-family: 'Cinzel', serif; font-weight: 700; font-size: 24px; margin: 0; }
-  .mp-tensao span { color: #f5a524; }
-  .mp-grade { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-  .mp-sis { display: flex; flex-direction: column; gap: 3px; padding: 14px 12px; border-radius: 16px; border: 1px solid #2e1f4a; background: #150a28; color: #faf5ff; text-decoration: none; }
-  .mp-sis:hover { border-color: #f5a524; }
-  .mp-sis-nome { font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #f5a524; }
-  .mp-sis strong { font-family: 'Cinzel', serif; font-size: 16px; line-height: 1.25; }
-  .mp-sis-sub { font-size: 15px; color: #cdbbe8; line-height: 1.3; }
-  .mp-sis-temas { font-size: 13px; color: #f5d48a; margin-top: 4px; }
-  .mp-story { align-items: stretch; text-align: center; }
-`;

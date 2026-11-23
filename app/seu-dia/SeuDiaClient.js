@@ -21,7 +21,8 @@ import { TEXTO_ANJO } from '@/lib/anjosTextos';
 import { longitudeSolar } from '@/lib/bazi';
 import { salvarPerfil, lerPerfil } from '@/lib/perfilLocal';
 import AbaMapa from './AbaMapa';
-import AbaInicio from './AbaInicio';
+import AbaInicio, { TituloDoDia } from './AbaInicio';
+import FaixaCeu from './FaixaCeu';
 import TelaConfirmar from './TelaConfirmar';
 import { precisaConfirmar, marcaConfirmacao } from '@/lib/minhaArea';
 import ma from './minhaArea.module.css';
@@ -350,6 +351,8 @@ function TelaDados({ perfil, onSalvo, onCancelar }) {
 // ── O app ────────────────────────────────────────────────────────────────────
 
 const ABAS = ['inicio', 'hoje', 'semana', 'mapa', 'conta'];
+// Título da faixa com o céu no topo de cada aba (o Início tem o céu grande).
+const TITULO_ABA = { hoje: 'Hoje', semana: 'Sua semana', mapa: 'Meu mapa', conta: 'Sua conta' };
 
 function AppSeuDia({ perfil, setPerfil, onEditar, onSair }) {
   // ?aba=hoje (aviso das 7h) abre direto no dia; o padrão é o Início.
@@ -422,9 +425,11 @@ function AppSeuDia({ perfil, setPerfil, onEditar, onSair }) {
           <AbaInicio perfil={perfil} leitura={leitura} hoje={hoje} abas={abasDesktop} onIr={(a) => { setAba(a); evento('sd_inicio_ir', { aba: a }); }} />
         </main>
       )}
-      {aba !== 'inicio' && <div className={`${ma.ma} sd-abas-topo`}>{abasDesktop}</div>}
       {aba !== 'inicio' && (
-      <main className="sd-col sd-col-app">
+      <div className={ma.ma}>
+      <FaixaCeu perfil={perfil} eyebrow="Minha Área" titulo={TITULO_ABA[aba]} />
+      {abasDesktop}
+      <main className={ma.abaCorpo}>
         {aba === 'hoje' && (
           <AbaHoje perfil={perfil} leitura={leitura} completo={completo} onDesbloquear={() => abrirModal('hoje')} />
         )}
@@ -436,6 +441,7 @@ function AppSeuDia({ perfil, setPerfil, onEditar, onSair }) {
           <AbaAjustes perfil={perfil} onEditar={onEditar} onSair={onSair} onDesbloquear={() => abrirModal('conta')} />
         )}
       </main>
+      </div>
       )}
 
       <nav className="sd-abas" aria-label="Minha Área">
@@ -459,34 +465,28 @@ function AppSeuDia({ perfil, setPerfil, onEditar, onSair }) {
   );
 }
 
-function saudacao(nome) {
-  const h = new Date().getHours();
-  const s = h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
-  return nome ? `${s}, ${nome}.` : `${s}.`;
-}
-
 const dataBR = (iso) => (iso ? new Date(iso).toLocaleDateString('pt-BR') : '');
 
 function BannerAcesso({ perfil, onDesbloquear }) {
   if (perfil.motivoAcesso === 'assinatura') {
-    return <p className="sd-faixa">Intuitive Completo ativo até {dataBR(perfil.assinatura?.acessoAte)}.</p>;
+    return <p className={ma.linhaMono}>Intuitive Completo ativo até {dataBR(perfil.assinatura?.acessoAte)}.</p>;
   }
   if (perfil.motivoAcesso === 'manual') {
     return (
-      <p className="sd-faixa">
+      <p className={ma.linhaMono}>
         Seu 1º mês do Completo é por conta do Manual, até {dataBR(perfil.assinatura?.acessoAte)}.{' '}
-        <button type="button" className="sd-link-btn" onClick={onDesbloquear}>Continuar depois</button>
+        <button type="button" onClick={onDesbloquear}>Continuar depois</button>
       </p>
     );
   }
   if (perfil.motivoAcesso === 'teste') {
     const dias = perfil.testeDiasRestantes || 1;
-    return <p className="sd-faixa">Teste do Seu Dia Completo: {dias === 1 ? 'último dia' : `faltam ${dias} dias`}.</p>;
+    return <p className={ma.linhaMono}>Teste do Seu Dia Completo: {dias === 1 ? 'último dia' : `faltam ${dias} dias`}.</p>;
   }
   return (
-    <p className="sd-faixa">
+    <p className={ma.linhaMono}>
       Seu teste acabou — o resumo do dia segue grátis.{' '}
-      <button type="button" className="sd-link-btn" onClick={onDesbloquear}>Quero o Completo</button>
+      <button type="button" onClick={onDesbloquear}>Quero o Completo</button>
     </p>
   );
 }
@@ -495,7 +495,6 @@ function AbaHoje({ perfil, leitura, completo, onDesbloquear }) {
   const l = leitura;
   const tom = TOM[l.tom];
   const [copiado, setCopiado] = useState(false);
-  const [ola] = useState(() => saudacao(perfil.nome));
   const extras = useMemo(() => camadasExtras(perfil, l.data), [perfil, l.data]);
 
   async function compartilhar() {
@@ -510,109 +509,117 @@ function AbaHoje({ perfil, leitura, completo, onDesbloquear }) {
     } catch {}
   }
 
+  const travado = (
+    <section className="sd-card sd-travado">
+      <div className="sd-travado-topo">
+        <h2 className="sd-card-titulo">No Seu Dia Completo</h2>
+        <Icone nome="cadeado" />
+      </div>
+      <ul>
+        <li>As 5 lentes do seu dia, uma por uma</li>
+        <li>Suas horas de força e de atenção</li>
+        <li>A semana e os próximos 30 dias</li>
+        <li>Como o dia mexe com cada parte do seu mapa</li>
+        <li>O Kin Maia e o anjo do dia, cruzados com os seus</li>
+      </ul>
+      <p className="sd-borrado" aria-hidden="true">{l.chinesa.texto} {l.numerologia.texto}</p>
+      <button type="button" className="sd-btn" onClick={onDesbloquear}>Desbloquear Seu Dia Completo</button>
+    </section>
+  );
+
   return (
     <>
-      <header className="sd-cabecalho">
-        <span className="sd-eyebrow">{`${l.rotulo.semana} · ${l.rotulo.dia} de ${l.rotulo.mes}`.toUpperCase()}</span>
-        <h1>{ola}</h1>
-      </header>
-
       <BannerAcesso perfil={perfil} onDesbloquear={onDesbloquear} />
 
-      <section className="sd-card sd-hero" aria-labelledby="sd-titulo-dia">
-        <div className="sd-hero-topo">
-          <span className="sd-eyebrow">TEMA DO DIA · {l.temaNome.toUpperCase()}</span>
-          <span className={`sd-tag ${tom.classe}`}>{tom.rotulo}</span>
-        </div>
-        <h2 id="sd-titulo-dia">{l.titulo}</h2>
-        <p className="sd-frase">{l.frase}</p>
-        <div className="sd-alinhamento">
-          <span className="sd-pontos" aria-hidden="true">
-            {Array.from({ length: l.totalLentes }, (_, i) => <span key={i} className={i < l.concordam ? 'on' : ''} />)}
-          </span>
-          <span>{l.concordam} de {l.totalLentes} sistemas apontam pra {l.temaNome.toLowerCase()}</span>
-        </div>
-      </section>
+      <div className={ma.duas}>
+        <div className={ma.coluna}>
+          <section className={ma.diaHero} aria-labelledby="sd-titulo-dia">
+            <div className={ma.hojeTopo}>
+              <span className={ma.eyebrow}>{`${l.rotulo.semana} · ${l.rotulo.dia} de ${l.rotulo.mes}`}</span>
+              <span className={ma.pilula}>{tom.rotulo}</span>
+            </div>
+            <h2 id="sd-titulo-dia" className={ma.diaTitulo}><TituloDoDia texto={l.titulo} /></h2>
+            <p className={ma.diaFrase}>{l.frase}</p>
+            <div className={ma.sistemasLinha}>
+              <div className={ma.barras} aria-hidden="true">
+                {Array.from({ length: l.totalLentes }, (_, i) => <span key={i} className={i < l.concordam ? ma.barraOn : ''} />)}
+              </div>
+              <span className={ma.sistemasTexto}>{l.concordam} de {l.totalLentes} sistemas apontam pra {l.temaNome.toLowerCase()}</span>
+            </div>
+          </section>
 
-      <div className="sd-grade-2">
-        <div className="sd-card sd-fe">
-          <span className="sd-fe-titulo sd-verde"><Icone nome="check" /> FAÇA</span>
-          {(completo ? l.faca : l.faca.slice(0, 1)).map((f) => <p key={f}>{f}</p>)}
-        </div>
-        <div className="sd-card sd-fe">
-          <span className="sd-fe-titulo sd-laranja"><Icone nome="x" /> EVITE</span>
-          {(completo ? l.evite : l.evite.slice(0, 1)).map((f) => <p key={f}>{f}</p>)}
-        </div>
-      </div>
-
-      {completo ? (
-        <>
-          <PorQueTema l={l} />
-          <SecaoChinesa l={l} />
-          <SecaoAnimais l={l} />
-          <SecaoHoras horas={l.horas} cidade={perfil.cidade?.nome} />
-
-          <h2 className="sd-secao">As outras lentes</h2>
-          <Lente titulo="Numerologia" destaque={<span className="sd-numero">{l.numerologia.diaPessoal}</span>}>
-            <p className="sd-lente-sub">Dia pessoal {l.numerologia.diaPessoal} · {l.numerologia.palavra}</p>
-            <p>{l.numerologia.longo}</p>
-            {l.numerologia.mesPalavra && (
-              <p>Pano de fundo: o seu mês pessoal é {l.numerologia.mesPessoal} ({l.numerologia.mesPalavra}). O mês dá o clima; o dia, o movimento.</p>
-            )}
-            <p className="sd-mudo">{l.numerologia.conta}</p>
-          </Lente>
-          {l.lua && (
-            <Lente titulo="A Lua no seu mapa" destaque={<Icone nome="lua" tamanho={30} />}>
-              <p className="sd-lente-sub">Lua em {l.lua.signo} · {l.lua.clima}</p>
-              <p>
-                Seu Sol é em {l.lua.signoSolar}{l.lua.signoLuaNatal ? ` e sua Lua de nascimento em ${l.lua.signoLuaNatal}` : ''}.
-                {' '}A Lua troca de signo a cada 2 ou 3 dias e dá o clima emocional do dia — hoje ela está em {l.lua.signo}.
-              </p>
-              <p>{l.lua.texto}{l.lua.retorno ? ` ${l.lua.retorno}` : ''}</p>
-              <p className="sd-mudo">{l.lua.signo} × {l.lua.signoSolar}: {l.lua.aspectoExplica}</p>
-            </Lente>
-          )}
-          <Lente titulo="Tarô do dia" destaque={<Icone nome="carta" tamanho={30} />}>
-            <p className="sd-lente-sub">{l.tarot.nome}{l.tarot.invertida ? ' (invertida)' : ''}</p>
-            {l.tarot.palavrasChave.length > 0 && (
-              <div className="sd-chips">{l.tarot.palavrasChave.map((k) => <span key={k}>{k}</span>)}</div>
-            )}
-            <p>{l.tarot.texto}</p>
-            <p className="sd-mudo">A sua carta sai da combinação da sua data de nascimento com a de hoje — outra pessoa tira outra carta.</p>
-          </Lente>
-          <Lente titulo="I Ching" destaque={<Icone nome="hexagrama" tamanho={30} />}>
-            <p className="sd-lente-sub">{l.hexagrama.superior} sobre {l.hexagrama.inferior}</p>
-            <p>{l.hexagrama.texto}</p>
-            <p><strong>Favorece:</strong></p>
-            <ul className="sd-lista-simples">{l.hexagrama.favoreceLista.map((x) => <li key={x}>{x}</li>)}</ul>
-            <p><strong>Cuidado:</strong></p>
-            <ul className="sd-lista-simples">{l.hexagrama.cuidadoLista.map((x) => <li key={x}>{x}</li>)}</ul>
-            <p>{l.hexagrama.movimento}</p>
-            <p className="sd-mudo">É a única lente igual pra todo mundo: sai só da data de hoje, não do seu mapa.</p>
-          </Lente>
-          {extras && <LentesExtras e={extras} />}
-        </>
-      ) : (
-        <section className="sd-card sd-travado">
-          <div className="sd-travado-topo">
-            <h2 className="sd-card-titulo">No Seu Dia Completo</h2>
-            <Icone nome="cadeado" />
+          <div className={ma.faceEvite}>
+            <div className={ma.faceCol}>
+              <span className={ma.rotuloFaca}>Faça</span>
+              {(completo ? l.faca : l.faca.slice(0, 1)).map((f) => <p key={f}>{f}</p>)}
+            </div>
+            <div className={ma.faceCol}>
+              <span className={ma.rotuloEvite}>Evite</span>
+              {(completo ? l.evite : l.evite.slice(0, 1)).map((f) => <p key={f}>{f}</p>)}
+            </div>
           </div>
-          <ul>
-            <li>As 5 lentes do seu dia, uma por uma</li>
-            <li>Suas horas de força e de atenção</li>
-            <li>A semana e os próximos 30 dias</li>
-            <li>Como o dia mexe com cada parte do seu mapa</li>
-            <li>O Kin Maia e o anjo do dia, cruzados com os seus</li>
-          </ul>
-          <p className="sd-borrado" aria-hidden="true">{l.chinesa.texto} {l.numerologia.texto}</p>
-          <button type="button" className="sd-btn" onClick={onDesbloquear}>Desbloquear Seu Dia Completo</button>
-        </section>
-      )}
 
-      <button type="button" className="sd-btn-sec sd-compartilhar" onClick={compartilhar}>
-        <Icone nome="compartilhar" /> {copiado ? 'Copiado!' : 'Compartilhar meu dia'}
-      </button>
+          {completo ? (
+            <>
+              <PorQueTema l={l} />
+              <SecaoHoras horas={l.horas} cidade={perfil.cidade?.nome} />
+            </>
+          ) : travado}
+
+          <div className={ma.acoes}>
+            <button type="button" className={ma.btnSec} onClick={compartilhar}>
+              <Icone nome="compartilhar" /> {copiado ? 'Copiado!' : 'Compartilhar meu dia'}
+            </button>
+          </div>
+        </div>
+
+        {completo && (
+          <div className={ma.coluna}>
+            <SecaoChinesa l={l} />
+            <SecaoAnimais l={l} />
+
+            <h2 className="sd-secao">As outras lentes</h2>
+            <Lente titulo="Numerologia" destaque={<span className="sd-numero">{l.numerologia.diaPessoal}</span>}>
+              <p className="sd-lente-sub">Dia pessoal {l.numerologia.diaPessoal} · {l.numerologia.palavra}</p>
+              <p>{l.numerologia.longo}</p>
+              {l.numerologia.mesPalavra && (
+                <p>Pano de fundo: o seu mês pessoal é {l.numerologia.mesPessoal} ({l.numerologia.mesPalavra}). O mês dá o clima; o dia, o movimento.</p>
+              )}
+              <p className="sd-mudo">{l.numerologia.conta}</p>
+            </Lente>
+            {l.lua && (
+              <Lente titulo="A Lua no seu mapa" destaque={<Icone nome="lua" tamanho={30} />}>
+                <p className="sd-lente-sub">Lua em {l.lua.signo} · {l.lua.clima}</p>
+                <p>
+                  Seu Sol é em {l.lua.signoSolar}{l.lua.signoLuaNatal ? ` e sua Lua de nascimento em ${l.lua.signoLuaNatal}` : ''}.
+                  {' '}A Lua troca de signo a cada 2 ou 3 dias e dá o clima emocional do dia — hoje ela está em {l.lua.signo}.
+                </p>
+                <p>{l.lua.texto}{l.lua.retorno ? ` ${l.lua.retorno}` : ''}</p>
+                <p className="sd-mudo">{l.lua.signo} × {l.lua.signoSolar}: {l.lua.aspectoExplica}</p>
+              </Lente>
+            )}
+            <Lente titulo="Tarô do dia" destaque={<Icone nome="carta" tamanho={30} />}>
+              <p className="sd-lente-sub">{l.tarot.nome}{l.tarot.invertida ? ' (invertida)' : ''}</p>
+              {l.tarot.palavrasChave.length > 0 && (
+                <div className="sd-chips">{l.tarot.palavrasChave.map((k) => <span key={k}>{k}</span>)}</div>
+              )}
+              <p>{l.tarot.texto}</p>
+              <p className="sd-mudo">A sua carta sai da combinação da sua data de nascimento com a de hoje — outra pessoa tira outra carta.</p>
+            </Lente>
+            <Lente titulo="I Ching" destaque={<Icone nome="hexagrama" tamanho={30} />}>
+              <p className="sd-lente-sub">{l.hexagrama.superior} sobre {l.hexagrama.inferior}</p>
+              <p>{l.hexagrama.texto}</p>
+              <p><strong>Favorece:</strong></p>
+              <ul className="sd-lista-simples">{l.hexagrama.favoreceLista.map((x) => <li key={x}>{x}</li>)}</ul>
+              <p><strong>Cuidado:</strong></p>
+              <ul className="sd-lista-simples">{l.hexagrama.cuidadoLista.map((x) => <li key={x}>{x}</li>)}</ul>
+              <p>{l.hexagrama.movimento}</p>
+              <p className="sd-mudo">É a única lente igual pra todo mundo: sai só da data de hoje, não do seu mapa.</p>
+            </Lente>
+            {extras && <LentesExtras e={extras} />}
+          </div>
+        )}
+      </div>
     </>
   );
 }
@@ -652,26 +659,26 @@ function LentesExtras({ e }) {
 
 function PorQueTema({ l }) {
   return (
-    <details className="sd-card sd-porque">
-      <summary>Por que esse tema e esse tom?</summary>
+    <section className={ma.secaoEd} aria-labelledby="sd-porque">
+      <h2 id="sd-porque" className={ma.h2Ed}>Por que esse tema e esse tom?</h2>
       <p>Cada sistema pessoal vota num tema. O mais votado vira o título do dia.</p>
-      <ul className="sd-votos">
+      <ul className={ma.votos}>
         {l.porQue.votos.map((v) => (
-          <li key={v.lente} className={v.igual ? 'on' : ''}>
+          <li key={v.lente} className={v.igual ? ma.votoOn : ''}>
             <span>{v.lente}</span><strong>{v.temasNomes}</strong>
           </li>
         ))}
       </ul>
       <p>O tom soma os sinais a favor (+) e contra (−) do dia: {l.porQue.pontos > 0 ? `+${l.porQue.pontos}` : l.porQue.pontos < 0 ? `−${Math.abs(l.porQue.pontos)}` : '0'} = {TOM[l.tom].rotulo.toLowerCase()}.</p>
-      <ul className="sd-votos">
+      <ul className={ma.votos}>
         {l.porQue.sinais.map((x) => (
           <li key={x.texto}>
-            <span>{x.texto}</span><strong className={x.peso > 0 ? 'sd-verde' : 'sd-laranja'}>{x.peso > 0 ? `+${x.peso}` : `−${Math.abs(x.peso)}`}</strong>
+            <span>{x.texto}</span><strong className={x.peso > 0 ? ma.votoMais : ma.votoMenos}>{x.peso > 0 ? `+${x.peso}` : `−${Math.abs(x.peso)}`}</strong>
           </li>
         ))}
         {!l.porQue.sinais.length && <li><span>Nenhum sinal forte hoje</span><strong>0</strong></li>}
       </ul>
-    </details>
+    </section>
   );
 }
 
@@ -775,47 +782,48 @@ function LinhaHora({ h }) {
   );
 }
 
+const TOM_CLASSE = { fluxo: 'tomFluxo', misto: '', tensao: 'tomTensao' };
+const DIA_CURTO = (r) => `${r.semana.slice(0, 3)} ${r.curto}`;
+
 function AbaSemana({ semana, depois, completo, onDesbloquear }) {
   return (
     <>
-      <header className="sd-cabecalho">
-        <span className="sd-eyebrow">PRÓXIMOS DIAS</span>
-        <h1>Sua semana</h1>
-        <p className="sd-mudo">Cada dia lido pelo seu mapa: onde tem força e onde pede cuidado.</p>
-      </header>
-
-      {semana.map((d, i) => {
-        const travado = !completo && i > 0;
-        return (
-          <article key={d.data} className="sd-card sd-dia">
-            <div className="sd-dia-topo">
-              <strong>{i === 0 ? 'Hoje' : i === 1 ? 'Amanhã' : `${d.rotulo.semana} · ${d.rotulo.curto}`}</strong>
-              <span className={`sd-tag ${d.melhor ? 'sd-tom-melhor' : TOM[d.tom].classe}`}>{d.melhor ? 'MELHOR DIA' : TOM[d.tom].rotulo}</span>
-            </div>
-            <div className={travado ? 'sd-borrado' : ''} aria-hidden={travado ? 'true' : undefined}>
-              <p className="sd-dia-titulo">{d.titulo}</p>
-              <p>{d.frase}</p>
-              <p className="sd-mudo"><span lang="zh">{d.deusHanzi}</span> {d.deusNome} · {d.pilarNome} · {d.concordam}/{d.totalLentes} sistemas</p>
-            </div>
-          </article>
-        );
-      })}
+      <p className={ma.intro}>Cada dia lido pelo seu mapa: onde tem força e onde pede cuidado.</p>
+      <ol className={ma.dias}>
+        {semana.map((d, i) => {
+          const travado = !completo && i > 0;
+          const classeTom = d.melhor ? ma.tomMelhor : ma[TOM_CLASSE[d.tom]] || '';
+          return (
+            <li key={d.data} className={ma.diaLinha}>
+              <span className={ma.diaRotulo}>{i === 0 ? 'Hoje' : i === 1 ? 'Amanhã' : DIA_CURTO(d.rotulo)}</span>
+              <div className={`${ma.diaMeio}${travado ? ' sd-borrado' : ''}`} aria-hidden={travado ? 'true' : undefined}>
+                <p className={ma.diaMeioTitulo}>{d.titulo}</p>
+                <p className={ma.diaMeioTexto}>{d.frase}</p>
+                <p className={ma.diaMeioMeta}><span lang="zh">{d.deusHanzi}</span> {d.deusNome} · {d.pilarNome} · {d.concordam}/{d.totalLentes} sistemas</p>
+              </div>
+              <span className={`${ma.pilulaTom} ${classeTom}`}>{d.melhor ? 'Melhor dia' : TOM[d.tom].rotulo}</span>
+            </li>
+          );
+        })}
+      </ol>
 
       {completo ? (
-        <section className="sd-card">
-          <h2 className="sd-card-titulo">Até o fim do mês</h2>
-          <ul className="sd-mes">
+        <section className={ma.secaoEd} aria-labelledby="sd-mes">
+          <h2 id="sd-mes" className={ma.h2Ed}>Até o fim do mês</h2>
+          <ul className={ma.mes}>
             {depois.map((d) => (
               <li key={d.data}>
-                <span className="sd-mes-data">{d.rotulo.semana.slice(0, 3)} {d.rotulo.curto}</span>
-                <span className={`sd-ponto ${d.melhor ? 'sd-tom-melhor' : TOM[d.tom].classe}`} aria-hidden="true" />
+                <span className={ma.mesData}>{DIA_CURTO(d.rotulo)}</span>
+                <span className={`${ma.ponto} ${d.melhor ? ma.tomMelhor : ma[TOM_CLASSE[d.tom]] || ''}`} aria-hidden="true" />
                 <span>{d.titulo}{d.melhor ? ' ★' : ''}{d.choqueCasa ? ' · atenção em casa' : ''}</span>
               </li>
             ))}
           </ul>
         </section>
       ) : (
-        <button type="button" className="sd-btn" onClick={onDesbloquear}>Ver a semana e os próximos 30 dias</button>
+        <div className={ma.acoes}>
+          <button type="button" className={ma.btn} onClick={onDesbloquear}>Ver a semana e os próximos 30 dias</button>
+        </div>
       )}
     </>
   );
@@ -899,61 +907,62 @@ function AbaAjustes({ perfil, onEditar, onSair, onDesbloquear }) {
   const precisaInstalarIos = suporte.ios && !suporte.instalado;
 
   return (
-    <>
-      <header className="sd-cabecalho">
-        <span className="sd-eyebrow">AJUSTES</span>
-        <h1>Sua conta</h1>
-      </header>
-
-      <section className="sd-card">
-        <h2 className="sd-card-titulo">Aviso às 7h</h2>
-        {!pushDisponivel && <p className="sd-mudo">Em breve.</p>}
-        {pushDisponivel && precisaInstalarIos && (
-          <p>No iPhone, primeiro instale o app (passo abaixo). Depois abra pelo ícone e ative o aviso aqui.</p>
-        )}
-        {pushDisponivel && !precisaInstalarIos && !suporte.push && <p className="sd-mudo">Este navegador não aceita avisos.</p>}
-        {pushDisponivel && !precisaInstalarIos && suporte.push && (
-          <>
-            <p>{inscrito ? 'Ativado neste aparelho. Todo dia às 7h chega o tema do seu dia.' : 'Receba o tema do seu dia às 7h, sem abrir nada.'}</p>
-            <button type="button" className={inscrito ? 'sd-btn-sec' : 'sd-btn'} disabled={ocupado} onClick={inscrito ? desligarAviso : ligarAviso}>
-              {inscrito ? 'Desligar o aviso' : 'Ativar aviso às 7h'}
-            </button>
-          </>
-        )}
-        {msg && <p className="sd-erro">{msg}</p>}
-      </section>
-
-      {!suporte.instalado && (
-        <section className="sd-card">
-          <h2 className="sd-card-titulo">Instale na tela de início</h2>
-          {promptInstalar ? (
-            <button type="button" className="sd-btn" onClick={instalar}>Instalar o Seu Dia</button>
-          ) : suporte.ios ? (
-            <p>Toque em <strong>Compartilhar</strong> (o quadrado com a seta) e depois em <strong>Adicionar à Tela de Início</strong>.</p>
-          ) : (
-            <p>No menu do navegador, toque em <strong>Instalar app</strong> ou <strong>Adicionar à tela inicial</strong>.</p>
+    <div className={ma.duas}>
+      <div className={ma.coluna}>
+        <section className={ma.contaSecao}>
+          <span className={ma.eyebrow}>Todo dia</span>
+          <h2 className={ma.h2Ed}>Aviso às 7h</h2>
+          {!pushDisponivel && <p>Em breve.</p>}
+          {pushDisponivel && precisaInstalarIos && (
+            <p>No iPhone, primeiro instale o app (passo abaixo). Depois abra pelo ícone e ative o aviso aqui.</p>
           )}
+          {pushDisponivel && !precisaInstalarIos && !suporte.push && <p>Este navegador não aceita avisos.</p>}
+          {pushDisponivel && !precisaInstalarIos && suporte.push && (
+            <>
+              <p>{inscrito ? 'Ativado neste aparelho. Todo dia às 7h chega o tema do seu dia.' : 'Receba o tema do seu dia às 7h, sem abrir nada.'}</p>
+              <button type="button" className={inscrito ? ma.btnSec : ma.btn} disabled={ocupado} onClick={inscrito ? desligarAviso : ligarAviso}>
+                {inscrito ? 'Desligar o aviso' : 'Ativar aviso às 7h'}
+              </button>
+            </>
+          )}
+          {msg && <p className={ma.erro}>{msg}</p>}
         </section>
-      )}
 
-      <section className="sd-card">
-        <h2 className="sd-card-titulo">Seus dados</h2>
-        <p>
-          {perfil.dataNascimento.split('-').reverse().join('/')}
-          {perfil.hora ? ` às ${perfil.hora}` : ' · hora não informada'}
-          {perfil.cidade ? ` · ${perfil.cidade.nome}, ${perfil.cidade.uf}` : ' · sem cidade'}
-        </p>
-        <button type="button" className="sd-btn-sec" onClick={onEditar}>Editar</button>
-      </section>
+        {!suporte.instalado && (
+          <section className={ma.contaSecao}>
+            <span className={ma.eyebrow}>App</span>
+            <h2 className={ma.h2Ed}>Instale na tela de início</h2>
+            {promptInstalar ? (
+              <button type="button" className={ma.btn} onClick={instalar}>Instalar o Seu Dia</button>
+            ) : suporte.ios ? (
+              <p>Toque em <strong>Compartilhar</strong> (o quadrado com a seta) e depois em <strong>Adicionar à Tela de Início</strong>.</p>
+            ) : (
+              <p>No menu do navegador, toque em <strong>Instalar app</strong> ou <strong>Adicionar à tela inicial</strong>.</p>
+            )}
+          </section>
+        )}
+      </div>
 
-      <SecaoAssinatura perfil={perfil} onDesbloquear={onDesbloquear} />
+      <div className={ma.coluna}>
+        <section className={ma.contaSecao}>
+          <span className={ma.eyebrow}>Seus dados</span>
+          <p className={ma.dadosLinha}>
+            {perfil.dataNascimento.split('-').reverse().join('/')}
+            {perfil.hora ? ` às ${perfil.hora}` : ' · hora não informada'}
+            {perfil.cidade ? ` · ${perfil.cidade.nome}, ${perfil.cidade.uf}` : ' · sem cidade'}
+          </p>
+          <button type="button" className={`${ma.btnSec} ${ma.btnPeq}`} onClick={onEditar}>Editar</button>
+        </section>
 
-      <section className="sd-card">
-        <h2 className="sd-card-titulo">Conta</h2>
-        <p className="sd-mudo">{perfil.email}</p>
-        <button type="button" className="sd-btn-sec" onClick={onSair}>Sair</button>
-      </section>
-    </>
+        <SecaoAssinatura perfil={perfil} onDesbloquear={onDesbloquear} />
+
+        <section className={ma.contaSecao}>
+          <span className={ma.eyebrow}>Conta</span>
+          <p>{perfil.email}</p>
+          <button type="button" className={`${ma.btnSec} ${ma.btnPeq}`} onClick={onSair}>Sair</button>
+        </section>
+      </div>
+    </div>
   );
 }
 
@@ -976,15 +985,16 @@ function SecaoAssinatura({ perfil, onDesbloquear }) {
   }
 
   return (
-    <section className="sd-card">
-      <h2 className="sd-card-titulo">Intuitive Completo</h2>
+    <section className={ma.contaSecao}>
+      <span className={ma.eyebrow}>Assinatura</span>
+      <h2 className={ma.h2Ed}>Intuitive Completo</h2>
       {perfil.motivoAcesso === 'assinatura' ? (
         <>
           <p>Plano {a?.plano === 'anual' ? 'anual' : 'mensal'}, ativo até {dataBR(a?.acessoAte)}{renova ? ' — renova sozinho no cartão.' : '.'}</p>
           {renova ? (
-            <button type="button" className="sd-btn-sec" disabled={ocupado} onClick={cancelar}>Cancelar renovação</button>
+            <button type="button" className={`${ma.btnSec} ${ma.btnPeq}`} disabled={ocupado} onClick={cancelar}>Cancelar renovação</button>
           ) : (
-            <a className="sd-btn-sec" href={`/assinar?plano=${a?.plano || 'anual'}`}>Renovar / somar mais tempo</a>
+            <a className={`${ma.btnSec} ${ma.btnLink}`} href={`/assinar?plano=${a?.plano || 'anual'}`}>Renovar / somar mais tempo</a>
           )}
         </>
       ) : (
@@ -993,10 +1003,10 @@ function SecaoAssinatura({ perfil, onDesbloquear }) {
             ? `Seu 1º mês é por conta do Manual, até ${dataBR(a?.acessoAte)}. Assine pra continuar depois.`
             : 'Seu Dia completo, Previsão do Ano, Human Design, Compatibilidade Completa e Oráculo ilimitado — e o Manual no anual.'}
           </p>
-          <button type="button" className="sd-btn" onClick={onDesbloquear}>Ver planos</button>
+          <button type="button" className={ma.btn} onClick={onDesbloquear}>Ver planos</button>
         </>
       )}
-      {msg && <p className="sd-mudo">{msg}</p>}
+      {msg && <p>{msg}</p>}
     </section>
   );
 }
@@ -1081,7 +1091,6 @@ const CSS = `
   /* O menu fica transparente por cima (position: absolute, 64px): o conteúdo começa embaixo dele. */
   .sd-col { max-width: 480px; margin: 0 auto; padding: 86px 18px 40px; display: flex; flex-direction: column; gap: 16px; box-sizing: border-box; }
   @media (display-mode: standalone) { .sd-col { padding-top: 22px; } }
-  .sd-col-app { padding-bottom: calc(110px + env(safe-area-inset-bottom)); }
   .sd-centro { min-height: 60vh; display: flex; align-items: center; justify-content: center; }
   .sd-centro-texto { text-align: center; }
   .sd-spinner { width: 34px; height: 34px; border-radius: 999px; border: 3px solid #2e1f4a; border-top-color: #f5a524; animation: sdgira 0.9s linear infinite; }
@@ -1103,10 +1112,10 @@ const CSS = `
   .sd-card-titulo { font-family: 'Cinzel', serif; font-weight: 700; font-size: 15px; letter-spacing: 0.05em; }
   .sd-secao { margin: 10px 0 0; font-family: 'Cinzel', serif; font-weight: 700; font-size: 17px; }
 
-  .sd-btn { min-height: 50px; border-radius: 999px; border: 0; background: #db2777; color: #fff; font-family: 'Cinzel', serif; font-weight: 700; font-size: 14px; letter-spacing: 0.04em; cursor: pointer; padding: 0 20px; }
+  .sd-btn { min-height: 50px; border-radius: 999px; border: 0; background: #f2c77b; color: #1a1020; font-family: 'Cinzel', serif; font-weight: 700; font-size: 14px; letter-spacing: 0.04em; cursor: pointer; padding: 0 20px; }
   .sd-btn:disabled { opacity: 0.6; cursor: default; }
   .sd-btn-link { display: flex; align-items: center; justify-content: center; text-decoration: none; }
-  .sd-btn-sec { min-height: 48px; border-radius: 999px; border: 1px solid #4a2f6e; background: transparent; color: #faf5ff; font-family: 'Cinzel', serif; font-weight: 700; font-size: 13px; letter-spacing: 0.04em; cursor: pointer; padding: 0 18px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+  .sd-btn-sec { min-height: 48px; border-radius: 999px; border: 1px solid rgba(243,233,218,.25); background: transparent; color: #faf5ff; font-family: 'Cinzel', serif; font-weight: 700; font-size: 13px; letter-spacing: 0.04em; cursor: pointer; padding: 0 18px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
   .sd-codigo { text-align: center; font-family: 'Courier New', monospace !important; font-size: 34px !important; letter-spacing: 0.4em; padding-left: 0.4em !important; }
   .sd-codigo-acoes { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
   .sd-link-btn:disabled { color: #8a7aa8; text-decoration: none; cursor: default; }
@@ -1125,7 +1134,6 @@ const CSS = `
   .sd-lista-compacta { font-size: 17px; gap: 8px; }
   .sd-lista-compacta svg { color: #86efac; }
 
-  .sd-faixa { margin: 0; font-size: 16px; color: #e9dcff; padding: 10px 14px; border-radius: 12px; border: 1px solid #2e1f4a; background: #10061f; }
 
   .sd-hero { padding: 22px 18px; }
   .sd-hero-topo { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
@@ -1204,12 +1212,7 @@ const CSS = `
   .sd-abas > * { min-height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; background: none; border: 0; color: #b9a9c9; text-decoration: none; font-family: 'Geist Mono', var(--font-geist-mono), monospace; font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; cursor: pointer; }
   .sd-abas > .is-on { color: #f2c77b; }
   /* Desktop: abas em linha (minhaArea.module.css) no lugar da barra de baixo. */
-  .sd-abas-topo { display: none; }
-  @media (min-width: 960px) {
-    .sd-abas { display: none; }
-    .sd-abas-topo { display: block; background: transparent; padding-top: 64px; }
-    .sd-col-app { padding-top: 22px; padding-bottom: 64px; }
-  }
+  @media (min-width: 960px) { .sd-abas { display: none; } }
 
   .sd-modal-fundo { position: fixed; inset: 0; z-index: 60; background: rgba(5, 0, 12, 0.78); display: flex; align-items: flex-end; justify-content: center; }
   @media (min-width: 560px) { .sd-modal-fundo { align-items: center; } }
