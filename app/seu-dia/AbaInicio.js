@@ -43,7 +43,7 @@ function saudacao() {
 }
 
 // "Ação com direção." → "Ação com <i>direção.</i>" (última palavra em itálico dourado)
-function TituloDoDia({ texto }) {
+export function TituloDoDia({ texto }) {
   const i = texto.lastIndexOf(' ');
   if (i < 0) return <i>{texto}</i>;
   return <>{texto.slice(0, i + 1)}<i>{texto.slice(i + 1)}</i></>;
