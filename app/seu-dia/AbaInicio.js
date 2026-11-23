@@ -1,77 +1,94 @@
 'use client';
 
-// Início da Minha Área (/seu-dia): a capa do mapa, o dia em uma linha, as
-// leituras pagas do e-mail logado (/api/seu-dia/produtos), a assinatura e as
-// ferramentas grátis já calculadas. Usa as classes sd-* do SeuDiaClient.
+// Início da Minha Área (/seu-dia) — redesign de nov/2026 (croqui em
+// reference/ux, branch reference-ux):
+//   1. topo com o CÉU REAL do nascimento (CeuNascimento, desenhado ao vivo),
+//      saudação, nome, frase da síntese, signo · número · anjo · Kin e a legenda
+//      do céu; no desktop, banner largo com o número de vida gigante à direita;
+//   2. o dia em uma linha;
+//   3. "Suas leituras": só as da pessoa do perfil, em cartões com imagem;
+//   4. "Seu mapa": lista editorial dos sistemas;
+//   5. assinatura;
+//   6. "Outras leituras neste e-mail (N)": uma linha fechada no fim da página;
+//      aberta, mostra as leituras de outras pessoas com "ocultar daqui".
+// Estilo em minhaArea.module.css (desktop ≥ 960px em duas colunas).
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import CeuNascimento from '@/app/components/ceu/CeuNascimento';
 import { sistemasDaPessoa, sinteseDoMapa, TEMAS } from '@/lib/mapaSintese';
+import { resumoCeu, lugarDoPerfil } from '@/lib/ceuNascimento';
+import { cartoesLeitura } from '@/lib/minhaArea';
 import { PRECO_ASSINATURA_MENSAL } from '@/lib/preco';
+import s from './minhaArea.module.css';
 
 const TOM = {
-  fluxo: { rotulo: 'Dia a favor', classe: 'sd-tom-fluxo' },
-  misto: { rotulo: 'Dia misto', classe: 'sd-tom-misto' },
-  tensao: { rotulo: 'Dia de atenção', classe: 'sd-tom-tensao' },
+  fluxo: { rotulo: 'Dia a favor', barras: 3 },
+  misto: { rotulo: 'Dia misto', barras: 2 },
+  tensao: { rotulo: 'Dia de atenção', barras: 1 },
 };
+const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
 
 const brl = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const dataBR = (iso) => (iso ? iso.slice(0, 10).split('-').reverse().join('/') : '');
+const capitalizar = (t) => (t ? t[0].toUpperCase() + t.slice(1) : t);
 
 function evento(nome, params = {}) {
   try { window.gtag?.('event', nome, { event_category: 'minha_area', ...params }); } catch {}
 }
 
-const GRATIS_EXTRA = [
-  { chave: 'hexagrama', sistema: 'I Ching', valor: 'Hexagrama do Dia', sub: 'O conselho de hoje, igual pra todos', href: '/hexagrama-do-dia' },
-  { chave: 'compatibilidade', sistema: 'Compatibilidade', valor: 'Vocês combinam?', sub: 'Signos e astrologia chinesa', href: '/compatibilidade' },
-  { chave: 'oraculo', sistema: 'Oráculo', valor: 'Pergunte o que quiser', sub: 'Respostas a partir do seu mapa', href: '/oraculo' },
-];
+function saudacao() {
+  const h = new Date().getHours();
+  return h < 5 ? 'Boa noite' : h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
+}
 
-// Um cartão de leitura. Leitura de outra pessoa: título "Leitura de Ana ·
-// 03/09/1995" (pra não parecer que é a dona do perfil) + botão de ocultar.
-function CartaoLeitura({ p, outra = false, onOcultar, onMostrar }) {
+// "Ação com direção." → "Ação com <i>direção.</i>" (última palavra em itálico dourado)
+function TituloDoDia({ texto }) {
+  const i = texto.lastIndexOf(' ');
+  if (i < 0) return <i>{texto}</i>;
+  return <>{texto.slice(0, i + 1)}<i>{texto.slice(i + 1)}</i></>;
+}
+
+// Manual pago: quem vem da Minha Área vai direto pro conteúdo; a abertura
+// (Olho Cósmico) fica pra quem chega pelo e-mail logo depois da compra.
+function marcarOlhoVisto(chave, estado, id) {
+  if (chave === 'manual' && estado === 'aberto') {
+    try { window.localStorage.setItem(`ic_olho_visto_${id}`, '1'); } catch {}
+  }
+}
+
+// Leitura de OUTRA pessoa (PR #131): título "Leitura de Ana · 03/09/1995" pra
+// não parecer que é a dona do perfil, + "ocultar daqui" / "voltar a mostrar".
+function CartaoOutra({ p, onOcultar, onMostrar }) {
   return (
-    <section className={`sd-card ma-pessoa${outra ? ' ma-outra' : ''}`}>
-      <div className="ma-linha">
-        {outra
-          ? <h3 className="ma-de">Leitura de {p.nome} · {dataBR(p.dataNascimento)}</h3>
-          : <><h3>{p.nome}</h3><span className="ma-data">{dataBR(p.dataNascimento)}</span></>}
-      </div>
-      {p.presenteDe && <p className="sd-mudo">Presente de {p.presenteDe} ✦</p>}
+    <section className="ma-outra">
+      <h3 className="ma-de">Leitura de {p.nome} · {dataBR(p.dataNascimento)}</h3>
+      {p.presenteDe && <p className="ma-presente">Presente de {p.presenteDe} ✦</p>}
       <ul className="ma-itens">
         {p.itens.map((it) => (
           <li key={it.chave}>
             <a href={it.href} className={`ma-item ma-${it.estado}`} onClick={() => {
-              evento('ma_leitura', { item: it.chave, estado: it.estado, outra });
-              // Quem já está na Minha Área vai direto pro conteúdo do Manual: a abertura
-              // (Olho Cósmico) fica pra quem chega pelo e-mail logo depois da compra.
-              if (it.chave === 'manual' && it.estado === 'aberto') {
-                try { window.localStorage.setItem(`ic_olho_visto_${p.id}`, '1'); } catch {}
-              }
+              evento('ma_leitura', { item: it.chave, estado: it.estado, outra: true });
+              marcarOlhoVisto(it.chave, it.estado, p.id);
             }}>
-              <span className="ma-icone" aria-hidden="true">{it.estado === 'aberto' ? '✓' : it.estado === 'travado' ? '🔒' : '◐'}</span>
-              <span className="ma-item-txt">
-                <strong>{it.titulo}</strong>
-                <span>{it.rotulo}</span>
-              </span>
+              <span className="ma-item-txt"><strong>{it.titulo}</strong><span>{it.rotulo}</span></span>
               <span aria-hidden="true">→</span>
             </a>
           </li>
         ))}
       </ul>
-      {outra && onOcultar && (
-        <button type="button" className="ma-ocultar" onClick={() => onOcultar(p)}>ocultar daqui</button>
-      )}
-      {outra && onMostrar && (
-        <button type="button" className="ma-ocultar" onClick={() => onMostrar(p)}>voltar a mostrar</button>
-      )}
+      {onOcultar && <button type="button" className="ma-ocultar" onClick={() => onOcultar(p)}>ocultar daqui</button>}
+      {onMostrar && <button type="button" className="ma-ocultar" onClick={() => onMostrar(p)}>voltar a mostrar</button>}
     </section>
   );
 }
 
-export default function AbaInicio({ perfil, leitura, onIr }) {
-  const nome = (perfil.nome || '').split(' ')[0];
+/**
+ * @param {{ perfil: object, leitura: object, hoje: string, onIr: (aba: string) => void, abas?: React.ReactNode }} props
+ *   abas: a barra de abas do desktop (vem do SeuDiaClient), desenhada logo abaixo do céu.
+ */
+export default function AbaInicio({ perfil, leitura, hoje, onIr, abas = null }) {
+  const nome = capitalizar((perfil.nome || '').trim().split(/\s+/)[0] || '');
   const sistemas = useMemo(() => sistemasDaPessoa({
     dataNascimento: perfil.dataNascimento,
     hora: perfil.hora || null,
@@ -79,8 +96,18 @@ export default function AbaInicio({ perfil, leitura, onIr }) {
   }), [perfil.dataNascimento, perfil.hora, perfil.cidade]);
   const sintese = useMemo(() => sinteseDoMapa(sistemas), [sistemas]);
   const temas = sintese.repete.length ? sintese.repete.map((r) => r.nome) : sintese.ranking.slice(0, 2).map((r) => TEMAS[r.tema].nome);
-  const chips = sistemas.filter((x) => ['signos', 'numerologia', 'anjo', 'kin-maia'].includes(x.chave))
-    .map((x) => (x.chave === 'kin-maia' ? `Kin ${x.sistema.replace(/\D/g, '')}` : x.chave === 'numerologia' ? `Número ${x.valor}` : x.valor));
+  const por = Object.fromEntries(sistemas.map((x) => [x.chave, x]));
+  const kinNumero = por['kin-maia'] ? por['kin-maia'].sistema.replace(/\D/g, '') : null;
+  const numero = por.numerologia?.valor;
+
+  // Céu: lugar memorizado (o CeuNascimento redesenha quando o objeto muda).
+  const cidade = perfil.cidade;
+  const lugar = useMemo(() => lugarDoPerfil(cidade), [cidade]);
+  const ceu = useMemo(() => {
+    try { return resumoCeu({ data: perfil.dataNascimento, hora: perfil.hora || null, lugar }); } catch { return null; }
+  }, [perfil.dataNascimento, perfil.hora, lugar]);
+
+  const [ola] = useState(saudacao);
 
   const [produtos, setProdutos] = useState(null); // null = carregando
   useEffect(() => {
@@ -117,140 +144,226 @@ export default function AbaInicio({ perfil, leitura, onIr }) {
   const suas = produtos ? produtos.filter((p) => p.propria) : [];
   const outras = produtos ? produtos.filter((p) => !p.propria && !p.oculta) : [];
   const ocultas = produtos ? produtos.filter((p) => !p.propria && p.oculta) : [];
+  const minha = suas[0] || null;
+  const cartoes = cartoesLeitura(minha);
 
-  const tom = TOM[leitura.tom];
+  const tom = TOM[leitura.tom] || TOM.misto;
+  const [, mesHoje, diaHoje] = (hoje || '').split('-').map(Number);
+  const hojeCurto = diaHoje ? `${diaHoje} ${MESES[mesHoje - 1].slice(0, 3)}` : '';
+  const hojeLongo = diaHoje ? `${diaHoje} de ${MESES[mesHoje - 1]}` : '';
+
+  const chipsCurto = [por.signos?.valor, numero, por.anjo?.valor, kinNumero && `Kin ${kinNumero}`].filter(Boolean);
+  const chipsLargo = [por.signos?.valor, por.anjo?.valor, kinNumero && `Kin ${kinNumero}`, por['astrologia-chinesa']?.valor].filter(Boolean);
+
+  // Lista "Seu mapa": rótulo curto no celular, longo no desktop.
+  const linhasMapa = [
+    por.signos && { k: 'Signo solar', kl: 'Signo solar', v: por.signos.valor, href: por.signos.href, chave: 'signos' },
+    por.numerologia && { k: 'Número', kl: 'Número de vida', v: por.numerologia.valor, href: por.numerologia.href, chave: 'numerologia', soCelular: true },
+    por.anjo && { k: 'Anjo', kl: 'Anjo da guarda', v: por.anjo.valor, href: por.anjo.href, chave: 'anjo' },
+    por['anjo-mente'] && { k: 'Anjo da mente', kl: 'Anjo da mente', v: por['anjo-mente'].valor, href: por['anjo-mente'].href, chave: 'anjo-mente' },
+    por['kin-maia'] && { k: 'Kin Maia', kl: 'Kin Maia', v: `${kinNumero} · ${por['kin-maia'].valor}`, href: por['kin-maia'].href, chave: 'kin-maia' },
+    por['astrologia-chinesa'] && { k: 'Chinês', kl: 'Astrologia chinesa', v: por['astrologia-chinesa'].valor, href: por['astrologia-chinesa'].href, chave: 'astrologia-chinesa' },
+    { k: 'Céu', kl: 'Céu do nascimento', v: ceu?.valor || 'O seu céu', href: '/ceu', chave: 'ceu' },
+  ].filter(Boolean);
+
+  const totalOutras = outras.length + ocultas.length;
 
   return (
-    <>
-      <section className="ma-capa" aria-label="Seu mapa">
-        <span className="sd-eyebrow">MINHA ÁREA</span>
-        <h1>{nome || 'Você'}</h1>
-        <p className="ma-temas">{temas.join(' · ')}</p>
-        <p className="ma-chips">{chips.join('  ·  ')}</p>
-        {sintese.tensao && <p className="ma-tensao">{sintese.tensao.nomeA} × {sintese.tensao.nomeB}</p>}
-        <button type="button" className="sd-btn-sec" onClick={() => onIr('mapa')}>Ver meu mapa completo</button>
-      </section>
-
-      <button type="button" className="sd-card ma-hoje" onClick={() => onIr('hoje')}>
-        <span className="ma-linha">
-          <span className="sd-eyebrow">HOJE · {leitura.temaNome.toUpperCase()}</span>
-          <span className={`sd-tag ${tom.classe}`}>{tom.rotulo}</span>
-        </span>
-        <strong>{leitura.titulo}</strong>
-        <span className="ma-sub">{leitura.frase}</span>
-        <span className="ma-ir">Ver meu dia →</span>
-      </button>
-
-      <h2 className="sd-secao">Suas leituras</h2>
-      {produtos === null && <div className="sd-card ma-carregando">Carregando suas leituras…</div>}
-      {produtos && suas.length === 0 && (
-        <div className="sd-card">
-          <p>
-            {produtos.length === 0
-              ? 'Você ainda não tem leituras no seu e-mail.'
-              : 'Ainda não há uma leitura sua neste e-mail.'}
-            {' '}O Manual começa por uma prévia grátis, já com os seus dados.
-          </p>
-          <Link className="sd-btn sd-btn-link" href="/" onClick={() => evento('ma_fazer_quiz')}>Ver minha prévia grátis</Link>
-        </div>
-      )}
-      {suas.map((p) => <CartaoLeitura key={p.id} p={p} />)}
-
-      {(outras.length > 0 || ocultas.length > 0) && (
-        <>
-          <h2 className="sd-secao">Outras leituras neste e-mail</h2>
-          {avisoOcultar && <p className="ma-aviso" role="status">{avisoOcultar}</p>}
-          {outras.map((p) => (
-            <CartaoLeitura key={p.id} p={p} outra onOcultar={(x) => alternarOculta(x, true)} />
-          ))}
-          {ocultas.length > 0 && (
-            <button type="button" className="ma-ver-ocultas" onClick={() => setVerOcultas((v) => !v)}>
-              {verOcultas
-                ? 'Esconder as ocultas'
-                : `Mostrar ${ocultas.length === 1 ? '1 leitura oculta' : `${ocultas.length} leituras ocultas`}`}
-            </button>
+    <div className={s.ma}>
+      <header className={s.hero}>
+        <CeuNascimento data={perfil.dataNascimento} hora={perfil.hora || null} lugar={lugar} rotuloMaxY={0.5} />
+        <div className={s.heroVeu} aria-hidden="true" />
+        <div className={s.heroConteudo}>
+          <div className={s.heroTexto}>
+            <span className={s.eyebrow}><span className={s.rotuloLongo}>Minha Área · </span>{ola}</span>
+            <h1 className={`${s.nome} ${nome.length > 7 ? s.nomeLongo : ''}`}>{nome || 'Você'}</h1>
+            <p className={s.temas}>{temas.join(' · ')}</p>
+            <p className={`${s.chips} ${s.chipsCurto}`}>{chipsCurto.join(' · ')}</p>
+            <p className={`${s.chips} ${s.chipsLargo}`}>{chipsLargo.join(' · ')}</p>
+            {ceu && (
+              <p className={s.legenda}>
+                <span className={s.rotuloLongo}>Ao fundo: </span>
+                <span className={s.rotuloCurto}>{ceu.legenda}</span>
+                <span className={s.rotuloLongo}>{ceu.legenda.replace(/^O céu/, 'o céu')}.</span>
+                {ceu.extra && <span className={s.legendaExtra}> {ceu.extra}</span>}
+              </p>
+            )}
+          </div>
+          {numero && (
+            <div className={s.heroNumero}>
+              <span className={s.numero}>{numero}</span>
+              <span className={s.eyebrow} style={{ color: 'var(--areia)' }}>Número de vida</span>
+            </div>
           )}
-          {verOcultas && ocultas.map((p) => (
-            <CartaoLeitura key={p.id} p={p} outra onMostrar={(x) => alternarOculta(x, false)} />
-          ))}
-        </>
-      )}
-
-      {perfil.assinatura ? (
-        <div className="sd-card ma-assin">
-          <span className="sd-eyebrow">INTUITIVE COMPLETO</span>
-          <p>
-            Plano {perfil.assinatura.plano === 'anual' ? 'anual' : 'mensal'} ativo
-            {perfil.assinatura.acessoAte ? ` até ${dataBR(perfil.assinatura.acessoAte)}` : ''}. Tudo destravado.
-          </p>
         </div>
-      ) : (
-        <a className="sd-card ma-assin ma-assin-cta" href="/assinar" onClick={() => evento('ma_assinar')}>
-          <span className="sd-eyebrow">INTUITIVE COMPLETO</span>
-          <strong>Destrave tudo por {brl(PRECO_ASSINATURA_MENSAL)}/mês</strong>
-          <span className="ma-sub">Seu Dia completo, Previsão do Ano, Human Design, Compatibilidade e Oráculo ilimitado.</span>
-          <span className="ma-ir">Conhecer →</span>
-        </a>
-      )}
+      </header>
 
-      <h2 className="sd-secao">Grátis, já calculado pra você</h2>
-      <div className="mp-grade">
-        {[...sistemas.filter((x) => x.chave !== 'anjo-mente'), ...GRATIS_EXTRA].map((c) => (
-          <a key={c.chave} href={c.href} className="mp-sis" onClick={() => evento('ma_gratis', { destino: c.chave })}>
-            <span className="mp-sis-nome">{c.sistema}</span>
-            <strong>{c.valor}</strong>
-            <span className="mp-sis-sub">{c.sub}</span>
-          </a>
-        ))}
+      {abas}
+
+      <div className={s.corpo}>
+        <div className={s.colunas}>
+          <div className={s.principal}>
+            <section className={s.hoje} aria-label="Seu dia hoje">
+              <div className={s.hojeBloco}>
+                <div className={s.hojeTopo}>
+                  <span className={s.eyebrow}>
+                    <span className={s.rotuloCurto}>Hoje · {hojeCurto}</span>
+                    <span className={s.rotuloLongo}>Hoje · {hojeLongo} · {tom.rotulo.toLowerCase()}</span>
+                  </span>
+                  <span className={s.pilula}>{tom.rotulo}</span>
+                </div>
+                <p className={s.hojeTitulo}><TituloDoDia texto={leitura.titulo} /></p>
+                <p className={s.hojeFrase}>{leitura.frase}</p>
+                <div className={s.barras} aria-hidden="true">
+                  {[0, 1, 2].map((i) => <span key={i} className={i < tom.barras ? s.barraOn : ''} />)}
+                </div>
+                <button type="button" className={s.hojeLink} onClick={() => onIr('hoje')}>Abrir meu dia →</button>
+              </div>
+              <button type="button" className={s.hojeBotao} onClick={() => onIr('hoje')}>Abrir meu dia</button>
+            </section>
+
+            <section className={s.secao} aria-labelledby="ma-suas">
+              <div className={s.secaoTopo}>
+                <h2 id="ma-suas" className={s.h2}>Suas leituras</h2>
+                {cartoes.length > 0 && <span className={s.contador}>{String(cartoes.length).padStart(2, '0')}</span>}
+              </div>
+              {produtos === null && <p className={s.carregando}>Carregando suas leituras…</p>}
+              {produtos && !minha && (
+                <div className={s.vazio}>
+                  <p>
+                    {produtos.length === 0 ? 'Você ainda não tem leituras neste e-mail.' : 'Ainda não há uma leitura sua neste e-mail.'}
+                    {' '}O Manual começa por uma prévia grátis, já com os seus dados.
+                  </p>
+                  <Link className={s.btn} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', color: '#1a1020' }} href="/" onClick={() => evento('ma_fazer_quiz')}>
+                    Ver minha prévia grátis
+                  </Link>
+                </div>
+              )}
+              {minha?.presenteDe && <p className={s.presente}>Presente de {minha.presenteDe} ✦</p>}
+              {cartoes.length > 0 && (
+                <div className={s.leituras}>
+                  {cartoes.map((c) => (
+                    <a
+                      key={c.chave}
+                      href={c.href}
+                      className={`${s.leitura} ${c.chave === 'manual' && c.liberado ? s.leituraForte : ''}`}
+                      onClick={() => { evento('ma_leitura', { item: c.chave, estado: c.estado, outra: false }); marcarOlhoVisto(c.chave, c.estado, minha.id); }}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={c.img} alt="" className={s.leituraImg} loading="lazy" decoding="async" />
+                      <span className={s.leituraVeu} />
+                      <span className={`${s.selo} ${c.liberado ? s.seloLiberado : s.seloGratis}`}>{c.selo}</span>
+                      <span className={s.leituraTexto}>
+                        <span className={s.leituraNome}>{c.nome}</span>
+                        <span className={s.leituraAcao}>{c.acao}</span>
+                      </span>
+                    </a>
+                  ))}
+                </div>
+              )}
+            </section>
+          </div>
+
+          <aside className={s.lateral}>
+            <section className={s.mapa} aria-labelledby="ma-mapa">
+              <h2 id="ma-mapa" className={s.h2}>Seu mapa</h2>
+              {linhasMapa.map((l) => (
+                <a
+                  key={l.chave}
+                  href={l.href}
+                  className={`${s.mapaLinha} ${l.soCelular ? s.soCelular : ''}`}
+                  onClick={() => evento('ma_gratis', { destino: l.chave })}
+                >
+                  <span className={s.mapaRotulo}>
+                    <span className={s.rotuloCurto}>{l.k}</span>
+                    <span className={s.rotuloLongo}>{l.kl}</span>
+                  </span>
+                  <span className={s.mapaValor}>{l.v}</span>
+                  <span className={s.seta} aria-hidden="true">→</span>
+                </a>
+              ))}
+              <button type="button" className={s.mapaCompleto} onClick={() => onIr('mapa')}>Ver o que seu mapa repete →</button>
+            </section>
+
+            {perfil.assinatura ? (
+              <div className={s.assin}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/olho/e3w.webp" alt="" className={s.assinImg} loading="lazy" decoding="async" />
+                <span className={s.assinVeu} />
+                <span className={s.assinTexto}>
+                  <span className={s.assinRotulo}>Intuitive Completo</span>
+                  <span className={s.assinTitulo}>Tudo destravado, todo dia.</span>
+                  <span className={s.assinPreco}>
+                    Plano {perfil.assinatura.plano === 'anual' ? 'anual' : 'mensal'} ativo
+                    {perfil.assinatura.acessoAte ? ` até ${dataBR(perfil.assinatura.acessoAte)}` : ''}
+                  </span>
+                </span>
+              </div>
+            ) : (
+              <a className={s.assin} href="/assinar" onClick={() => evento('ma_assinar')}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/olho/e3w.webp" alt="" className={s.assinImg} loading="lazy" decoding="async" />
+                <span className={s.assinVeu} />
+                <span className={s.assinTexto}>
+                  <span className={s.assinRotulo}>Intuitive Completo</span>
+                  <span className={s.assinTitulo}>Tudo destravado, todo dia.</span>
+                  <span className={s.assinPreco}>{brl(PRECO_ASSINATURA_MENSAL)}/mês →</span>
+                </span>
+              </a>
+            )}
+
+            <p className={s.tambem}>
+              Também grátis:{' '}
+              <a href="/hexagrama-do-dia" onClick={() => evento('ma_gratis', { destino: 'hexagrama' })}>Hexagrama do dia</a>{' · '}
+              <a href="/compatibilidade" onClick={() => evento('ma_gratis', { destino: 'compatibilidade' })}>Vocês combinam?</a>{' · '}
+              <a href="/oraculo" onClick={() => evento('ma_gratis', { destino: 'oraculo' })}>Oráculo</a>
+            </p>
+          </aside>
+        </div>
+
+        {totalOutras > 0 && (
+          <details className={s.outras} onToggle={(e) => { if (e.currentTarget.open) evento('ma_outras_abrir', { n: totalOutras }); }}>
+            <summary className={s.outrasLinha}>
+              <span>Outras leituras neste e-mail ({outras.length})</span>
+              <span className={s.outrasMais} aria-hidden="true">+</span>
+            </summary>
+            <div className={s.outrasCorpo}>
+              {avisoOcultar && <p className="ma-aviso" role="status">{avisoOcultar}</p>}
+              {outras.map((p) => <CartaoOutra key={p.id} p={p} onOcultar={(x) => alternarOculta(x, true)} />)}
+              {ocultas.length > 0 && (
+                <button type="button" className="ma-ver-ocultas" onClick={() => setVerOcultas((v) => !v)}>
+                  {verOcultas
+                    ? 'Esconder as ocultas'
+                    : `Mostrar ${ocultas.length === 1 ? '1 leitura oculta' : `${ocultas.length} leituras ocultas`}`}
+                </button>
+              )}
+              {verOcultas && ocultas.map((p) => <CartaoOutra key={p.id} p={p} onMostrar={(x) => alternarOculta(x, false)} />)}
+            </div>
+          </details>
+        )}
       </div>
 
-      <style>{CSS_INICIO}</style>
-    </>
+      <style>{CSS_OUTRAS}</style>
+    </div>
   );
 }
 
-const CSS_INICIO = `
-  .ma-capa { position: relative; overflow: hidden; text-align: center; padding: 30px 18px 22px; border-radius: 22px; border: 1px solid #4a2f6e;
-    background: radial-gradient(ellipse at 50% 0%, rgba(245,212,138,0.22), transparent 60%), linear-gradient(180deg, #1a0b33, #0d0420);
-    display: flex; flex-direction: column; align-items: center; gap: 6px; }
-  .ma-capa h1 { margin: 4px 0 0; font-family: 'Cinzel', serif; font-weight: 700; font-size: 40px; line-height: 1.1; }
-  .ma-temas { margin: 0; font-style: italic; font-size: 26px; color: #f5d48a; }
-  .ma-chips { margin: 4px 0 0; font-size: 16px; color: #cdbbe8; }
-  .ma-tensao { margin: 0 0 10px; font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 0.12em; color: #f5a524; text-transform: uppercase; }
-  .ma-hoje { text-align: left; cursor: pointer; color: #faf5ff; font: inherit; width: 100%; }
-  .ma-hoje strong { font-family: 'Cinzel', serif; font-size: 19px; line-height: 1.3; }
-  .ma-linha { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-  .ma-sub { font-size: 16px; color: #cdbbe8; line-height: 1.4; }
-  .ma-ir { color: #f5a524; font-size: 16px; }
-  .ma-carregando { color: #cdbbe8; font-size: 16px; }
-  .ma-pessoa h3 { margin: 0; font-family: 'Cinzel', serif; font-size: 18px; }
-  .ma-data { color: #cdbbe8; font-size: 15px; }
-  .ma-outra { border-style: dashed; }
-  .ma-pessoa h3.ma-de { font-size: 15px; letter-spacing: 0.02em; color: #e9dcff; }
-  .ma-ocultar { align-self: flex-end; margin-top: 2px; background: none; border: 0; padding: 4px 2px; color: #a78bcf;
-    font: inherit; font-size: 14px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
-  .ma-ocultar:hover { color: #f5a524; }
-  .ma-ver-ocultas { background: none; border: 0; padding: 6px 0; color: #a78bcf; font: inherit; font-size: 15px;
-    text-decoration: underline; text-underline-offset: 3px; cursor: pointer; text-align: left; }
-  .ma-aviso { margin: 0; font-size: 15px; color: #f5a524; }
-  .ma-itens { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-  .ma-item { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 14px; border: 1px solid #2e1f4a; background: #0f0620; color: #faf5ff; text-decoration: none; }
-  .ma-item:hover { border-color: #f5a524; }
-  .ma-item-txt { display: flex; flex-direction: column; flex: 1; }
-  .ma-item-txt strong { font-family: 'Cinzel', serif; font-size: 14px; }
-  .ma-item-txt span { font-size: 15px; color: #cdbbe8; }
-  .ma-icone { width: 26px; height: 26px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
-  .ma-aberto .ma-icone { background: rgba(74,222,128,0.15); color: #4ade80; }
-  .ma-parcial .ma-icone { background: rgba(245,165,36,0.15); color: #f5a524; }
-  .ma-travado .ma-icone { background: rgba(236,72,153,0.12); }
-  .ma-aberto .ma-item-txt span { color: #86efac; }
-  .ma-assin { text-decoration: none; color: #faf5ff; }
-  .ma-assin strong { font-family: 'Cinzel', serif; font-size: 18px; }
-  .ma-assin-cta { border-color: #db2777; background: linear-gradient(160deg, rgba(219,39,119,0.12), #150a28); }
-  .mp-grade { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-  .mp-sis { display: flex; flex-direction: column; gap: 3px; padding: 14px 12px; border-radius: 16px; border: 1px solid #2e1f4a; background: #150a28; color: #faf5ff; text-decoration: none; }
-  .mp-sis:hover { border-color: #f5a524; }
-  .mp-sis-nome { font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #f5a524; }
-  .mp-sis strong { font-family: 'Cinzel', serif; font-size: 16px; line-height: 1.25; }
-  .mp-sis-sub { font-size: 15px; color: #cdbbe8; line-height: 1.3; }
+// Cartões de "Outras leituras" (comportamento do PR #131, visual novo).
+const CSS_OUTRAS = `
+  .ma-outra { display: flex; flex-direction: column; gap: 10px; padding: 16px; border: 1px dashed rgba(242,199,123,.28); border-radius: 18px; }
+  .ma-de { margin: 0; font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 22px; line-height: 1.1; color: #f3e9da; }
+  .ma-presente { margin: 0; font-family: 'Geist Mono', monospace; font-size: 11px; color: #ffdca0; }
+  .ma-itens { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+  .ma-item { display: flex; align-items: center; gap: 12px; min-height: 44px; border-bottom: 1px solid rgba(242,199,123,.12); text-decoration: none; }
+  a.ma-item { color: #f3e9da; }
+  .ma-item:hover { color: #ffdca0; }
+  .ma-item-txt { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex: 1; min-width: 0; }
+  .ma-item-txt strong { font-weight: 400; font-size: 15px; }
+  .ma-item-txt span { font-family: 'Geist Mono', monospace; font-size: 10px; letter-spacing: .08em; color: #b9a9c9; text-align: right; }
+  .ma-aberto .ma-item-txt span { color: #9fe0c0; }
+  .ma-ocultar, .ma-ver-ocultas { align-self: flex-start; background: none; border: 0; padding: 6px 0; cursor: pointer;
+    font-family: 'Geist Mono', monospace; font-size: 11px; letter-spacing: .08em; color: #b9a9c9; text-decoration: underline; text-underline-offset: 3px; }
+  .ma-ocultar:hover, .ma-ver-ocultas:hover { color: #ffdca0; }
+  .ma-ocultar { align-self: flex-end; }
+  .ma-aviso { font-family: 'Geist Mono', monospace; font-size: 11px; color: #ffdca0; }
 `;

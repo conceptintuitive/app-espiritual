@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { admin, emailDaSessao, perfilParaFront, validarDados } from '@/lib/seuDiaServidor';
+import { admin, emailDaSessao, marcarConfirmado, perfilParaFront, validarDados } from '@/lib/seuDiaServidor';
 
 export const runtime = 'nodejs';
 
@@ -16,7 +16,8 @@ export async function GET(request) {
 }
 
 // POST { nome, dataNascimento, hora, cidade } → salva os dados de nascimento.
-// A 1ª vez que salva começa o teste de 7 dias do Seu Dia Completo.
+// A 1ª vez que salva começa o teste de 7 dias do Seu Dia Completo. Salvar
+// também confirma o perfil (perfil_confirmado_em).
 export async function POST(request) {
   const email = emailDaSessao(request);
   if (!email) return NextResponse.json({ logado: false }, { status: 401 });
@@ -47,6 +48,9 @@ export async function POST(request) {
       teste_inicio: atual?.teste_inicio ?? new Date().toISOString(),
     }, { onConflict: 'email' });
     if (error) throw error;
+    // Quem salvou os próprios dados já conferiu: não precisa ver "Esta é você?".
+    // Update separado e best effort (migração 0021 opcional).
+    await marcarConfirmado(sb, email);
     return NextResponse.json({ logado: true, perfil: await perfilParaFront(sb, email) });
   } catch (e) {
     console.error('[seu-dia/perfil POST]', e);
