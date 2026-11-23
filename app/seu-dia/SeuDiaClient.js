@@ -6,6 +6,7 @@
 // Estados: carregando → entrar (sem sessão) → dados (sem nascimento) → app.
 
 import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import SiteNav from '@/app/components/SiteNav';
 import CidadeAutocomplete from '@/app/components/CidadeAutocomplete';
 import { montarPerfil, leituraDoDia, proximosDias, hojeNoFuso, somarDias } from '@/lib/seuDia';
@@ -577,7 +578,7 @@ function LentesExtras({ e }) {
             : 'Hoje o Kin do dia não cruza com o seu oráculo: um dia neutro pra você no Tzolkin.'}
         </p>
         <p className="sd-mudo">
-          O seu Kin é o {e.kinPessoa}, {nomeDoKin(e.kinPessoa)}. <a href="/kin-maia">Entender meu Kin →</a>
+          O seu Kin é o {e.kinPessoa}, {nomeDoKin(e.kinPessoa)}. <Link href="/kin-maia">Entender meu Kin →</Link>
         </p>
       </Lente>
       <Lente titulo="Anjo destes dias" destaque={<span className="sd-numero">✶</span>}>
