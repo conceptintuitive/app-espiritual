@@ -19,6 +19,7 @@ import { PRECO_ASSINATURA_ANUAL, PRECO_ASSINATURA_MENSAL, PRECO_MANUAL_PADRAO } 
 import { emailValido, sugestaoEmail } from '@/lib/emailValidacao';
 import { lerPerfil } from '@/lib/perfilLocal';
 import { montarPerfil, leituraDoDia, hojeNoFuso } from '@/lib/seuDia';
+import { TESTE_SEU_DIA_ATIVO } from '@/lib/testeSeuDia';
 import ma from '@/app/seu-dia/minhaArea.module.css';
 import a from './assinar.module.css';
 
@@ -51,8 +52,14 @@ export default function AssinarClient() {
   const renovar = params.get('renovar');
   const erroPagamento = params.get('erro') === 'pagamento';
 
-  const [plano, setPlano] = useState(params.get('plano') === 'mensal' ? 'mensal' : 'anual');
-  const [metodo, setMetodo] = useState('prepago');
+  // Forma de pagamento padrão por plano: mensal → cartão que renova sozinho;
+  // anual → Pix (liberado na hora). Trocar de plano volta pro padrão dele.
+  const METODO_PADRAO = { mensal: 'recorrente', anual: 'prepago' };
+  const planoInicial = params.get('plano') === 'mensal' ? 'mensal' : 'anual';
+  const [plano, setPlanoEstado] = useState(planoInicial);
+  const [metodo, setMetodo] = useState(METODO_PADRAO[planoInicial]);
+  const setPlano = (p) => { setPlanoEstado(p); setMetodo(METODO_PADRAO[p]); };
+  const [semSessao, setSemSessao] = useState(false);
   const [email, setEmail] = useState('');
   const [precisaEmail, setPrecisaEmail] = useState(false);
   const [acesso, setAcesso] = useState(null);
@@ -81,8 +88,9 @@ export default function AssinarClient() {
       .catch(() => {});
     // Sem sessão do Seu Dia, sem análise e sem token, precisamos do e-mail.
     fetch('/api/seu-dia/perfil').then((r) => {
+      if (vivo && r.status === 401) setSemSessao(true);
       if (vivo && r.status === 401 && !analiseId && !renovar) setPrecisaEmail(true);
-    }).catch(() => vivo && !analiseId && !renovar && setPrecisaEmail(true));
+    }).catch(() => { if (vivo) { setSemSessao(true); if (!analiseId && !renovar) setPrecisaEmail(true); } });
     evento('assinar_ver');
     return () => { vivo = false; };
   }, [analiseId, renovar]);
@@ -125,7 +133,7 @@ export default function AssinarClient() {
       <div className={ma.ma}>
 
       <FaixaCeu perfil={perfilLocal} eyebrow="Intuitive Completo" titulo="Seu mapa, todo dia." alta>
-        <p className={a.sub}>O grátis mostra o começo. Assinando, você vê tudo, todo dia, sobre você.</p>
+        <p className={a.sub}>Seu dia lido pelo seu mapa: o que fazer, o que evitar e as melhores horas, todo dia.</p>
         {cortesia && ateCurto && <p className={a.cortesia}>Seu mês de cortesia vai até {ateCurto}</p>}
       </FaixaCeu>
 
@@ -186,7 +194,7 @@ export default function AssinarClient() {
               ) : (
                 <>
                   <span className={a.planoPreco}>{brl(PRECO_ASSINATURA_ANUAL)}<small>/ano</small></span>
-                  <p className={a.planoLinha}>Equivale a {porMes}/mês · inclui o Manual do seu Mapa ({brl(PRECO_MANUAL_PADRAO)})</p>
+                  <p className={a.planoLinha}>Equivale a {porMes}/mês · inclui o Manual do seu Mapa (valor: {brl(PRECO_MANUAL_PADRAO)})</p>
                   <p className={a.planoEconomia}>Você economiza {brl(ECONOMIA_COM_MANUAL)} em relação a 12 meses do mensal + Manual</p>
                 </>
               )}
@@ -200,20 +208,26 @@ export default function AssinarClient() {
 
           <span className={a.rotulo}>Forma de pagamento</span>
           <div role="radiogroup" aria-label="Forma de pagamento" className={a.metodos}>
-            <button type="button" role="radio" aria-checked={metodo === 'prepago'} className={`${a.metodo} ${metodo === 'prepago' ? a.metodoOn : ''}`} onClick={() => setMetodo('prepago')}>
-              <span className={a.bolinha} aria-hidden="true" />
-              <span className={a.metodoTexto}>
-                <span className={a.metodoNome}>Pix ou cartão à vista <span className={a.pix}>Pix: liberado na hora</span></span>
-                <span className={a.metodoSub}>{plano === 'anual' ? 'Paga 1 ano agora' : 'Paga 1 mês agora'}; avisamos antes de vencer. Sem renovação automática.</span>
-              </span>
-            </button>
-            <button type="button" role="radio" aria-checked={metodo === 'recorrente'} className={`${a.metodo} ${metodo === 'recorrente' ? a.metodoOn : ''}`} onClick={() => setMetodo('recorrente')}>
-              <span className={a.bolinha} aria-hidden="true" />
-              <span className={a.metodoTexto}>
-                <span className={a.metodoNome}>Cartão, renova sozinho</span>
-                <span className={a.metodoSub}>Cobra {plano === 'anual' ? 'todo ano' : 'todo mês'}; cancele quando quiser.</span>
-              </span>
-            </button>
+            {(plano === 'mensal' ? ['recorrente', 'prepago'] : ['prepago', 'recorrente']).map((m) => (
+              <button key={m} type="button" role="radio" aria-checked={metodo === m} className={`${a.metodo} ${metodo === m ? a.metodoOn : ''}`} onClick={() => setMetodo(m)}>
+                <span className={a.bolinha} aria-hidden="true" />
+                {m === 'prepago' ? (
+                  <span className={a.metodoTexto}>
+                    <span className={a.metodoNome}>Pix ou cartão à vista {plano === 'anual' && <span className={a.pix}>Pix: liberado na hora</span>}</span>
+                    <span className={a.metodoSub}>
+                      {plano === 'anual'
+                        ? 'Paga 1 ano agora; avisamos antes de vencer. Sem renovação automática.'
+                        : 'Pix: você renova manualmente todo mês. Avisamos antes de vencer.'}
+                    </span>
+                  </span>
+                ) : (
+                  <span className={a.metodoTexto}>
+                    <span className={a.metodoNome}>Cartão, renova sozinho</span>
+                    <span className={a.metodoSub}>Cobra {plano === 'anual' ? 'todo ano' : 'todo mês'}; cancele quando quiser.</span>
+                  </span>
+                )}
+              </button>
+            ))}
           </div>
           {metodo === 'recorrente' && (
             <p className={a.mudo}>No Mercado Pago, entre com a conta do mesmo e-mail da sua assinatura.</p>
@@ -231,6 +245,11 @@ export default function AssinarClient() {
           <button type="submit" className={`${ma.btn} ${a.botao}`} disabled={enviando}>
             {enviando ? 'Abrindo o pagamento…' : `Assinar por ${precoBotao}`}
           </button>
+          {/* Visitante sem perfil e sem sessão: o teste de 7 dias da Minha Área (mesma
+              chave que decide o teste no cadastro, lib/testeSeuDia.js). */}
+          {TESTE_SEU_DIA_ATIVO && semSessao && !perfilLocal && (
+            <a className={a.teste} href="/seu-dia" onClick={() => evento('assinar_teste_click')}>ou teste 7 dias grátis, sem cartão</a>
+          )}
           <p className={a.garantia}>
             <strong>Garantia de 7 dias:</strong> desistiu em até 7 dias, devolvemos o valor pago, pelo mesmo meio de pagamento. É só escrever pra conceptintuitive@gmail.com. Pagamento pelo Mercado Pago.
           </p>

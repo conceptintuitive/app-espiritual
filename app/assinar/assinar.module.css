@@ -72,3 +72,6 @@
   .botao { width: auto; align-self: flex-start; min-width: 320px; }
   .duvidas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 56px; }
 }
+
+.teste { align-self: flex-start; margin-top: -2px; font-family: var(--mono); font-size: 11px; letter-spacing: .1em; color: var(--ouro-2); text-decoration: underline; text-underline-offset: 3px; }
+@media (min-width: 960px) { .teste { align-self: flex-start; } }
