@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Menu no celular</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Geist:wght@300;400;500&amp;family=Geist+Mono:wght@300;400&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#f3e9da}a:hover{color:#ffdca0}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #07040d; color: #f3e9da; font-family: Geist, sans-serif; display: flex; flex-direction: column">
+  <div style="display: flex; align-items: center; gap: 10px; padding: 16px 20px; border-bottom: 1px solid #2a1f3f">
+    <span style="flex-grow: 1; font-family: 'Instrument Serif', serif; font-weight: 400; font-size: 19px; font-weight: 600">Intuitive Concept</span>
+    <button type="button" aria-label="Fechar menu" style="width: 44px; height: 44px; border: 1px solid #3a2c55; border-radius: 999px; background: transparent; color: #f3e9da; font-size: 18px">×</button>
+  </div>
+  <div style="display: flex; flex-direction: column; gap: 24px; padding: 24px 20px">
+    <a href="#" style="display: flex; align-items: center; justify-content: center; min-height: 54px; border-radius: 999px; background: #f2c77b; color: #1a1020; font-size: 15px; font-weight: 600; text-decoration: none">Fazer meu mapa grátis</a>
+
+    <div style="display: flex; flex-direction: column; gap: 4px">
+      <span style="font-family: 'Geist Mono', monospace; font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: #8fd1b0; padding-bottom: 6px">Descobrir — grátis</span>
+      <a href="#" style="padding: 12px 0; font-size: 16px; text-decoration: none; border-bottom: 1px solid #1f1533">Céu do nascimento</a>
+      <a href="#" style="padding: 12px 0; font-size: 16px; text-decoration: none; border-bottom: 1px solid #1f1533">Anjo da Guarda</a>
+      <a href="#" style="padding: 12px 0; font-size: 16px; text-decoration: none; border-bottom: 1px solid #1f1533">Kin Maia</a>
+      <a href="#" style="padding: 12px 0; font-size: 16px; text-decoration: none; border-bottom: 1px solid #1f1533">Astrologia Chinesa</a>
+      <a href="#" style="padding: 12px 0; font-size: 16px; text-decoration: none; border-bottom: 1px solid #1f1533">Signos · Numerologia · Compatibilidade</a>
+      <a href="#" style="padding: 12px 0; font-size: 14px; color: #9e8cbd; text-decoration: none">Ver tudo (blog, hexagrama…) ›</a>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 4px">
+      <span style="font-family: 'Geist Mono', monospace; font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: #f2c77b; padding-bottom: 6px">Meu Mapa</span>
+      <a href="#" style="padding: 12px 0; font-size: 16px; text-decoration: none; border-bottom: 1px solid #1f1533">Meu Manual</a>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 4px">
+      <span style="font-family: 'Geist Mono', monospace; font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: #a9b6ff; padding-bottom: 6px">Todo dia</span>
+      <a href="#" style="padding: 12px 0; font-size: 16px; text-decoration: none; border-bottom: 1px solid #1f1533">Minha Área · Seu Dia</a>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
