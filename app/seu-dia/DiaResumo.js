@@ -1,12 +1,23 @@
 'use client';
 
 // Pedaços da aba Hoje usados também fora da Minha Área (a prévia "Como é por
-// dentro" do /assinar): o tema do dia com Faça/Evite e uma linha das horas.
-// Estilo em minhaArea.module.css (precisa estar dentro de .ma; a linha das
-// horas, dentro de .abaCorpo).
+// dentro" do /assinar e a "Depois do mapa" da home): o tema do dia com
+// Faça/Evite e uma linha das horas. Estilo em minhaArea.module.css (precisa
+// estar dentro de .ma; a linha das horas, dentro de .abaCorpo).
+// Arquivo leve de propósito (sem lib/seuDia.js nem o céu): a home importa.
 
-import { TituloDoDia } from './AbaInicio';
 import ma from './minhaArea.module.css';
+
+// Pessoa de exemplo das prévias do Hoje (/assinar e home). Não é ninguém real.
+export const EXEMPLO_DIA = { dataNascimento: '1992-04-03', hora: '09:30', tz: 'America/Sao_Paulo', lon: -46.63 };
+export const TOM_ROTULO = { fluxo: 'Dia a favor', misto: 'Dia misto', tensao: 'Dia de atenção' };
+
+// "Ação com direção." → "Ação com <i>direção.</i>" (última palavra em itálico dourado)
+export function TituloDoDia({ texto }) {
+  const i = texto.lastIndexOf(' ');
+  if (i < 0) return <i>{texto}</i>;
+  return <>{texto.slice(0, i + 1)}<i>{texto.slice(i + 1)}</i></>;
+}
 
 /** Tema do dia (rótulo, título, frase, barrinhas) + Faça/Evite. */
 export function DiaResumo({ l, rotuloTom }) {
