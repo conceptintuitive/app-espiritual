@@ -19,15 +19,23 @@ function evento(nome, params = {}) {
   try { window.gtag?.('event', nome, { event_category: 'seu_dia', ...params }); } catch {}
 }
 
-/** Botões do cadeado (também usados no bloco do fim do Meu Mapa). */
-export function BotoesCadeado({ perfil, origem }) {
+/**
+ * Botões do cadeado (também usados na prévia do Manual no fim do Meu Mapa,
+ * que troca os rótulos e põe uma nota entre o botão e o link da assinatura).
+ */
+export function BotoesCadeado({
+  perfil, origem,
+  rotuloResultado = 'Desbloquear com o Manual do seu Mapa',
+  rotuloQuiz = 'Fazer meu mapa grátis',
+  nota = null,
+}) {
   const mapa = perfil.mapa || null;
   let botao;
   if (mapa && !mapa.pago) {
     botao = (
       <a className={`${ma.btn} ${ma.btnLink}`} href={`/resultado/${mapa.id}#comprar`}
         onClick={() => evento('sd_cadeado_click', { origem, destino: 'resultado' })}>
-        Desbloquear com o Manual do seu Mapa
+        {rotuloResultado}
       </a>
     );
   } else if (mapa?.pago) {
@@ -49,13 +57,14 @@ export function BotoesCadeado({ perfil, origem }) {
           window.location.href = '/';
         }}
       >
-        Fazer meu mapa grátis
+        {rotuloQuiz}
       </Link>
     );
   }
   return (
     <div className={ma.cadeadoAcoes}>
       {botao}
+      {nota && <p className={ma.cadeadoNota}>{nota}</p>}
       {!mapa?.pago && (
         <a className={ma.cadeadoLink} href="/assinar" onClick={() => evento('sd_cadeado_click', { origem, destino: 'assinar' })}>
           ou assine o Intuitive Completo

@@ -45,3 +45,34 @@ test('frases em primeira pessoa (card do story): todo tema e toda tensão têm `
   assert.equal(s.tensao.eu, 'Uma parte de mim quer raiz. A outra quer estrada.');
   assert.ok(s.repete.every((r) => r.eu));
 });
+
+test('tensão dividida em frase (aberta) e conselho (do Manual); texto = os dois', async () => {
+  const { TENSOES, sistemasDaPessoa, sinteseDoMapa } = await import('../lib/mapaSintese.js');
+  for (const t of TENSOES) {
+    assert.ok(t.frase && t.conselho, `${t.a}×${t.b}`);
+    assert.equal(t.texto, `${t.frase} ${t.conselho}`);
+  }
+  const s = sinteseDoMapa(sistemasDaPessoa({ dataNascimento: '1994-12-21', hora: '07:25' }));
+  assert.equal(s.tensao.frase, 'Uma parte de você quer raiz e estabilidade; outra quer estrada.');
+  assert.match(s.tensao.conselho, /^O equilíbrio é/);
+});
+
+test('previaDoManual: títulos com os temas da pessoa (sem IA)', async () => {
+  const { previaDoManual, sistemasDaPessoa, sinteseDoMapa, TEMAS } = await import('../lib/mapaSintese.js');
+  const s = sinteseDoMapa(sistemasDaPessoa({ dataNascimento: '1994-12-21', hora: '07:25' }));
+  const p = previaDoManual(s);
+  assert.deepEqual(p.map((x) => x.titulo), [
+    'Por que você se divide entre Liberdade e Construir, e como parar de escolher',
+    'Seu jeito de amar como alguém que veio pra Construir',
+    'Onde a Intuição te faz ganhar (e perder) dinheiro',
+  ]);
+  // sem tensão: o tema que mais se repete; "Verdade e ordem" vira "Ordem"
+  const p2 = previaDoManual({ repete: [{ tema: 'ordem' }], ranking: [{ tema: 'ordem' }], tensao: null });
+  assert.equal(p2[0].titulo, 'Por que seu mapa repete Ordem, e o que fazer com isso');
+  assert.equal(p2[2].titulo, 'Onde a busca por Ordem te faz ganhar (e perder) dinheiro');
+  // todo tema tem frase de amor e de dinheiro
+  for (const t of Object.keys(TEMAS)) {
+    const q = previaDoManual({ repete: [{ tema: t }], ranking: [{ tema: t }], tensao: null });
+    assert.ok(q.every((x) => x.titulo && !x.titulo.includes('undefined')), t);
+  }
+});

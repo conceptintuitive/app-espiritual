@@ -440,7 +440,7 @@ function AppSeuDia({ perfil, setPerfil, onEditar, onSair }) {
         {aba === 'semana' && (
           <AbaSemana perfil={perfil} semana={semana} depois={depois} completo={completo} />
         )}
-        {aba === 'mapa' && <AbaMapa perfil={perfil} completo={completo} />}
+        {aba === 'mapa' && <AbaMapa perfil={perfil} />}
         {aba === 'conta' && (
           <AbaAjustes perfil={perfil} onEditar={onEditar} onSair={onSair} onDesbloquear={() => abrirModal('conta')} />
         )}

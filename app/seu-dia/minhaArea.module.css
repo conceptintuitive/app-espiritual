@@ -384,6 +384,14 @@
 .diaSoTitulo { grid-template-columns: minmax(0, 1fr); }
 @media (min-width: 560px) { .diaSoTitulo { grid-template-columns: 76px minmax(0, 1fr); } }
 
+/* Prévia do Manual no fim do Meu Mapa (quem não tem o Manual) */
+.previaManual { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 0; margin-top: 12px; padding: 24px 20px; border: 1px solid rgba(242,199,123,.35); border-radius: 18px; background: rgba(242,199,123,.04); }
+.previaManual .h2Ed { margin-bottom: 6px; }
+.previaLinha { display: flex; flex-direction: column; gap: 6px; padding: 16px 0; border-bottom: 1px solid var(--linha); }
+.previaManual .cadeadoAcoes { margin-top: 20px; }
+.previaTitulo { margin: 0; font-family: var(--serif); font-size: 22px; line-height: 1.15; color: var(--texto); }
+.cadeadoNota { margin: 0; font-family: var(--mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--ouro-2); }
+
 /* Faixa alta (/assinar) e visitante sem perfil (imagem da estrela) */
 .faixaImg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 48%; }
 .faixaAlta { height: 330px; }
