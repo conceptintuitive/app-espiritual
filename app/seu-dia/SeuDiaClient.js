@@ -114,7 +114,7 @@ export default function SeuDiaClient() {
         href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Cormorant+Garamond:wght@400;500;600&family=Noto+Serif+SC:wght@600&display=swap"
         rel="stylesheet"
       />
-      <SiteNav active="seu-dia" />
+      <SiteNav active="seu-dia" transparente />
 
       {estado === 'carregando' && <div className="sd-centro"><span className="sd-spinner" aria-label="Carregando" /></div>}
       {estado === 'entrar' && <TelaEntrar erroLink={erroLink} onEntrou={() => { setEstado('carregando'); carregarPerfil(); }} />}
@@ -1078,7 +1078,9 @@ const CSS = `
   body { margin: 0; background: #0a0118; }
   @media (display-mode: standalone) { .site-nav { display: none; } }
   .sd-wrap { min-height: 100vh; background: #0a0118; color: #faf5ff; font-family: 'Cormorant Garamond', Georgia, serif; }
-  .sd-col { max-width: 480px; margin: 0 auto; padding: 22px 18px 40px; display: flex; flex-direction: column; gap: 16px; box-sizing: border-box; }
+  /* O menu fica transparente por cima (position: absolute, 64px): o conteúdo começa embaixo dele. */
+  .sd-col { max-width: 480px; margin: 0 auto; padding: 86px 18px 40px; display: flex; flex-direction: column; gap: 16px; box-sizing: border-box; }
+  @media (display-mode: standalone) { .sd-col { padding-top: 22px; } }
   .sd-col-app { padding-bottom: calc(110px + env(safe-area-inset-bottom)); }
   .sd-centro { min-height: 60vh; display: flex; align-items: center; justify-content: center; }
   .sd-centro-texto { text-align: center; }
@@ -1205,8 +1207,8 @@ const CSS = `
   .sd-abas-topo { display: none; }
   @media (min-width: 960px) {
     .sd-abas { display: none; }
-    .sd-abas-topo { display: block; background: transparent; }
-    .sd-col-app { padding-bottom: 64px; }
+    .sd-abas-topo { display: block; background: transparent; padding-top: 64px; }
+    .sd-col-app { padding-top: 22px; padding-bottom: 64px; }
   }
 
   .sd-modal-fundo { position: fixed; inset: 0; z-index: 60; background: rgba(5, 0, 12, 0.78); display: flex; align-items: flex-end; justify-content: center; }
