@@ -8,6 +8,7 @@
 //
 // Uso: topo da Minha Área (app/seu-dia/AbaInicio.js). Retrato (largura/altura
 // ≤ 0,9) usa a imagem e4.webp; banner largo usa e4w.webp — mesmo limiar do Olho.
+// Modo dia: a imagem some e o zênite vira uma estrela pequena e branca (igual ao Olho).
 // A conta do céu é de lib/ceuNascimento.js (pura, testada).
 //
 // Dados de estrelas e constelações (public/olho/sky.json): d3-celestial
@@ -64,6 +65,17 @@ function desenhar(ctx, ceu, W) {
       g.addColorStop(0, `rgba(${corEstrela(bv)},${0.35 * ext})`); g.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r * 4, 0, 6.283); ctx.fill();
     }
+  }
+  if (sol.dia) {
+    // Modo dia (igual ao Olho Cósmico): a imagem da estrela (e4) não aparece e
+    // o zênite vira um ponto pequeno e branco, pra não parecer um segundo Sol.
+    const { x, y } = ceu.zenite;
+    const g = ctx.createRadialGradient(x, y, 0, x, y, 16);
+    g.addColorStop(0, 'rgba(255,255,255,.95)'); g.addColorStop(0.18, 'rgba(240,244,255,.55)'); g.addColorStop(1, 'rgba(240,244,255,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, 16, 0, 6.283); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 0.8;
+    ctx.beginPath(); ctx.moveTo(x - 14, y); ctx.lineTo(x + 14, y); ctx.moveTo(x, y - 14); ctx.lineTo(x, y + 14); ctx.stroke();
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y, 2.2, 0, 6.283); ctx.fill();
   }
   for (const c of linhas) {
     ctx.strokeStyle = c.destaque ? 'rgba(255,214,140,.95)' : 'rgba(242,199,123,.38)';
@@ -123,6 +135,8 @@ export default function CeuNascimento({ data, hora = null, lugar = LUGAR_PADRAO,
 
   const largo = tam ? tam.W / Math.max(1, tam.H) > LIMIAR_LARGO : false;
   const img = IMAGENS[largo ? 'largo' : 'retrato'];
+  // Modo dia: sem a imagem da estrela (o canvas desenha um ponto branco no zênite).
+  const dia = !!resumo?.dia;
 
   useEffect(() => {
     const cv = canvas.current;
@@ -153,11 +167,11 @@ export default function CeuNascimento({ data, hora = null, lugar = LUGAR_PADRAO,
   return (
     <div
       ref={caixa}
-      className={`${s.ceu} ${sky && imgOk ? s.pronto : ''} ${className}`}
+      className={`${s.ceu} ${sky && (imgOk || dia) ? s.pronto : ''} ${className}`}
       role="img"
       aria-label={resumo ? resumo.legenda : 'O céu do seu nascimento'}
     >
-      {tam && (
+      {tam && !dia && (
         // eslint-disable-next-line @next/next/no-img-element
         <img key={img.src} src={img.src} alt="" className={s.fundo} onLoad={() => setImgOk(true)} onError={() => setImgOk(true)} decoding="async" />
       )}
