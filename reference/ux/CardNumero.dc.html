@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Card do story: número</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Geist:wght@300;400;500&amp;family=Geist+Mono:wght@300;400&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#ffdca0}a:hover{color:#fff1d6}
+</style>
+</helmet>
+<div style="width: 540px; height: 960px; position: relative; overflow: hidden; background: #07040d; color: #f3e9da; font-family: Geist, sans-serif">
+  <img src="img/sky-portrait.webp" alt="O céu sobre Vitória na manhã de 21 de dezembro de 1994" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 45%">
+  <div style="position: absolute; inset: 0; background: radial-gradient(ellipse 80% 60% at 50% 48%, rgba(7,4,13,.15) 0%, rgba(7,4,13,.7) 100%), linear-gradient(180deg, rgba(7,4,13,.6) 0%, rgba(7,4,13,0) 25%, rgba(7,4,13,0) 65%, rgba(7,4,13,.95) 100%)"></div>
+
+  <div style="position: relative; display: flex; flex-direction: column; align-items: center; height: 100%; box-sizing: border-box; padding: 40px 40px 34px; text-align: center">
+    <span style="font-family: 'Geist Mono', monospace; font-size: 11px; letter-spacing: .3em; text-transform: uppercase; color: #ffdca0">Intuitive Concept</span>
+
+    <span style="margin-top: 110px; font-family: 'Geist Mono', monospace; font-size: 11px; letter-spacing: .3em; text-transform: uppercase">Bianca, seu número é</span>
+    <span style="font-family: 'Instrument Serif', serif; font-size: 300px; line-height: .9; color: #ffdca0; letter-spacing: -.04em">11</span>
+    <span style="font-family: 'Instrument Serif', serif; font-style: italic; font-size: 34px">Construir · Intuir</span>
+
+    <div style="margin-top: 40px; width: 100%; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid rgba(242,199,123,.25); border-bottom: 1px solid rgba(242,199,123,.25)">
+      <sc-for list="{{tres}}" as="s" hint-placeholder-count="3">
+        <div style="display: flex; flex-direction: column; gap: 4px; padding: 16px 0">
+          <span style="font-family: 'Geist Mono', monospace; font-size: 9px; letter-spacing: .22em; text-transform: uppercase; color: #b9a9c9">{{s.k}}</span>
+          <span style="font-family: 'Instrument Serif', serif; font-size: 26px">{{s.v}}</span>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="margin-top: auto; display: flex; flex-direction: column; gap: 6px; font-family: 'Geist Mono', monospace; font-size: 10px; letter-spacing: .14em; color: #b9a9c9">
+      <span>Ao fundo, o céu da manhã em que eu cheguei</span>
+      <span style="color: #ffdca0">Descubra o seu · intuitiveconcept.com.br/ceu</span>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{{"$preview":{{"width":540,"height":960}}}}'>
+class Component extends DCLogic {{
+renderVals() {{
+return {{ sistemas: [
+{{ k: 'Signo solar', v: 'Sagitário' }}, {{ k: 'Número de vida', v: '11' }},
+{{ k: 'Anjo da guarda', v: 'Nithael' }}, {{ k: 'Anjo da mente', v: 'Melahel' }},
+{{ k: 'Astrologia chinesa', v: 'Cachorro de Madeira' }}, {{ k: 'Kin Maia 137', v: 'Terra Ressonante' }}
+], tres: [
+{{ k: 'Signo', v: 'Sagitário' }}, {{ k: 'Anjo', v: 'Nithael' }}, {{ k: 'Kin', v: '137' }}
+] }};
+}}
+}}
+</script>
+</body>
+</html>

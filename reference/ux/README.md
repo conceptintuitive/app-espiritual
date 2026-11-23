@@ -19,3 +19,5 @@ As imagens `/olho/e1–e4.webp` já existem em `public/olho/`.
 Tokens: fundo `#07040d`, texto `#f3e9da`, dourado `#f2c77b` / `#ffdca0`, apagado `#b9a9c9`,
 linhas `rgba(242,199,123,.16)`. Fontes: Instrument Serif (títulos, nomes, números), Geist (texto corrido),
 Geist Mono (rótulos em caixa alta, letter-spacing .16–.28em).
+| `CardCeu.dc.html` | Card do story, versão céu (1080×1920 desenhado em 50%) |
+| `CardNumero.dc.html` | Card do story, versão número |
