@@ -4,8 +4,13 @@
 // cruzada (lib/mapaSintese.js) e um card 1080x1920 pro story, desenhado no
 // próprio navegador (canvas) — sem servidor, sem dados na URL.
 // Grátis pra todo mundo: é o que a pessoa compartilha.
+// Card (nov/2026): dois modelos com o céu real da pessoa, "Céu" (padrão) e
+// "Número"; antes de gerar, a pessoa escolhe pelas miniaturas. Desenho em
+// ./cardStory.js, textos em lib/cardStory.js.
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
+import { dadosDoCard } from '@/lib/cardStory';
+import { desenharCard, canvasParaBlob } from './cardStory';
 import { sistemasDaPessoa, sinteseDoMapa, TEMAS } from '@/lib/mapaSintese';
 import ma from './minhaArea.module.css';
 
@@ -26,20 +31,48 @@ export default function AbaMapa({ perfil }) {
   const [aviso, setAviso] = useState('');
   const nome = (perfil.nome || '').split(' ')[0];
 
+  // Card do story: abre a escolha, desenha os dois modelos e mostra as miniaturas.
+  const dadosCard = useMemo(() => dadosDoCard({
+    nome: perfil.nome, dataNascimento: perfil.dataNascimento, hora: perfil.hora || null, cidade: perfil.cidade || null,
+  }), [perfil.nome, perfil.dataNascimento, perfil.hora, perfil.cidade]);
+  const [escolhendo, setEscolhendo] = useState(false);
+  const [modelo, setModelo] = useState('ceu');
+  const [previas, setPrevias] = useState({});
+  const cards = useRef({});
+
+  async function abrirEscolha() {
+    setEscolhendo(true);
+    setAviso('');
+    evento('sd_mapa_card_abrir');
+    try {
+      for (const m of ['ceu', 'numero']) {
+        if (cards.current[m]) continue;
+        const cv = await desenharCard(m, dadosCard);
+        cards.current[m] = cv;
+        const url = cv.toDataURL('image/jpeg', 0.82);
+        setPrevias((p) => ({ ...p, [m]: url }));
+      }
+    } catch {
+      setAviso('Não deu pra desenhar o card agora. Tente de novo.');
+    }
+  }
+
   async function compartilharCard() {
+    const cv = cards.current[modelo];
+    if (!cv) return;
     setGerando(true);
     setAviso('');
-    evento('sd_mapa_card');
+    evento('sd_mapa_card', { modelo });
     try {
-      const blob = await gerarCardMapa({ nome, sistemas, sintese: s });
-      const arquivo = new File([blob], 'meu-mapa-intuitive.png', { type: 'image/png' });
+      const blob = await canvasParaBlob(cv);
+      const arquivo = new File([blob], `meu-mapa-${modelo}.png`, { type: 'image/png' });
       if (navigator.canShare?.({ files: [arquivo] })) {
-        await navigator.share({ files: [arquivo], title: 'Meu mapa', text: 'Meu mapa no Intuitive Concept ✦ intuitiveconcept.com.br/seu-dia' });
+        await navigator.share({ files: [arquivo], title: 'Meu mapa', text: 'O céu do dia em que eu cheguei · intuitiveconcept.com.br/ceu' });
       } else {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'meu-mapa-intuitive.png';
+        a.download = arquivo.name;
         a.click();
         setTimeout(() => URL.revokeObjectURL(url), 4000);
         setAviso('Imagem baixada. É só postar no story.');
@@ -112,112 +145,41 @@ export default function AbaMapa({ perfil }) {
 
         <section className={ma.secaoEd} aria-labelledby="mp-story">
           <span id="mp-story" className={ma.eyebrow}>Pro seu story</span>
-          <p>Um card com o seu mapa inteiro, no tamanho do story.</p>
-          <div>
-            <button type="button" className={ma.btn} onClick={compartilharCard} disabled={gerando}>
-              {gerando ? 'Gerando…' : 'Gerar meu card'}
-            </button>
-          </div>
+          <p>Um card com o céu do dia em que você chegou e o seu mapa, no tamanho do story.</p>
+          {!escolhendo ? (
+            <div>
+              <button type="button" className={ma.btn} onClick={abrirEscolha}>Gerar meu card</button>
+            </div>
+          ) : (
+            <>
+              <div className={ma.cardOpcoes} role="radiogroup" aria-label="Modelo do card">
+                {[['ceu', 'Céu'], ['numero', 'Número']].map(([m, rotulo]) => (
+                  <button
+                    key={m}
+                    type="button"
+                    role="radio"
+                    aria-checked={modelo === m}
+                    className={`${ma.cardOpcao} ${modelo === m ? ma.cardOpcaoOn : ''}`}
+                    onClick={() => setModelo(m)}
+                  >
+                    {previas[m]
+                      // eslint-disable-next-line @next/next/no-img-element
+                      ? <img src={previas[m]} alt={`Prévia do card ${rotulo}`} />
+                      : <span className={ma.cardCarregando}>Desenhando…</span>}
+                    <span className={ma.cardRotulo}>{rotulo}</span>
+                  </button>
+                ))}
+              </div>
+              <div>
+                <button type="button" className={ma.btn} onClick={compartilharCard} disabled={gerando || !previas[modelo]}>
+                  {gerando ? 'Gerando…' : 'Compartilhar no story'}
+                </button>
+              </div>
+            </>
+          )}
           {aviso && <p>{aviso}</p>}
         </section>
       </div>
     </div>
   );
-}
-
-// ── Card 1080x1920 ───────────────────────────────────────────────────────────
-
-function quebrar(ctx, texto, largura) {
-  const palavras = texto.split(' ');
-  const linhas = [];
-  let atual = '';
-  for (const p of palavras) {
-    const teste = atual ? `${atual} ${p}` : p;
-    if (ctx.measureText(teste).width > largura && atual) { linhas.push(atual); atual = p; } else atual = teste;
-  }
-  if (atual) linhas.push(atual);
-  return linhas;
-}
-
-async function gerarCardMapa({ nome, sistemas, sintese }) {
-  try { await document.fonts?.ready; } catch {}
-  const W = 1080;
-  const H = 1920;
-  const c = document.createElement('canvas');
-  c.width = W;
-  c.height = H;
-  const ctx = c.getContext('2d');
-
-  const fundo = ctx.createLinearGradient(0, 0, 0, H);
-  fundo.addColorStop(0, '#1a0b33');
-  fundo.addColorStop(0.55, '#0d0420');
-  fundo.addColorStop(1, '#070112');
-  ctx.fillStyle = fundo;
-  ctx.fillRect(0, 0, W, H);
-  const brilho = ctx.createRadialGradient(W / 2, 260, 0, W / 2, 260, 700);
-  brilho.addColorStop(0, 'rgba(245,212,138,0.20)');
-  brilho.addColorStop(1, 'rgba(245,212,138,0)');
-  ctx.fillStyle = brilho;
-  ctx.fillRect(0, 0, W, H);
-  // estrelinhas fixas (pseudoaleatórias, sempre iguais)
-  let semente = 7;
-  const rnd = () => ((semente = (semente * 9301 + 49297) % 233280) / 233280);
-  ctx.fillStyle = 'rgba(255,255,255,0.55)';
-  for (let i = 0; i < 90; i++) { ctx.beginPath(); ctx.arc(rnd() * W, rnd() * H, rnd() * 2.2 + 0.4, 0, Math.PI * 2); ctx.fill(); }
-
-  const serif = "'Cormorant Garamond', Georgia, serif";
-  const cinzel = "'Cinzel', Georgia, serif";
-  ctx.textAlign = 'center';
-  ctx.fillStyle = '#f5d48a';
-  ctx.font = `600 34px ${cinzel}`;
-  ctx.fillText('M E U   M A P A', W / 2, 190);
-  ctx.fillStyle = '#faf5ff';
-  ctx.font = `700 96px ${cinzel}`;
-  ctx.fillText(nome || 'Meu mapa', W / 2, 310);
-
-  // temas que se repetem
-  const temas = sintese.repete.length ? sintese.repete.map((r) => r.nome) : sintese.ranking.slice(0, 2).map((r) => TEMAS[r.tema].nome);
-  ctx.fillStyle = '#f5d48a';
-  ctx.font = `italic 600 64px ${serif}`;
-  ctx.fillText(temas.join(' · '), W / 2, 430);
-
-  // sistemas
-  let y = 560;
-  const lista = sistemas.filter((x) => x.chave !== 'ceu');
-  for (const sis of lista) {
-    ctx.fillStyle = 'rgba(255,255,255,0.06)';
-    ctx.strokeStyle = 'rgba(216,180,254,0.28)';
-    ctx.lineWidth = 2;
-    const altura = 150;
-    ctx.beginPath();
-    ctx.roundRect ? ctx.roundRect(90, y, W - 180, altura, 28) : ctx.rect(90, y, W - 180, altura);
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = '#f5d48a';
-    ctx.font = `600 26px ${cinzel}`;
-    ctx.fillText(sis.sistema.toUpperCase(), W / 2, y + 48);
-    ctx.fillStyle = '#faf5ff';
-    ctx.font = `700 50px ${cinzel}`;
-    let valor = sis.valor;
-    while (ctx.measureText(valor).width > W - 240 && valor.length > 4) valor = `${valor.slice(0, -2)}…`;
-    ctx.fillText(valor, W / 2, y + 112);
-    y += altura + 22;
-  }
-
-  // tensão (curta) ou frase do tema
-  ctx.fillStyle = 'rgba(233,213,255,0.85)';
-  ctx.font = `500 40px ${serif}`;
-  const t1 = sintese.tensao ? sintese.tensao.texto.split('. ')[0] : '';
-  const frase = sintese.tensao
-    ? `${sintese.tensao.nomeA} × ${sintese.tensao.nomeB}: ${t1.charAt(0).toLowerCase()}${t1.slice(1)}.`
-    : (sintese.repete[0]?.frase || '');
-  const linhas = quebrar(ctx, frase, W - 220).slice(0, 4);
-  y = Math.max(y + 40, 1540);
-  for (const l of linhas) { ctx.fillText(l, W / 2, y); y += 52; }
-
-  ctx.fillStyle = '#f5d48a';
-  ctx.font = `600 34px ${cinzel}`;
-  ctx.fillText('intuitiveconcept.com.br/seu-dia', W / 2, H - 110);
-
-  return await new Promise((resolve, reject) => c.toBlob((b) => (b ? resolve(b) : reject(new Error('canvas'))), 'image/png'));
 }

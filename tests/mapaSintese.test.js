@@ -36,3 +36,12 @@ test('todo tema usado existe; tensões apontam pra temas válidos', () => {
   }
   for (const t of TENSOES) { assert.ok(TEMAS[t.a]); assert.ok(TEMAS[t.b]); }
 });
+
+test('frases em primeira pessoa (card do story): todo tema e toda tensão têm `eu`', async () => {
+  const { TEMAS, TENSOES, sistemasDaPessoa, sinteseDoMapa } = await import('../lib/mapaSintese.js');
+  for (const [k, t] of Object.entries(TEMAS)) assert.match(t.eu, /^(Eu|Minha|Uma)/, k);
+  for (const t of TENSOES) assert.ok(t.eu && t.eu.length < 80, `${t.a}×${t.b}`);
+  const s = sinteseDoMapa(sistemasDaPessoa({ dataNascimento: '1994-12-21', hora: '07:25' }));
+  assert.equal(s.tensao.eu, 'Uma parte de mim quer raiz. A outra quer estrada.');
+  assert.ok(s.repete.every((r) => r.eu));
+});
