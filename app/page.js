@@ -7,7 +7,7 @@ import { emailValido, sugestaoEmail } from '@/lib/emailValidacao';
 import CidadeAutocomplete from '@/app/components/CidadeAutocomplete';
 import { lerCeuDados, consumirAbrirQuiz, limparCeuDados } from '@/lib/ceuDados';
 import { lerPerfil, salvarPerfil } from '@/lib/perfilLocal';
-import SiteNav from '@/app/components/SiteNav';
+import SiteNav, { EVENTO_ABRIR_QUIZ } from '@/app/components/SiteNav';
 
 // ── FAQ accordion ─────────────────────────────────────────────────────────────
 function FaqItem({ q, a }) {
@@ -572,9 +572,13 @@ export default function Home() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
-    if (params.get('refazer') === '1') setQuizOpen(true);
+    // ?quiz=1: botão "Fazer meu mapa grátis" do menu vindo de outra página
+    if (params.get('refazer') === '1' || params.get('quiz') === '1') setQuizOpen(true);
     // Veio do CTA "Abrir meu mapa" do /ceu: abre o quiz já preenchido (uma vez)
     else if (consumirAbrirQuiz()) setQuizOpen(true);
+    // O mesmo botão clicado aqui na home (o menu dispara um evento em vez de navegar)
+    window.addEventListener(EVENTO_ABRIR_QUIZ, openQuiz);
+    return () => window.removeEventListener(EVENTO_ABRIR_QUIZ, openQuiz);
   }, []);
 
   // Orbs ref

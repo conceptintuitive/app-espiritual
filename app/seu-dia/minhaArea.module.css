@@ -120,7 +120,7 @@
 .outrasCorpo > p { margin: 0; }
 
 /* ── "Esta é você?" ─────────────────────────────────────────────────────── */
-.confirmar { position: relative; min-height: calc(100vh - 60px); min-height: calc(100dvh - 60px); overflow: hidden; }
+.confirmar { position: relative; min-height: 100vh; min-height: 100dvh; overflow: hidden; }
 .confirmarImg { position: absolute; left: 0; top: -40px; width: 100%; height: 460px; object-fit: cover; object-position: center 45%; opacity: .75; }
 .confirmarVeu { position: absolute; left: 0; right: 0; top: 0; height: 440px; background: linear-gradient(180deg, rgba(7,4,13,.4) 0%, rgba(7,4,13,0) 30%, rgba(7,4,13,.85) 80%, #07040d 100%); }
 .confirmarCol { position: relative; box-sizing: border-box; max-width: 480px; margin: 0 auto; min-height: inherit; display: flex; flex-direction: column; padding: 230px 24px 28px; }

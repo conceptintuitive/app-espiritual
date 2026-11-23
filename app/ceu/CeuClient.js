@@ -25,7 +25,7 @@ export default function CeuClient() {
 
   return (
     <main style={{ background: '#000', minHeight: '100dvh' }}>
-      <SiteNav active="ceu" sticky={false} />
+      <SiteNav active="ceu" sticky={false} transparente />
       <OlhoCosmico mode="publico" onCta={abrirMapa} />
     </main>
   );
