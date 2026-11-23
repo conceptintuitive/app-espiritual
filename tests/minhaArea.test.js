@@ -1,7 +1,7 @@
 // Testes de lib/minhaArea.js e do código de 6 dígitos (lib/seuDiaServidor.js).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { agruparProdutos, chavePessoa, chaveValida } from '../lib/minhaArea.js';
+import { agruparProdutos, chavePessoa, chaveValida, precisaConfirmar, marcaConfirmacao, cartoesLeitura } from '../lib/minhaArea.js';
 
 process.env.SEU_DIA_SECRET = 'teste-segredo';
 const { gerarCodigo, hashCodigo, checarCodigo, CODIGO_MAX_TENTATIVAS } = await import('../lib/seuDiaServidor.js');
@@ -97,4 +97,39 @@ test('código: certo, errado, vencido, bloqueado, uso de outro e-mail', () => {
   assert.equal(checarCodigo({ ...row, codigo_tentativas: CODIGO_MAX_TENTATIVAS }, 'bia@x.com', c), 'bloqueado');
   assert.equal(checarCodigo(null, 'bia@x.com', c), 'sem');
   assert.equal(checarCodigo(row, 'bia@x.com', 'abc'), 'errado');
+});
+
+// ── Redesign da Minha Área: "Esta é você?" e cartões de leitura ─────────────
+const linha = (x) => ({ ...base, email: 'eu@x.com', created_at: '2026-11-01', nome: 'Bia', data_nascimento: '1994-12-21', payment_status: 'pending', ...x });
+
+test('precisaConfirmar: servidor, aparelho e perfil sem dados', () => {
+  const p = { email: 'a@b.com', dataNascimento: '1994-12-21', hora: '07:25', cidade: { ibge: 3205309 }, confirmadoEm: null };
+  assert.equal(precisaConfirmar(p), true);
+  assert.equal(precisaConfirmar({ ...p, confirmadoEm: '2026-11-23T10:00:00Z' }), false);
+  // sem a migração 0021 (campo ausente): vale a marca do aparelho
+  const semColuna = { ...p };
+  delete semColuna.confirmadoEm;
+  assert.equal(precisaConfirmar(semColuna), true);
+  assert.equal(precisaConfirmar(semColuna, marcaConfirmacao(p)), false);
+  // dados mudaram depois de confirmar no aparelho: pergunta de novo
+  assert.equal(precisaConfirmar({ ...semColuna, hora: '08:00' }, marcaConfirmacao(p)), true);
+  // cadastro novo vai pra tela de dados, não pra confirmação
+  assert.equal(precisaConfirmar({ ...p, precisaDados: true }), false);
+  assert.equal(precisaConfirmar(null), false);
+});
+
+test('cartoesLeitura: ordem Manual, Compatibilidade, Previsão, Human Design + selos', () => {
+  const [pago] = agruparProdutos([linha({ id: 'a', payment_status: 'paid' })], { email: 'eu@x.com' });
+  const c = cartoesLeitura(pago);
+  assert.deepEqual(c.map((x) => x.chave), ['manual', 'compat', 'previsao', 'human-design']);
+  assert.deepEqual(c.map((x) => x.selo), ['Liberado', 'Liberado', 'Prova grátis', 'Prova grátis']);
+  assert.equal(c[0].img, '/olho/e3.webp');
+  assert.equal(c[2].acao, 'Mês atual grátis →');
+
+  const [semManual] = agruparProdutos([linha({ id: 'b' })], { email: 'eu@x.com' });
+  const m = cartoesLeitura(semManual)[0];
+  assert.equal(m.selo, 'Prova grátis');
+  assert.equal(m.acao, 'Ver prévia grátis →');
+  assert.equal(m.href, '/resultado/b');
+  assert.deepEqual(cartoesLeitura(null), []);
 });

@@ -1,0 +1,15 @@
+/* Céu do nascimento parado (topo da Minha Área). O fundo é a imagem da estrela
+   do Olho Cósmico (e4 / e4w); o canvas desenha estrelas, constelações e a luz
+   do Sol por cima, com o zênite alinhado à estrela da imagem. */
+
+@font-face { font-family: 'Geist Mono'; font-weight: 300; font-display: swap; src: url(/olho/fonts/geist-mono-latin-300-normal.woff2) format('woff2'); }
+
+.ceu { position: absolute; inset: 0; overflow: hidden; background: #07040d; }
+.fundo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; opacity: 0; transition: opacity .7s ease; }
+.canvas { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity .9s ease; }
+.pronto .fundo { opacity: 1; }
+.pronto .canvas { opacity: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .fundo, .canvas { transition: none; }
+}

@@ -3,7 +3,8 @@
 // /seu-dia — o app diário (fase 1: grátis + 7 dias de Completo + lista de espera).
 // A leitura é calculada no navegador (lib/seuDia.js, sem IA); o servidor só
 // guarda perfil, visitas, lista de espera e inscrições de aviso.
-// Estados: carregando → entrar (sem sessão) → dados (sem nascimento) → app.
+// Estados: carregando → entrar (sem sessão) → dados (sem nascimento) →
+// confirmar ("Esta é você?", perfil ainda não confirmado) → app.
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
@@ -21,6 +22,22 @@ import { longitudeSolar } from '@/lib/bazi';
 import { salvarPerfil, lerPerfil } from '@/lib/perfilLocal';
 import AbaMapa from './AbaMapa';
 import AbaInicio from './AbaInicio';
+import TelaConfirmar from './TelaConfirmar';
+import { precisaConfirmar, marcaConfirmacao } from '@/lib/minhaArea';
+import ma from './minhaArea.module.css';
+
+// "Esta é você?": a confirmação também fica no aparelho (migração 0021 opcional).
+const CHAVE_CONFIRMADO = 'ic_perfil_confirmado';
+function lerConfirmadoLocal() {
+  try { return window.localStorage.getItem(CHAVE_CONFIRMADO); } catch { return null; }
+}
+function gravarConfirmadoLocal(perfil) {
+  try { window.localStorage.setItem(CHAVE_CONFIRMADO, marcaConfirmacao(perfil)); } catch {}
+}
+function estadoDoPerfil(p) {
+  if (p.precisaDados) return 'dados';
+  return precisaConfirmar(p, lerConfirmadoLocal()) ? 'confirmar' : 'app';
+}
 
 const TOM = {
   fluxo: { rotulo: 'Dia a favor', classe: 'sd-tom-fluxo' },
@@ -77,7 +94,7 @@ export default function SeuDiaClient() {
       if (!vivo()) return;
       if (!ok || !json?.perfil) { setEstado('entrar'); return; }
       setPerfil(json.perfil);
-      setEstado(json.perfil.precisaDados ? 'dados' : 'app');
+      setEstado(estadoDoPerfil(json.perfil));
     }).catch(() => vivo() && setEstado('entrar'));
   }
 
@@ -101,11 +118,24 @@ export default function SeuDiaClient() {
 
       {estado === 'carregando' && <div className="sd-centro"><span className="sd-spinner" aria-label="Carregando" /></div>}
       {estado === 'entrar' && <TelaEntrar erroLink={erroLink} onEntrou={() => { setEstado('carregando'); carregarPerfil(); }} />}
+      {estado === 'confirmar' && perfil && (
+        <TelaConfirmar
+          perfil={perfil}
+          onConfirmar={async () => {
+            gravarConfirmadoLocal(perfil);
+            evento('sd_perfil_confirmado');
+            await api('/api/seu-dia/perfil/confirmar', { method: 'POST' }).catch(() => null);
+            setEstado('app');
+          }}
+          onCorrigir={() => { evento('sd_perfil_corrigir'); setEstado('dados'); }}
+        />
+      )}
       {estado === 'dados' && (
         <TelaDados
           perfil={perfil}
-          onSalvo={(p) => { setPerfil(p); setEstado('app'); }}
-          onCancelar={perfil?.precisaDados ? null : () => setEstado('app')}
+          // Salvar os próprios dados também confirma o perfil (servidor + aparelho).
+          onSalvo={(p) => { gravarConfirmadoLocal(p); setPerfil(p); setEstado('app'); }}
+          onCancelar={perfil?.precisaDados ? null : () => setEstado(estadoDoPerfil(perfil))}
         />
       )}
       {estado === 'app' && perfil && (
@@ -359,12 +389,42 @@ function AppSeuDia({ perfil, setPerfil, onEditar, onSair }) {
   const completo = perfil.acesso === 'completo';
   const abrirModal = (origem) => { evento('sd_desbloquear_click', { origem }); setModal(true); };
 
+  const ROTULOS = [
+    ['inicio', 'casa', 'Início'],
+    ['hoje', 'sol', 'Hoje'],
+    ['semana', 'calendario', 'Semana'],
+    ['mapa', 'mapa', 'Mapa'],
+    ['conta', 'ajustes', 'Conta'],
+  ];
+  const irPraAba = (k) => { setAba(k); if (k === 'mapa') evento('sd_aba_mapa'); };
+  // Desktop (≥ 960px): abas em linha — no Início logo abaixo do céu, nas outras no topo.
+  // No celular elas são a barra fixa de baixo (.sd-abas).
+  const abasDesktop = (
+    <nav className={ma.abas} aria-label="Seções da Minha Área">
+      {ROTULOS.map(([k, , rotulo]) => (
+        <button
+          key={k}
+          type="button"
+          className={`${ma.aba} ${aba === k ? ma.abaOn : ''}`}
+          aria-current={aba === k ? 'page' : undefined}
+          onClick={() => irPraAba(k)}
+        >
+          {k === 'mapa' ? 'Meu mapa' : rotulo}
+        </button>
+      ))}
+    </nav>
+  );
+
   return (
     <>
+      {aba === 'inicio' && (
+        <main>
+          <AbaInicio perfil={perfil} leitura={leitura} hoje={hoje} abas={abasDesktop} onIr={(a) => { setAba(a); evento('sd_inicio_ir', { aba: a }); }} />
+        </main>
+      )}
+      {aba !== 'inicio' && <div className={`${ma.ma} sd-abas-topo`}>{abasDesktop}</div>}
+      {aba !== 'inicio' && (
       <main className="sd-col sd-col-app">
-        {aba === 'inicio' && (
-          <AbaInicio perfil={perfil} leitura={leitura} onIr={(a) => { setAba(a); evento('sd_inicio_ir', { aba: a }); }} onDesbloquear={() => abrirModal('inicio')} />
-        )}
         {aba === 'hoje' && (
           <AbaHoje perfil={perfil} leitura={leitura} completo={completo} onDesbloquear={() => abrirModal('hoje')} />
         )}
@@ -376,21 +436,16 @@ function AppSeuDia({ perfil, setPerfil, onEditar, onSair }) {
           <AbaAjustes perfil={perfil} onEditar={onEditar} onSair={onSair} onDesbloquear={() => abrirModal('conta')} />
         )}
       </main>
+      )}
 
       <nav className="sd-abas" aria-label="Minha Área">
-        {[
-          ['inicio', 'casa', 'Início'],
-          ['hoje', 'sol', 'Hoje'],
-          ['semana', 'calendario', 'Semana'],
-          ['mapa', 'mapa', 'Mapa'],
-          ['conta', 'ajustes', 'Conta'],
-        ].map(([k, icone, rotulo]) => (
+        {ROTULOS.map(([k, icone, rotulo]) => (
           <button
             key={k}
             type="button"
             className={aba === k ? 'is-on' : ''}
             aria-current={aba === k ? 'page' : undefined}
-            onClick={() => { setAba(k); if (k === 'mapa') evento('sd_aba_mapa'); }}
+            onClick={() => irPraAba(k)}
           >
             <Icone nome={icone} />{rotulo}
           </button>
@@ -1143,9 +1198,16 @@ const CSS = `
   .sd-ponto.sd-tom-tensao { background: #fb923c; }
   .sd-ponto.sd-tom-melhor { background: #fcd34d; }
 
-  .sd-abas { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); background: #0d0420; border-top: 1px solid #2e1f4a; padding: 6px 8px calc(10px + env(safe-area-inset-bottom)); }
-  .sd-abas > * { min-height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; background: none; border: 0; color: #cdbbe8; text-decoration: none; font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.05em; cursor: pointer; }
-  .sd-abas > .is-on { color: #f5a524; }
+  .sd-abas { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); background: rgba(7,4,13,.96); border-top: 1px solid rgba(242,199,123,.16); padding: 8px 8px calc(12px + env(safe-area-inset-bottom)); }
+  .sd-abas > * { min-height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; background: none; border: 0; color: #b9a9c9; text-decoration: none; font-family: 'Geist Mono', var(--font-geist-mono), monospace; font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; cursor: pointer; }
+  .sd-abas > .is-on { color: #f2c77b; }
+  /* Desktop: abas em linha (minhaArea.module.css) no lugar da barra de baixo. */
+  .sd-abas-topo { display: none; }
+  @media (min-width: 960px) {
+    .sd-abas { display: none; }
+    .sd-abas-topo { display: block; background: transparent; }
+    .sd-col-app { padding-bottom: 64px; }
+  }
 
   .sd-modal-fundo { position: fixed; inset: 0; z-index: 60; background: rgba(5, 0, 12, 0.78); display: flex; align-items: flex-end; justify-content: center; }
   @media (min-width: 560px) { .sd-modal-fundo { align-items: center; } }
