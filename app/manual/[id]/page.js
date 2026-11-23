@@ -1,28 +1,49 @@
 'use client';
 
-import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
+// /manual/[id] — o Manual do seu Mapa (pago). Visual da Minha Área desde
+// nov/2026 (manual.module.css): coluna de leitura de ~680px, seções abertas
+// com a frase de destaque em citação grande, agrupadas em capítulos
+// (lib/manualLeitura.js), índice lateral (desktop) / botão "Índice"
+// (celular) com ✓ nas lidas, "Continuar de onde parou", bloco do Seu Dia
+// depois da abertura e no fim, card da frase e .ics dos rituais sob demanda.
+//
+// NÃO MUDOU: confirmação de pagamento MP pós-redirect (?payment_id, polling,
+// timeout), paywall Stripe pra quem não pagou, geração sob demanda
+// (gerar-manual-completo, pendingFields, "Preparando…"), Olho Cósmico,
+// ChatAssistente, complementos (Previsão/HD/Compatibilidade) e checkouts,
+// BotaoCompartilharStory, conteúdo do lib/manualgenerator.js.
+
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { createClient } from '@supabase/supabase-js';
 
-// ✅ IMPORT do gerador de manual
 import { generateManual, renderManualMarkdown } from '@/lib/manualgenerator';
 import { getTopMatches } from '@/lib/compatibilidade';
-import { gerarProjecao12Meses } from '@/lib/transitos12meses';
-import { calcularHumanDesign, CENTRO_NOME_AMIGAVEL } from '@/lib/humanDesign';
-import { TIPO_DESCRICAO, AUTORIDADE_DESCRICAO, narracaoHumanDesign, gerarIntegracaoHumanDesign } from '@/lib/humanDesignTextos';
 import { calcularSignosPessoa, gerarCompatibilidadeCompleta } from '@/lib/compatibilidadeCompleta';
 import FeedbackSecao, { chaveSecao } from '@/app/components/FeedbackSecao';
 import BotaoCompartilharStory from '@/app/components/BotaoCompartilharStory';
-import { getPrecoManual, PRECO_BONUS_AVULSO, PRECO_BONUS_COMBO } from '@/lib/preco';
+import { getPrecoManual, PRECO_ASSINATURA_MENSAL } from '@/lib/preco';
 import { offsetSalvo } from '@/lib/sky';
 import SiteNav from '@/app/components/SiteNav';
 import { useAssinatura } from '@/app/components/assinatura';
+import { salvarEmailSeuDia } from '@/lib/seuDiaRepasse';
+import {
+  agruparEmCapitulos, destaqueDaSecao, chaveLidas, lerLidas, marcarLida, secaoParaContinuar,
+  CHAVE_JORNADA, lerJornada, iniciarJornada, hojeBrasilia,
+} from '@/lib/manualLeitura';
+import {
+  renderInline, splitBodyIntoParasAndQuote, CheckItem, ListenButton,
+  buildRitualNarration, buildDiagBlockNarration, buildArchetypeNarration,
+} from './pecas';
+import m from './manual.module.css';
 
 // Olho Cósmico (abertura "Meu Mapa"): chunk separado, só baixa pra quem pagou.
 const OlhoCosmicoManual = dynamic(() => import('@/app/components/olho/OlhoCosmicoManual'), { ssr: false });
 // Chat flutuante do Oráculo: só carrega depois do Manual.
 const ChatAssistente = dynamic(() => import('@/app/components/ChatAssistente'), { ssr: false });
+// Projeção de 12 Meses + Human Design (cálculos pesados): depois da página.
+const Complementos = dynamic(() => import('./Complementos'), { ssr: false });
 
 // ==============================================
 // SUPABASE CLIENT
@@ -31,7 +52,7 @@ function getSupabaseClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) {
-    console.error('❌ Variáveis de ambiente do Supabase não configuradas');
+    console.error('Variáveis de ambiente do Supabase não configuradas');
     return null;
   }
   return createClient(url, key);
@@ -78,195 +99,24 @@ function firstSentences(text, maxSentences = 1) {
   return sentences.slice(0, maxSentences).join(' ').trim();
 }
 
-// Destaque de 1 frase mostrado em evidência acima do "Ler mais" — sempre
-// extraído do texto já gerado (firstSentences acima), nunca uma chamada de
-// IA nova. Corta por tamanho só pra blindar contra um texto sem pontuação
-// (viraria "a primeira frase" = o texto inteiro).
-function destaqueFrase(text, max = 170) {
-  const frase = firstSentences(text, 1);
-  if (!frase) return '';
-  return frase.length > max ? `${frase.slice(0, max - 1).trimEnd()}…` : frase;
-}
-
-// ==============================================
-// MARKDOWN LEVE (**negrito** / *itálico*) → React nodes, sem dangerouslySetInnerHTML
-// ==============================================
-function renderInline(text) {
-  const str = String(text ?? '');
-  const parts = str.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g);
-  return parts.map((part, i) => {
-    if (/^\*\*[^*]+\*\*$/.test(part)) return <strong key={i}>{part.slice(2, -2)}</strong>;
-    if (/^\*[^*]+\*$/.test(part)) return <em key={i}>{part.slice(1, -1)}</em>;
-    return part;
-  });
-}
-
-// ==============================================
-// QUEBRA UM TEXTO CORRIDO EM PARÁGRAFOS + DESTACA A FRASE FINAL ENTRE ASPAS (PULL-QUOTE)
-// ==============================================
-function splitBodyIntoParasAndQuote(body) {
-  const raw = String(body ?? '').replace(/\r\n/g, '\n').trim();
-  if (!raw) return { paragraphs: [], quote: null };
-  const chunks = raw.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
-  if (!chunks.length) return { paragraphs: [], quote: null };
-  const last = chunks[chunks.length - 1];
-  const quoteMatch = last.match(/^["“](.+)["”]$/s);
-  if (quoteMatch && chunks.length > 1 && quoteMatch[1].length <= 260) {
-    return { paragraphs: chunks.slice(0, -1), quote: quoteMatch[1].trim() };
-  }
-  return { paragraphs: chunks, quote: null };
-}
-
-// ==============================================
-// ITEM DE CHECKLIST INTERATIVO (Plano 7 dias / Rituais / Calendário 4 semanas)
-// ==============================================
-function CheckItem({ itemKey, checked, onToggle, children }) {
-  return (
-    <li
-      className={`check-item${checked ? ' is-checked' : ''}`}
-      onClick={() => onToggle(itemKey)}
-      role="checkbox"
-      aria-checked={checked}
-      tabIndex={0}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle(itemKey); } }}
-    >
-      <span className="check-box">{checked ? '✅' : '⬜'}</span>
-      <span className="check-label">{children}</span>
-    </li>
-  );
-}
-
-// ==============================================
-// SEÇÃO EM CAMADAS: título + destaque sempre visível + conteúdo completo
-// recolhido atrás de "Ler mais" (<details> nativo — sem estado próprio).
-// ==============================================
-function SecaoColapsavel({ anchor, title, destaque, extra, children }) {
-  return (
-    <div id={anchor} className="card premium">
-      <h2 className="h2">{title}</h2>
-      {destaque && <p className="section-destaque">{renderInline(destaque)}</p>}
-      {extra}
-      <details className="section-details">
-        <summary className="section-summary">
-          <span className="only-closed">Ler mais</span>
-          <span className="only-open">Ler menos</span>
-        </summary>
-        <div className="section-full">{children}</div>
-      </details>
-    </div>
-  );
-}
-
-// ==============================================
-// ROTEIROS FALADOS (texto puro, sem markdown, pra narração)
-// ==============================================
-function stripMarkdown(s) {
-  return String(s ?? '').replace(/\*\*/g, '').replace(/\*/g, '');
-}
-
-function buildRitualNarration(r) {
-  const parts = [
-    `Ritual: ${stripMarkdown(r.nome)}.`,
-    r.quando ? `Use quando: ${stripMarkdown(r.quando)}.` : '',
-    ...(Array.isArray(r.passos) ? r.passos.map((p, i) => `Passo ${i + 1}: ${stripMarkdown(p)}.`) : []),
-    r.frase ? `Para fechar: ${stripMarkdown(r.frase)}` : '',
-  ];
-  return parts.filter(Boolean).join(' ');
-}
-
-function buildDiagBlockNarration(block) {
-  const parts = [
-    block?.label ? `${stripMarkdown(block.label)}.` : '',
-    stripMarkdown(block?.text),
-  ];
-  return parts.filter(Boolean).join(' ');
-}
-
-function buildArchetypeNarration(item) {
-  const parts = [
-    `${stripMarkdown(item?.label)}: ${stripMarkdown(item?.nome)}.`,
-    stripMarkdown(item?.descricao),
-    item?.frase ? `Frase: ${stripMarkdown(item.frase)}` : '',
-  ];
-  return parts.filter(Boolean).join(' ');
-}
-
-function buildProjecaoMesNarration(m) {
-  const parts = [
-    `${stripMarkdown(m?.label)}. Mês Pessoal ${m?.mesPessoal}: ${stripMarkdown(m?.titulo)}.`,
-    stripMarkdown(m?.texto),
-    Array.isArray(m?.foco) && m.foco.length ? `O que favorece: ${m.foco.map(stripMarkdown).join('. ')}.` : '',
-    Array.isArray(m?.atencao) && m.atencao.length ? `Cuidado com: ${m.atencao.map(stripMarkdown).join('. ')}.` : '',
-  ];
-  return parts.filter(Boolean).join(' ');
-}
-
-// ==============================================
-// BOTÃO "OUVIR" — narração 100% no navegador (Web Speech API), sem custo e sem API externa
-// ==============================================
-function ListenButton({ text, label = 'Ouvir', pauseLabel = 'Pausar áudio' }) {
-  const [playing, setPlaying] = useState(false);
-  const [supported, setSupported] = useState(false);
-
-  useEffect(() => {
-    setSupported(typeof window !== 'undefined' && 'speechSynthesis' in window);
-    return () => {
-      if (typeof window !== 'undefined' && window.speechSynthesis) {
-        window.speechSynthesis.cancel();
-      }
-    };
-  }, []);
-
-  if (!supported) return null;
-
-  const pickVoice = () => {
-    const voices = window.speechSynthesis.getVoices() || [];
-    return (
-      voices.find((v) => v.lang?.toLowerCase() === 'pt-br') ||
-      voices.find((v) => v.lang?.toLowerCase().startsWith('pt')) ||
-      null
-    );
+/** Nascimento da análise no formato do perfil local (céu do card da frase). */
+function dadosDaAnalise(a) {
+  if (!a?.data_nascimento) return null;
+  const temCidade = a.fuso_iana && typeof a.latitude === 'number' && typeof a.longitude === 'number';
+  const [cidadeNome, uf] = String(a.local_nascimento || '').split(',').map((x) => x.trim());
+  return {
+    nome: String(a.nome || '').trim().split(' ')[0],
+    dataNascimento: a.data_nascimento,
+    hora: /^\d{2}:\d{2}/.test(a.hora_nascimento || '') ? a.hora_nascimento.slice(0, 5) : null,
+    cidade: temCidade ? { ibge: a.municipio_ibge ?? null, nome: cidadeNome || '', uf: uf || '', lat: a.latitude, lon: a.longitude, tz: a.fuso_iana } : null,
   };
-
-  const handleToggle = () => {
-    if (playing) {
-      window.speechSynthesis.cancel();
-      setPlaying(false);
-      return;
-    }
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    const voice = pickVoice();
-    if (voice) utterance.voice = voice;
-    utterance.lang = voice?.lang || 'pt-BR';
-    utterance.rate = 0.95;
-    utterance.onend = () => setPlaying(false);
-    utterance.onerror = () => setPlaying(false);
-    window.speechSynthesis.speak(utterance);
-    setPlaying(true);
-  };
-
-  return (
-    <button type="button" className="listen-btn" onClick={handleToggle}>
-      {playing ? pauseLabel : label}
-    </button>
-  );
 }
 
-// ==============================================
-// TOGGLE DE COMBO — oferece incluir o outro upsell junto, por
-// PRECO_BONUS_COMBO no total em vez de PRECO_BONUS_AVULSO cada. Só aparece
-// se o outro produto ainda não tiver sido comprado.
-// ==============================================
-function ComboUpsellToggle({ label, checked, onChange }) {
-  return (
-    <label className={`combo-upsell${checked ? ' is-checked' : ''}`}>
-      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
-      <span>
-        {checked ? '✅' : '➕'} Incluir também {label} — os dois por <strong>R$ {PRECO_BONUS_COMBO}</strong> (economize R$ {(PRECO_BONUS_AVULSO * 2 - PRECO_BONUS_COMBO).toFixed(0)})
-      </span>
-    </label>
-  );
+const brl = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const dataBR = (iso) => { try { return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'America/Sao_Paulo' }); } catch { return ''; } };
+
+function evento(nome, params = {}) {
+  try { window.gtag?.('event', nome, { event_category: 'manual', ...params }); } catch {}
 }
 
 // ==============================================
@@ -282,9 +132,9 @@ function isPaid(row) {
 
   // Status em string
   const status = String(
-    row.pagamento_status ?? 
-    row.payment_status ?? 
-    row.status_pagamento ?? 
+    row.pagamento_status ??
+    row.payment_status ??
+    row.status_pagamento ??
     ''
   ).toLowerCase();
 
@@ -294,8 +144,8 @@ function isPaid(row) {
 
   // Stripe status
   const stripeStatus = String(
-    row.stripe_status ?? 
-    row.stripe_session_status ?? 
+    row.stripe_status ??
+    row.stripe_session_status ??
     ''
   ).toLowerCase();
 
@@ -317,6 +167,16 @@ const CAMPOS_GERADOS_IA = [
   'fechamento_gerado',
 ];
 
+function Pagina({ children }) {
+  return (
+    <div className={m.pagina}>
+      {/* overflow-x: clip (e não hidden) pra não quebrar o "sticky" do índice */}
+      <style jsx global>{`html, body { background: #07040d; max-width: 100%; overflow-x: clip; }`}</style>
+      {children}
+    </div>
+  );
+}
+
 // ==============================================
 // COMPONENTE PRINCIPAL
 // ==============================================
@@ -332,41 +192,7 @@ export default function ManualPage() {
   const [processando, setProcessando] = useState(false);
   const [gerando, setGerando] = useState(false);
 
-  const starsBuiltRef = useRef(false);
   const geracaoIniciada = useRef(false);
-
-  // ==============================================
-  // EFEITO: CRIAR ESTRELAS NO FUNDO
-  // ==============================================
-  useEffect(() => {
-    if (starsBuiltRef.current) return;
-    starsBuiltRef.current = true;
-
-    const starsContainer = document.getElementById('stars');
-    if (!starsContainer) return;
-
-    starsContainer.innerHTML = '';
-    const isMobile = window.innerWidth < 768;
-    const starCount = isMobile ? 55 : 120;
-
-    for (let i = 0; i < starCount; i++) {
-      const star = document.createElement('div');
-      star.className = 'star';
-      star.style.left = `${Math.random() * 100}%`;
-      star.style.top = `${Math.random() * 100}%`;
-      star.style.opacity = String(0.25 + Math.random() * 0.75);
-      star.style.transform = `scale(${0.7 + Math.random() * 1.6})`;
-      star.style.animationDelay = `${Math.random() * 3}s`;
-      starsContainer.appendChild(star);
-    }
-
-    return () => {
-      if (starsContainer) {
-        starsContainer.innerHTML = '';
-      }
-      starsBuiltRef.current = false;
-    };
-  }, []);
 
   // ==============================================
   // EFEITO: BUSCAR DADOS DO SUPABASE
@@ -402,7 +228,6 @@ export default function ManualPage() {
         if (!mounted) return;
         setRow(data);
         try { window.localStorage.setItem('ic_ultima_analise_id', id); } catch {}
-        console.log('OBJETIVO DO BANCO:', data.objetivo_principal);
       } catch (e) {
         if (!mounted) return;
         console.error('Erro ao buscar dados:', e);
@@ -430,13 +255,14 @@ export default function ManualPage() {
   // ==============================================
   const hasPaid = useMemo(() => isPaid(row), [row]);
 
-  // Intuitive Completo ANUAL inclui o Manual: se o e-mail da análise tem o
-  // anual ativo, o servidor marca esta análise como paga (origem
-  // 'assinatura') e a página recarrega já liberada.
-  const assinaturaManual = useAssinatura(row && !hasPaid ? id : null);
+  // Acesso do e-mail (assinatura / 30 dias de cortesia do Manual) — decide o
+  // bloco do Seu Dia. E o Intuitive Completo ANUAL inclui o Manual: se o
+  // e-mail da análise tem o anual ativo, o servidor marca esta análise como
+  // paga (origem 'assinatura') e a página recarrega já liberada.
+  const acesso = useAssinatura(row ? id : null);
   useEffect(() => {
-    if (assinaturaManual?.manualLiberado) window.location.reload();
-  }, [assinaturaManual]);
+    if (!hasPaid && acesso?.manualLiberado) window.location.reload();
+  }, [acesso, hasPaid]);
 
   // ==============================================
   // CHEGOU DO REDIRECT DO MP (?payment_id=...) — confirmação pós-pagamento
@@ -534,12 +360,8 @@ export default function ManualPage() {
       if (window.localStorage.getItem(storageKey)) return;
     } catch {}
 
-    // Antes hardcoded em 47 — não refletia o que foi cobrado de verdade.
-    // Hoje nenhuma coluna guarda o valor pago, então recalcula pela mesma
-    // regra do checkout (lib/preco.js), usando paid_at como referência —
-    // não "agora", pra não mudar de valor se a pessoa reabrir o manual dias
-    // depois de ter pago dentro da janela. Se um dia existir uma coluna com
-    // o valor pago de verdade (ex: valor_pago), ela tem prioridade.
+    // Valor real cobrado (valor_pago) quando existe; senão a mesma regra do
+    // checkout (lib/preco.js) com paid_at como referência — não "agora".
     const valorPurchase = typeof row.valor_pago === 'number'
       ? row.valor_pago
       : getPrecoManual(row.created_at, row.paid_at ? new Date(row.paid_at).getTime() : Date.now());
@@ -566,6 +388,8 @@ export default function ManualPage() {
   // BARRA DE PROGRESSO DE LEITURA
   // ==============================================
   const [readProgress, setReadProgress] = useState(0);
+  // O botão "Índice" (celular) só aparece com o conteúdo na tela, não por cima do Olho.
+  const [noConteudo, setNoConteudo] = useState(false);
   useEffect(() => {
     const onScroll = () => {
       const doc = document.documentElement;
@@ -575,6 +399,7 @@ export default function ManualPage() {
       const scrollable = (doc.scrollHeight || 0) - doc.clientHeight - inicio;
       const pct = scrollable > 0 ? Math.min(100, Math.max(0, ((window.scrollY - inicio) / scrollable) * 100)) : 0;
       setReadProgress(pct);
+      setNoConteudo(window.scrollY + window.innerHeight * 0.6 >= inicio);
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
@@ -589,17 +414,17 @@ export default function ManualPage() {
     if (!id || typeof window === 'undefined') return;
     try {
       const raw = window.localStorage.getItem(`ic_manual_checks_${id}`);
-      if (raw) setChecks(JSON.parse(raw));
+      if (raw) setChecks(JSON.parse(raw));  
     } catch {}
   }, [id]);
 
-  const toggleCheck = (key) => {
+  const toggleCheck = useCallback((key) => {
     setChecks((prev) => {
       const next = { ...prev, [key]: !prev[key] };
       try { window.localStorage.setItem(`ic_manual_checks_${id}`, JSON.stringify(next)); } catch {}
       return next;
     });
-  };
+  }, [id]);
 
   // ==============================================
   // EFEITO: GERAÇÃO SOB DEMANDA
@@ -696,24 +521,12 @@ export default function ManualPage() {
       return generateManual(params);
     } catch (e) {
       console.error('Erro ao gerar manual:', e);
-      return { 
-        __error: e?.message || 'Erro ao gerar manual', 
-        params 
+      return {
+        __error: e?.message || 'Erro ao gerar manual',
+        params
       };
     }
   }, [row]);
-
-  useEffect(() => {
-  if (!row) return;
-  console.log('[DEBUG] diagnostico_gerado:', row.diagnostico_gerado ? row.diagnostico_gerado.slice(0, 60) + '…' : 'NULL');
-  console.log('[DEBUG] amor_gerado:', row.amor_gerado ? '✅ preenchido' : 'NULL');
-  console.log('[DEBUG] tipo_pessoa_gerado:', row.tipo_pessoa_gerado ? '✅ preenchido' : 'NULL');
-}, [row]);
-
-  useEffect(() => {
-  if (!manual || manual.__error) return;
-  console.log('SECTIONS:', manual.sections.map(s => `${s.type} | ${s.title} | body:${(s.body?.length || 0)}`));
-}, [manual]);
 
   // ==============================================
   // RENDERIZAR MARKDOWN
@@ -729,18 +542,84 @@ export default function ManualPage() {
   }, [manual]);
 
   // ==============================================
-  // SEÇÕES VISÍVEIS NO CORPO/SUMÁRIO
+  // SEÇÕES VISÍVEIS EM CAPÍTULOS
   // A carta de tarot já aparece na abertura do manual (imagem + texto completo),
-  // então é excluída daqui para não duplicar e para manter os anchors sec_${idx}
-  // alinhados entre o sumário e o corpo.
+  // então é excluída daqui para não duplicar.
   // ==============================================
-  const visibleSections = useMemo(() => {
+  const capitulos = useMemo(() => {
     if (!Array.isArray(manual?.sections)) return [];
-    return manual.sections.filter((s) => s?.type !== 'tarot');
+    return agruparEmCapitulos(manual.sections.filter((s) => s?.type !== 'tarot'));
   }, [manual]);
+  const ancoras = useMemo(() => capitulos.flatMap((c) => c.secoes.map((s) => s.ancora)), [capitulos]);
 
   // ==============================================
-  // HANDLER: ABRIR CHECKOUT
+  // LIDAS (✓ no índice) E "CONTINUAR DE ONDE PAROU" — ic_manual_lidas_<id>
+  // ==============================================
+  const [leitura, setLeitura] = useState({ lidas: [], ultima: null });
+  const [continuarPara, setContinuarPara] = useState(null);
+  const leituraPronta = useRef(false);
+  const conteudoPronto = hasPaid && !gerando && capitulos.length > 0;
+
+  useEffect(() => {
+    if (!conteudoPronto || leituraPronta.current) return;
+    leituraPronta.current = true;
+    let salvo = { lidas: [], ultima: null };
+    try { salvo = lerLidas(window.localStorage.getItem(chaveLidas(id))); } catch {}
+    setLeitura(salvo);  
+    // Chegou com âncora (ex.: "Dia N do seu plano" no Seu Dia): vai direto, sem o aviso.
+    if (!window.location.hash) setContinuarPara(secaoParaContinuar(salvo, ancoras));
+  }, [conteudoPronto, id, ancoras]);
+
+  // Âncora na URL: o conteúdo só existe depois do fetch, então o navegador não acha sozinho.
+  useEffect(() => {
+    if (!conteudoPronto || !window.location.hash) return undefined;
+    const t = setTimeout(() => document.getElementById(decodeURIComponent(window.location.hash.slice(1)))?.scrollIntoView({ block: 'start' }), 400);
+    return () => clearTimeout(t);
+  }, [conteudoPronto]);
+
+  useEffect(() => {
+    if (!conteudoPronto) return undefined;
+    const salvar = (fn) => setLeitura((atual) => {
+      const novo = fn(atual);
+      if (novo !== atual) { try { window.localStorage.setItem(chaveLidas(id), JSON.stringify(novo)); } catch {} }
+      return novo;
+    });
+    // Lida = o fim da seção passou pela tela.
+    const obsFim = new IntersectionObserver((entradas) => {
+      for (const e of entradas) if (e.isIntersecting) salvar((l) => marcarLida(l, e.target.dataset.secao));
+    }, { threshold: 0 });
+    document.querySelectorAll('[data-fim-secao]').forEach((el) => obsFim.observe(el));
+    return () => obsFim.disconnect();
+  }, [conteudoPronto, id]);
+
+  // Seção atual (destacada no índice).
+  const [atual, setAtual] = useState(null);
+  useEffect(() => {
+    if (!conteudoPronto) return undefined;
+    const obs = new IntersectionObserver((entradas) => {
+      for (const e of entradas) if (e.isIntersecting) setAtual(e.target.id);
+    }, { rootMargin: '-30% 0px -60% 0px' });
+    ancoras.forEach((a) => { const el = document.getElementById(a); if (el) obs.observe(el); });
+    return () => obs.disconnect();
+  }, [conteudoPronto, ancoras]);
+
+  // Índice no celular
+  const [indiceAberto, setIndiceAberto] = useState(false);
+
+  // ==============================================
+  // JORNADA DO PLANO / CALENDÁRIO — 1º check grava o início (ic_manual_jornada);
+  // a aba Hoje do Seu Dia mostra "Dia N do seu plano: <título>".
+  // ==============================================
+  const marcarJornada = useCallback((tipo, itens, ancorasItens) => {
+    try {
+      const atualJ = lerJornada(window.localStorage.getItem(CHAVE_JORNADA));
+      const nova = iniciarJornada(atualJ, { id, nome: pickFirstName(row?.nome), tipo, itens, ancoras: ancorasItens, hoje: hojeBrasilia() });
+      if (nova !== atualJ) window.localStorage.setItem(CHAVE_JORNADA, JSON.stringify(nova));
+    } catch {}
+  }, [id, row?.nome]);
+
+  // ==============================================
+  // HANDLER: ABRIR CHECKOUT (Stripe — paywall de quem não pagou)
   // ==============================================
   async function handleComprar() {
     setProcessando(true);
@@ -756,49 +635,18 @@ export default function ManualPage() {
       }
 
       const data = await response.json();
-      
+
       if (data?.url) {
         window.location.href = data.url;
         return;
       }
-      
+
       throw new Error(data?.error || 'Erro ao criar sessão de checkout');
     } catch (e) {
       console.error('Erro ao abrir checkout:', e);
       alert(e?.message || 'Erro ao processar pagamento. Tente novamente.');
     } finally {
       setProcessando(false);
-    }
-  }
-
-  // ==============================================
-  // HANDLER: CHECKOUT DOS UPSELLS (Projeção de 12 Meses e/ou Human Design —
-  // PRECO_BONUS_AVULSO cada, PRECO_BONUS_COMBO os dois juntos, via MP)
-  // ==============================================
-  const [processandoUpsell, setProcessandoUpsell] = useState(false);
-  const [comboProjecao, setComboProjecao] = useState(false);
-  const [comboHumanDesign, setComboHumanDesign] = useState(false);
-
-  async function handleComprarUpsell(produtoPrincipal, incluirCombo) {
-    const produtos = incluirCombo
-      ? ['projecao12m', 'humandesign']
-      : [produtoPrincipal];
-    setProcessandoUpsell(true);
-    try {
-      const response = await fetch('/api/criar-checkout-upsell-mp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ analiseId: id, produtos }),
-      });
-      const data = await response.json().catch(() => ({}));
-      const checkoutUrl = data?.url || data?.sandbox_url;
-      if (checkoutUrl) { window.location.href = checkoutUrl; return; }
-      throw new Error(data?.error || 'Erro ao criar checkout');
-    } catch (e) {
-      console.error('Erro ao abrir checkout do upsell:', e);
-      alert(e?.message || 'Erro ao processar pagamento. Tente novamente.');
-    } finally {
-      setProcessandoUpsell(false);
     }
   }
 
@@ -810,7 +658,7 @@ export default function ManualPage() {
   const [pessoa2Data, setPessoa2Data] = useState('');
 
   useEffect(() => {
-    if (row?.compat_pessoa2_nome && !pessoa2Nome) setPessoa2Nome(row.compat_pessoa2_nome);
+    if (row?.compat_pessoa2_nome && !pessoa2Nome) setPessoa2Nome(row.compat_pessoa2_nome);  
     if (row?.compat_pessoa2_data_nascimento && !pessoa2Data) setPessoa2Data(row.compat_pessoa2_data_nascimento);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [row]);
@@ -849,21 +697,51 @@ export default function ManualPage() {
   }, [pessoa2Nome, pessoa2Data, row, id]);
 
   // ==============================================
+  // COMPARTILHAR FRASE (card 1080x1920) e .ics DOS RITUAIS — sob demanda
+  // ==============================================
+  const [compartilhando, setCompartilhando] = useState(null);
+  async function compartilharFrase(frase, secao) {
+    const dados = dadosDaAnalise(row);
+    if (!dados || compartilhando) return;
+    setCompartilhando(secao);
+    try {
+      const { compartilharFrase: gerar } = await import('./compartilharFrase');
+      const resultado = await gerar({ frase, nome: dados.nome, dataNascimento: dados.dataNascimento, hora: dados.hora, cidade: dados.cidade });
+      evento('manual_frase_compartilhar', { secao, resultado });
+    } catch (e) {
+      console.error('[manual] card da frase', e);
+      alert('Não deu pra gerar a imagem agora. Tente de novo.');
+    } finally {
+      setCompartilhando(null);
+    }
+  }
+
+  async function agendarRitual(ritual, i) {
+    try {
+      const { baixarIcsRitual } = await import('./compartilharFrase');
+      await baixarIcsRitual(ritual);
+      evento('manual_ritual_agenda', { ritual: i + 1 });
+    } catch (e) {
+      console.error('[manual] .ics', e);
+    }
+  }
+
+  // ==============================================
   // HANDLER: COPIAR MARKDOWN
   // ==============================================
   function copyMarkdown() {
     if (!markdown) {
-      alert('❌ Nenhum conteúdo para copiar');
+      alert('Nenhum conteúdo para copiar.');
       return;
     }
-    
+
     navigator.clipboard.writeText(markdown)
       .then(() => {
-        alert('✅ Manual copiado! Cole em qualquer editor para gerar PDF.');
+        alert('Manual copiado! Cole em qualquer editor para gerar PDF.');
       })
       .catch((err) => {
         console.error('Erro ao copiar:', err);
-        alert('❌ Erro ao copiar. Tente novamente.');
+        alert('Erro ao copiar. Tente novamente.');
       });
   }
 
@@ -872,14 +750,12 @@ export default function ManualPage() {
   // ==============================================
   if (loading) {
     return (
-      <div className="wrap">
-        <style jsx global>{globalCss}</style>
-        <div id="stars" className="stars" />
-        <div className="center card">
-          <div className="spinner" />
-          <div className="muted">Carregando seu Manual…</div>
+      <Pagina>
+        <div className={m.centro}>
+          <div className={m.spinner} />
+          <p className={m.texto}>Carregando seu Manual…</p>
         </div>
-      </div>
+      </Pagina>
     );
   }
 
@@ -888,21 +764,13 @@ export default function ManualPage() {
   // ==============================================
   if (erro || !row) {
     return (
-      <div className="wrap">
-        <style jsx global>{globalCss}</style>
-        <div id="stars" className="stars" />
-        <div className="center card">
-          <h1 style={{ marginBottom: 10 }}>⚠️ Ops…</h1>
-          <p className="muted">{erro || 'Erro ao carregar dados'}</p>
-          <button 
-            className="btn" 
-            onClick={() => router.push('/')}
-            style={{ marginTop: 20 }}
-          >
-            ← Voltar ao início
-          </button>
+      <Pagina>
+        <div className={m.centro}>
+          <h1 className={m.centroTitulo}>Ops…</h1>
+          <p className={m.texto}>{erro || 'Erro ao carregar dados'}</p>
+          <button className={m.btn} onClick={() => router.push('/')}>Voltar ao início</button>
         </div>
-      </div>
+      </Pagina>
     );
   }
 
@@ -911,29 +779,16 @@ export default function ManualPage() {
   // ==============================================
   if (manual?.__error) {
     return (
-      <div className="wrap">
-        <style jsx global>{globalCss}</style>
-        <div id="stars" className="stars" />
-        <div className="center card">
-          <h2 style={{ marginBottom: 10 }}>⚠️ Erro ao gerar Manual</h2>
-          <p className="muted" style={{ maxWidth: 720, marginBottom: 20 }}>
-            {manual.__error}
+      <Pagina>
+        <div className={m.centro}>
+          <h2 className={m.centroTitulo}>Erro ao gerar o Manual</h2>
+          <p className={m.texto}>{manual.__error}</p>
+          <p className={m.texto} style={{ fontFamily: 'var(--mono)', fontSize: 12 }}>
+            signo: {row.signo || 'não encontrado'} · numero_vida: {row.numero_vida || 'não encontrado'} · objetivo_principal: {row.objetivo_principal || 'não encontrado'}
           </p>
-          <div className="note" style={{ textAlign: 'left', maxWidth: 720 }}>
-            <b>Verifique se os dados estão corretos:</b>
-            <br />• <code>signo</code>: {row.signo || '❌ não encontrado'}
-            <br />• <code>numero_vida</code>: {row.numero_vida || '❌ não encontrado'}
-            <br />• <code>objetivo_principal</code>: {row.objetivo_principal || '❌ não encontrado'}
-          </div>
-          <button 
-            className="btn" 
-            onClick={() => router.push(`/resultado/${id}`)} 
-            style={{ marginTop: 20 }}
-          >
-            Ver página de resultado
-          </button>
+          <button className={m.btn} onClick={() => router.push(`/resultado/${id}`)}>Ver página de resultado</button>
         </div>
-      </div>
+      </Pagina>
     );
   }
 
@@ -945,1887 +800,684 @@ export default function ManualPage() {
   const signo = row.signo;
   const numero = row.numero_vida;
 
+  // Seu Dia: cortesia de 30 dias do Manual (Termos, seção 5) ou assinatura.
+  // Enquanto o /api/assinatura/status não responde, usa o paid_at daqui.
+  const cortesiaLocal = Boolean(row.paid_at) && Date.now() - new Date(row.paid_at).getTime() < 30 * 86400000;
+  const seuDiaAtivo = acesso ? Boolean(acesso.ativa) : cortesiaLocal;
+  const seuDiaOrigem = acesso?.ativa ? acesso.origem : (cortesiaLocal ? 'manual' : null);
+  const seuDiaAte = acesso?.acessoAte || (row.paid_at ? new Date(new Date(row.paid_at).getTime() + 30 * 86400000).toISOString() : null);
+
+  const tarotSection = Array.isArray(manual?.sections) ? manual.sections.find((s) => s?.type === 'tarot') : null;
+
+  // ==============================================
+  // PEDAÇOS
+  // ==============================================
+  // Funções que devolvem JSX (não componentes): definidas aqui dentro pra ler o
+  // estado, mas chamadas como função pra não remontar a cada rolagem (a barra
+  // de progresso muda estado no scroll; um componente novo por render cortaria o áudio).
+  function blocoSeuDia(posicao) {
+    const abrir = () => {
+      evento('manual_seu_dia_clique', { destino: 'seu-dia', posicao, cortesia: seuDiaAtivo });
+      salvarEmailSeuDia(row.email || '');
+    };
+    if (seuDiaAtivo) {
+      return (
+        <aside className={m.seuDia} aria-label="Seu Dia">
+          <span className={m.eyebrow}>Seu Dia Completo</span>
+          <h2 className={m.seuDiaTitulo}>
+            {seuDiaOrigem === 'manual'
+              ? <>Seu Manual vem com <em>30 dias do Seu Dia Completo</em></>
+              : <>Seu Dia Completo <em>está ativo</em></>}
+          </h2>
+          <p className={m.texto}>
+            O que fazer, o que evitar e as melhores horas, todo dia, lido pelo mesmo mapa deste Manual.
+            {seuDiaAte ? ` Até ${dataBR(seuDiaAte)}.` : ''}
+          </p>
+          <a className={m.btn} href="/seu-dia?aba=hoje" onClick={abrir}>Abrir meu dia de hoje</a>
+        </aside>
+      );
+    }
+    return (
+      <aside className={m.seuDia} aria-label="Seu Dia">
+        <span className={m.eyebrow}>Seu Dia Completo</span>
+        <h2 className={m.seuDiaTitulo}>O seu mapa, <em>lido pro dia de hoje</em></h2>
+        <p className={m.texto}>Os 30 dias que vieram com o Manual acabaram. O resumo do seu dia continua grátis; o completo é com a assinatura.</p>
+        <a
+          className={m.btn}
+          href={`/assinar?a=${encodeURIComponent(id)}&plano=mensal`}
+          onClick={() => evento('manual_seu_dia_clique', { destino: 'assinar', posicao, cortesia: false })}
+        >
+          Continuar com o Seu Dia Completo · {brl(PRECO_ASSINATURA_MENSAL)}/mês
+        </a>
+        <a className={m.linkMono} href="/seu-dia?aba=hoje" onClick={abrir}>Abrir o resumo grátis do meu dia</a>
+      </aside>
+    );
+  }
+
+  function destaqueEl(frase, secao) {
+    if (!frase) return null;
+    return (
+      <div className={m.destaque}>
+        <p className={m.citacao}>“{frase}”</p>
+        <div className={m.acoes}>
+          <button type="button" className={m.acao} onClick={() => compartilharFrase(frase, secao)} disabled={compartilhando === secao}>
+            {compartilhando === secao ? 'Gerando a imagem…' : 'Compartilhar'}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  function listaIndice(aoClicar) {
+    return (
+      <>
+        {capitulos.map((cap) => (
+          <div key={cap.id} className={m.indiceCap}>
+            <span className={m.rotulo} style={{ color: 'var(--ouro)' }}>{cap.rotulo}</span>
+            <ul className={m.indiceItens}>
+              {cap.secoes.map((s) => (
+                <li key={s.ancora}>
+                  <a href={`#${s.ancora}`} className={`${m.indiceItem} ${atual === s.ancora ? m.indiceAtual : ''}`} onClick={aoClicar}>
+                    <span className={m.indiceMarca} aria-label={leitura.lidas.includes(s.ancora) ? 'lida' : undefined}>
+                      {leitura.lidas.includes(s.ancora) ? '✓' : ''}
+                    </span>
+                    {s.titulo}
+                  </a>
+                </li>
+              ))}
+              {cap.id === 'amor' && (
+                <>
+                  <li><a href="#compatibilidade-astral" className={m.indiceItem} onClick={aoClicar}><span className={m.indiceMarca} />Compatibilidade Astral</a></li>
+                  <li><a href="#compatibilidade-completa" className={m.indiceItem} onClick={aoClicar}><span className={m.indiceMarca} />Compatibilidade Completa</a></li>
+                </>
+              )}
+            </ul>
+          </div>
+        ))}
+        <div className={m.indiceRodape}>
+          <a href="#projecao-12-meses" className={m.linkMono} onClick={aoClicar}>Complementos</a>
+          <button type="button" className={m.acao} onClick={copyMarkdown} disabled={!markdown}>Copiar Manual (Markdown)</button>
+        </div>
+      </>
+    );
+  }
+
+  // ==============================================
+  // UMA SEÇÃO DO GERADOR
+  // ==============================================
+  function secaoEl(section, ancora) {
+    const titulo = String(section.title || 'Seção').trim();
+    const destaque = destaqueDaSecao(section);
+    const cabeca = (
+      <>
+        <h2 className={m.h2}>{titulo}</h2>
+        {destaqueEl(destaque, ancora)}
+      </>
+    );
+
+    // TIPO: COVER
+    if (section.type === 'cover') {
+      return (
+        <>
+          <h2 className={m.h2}>{titulo}</h2>
+          {section.subtitle && <p className={m.rotulo} style={{ marginTop: 8 }}>{section.subtitle}</p>}
+          {Array.isArray(section.meta) && section.meta.length > 0 && (
+            <ul className={m.lista}>{section.meta.map((x, i) => <li key={i}>{x}</li>)}</ul>
+          )}
+        </>
+      );
+    }
+
+    // TIPO: MAPA
+    if (section.type === 'mapa') {
+      return (
+        <>
+          <h2 className={m.h2}>{titulo}</h2>
+          <span className={m.rotuloOuro}>Legenda do seu mapa</span>
+          <ul className={m.lista}>{Array.isArray(section.items) && section.items.map((item, i) => <li key={i}>{item}</li>)}</ul>
+          {section.sintese && (
+            <>
+              <span className={m.rotuloOuro}>Síntese integrada</span>
+              <p className={`${m.p} ${m.pre}`}>{section.sintese}</p>
+            </>
+          )}
+        </>
+      );
+    }
+
+    // TIPO: TOC
+    if (section.type === 'toc') {
+      return (
+        <>
+          <h2 className={m.h2}>{titulo}</h2>
+          <ul className={m.lista}>{Array.isArray(section.items) && section.items.map((item, i) => <li key={i}>{item}</li>)}</ul>
+        </>
+      );
+    }
+
+    // TIPO: PREPARANDO (IA ainda gerando essa seção)
+    if (section.type === 'preparando') {
+      return (
+        <>
+          <h2 className={m.h2}>{titulo}</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 16 }}>
+            <div className={m.spinnerPeq} />
+            <p className={m.texto}>Preparando essa parte do seu Manual…</p>
+          </div>
+        </>
+      );
+    }
+
+    // TIPO: TEXT
+    if (section.type === 'text') {
+      const { paragraphs, quote } = splitBodyIntoParasAndQuote(section.body);
+      const ehPontoCego = titulo.toLowerCase() === 'ponto cego';
+      return (
+        <>
+          {cabeca}
+          {ehPontoCego && (
+            <BotaoCompartilharStory analiseId={id} pago={hasPaid} tipo="ponto_cego" origem="manual_ponto_cego" className={m.btnSec} />
+          )}
+          {paragraphs.map((p, i) => <p key={i} className={m.p}>{renderInline(p)}</p>)}
+          {quote && <p className={m.citacaoMenor}>“{renderInline(quote)}”</p>}
+        </>
+      );
+    }
+
+    // TIPO: DIAGNÓSTICO (blocos com subtítulo + pull-quote)
+    if (section.type === 'diagnostico') {
+      return (
+        <>
+          {cabeca}
+          {Array.isArray(section.blocks) && section.blocks.map((b, i) => (
+            <div key={i} className={m.bloco}>
+              <span className={m.rotuloOuro} style={{ marginTop: 0 }}>{b.label}</span>
+              {splitBodyIntoParasAndQuote(b.text).paragraphs.map((p, j) => <p key={j} className={m.p}>{renderInline(p)}</p>)}
+              <div className={m.acoes}><ListenButton text={buildDiagBlockNarration(b)} label="Ouvir este bloco" /></div>
+            </div>
+          ))}
+          {section.quote && section.quote.trim() !== destaque && <p className={m.citacaoMenor}>“{renderInline(section.quote)}”</p>}
+        </>
+      );
+    }
+
+    // TIPO: ARQUÉTIPOS
+    if (section.type === 'archetypes') {
+      return (
+        <>
+          {cabeca}
+          {Array.isArray(section.items) && section.items.map((it, i) => (
+            <div key={i} className={m.bloco}>
+              <span className={m.rotulo}>{it.label}</span>
+              <p className={m.h3}>{it.nome}</p>
+              <p className={m.p}>{renderInline(it.descricao)}</p>
+              {it.frase && i > 0 && <p className={m.citacaoMenor}>“{renderInline(it.frase)}”</p>}
+              <div className={m.acoes}><ListenButton text={buildArchetypeNarration(it)} label="Ouvir este arquétipo" /></div>
+            </div>
+          ))}
+        </>
+      );
+    }
+
+    // TIPO: RITUAIS (passos numerados, áudio, agenda e check de prática)
+    if (section.type === 'rituals') {
+      return (
+        <>
+          {cabeca}
+          {Array.isArray(section.items) && section.items.map((r, i) => {
+            const ck = `rituals_${i}`;
+            return (
+              <div key={i} className={m.bloco}>
+                <span className={m.rotulo}>Ritual {i + 1}</span>
+                <p className={m.h3}>{r.nome}</p>
+                {r.quando && <p className={m.nota}>Quando usar: {renderInline(r.quando)}</p>}
+                {Array.isArray(r.passos) && r.passos.length > 0 && (
+                  <ol className={m.passos}>{r.passos.map((p, j) => <li key={j}>{renderInline(p)}</li>)}</ol>
+                )}
+                {r.frase && i > 0 && <p className={m.citacaoMenor}>“{renderInline(r.frase)}”</p>}
+                <div className={m.acoes}>
+                  <ListenButton text={buildRitualNarration(r)} label="Ouvir este ritual guiado" />
+                  <button type="button" className={m.acao} onClick={() => agendarRitual(r, i)}>Colocar na minha agenda</button>
+                </div>
+                <ul className={m.checks}>
+                  <CheckItem itemKey={ck} checked={!!checks[ck]} onToggle={toggleCheck}>Já pratiquei este ritual</CheckItem>
+                </ul>
+              </div>
+            );
+          })}
+        </>
+      );
+    }
+
+    // TIPO: BULLETS
+    if (section.type === 'bullets') {
+      return (
+        <>
+          {cabeca}
+          {section.note && <p className={m.p}>{section.note}</p>}
+          <ul className={m.lista}>{Array.isArray(section.items) && section.items.map((item, i) => <li key={i}>{renderInline(item)}</li>)}</ul>
+        </>
+      );
+    }
+
+    // TIPO: PLAN7
+    if (section.type === 'plan7') {
+      const dias = Array.isArray(section.days) ? section.days : [];
+      const ancorasDias = dias.map((_, i) => `plano-d${i + 1}`);
+      const marcar = (k) => { if (!checks[k]) marcarJornada('plano', dias, ancorasDias); toggleCheck(k); };
+      return (
+        <>
+          {cabeca}
+          {section.hook && <p className={m.p}>{section.hook}</p>}
+          <span className={m.rotuloOuro}>Passo a passo (7 dias)</span>
+          <ul className={m.checks}>
+            {dias.map((day, i) => {
+              const ck = `plan7_${i}`;
+              return <CheckItem key={i} id={ancorasDias[i]} itemKey={ck} checked={!!checks[ck]} onToggle={marcar}>{renderInline(day)}</CheckItem>;
+            })}
+          </ul>
+        </>
+      );
+    }
+
+    // TIPO: LOVE
+    if (section.type === 'love') {
+      return (
+        <>
+          {cabeca}
+          {section.pattern && (
+            <p className={`${m.p} ${m.pre}`}>{String(section.pattern).replace(/\r\n/g, '\n').replace(/\*\*/g, '').replace(/\*/g, '')}</p>
+          )}
+          <div className={m.duasListas}>
+            <div>
+              <span className={m.rotuloAlerta}>Pare de fazer isso</span>
+              <ul className={m.lista}>{Array.isArray(section.whatToStop) && section.whatToStop.map((item, i) => <li key={i}>{item}</li>)}</ul>
+            </div>
+            <div>
+              <span className={m.rotuloOuro}>Comece a fazer isso</span>
+              <ul className={m.lista}>{Array.isArray(section.whatToStart) && section.whatToStart.map((item, i) => <li key={i}>{item}</li>)}</ul>
+            </div>
+          </div>
+          <span className={m.rotuloOuro}>Frases prontas (sem joguinho)</span>
+          <ul className={m.lista}>{Array.isArray(section.microScript) && section.microScript.map((script, i) => <li key={i}>{script}</li>)}</ul>
+        </>
+      );
+    }
+
+    // TIPO: MONEY
+    if (section.type === 'money') {
+      return (
+        <>
+          {cabeca}
+          <div className={m.duasListas}>
+            <div>
+              <span className={m.rotuloAlerta}>Bloqueios</span>
+              <ul className={m.lista}>{Array.isArray(section.blocks) && section.blocks.map((block, i) => <li key={i}>{block}</li>)}</ul>
+            </div>
+            <div>
+              <span className={m.rotuloOuro}>Ações práticas</span>
+              <ul className={m.lista}>{Array.isArray(section.actions) && section.actions.map((action, i) => <li key={i}>{action}</li>)}</ul>
+            </div>
+          </div>
+          <span className={m.rotuloOuro}>Micro-hábitos</span>
+          <ul className={m.lista}>{Array.isArray(section.microHabits) && section.microHabits.map((habit, i) => <li key={i}>{habit}</li>)}</ul>
+        </>
+      );
+    }
+
+    // TIPO: CALENDAR30
+    if (section.type === 'calendar30') {
+      const semanas = Array.isArray(section.weeks) ? section.weeks : [];
+      const chavesDias = semanas.flatMap((week, i) => (Array.isArray(week.days) ? week.days.map((_, j) => `calendar30_w${i}d${j}`) : []));
+      const textosDias = semanas.flatMap((week) => (Array.isArray(week.days) ? week.days : []));
+      const ancorasDias = textosDias.map((_, k) => `calendario-d${k + 1}`);
+      const totalDias = chavesDias.length;
+      const diasFeitos = chavesDias.filter((ck) => checks[ck]).length;
+      const progressoPct = totalDias > 0 ? Math.round((diasFeitos / totalDias) * 100) : 0;
+      const marcar = (k) => { if (!checks[k]) marcarJornada('calendario', textosDias, ancorasDias); toggleCheck(k); };
+      let k = 0;
+      return (
+        <>
+          {cabeca}
+          {totalDias > 0 && (
+            <div className={m.progressoCal}>
+              <div className={m.progressoCalLinha}><span>{diasFeitos} de {totalDias}</span><span>{progressoPct}%</span></div>
+              <div className={m.progressoCalTrilho}><span style={{ width: `${progressoPct}%` }} /></div>
+            </div>
+          )}
+          {semanas.map((week, i) => (
+            <div key={i} className={m.semana}>
+              <span className={m.rotuloOuro} style={{ marginTop: 0 }}>{week.week}</span>
+              {week.focus && <p className={m.h3}>{week.focus}</p>}
+              <ul className={m.checks}>
+                {Array.isArray(week.days) && week.days.map((day, j) => {
+                  const ck = `calendar30_w${i}d${j}`;
+                  const ancoraDia = ancorasDias[k++];
+                  return <CheckItem key={j} id={ancoraDia} itemKey={ck} checked={!!checks[ck]} onToggle={marcar}>{renderInline(day)}</CheckItem>;
+                })}
+              </ul>
+            </div>
+          ))}
+        </>
+      );
+    }
+
+    // TIPO: CLOSING
+    if (section.type === 'closing') {
+      const { paragraphs: closingParas, quote: closingQuote } = splitBodyIntoParasAndQuote(section.body);
+      return (
+        <>
+          {cabeca}
+          {closingParas.map((p, i) => <p key={i} className={m.p}>{renderInline(p)}</p>)}
+          {closingQuote && <p className={m.citacaoMenor}>“{renderInline(closingQuote)}”</p>}
+          {section.mantra && (
+            <div className={m.bloco}>
+              <span className={m.rotuloOuro} style={{ marginTop: 0 }}>Mantra</span>
+              <p className={m.h3}>{section.mantra}</p>
+              {section.signature && <p className={m.nota}>{section.signature}</p>}
+              <BotaoCompartilharStory analiseId={id} pago={hasPaid} tipo="mantra" origem="manual_mantra" className={m.btnSec} style={{ marginTop: 16 }} />
+            </div>
+          )}
+        </>
+      );
+    }
+
+    // FALLBACK: tipo desconhecido
+    return (
+      <>
+        <h2 className={m.h2}>{titulo}</h2>
+        <p className={m.nota}>Tipo de seção desconhecido: <code>{section.type}</code></p>
+      </>
+    );
+  }
+
   // ==============================================
   // RENDER PRINCIPAL
   // ==============================================
   return (
-    <div className="wrap">
-      <style jsx global>{globalCss}</style>
-
-      {/* FONTS */}
-      <link
-        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Cormorant+Garamond:wght@300;400;500;600&display=swap"
-        rel="stylesheet"
-      />
-
-      {/* ESTRELAS */}
-      <div id="stars" className="stars" />
-
+    <Pagina>
       {/* MENU — não-sticky: o palco do Olho Cósmico fica fixo na tela logo abaixo */}
       <SiteNav active="meu-mapa" sticky={false} />
 
       {/* BARRA DE PROGRESSO DE LEITURA */}
-      <div className="reading-progress-track">
-        <div className="reading-progress-fill" style={{ width: `${readProgress}%` }} />
-      </div>
+      <div className={m.progresso} aria-hidden="true"><span style={{ width: `${readProgress}%` }} /></div>
 
       {/* OLHO CÓSMICO — o céu do nascimento, só pra quem pagou */}
       {hasPaid && !gerando && <OlhoCosmicoManual row={row} />}
 
       {/* CONTEÚDO */}
-      <div className="container" id="manual">
+      <div className={m.manual} id="manual">
+        <div className={m.largura}>
 
         {/* ========== LOADING (aguardando geração IA) ========== */}
         {gerando ? (
-          <div className="center" style={{ minHeight: '70vh', padding: '40px 20px' }}>
-            <div className="spinner" style={{ width: 64, height: 64, borderWidth: 4, margin: '0 auto 24px' }} />
-            <p style={{ fontSize: 22, fontFamily: "'Cinzel', serif", fontWeight: 700, color: 'var(--text)', marginBottom: 10, textAlign: 'center' }}>
-              ✨ Estamos preparando seu manual personalizado...
+          <div className={m.centro}>
+            <div className={m.spinner} />
+            <p className={m.centroTitulo}>Estamos preparando o seu Manual…</p>
+            <p className={m.texto}>Isso leva de 30 a 60 segundos. Não feche esta página.</p>
+            <p className={m.texto} style={{ fontSize: 14 }}>
+              Você também vai receber o link de acesso por e-mail. Confira a caixa de spam caso não encontre.
             </p>
-            <p className="muted" style={{ fontSize: 17, marginBottom: 8, textAlign: 'center' }}>
-              Isso leva de 30 a 60 segundos. Não feche esta página.
-            </p>
-            <p className="muted" style={{ fontSize: 14, marginTop: 12, marginBottom: 32, textAlign: 'center' }}>
-              📩 Você também receberá o link de acesso por email. Verifique sua caixa de spam caso não encontre.
-            </p>
-            <div className="progressBar">
-              <div className="progressFill" />
-            </div>
+            <div className={m.barraGerando}><span /></div>
           </div>
         ) : (
         <>
 
-        {/* ========== HERO ========== */}
-        <div className="hero">
-          <div className="badge">
-            🔒 Manual do seu Mapa • Personalizado
-          </div>
-          <h1 className="title">
-            {firstName}, SEU PADRÃO FICOU CLARO.
-AGORA VAMOS VIRAR A CHAVE.
-          </h1>
-          <p className="subtitle">
-           Nada aqui é por acaso.
-
-Quando colocamos tudo lado a lado,
-o padrão fica claro.
-
-Este manual existe para nomear isso, 
-e mostrar como sair dele.
+        {/* ========== TOPO ========== */}
+        <header className={m.topo}>
+          <span className={m.eyebrow}>Manual do seu Mapa · personalizado</span>
+          <h1 className={m.titulo}>{firstName}, seu padrão ficou claro. <em>Agora vamos virar a chave.</em></h1>
+          <p className={m.subtitulo}>
+            Nada aqui é por acaso. Quando colocamos tudo lado a lado, o padrão fica claro.
+            Este Manual existe para nomear isso, e mostrar como sair dele.
           </p>
-
-          <div className="pills">
-            {signo && <span className="pill">♈ {signo}</span>}
-            {numero && <span className="pill">🔢 Número {numero}</span>}
-            {hasValidChoice(objetivo) && <span className="pill">🎯 {objetivo}</span>}
-          </div>
-        </div>
+          <p className={m.chips}>
+            {[signo, numero ? `Número ${numero}` : null, hasValidChoice(objetivo) ? objetivo : null].filter(Boolean).join(' · ')}
+          </p>
+        </header>
 
         {/* ========== CHEGOU DO MP, AINDA NÃO CONFIRMADO ========== */}
         {/* Nunca mostra o paywall com "Desbloquear" pra quem já pagou — só
             o estado de confirmação/timeout, até o banco confirmar. */}
         {!hasPaid && mpPaymentId && (
-          <div className="card paywall">
+          <div className={m.caixaCentro}>
             {confirmandoMp ? (
-              <div style={{ textAlign: 'center', padding: '12px 0' }}>
-                <div className="spinner" style={{ margin: '0 auto 16px' }} />
-                <h2 className="h2">Confirmando seu pagamento…</h2>
-                <p className="p">Isso leva só um instante.</p>
-              </div>
+              <>
+                <div className={m.spinner} />
+                <h2 className={m.h2}>Confirmando seu pagamento…</h2>
+                <p className={m.texto}>Isso leva só um instante.</p>
+              </>
             ) : (
-              <div style={{ textAlign: 'center', padding: '12px 0' }}>
-                <h2 className="h2">Pagamento recebido 🎉</h2>
-                <p className="p">
+              <>
+                <h2 className={m.h2}>Pagamento recebido</h2>
+                <p className={m.texto}>
                   Seu pagamento foi recebido e está sendo confirmado — isso pode levar
                   alguns minutos. Assim que for processado, seu acesso chega também
                   por e-mail.
                 </p>
-                <button
-                  className="btn"
-                  style={{ marginTop: 16 }}
-                  onClick={() => setMpConfirmRetryKey((k) => k + 1)}
-                >
+                <button className={m.btn} onClick={() => setMpConfirmRetryKey((k) => k + 1)}>
                   Verificar de novo
                 </button>
-                <p className="muted" style={{ marginTop: 12, fontSize: 13 }}>
+                <p className={m.nota}>
                   Se demorar mais do que isso,{' '}
-                  <a
-                    href={`mailto:conceptintuitive@gmail.com?subject=${encodeURIComponent('Paguei o Manual e não consegui acessar')}`}
-                    style={{ color: 'inherit', textDecoration: 'underline' }}
-                  >
+                  <a href={`mailto:conceptintuitive@gmail.com?subject=${encodeURIComponent('Paguei o Manual e não consegui acessar')}`}>
                     nos chame pelo suporte
                   </a>.
                 </p>
-              </div>
+              </>
             )}
           </div>
         )}
 
         {/* ========== PAYWALL (se não pagou, SEM vir do MP) ========== */}
         {!hasPaid && !mpPaymentId && (
-          <div className="card paywall">
-            <h2 className="h2">🔒 Acesso Bloqueado</h2>
-            <p className="p">
-              Este é o <b>Manual do seu Mapa</b>. Para liberar todo o conteúdo 
-              (amor + dinheiro + calendário + plano de 7 dias), finalize o pagamento.
+          <div className={m.caixa}>
+            <span className={m.rotulo}>Acesso bloqueado</span>
+            <h2 className={m.h2}>Este é o Manual do seu Mapa</h2>
+            <p className={m.p}>
+              Para liberar todo o conteúdo (amor + dinheiro + calendário + plano de 7 dias), finalize o pagamento.
             </p>
-
-            <div className="offer-mini">
-              <div className="offer-section">
-                <strong>✅ O que você recebe:</strong>
-              </div>
-              <ul className="list-check compact">
-                <li>✓ Análise completa do seu Signo + Número</li>
-                <li>✓ Mapeamento dos bloqueios invisíveis que te sabotam</li>
-                <li>✓ Plano de ação de 7 dias (prático e simples)</li>
-                <li>✓ Rituais rápidos (3–7 min) pro seu perfil</li>
-                <li>✓ Amor & Dinheiro (parte completa)</li>
-              </ul>
-
-              <div className="offer-section">
-                <strong>🎁 Bônus exclusivos:</strong>
-              </div>
-              <ul className="list-check compact">
-                <li>✓ Mapa do Amor (padrão afetivo real)</li>
-                <li>✓ Mapa do Dinheiro (prosperidade e bloqueios)</li>
-                <li>✓ Calendário de Poder (4 semanas)</li>
-              </ul>
-            </div>
-
-            <button 
-              className="btnBig pulse" 
-              onClick={handleComprar} 
-              disabled={processando}
-            >
+            <span className={m.rotuloOuro}>O que você recebe</span>
+            <ul className={m.lista}>
+              <li>Análise completa do seu Signo + Número</li>
+              <li>Mapeamento dos bloqueios invisíveis que te sabotam</li>
+              <li>Plano de ação de 7 dias (prático e simples)</li>
+              <li>Rituais rápidos (3–7 min) pro seu perfil</li>
+              <li>Amor e Dinheiro (parte completa)</li>
+            </ul>
+            <span className={m.rotuloOuro}>Bônus</span>
+            <ul className={m.lista}>
+              <li>Mapa do Amor (padrão afetivo real)</li>
+              <li>Mapa do Dinheiro (prosperidade e bloqueios)</li>
+              <li>Calendário de Poder (4 semanas)</li>
+            </ul>
+            <button className={m.btn} style={{ width: '100%' }} onClick={handleComprar} disabled={processando}>
               {processando ? 'Abrindo checkout…' : 'Desbloquear o Manual do seu Mapa'}
             </button>
-
-            <div className="muted" style={{ textAlign: 'center', marginTop: 12, fontSize: 13 }}>
-              Pagamento seguro • Acesso imediato • Garantia de 7 dias
-            </div>
-            <div style={{ textAlign: 'center', marginTop: 10 }}>
-              <a href={`/assinar?a=${id}&plano=anual`} style={{ color: '#f5a524', fontSize: 15 }}>
-                Ou assine o Intuitive Completo anual — o Manual vem incluso
-              </a>
-            </div>
+            <p className={m.nota} style={{ textAlign: 'center' }}>Pagamento seguro · Acesso imediato · Garantia de 7 dias</p>
+            <p className={m.nota} style={{ textAlign: 'center' }}>
+              <a href={`/assinar?a=${id}&plano=anual`}>Ou assine o Intuitive Completo anual — o Manual vem incluso</a>
+            </p>
           </div>
         )}
 
         {/* ========== CONTEÚDO PREMIUM (só mostra se pagou) ========== */}
         {hasPaid && (
           <>
-            {/* ========== ABERTURA: IMAGEM DA CARTA DO DIA ========== */}
-            {(() => {
-              const tarotSection = Array.isArray(manual?.sections)
-                ? manual.sections.find((s) => s?.type === 'tarot')
-                : null;
-              if (!tarotSection) return null;
+            {/* CONTINUAR DE ONDE PAROU */}
+            {continuarPara && (
+              <div className={m.continuar} role="status">
+                <a
+                  href={`#${continuarPara}`}
+                  className={m.continuarTexto}
+                  style={{ textDecoration: 'none' }}
+                  onClick={() => { evento('manual_continuar'); setContinuarPara(null); }}
+                >
+                  <span className={m.rotulo}>Continuar de onde parou</span>
+                  <span className={m.continuarTitulo}>{capitulos.flatMap((c) => c.secoes).find((s) => s.ancora === continuarPara)?.titulo} →</span>
+                </a>
+                <button type="button" className={m.fecharPeq} aria-label="Fechar aviso" onClick={() => setContinuarPara(null)}>✕</button>
+              </div>
+            )}
 
+            {/* ABERTURA: A CARTA DO DIA */}
+            {tarotSection && (() => {
               const c = tarotSection.carta || {};
-              const manualFirstName = row?.nome?.split(' ')[0] || '';
-
-              const fallbackText =
-                tarotSection.interpBody ||
-                (c.invertida ? c.significadoInvertido : c.significado);
-              const hookPhrase =
-                normalize(tarotSection.interpTitulo) || firstSentences(fallbackText, 1);
-
+              const fallbackText = tarotSection.interpBody || (c.invertida ? c.significadoInvertido : c.significado);
+              const hookPhrase = normalize(tarotSection.interpTitulo) || firstSentences(fallbackText, 1);
               return (
-                <>
-                  <div
-                    style={{
-                      position: 'relative',
-                      borderRadius: 20,
-                      overflow: 'hidden',
-                      marginTop: 22,
-                      aspectRatio: '1200/630',
-                      background: 'linear-gradient(135deg, #0a0118, #2d0a4e)',
-                      boxShadow: '0 20px 60px rgba(0, 0, 0, 0.35)',
-                      border: '1px solid rgba(212,168,83,0.3)',
-                    }}
-                  >
-                    <img
-                      src={row?.imagem_ia_url || `/api/og/${id}`}
-                      alt=""
-                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                    />
-                    <div
-                      style={{
-                        position: 'absolute',
-                        inset: 0,
-                        background: 'linear-gradient(to top, rgba(5,0,15,0.85) 0%, rgba(5,0,15,0.05) 55%, rgba(5,0,15,0.4) 100%)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'flex-end',
-                        padding: 22,
-                        gap: 6,
-                      }}
-                    >
-                      {manualFirstName && (
-                        <p style={{ fontFamily: 'Georgia, serif', fontSize: 20, fontWeight: 700, color: '#f0eff4', margin: 0, textAlign: 'center', textShadow: '0 2px 12px rgba(0,0,0,0.9)' }}>{manualFirstName}</p>
-                      )}
-                    </div>
+                <section className={m.abertura} aria-label="Sua carta do dia">
+                  <div className={m.cartaImg}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={row?.imagem_ia_url || `/api/og/${id}`} alt="" />
+                    <div className={m.cartaVeu}><span className={m.cartaNome}>{firstName}</span></div>
                   </div>
-
-                  {/* Interpretação completa: nome da carta + gancho + texto personalizado */}
-                  <div className="card premium" style={{ marginTop: 18, textAlign: 'center' }}>
-                    <h3
-                      style={{
-                        fontFamily: "'Cinzel', serif",
-                        fontSize: 'clamp(20px, 4vw, 28px)',
-                        fontWeight: 700,
-                        color: '#fbbf24',
-                        margin: 0,
-                        letterSpacing: '0.02em',
-                      }}
-                    >
-                      {c.simbolo ? `${c.simbolo} ` : ''}{c.nome}{c.invertida ? ' — Invertida' : ''}
-                    </h3>
-                    {hookPhrase && (
-                      <p
-                        style={{
-                          fontFamily: "'Cormorant Garamond', serif",
-                          fontSize: 19,
-                          fontStyle: 'italic',
-                          color: 'rgba(233,213,255,0.9)',
-                          margin: '10px auto 0',
-                          maxWidth: 620,
-                        }}
-                      >
-                        "{hookPhrase}"
-                      </p>
-                    )}
-                    {fallbackText && (
-                      <div className="richText" style={{ textAlign: 'left' }}>
-                        {fallbackText}
-                      </div>
-                    )}
-                  </div>
-                </>
+                  <span className={m.rotuloOuro}>Sua carta do dia · {c.nome}{c.invertida ? ' invertida' : ''}</span>
+                  {hookPhrase && <p className={m.citacao} style={{ marginTop: 10 }}>“{hookPhrase}”</p>}
+                  {fallbackText && <p className={`${m.p} ${m.pre}`}>{fallbackText}</p>}
+                </section>
               );
             })()}
 
-            {/* TOOLBAR + SUMÁRIO */}
-            <div className="card toolbar">
-              <div className="toolbarLeft">
-                <div className="toolbarTitle">📚 Navegue pelo seu manual</div>
-                <div className="muted" style={{ fontSize: 14 }}>
-                    Leia na ordem ou comece pelo que mais te chamou.
-                </div>
-              </div>
+            {/* SEU DIA (logo depois da abertura) */}
+            {blocoSeuDia('topo')}
 
-              <div className="toolbarRight">
-                <button 
-                  className="btn" 
-                  onClick={() => router.push(`/resultado/${id}`)}
-                >
-                  Voltar na página de venda
-                </button>
-                <button 
-                  className="btnMedium" 
-                  onClick={copyMarkdown} 
-                  disabled={!markdown}
-                >
-                  Copiar Manual (Markdown)
-                </button>
-              </div>
+            <div className={m.leitura}>
+              {/* ÍNDICE LATERAL (desktop) */}
+              <nav className={m.indice} aria-label="Índice do Manual">
+                <span className={m.eyebrow}>Índice</span>
+                {listaIndice()}
+              </nav>
 
-              {/* TABLE OF CONTENTS */}
-              <div className="toc">
-                {visibleSections
-                  .filter((s) => s?.title)
-                  .map((s, idx) => {
-                    const anchor = `sec_${idx}`;
-                    return (
-                      <a key={anchor} href={`#${anchor}`} className="tocItem">
-                        {s.title}
-                      </a>
-                    );
-                  })}
-              </div>
-            </div>
+              <div className={m.coluna}>
+                {capitulos.map((cap) => (
+                  <div key={cap.id} className={m.capitulo}>
+                    <p className={m.capituloRotulo}>{cap.rotulo}</p>
+                    {cap.secoes.map(({ section, ancora }) => (
+                      <Fragment key={ancora}>
+                        <section id={ancora} className={m.secao}>
+                          {secaoEl(section, ancora)}
+                          {section.type !== 'cover' && section.type !== 'toc' && (
+                            <FeedbackSecao manualId={id} secao={chaveSecao(section)} visual="ma" />
+                          )}
+                          <span data-fim-secao="" data-secao={ancora} aria-hidden="true" />
+                        </section>
 
-            {/* ========== RENDER DAS SEÇÕES ========== */}
-            {visibleSections.map((section, idx) => {
-              // Renderiza a seção como antes e, se for seção de conteúdo,
-              // anexa o feedback no fim. Capa e sumário não levam feedback.
-              const conteudo = (() => {
-                const anchor = `sec_${idx}`;
-
-
-                // TIPO: COVER
-                if (section.type === 'cover') {
-                  return (
-                    <div key={anchor} id={anchor} className="card premium">
-                      <div className="premiumTag">✨ Premium Entregue</div>
-                      <h2 className="h2">{section.title}</h2>
-                      {section.subtitle && (
-                        <div className="muted" style={{ marginTop: 6 }}>
-                          {section.subtitle}
-                        </div>
-                      )}
-                      {Array.isArray(section.meta) && section.meta.length > 0 && (
-                        <ul className="list-check compact" style={{ marginTop: 14 }}>
-                          {section.meta.map((m, i) => (
-                            <li key={i}>✓ {m}</li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  );
-                }
-
-                // TIPO: MAPA
-                if (section.type === 'mapa') {
-                  return (
-                    <div key={anchor} id={anchor} className="card premium">
-                      <h2 className="h2">{section.title}</h2>
-                      <div className="subttl" style={{ marginBottom: 10 }}>🗺 Legenda do seu mapa</div>
-                      <ul className="list-check compact">
-                        {Array.isArray(section.items) && section.items.map((item, i) => (
-                          <li key={i}>✦ {item}</li>
-                        ))}
-                      </ul>
-                      {section.sintese && (
-                        <div className="note" style={{ marginTop: 18 }}>
-                          <div className="subttl" style={{ marginBottom: 8 }}>✨ Síntese Integrada</div>
-                          <div className="richText">{section.sintese}</div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                }
-
-                // TIPO: TOC
-                if (section.type === 'toc') {
-                  return (
-                    <div key={anchor} id={anchor} className="card premium">
-                      <h2 className="h2">{section.title}</h2>
-                      <ul className="list-check">
-                        {Array.isArray(section.items) && 
-                          section.items.map((item, i) => (
-                            <li key={i}>✓ {item}</li>
-                          ))}
-                      </ul>
-                    </div>
-                  );
-                }
-
-                // TIPO: PREPARANDO (IA ainda gerando essa seção)
-                if (section.type === 'preparando') {
-                  return (
-                    <div key={anchor} id={anchor} className="card">
-                      <h2 className="h2">{section.title}</h2>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '8px 0' }}>
-                        <div className="spinner" style={{ width: 28, height: 28, flexShrink: 0 }} />
-                        <p className="p" style={{ margin: 0 }}>Preparando essa parte do seu Manual…</p>
-                      </div>
-                    </div>
-                  );
-                }
-
-                // TIPO: TEXT
-                if (section.type === 'text') {
-                  const { paragraphs, quote } = splitBodyIntoParasAndQuote(section.body);
-                  const ehPontoCego = String(section.title ?? '').trim().toLowerCase() === 'ponto cego';
-                  return (
-                    <SecaoColapsavel
-                      key={anchor} anchor={anchor} title={section.title} destaque={destaqueFrase(section.body)}
-                      extra={ehPontoCego ? (
-                        <BotaoCompartilharStory
-                          analiseId={id} pago={hasPaid} tipo="ponto_cego" origem="manual_ponto_cego"
-                          style={{ marginTop: 0, marginBottom: 16, fontSize: 15, padding: '10px 20px' }}
-                        />
-                      ) : null}
-                    >
-                      {paragraphs.map((p, i) => (
-                        <p key={i} className="richText-p">{renderInline(p)}</p>
-                      ))}
-                      {quote && <blockquote className="pullQuote">"{renderInline(quote)}"</blockquote>}
-                    </SecaoColapsavel>
-                  );
-                }
-
-                // TIPO: DIAGNÓSTICO (blocos com subtítulo + pull-quote)
-                if (section.type === 'diagnostico') {
-                  return (
-                    <SecaoColapsavel key={anchor} anchor={anchor} title={section.title} destaque={destaqueFrase(section.blocks?.[0]?.text)}>
-                      {Array.isArray(section.blocks) && section.blocks.map((b, i) => (
-                        <div key={i} className="diag-block">
-                          <div className="diag-block-label">{b.label}</div>
-                          {splitBodyIntoParasAndQuote(b.text).paragraphs.map((p, j) => (
-                            <p key={j} className="richText-p">{renderInline(p)}</p>
-                          ))}
-                          <ListenButton text={buildDiagBlockNarration(b)} label="Ouvir este bloco" />
-                        </div>
-                      ))}
-                      {section.quote && <blockquote className="pullQuote">"{renderInline(section.quote)}"</blockquote>}
-                    </SecaoColapsavel>
-                  );
-                }
-
-                // TIPO: ARQUÉTIPOS (cards)
-                if (section.type === 'archetypes') {
-                  const primeiro = section.items?.[0];
-                  const destaque = primeiro?.frase || destaqueFrase(primeiro?.descricao);
-                  return (
-                    <SecaoColapsavel key={anchor} anchor={anchor} title={section.title} destaque={destaque}>
-                      {Array.isArray(section.items) && section.items.map((it, i) => (
-                        <div key={i} className="subcard archetype-card">
-                          <div className="subttl">{it.icon} {it.label} — {it.nome}</div>
-                          <p className="richText-p" style={{ marginTop: 8 }}>{renderInline(it.descricao)}</p>
-                          {it.frase && <blockquote className="pullQuote small">"{renderInline(it.frase)}"</blockquote>}
-                          <ListenButton text={buildArchetypeNarration(it)} label="Ouvir este arquétipo" />
-                        </div>
-                      ))}
-                    </SecaoColapsavel>
-                  );
-                }
-
-                // TIPO: RITUAIS (cards com passos numerados e checkbox de prática)
-                if (section.type === 'rituals') {
-                  const primeiroRitual = section.items?.[0];
-                  const destaqueRitual = primeiroRitual?.frase || (primeiroRitual?.nome ? `Ritual: ${primeiroRitual.nome}` : '');
-                  return (
-                    <SecaoColapsavel key={anchor} anchor={anchor} title={section.title} destaque={destaqueRitual}>
-                      {Array.isArray(section.items) && section.items.map((r, i) => {
-                        const ck = `rituals_${i}`;
-                        return (
-                          <div key={i} className="subcard ritual-card">
-                            <div className="subttl">🕯️ Ritual {i + 1} — {r.nome}</div>
-                            {r.quando && <div className="muted" style={{ marginTop: 6 }}>Quando usar: {renderInline(r.quando)}</div>}
-                            {Array.isArray(r.passos) && r.passos.length > 0 && (
-                              <ol className="ritual-steps">
-                                {r.passos.map((p, j) => <li key={j}>{renderInline(p)}</li>)}
-                              </ol>
-                            )}
-                            {r.frase && <blockquote className="pullQuote small">"{renderInline(r.frase)}"</blockquote>}
-                            <ListenButton text={buildRitualNarration(r)} label="Ouvir este ritual guiado" />
-                            <ul className="list-check compact" style={{ marginTop: 6 }}>
-                              <CheckItem itemKey={ck} checked={!!checks[ck]} onToggle={toggleCheck}>
-                                Já pratiquei este ritual
-                              </CheckItem>
-                            </ul>
-                          </div>
-                        );
-                      })}
-                    </SecaoColapsavel>
-                  );
-                }
-
-                // TIPO: BULLETS
-                if (section.type === 'bullets') {
-                  const destaqueBullets = section.note ? destaqueFrase(section.note) : destaqueFrase(section.items?.[0]);
-                  return (
-                    <SecaoColapsavel key={anchor} anchor={anchor} title={section.title} destaque={destaqueBullets}>
-                      {section.note && <div className="note">{section.note}</div>}
-                      <ul className="list-check">
-                        {Array.isArray(section.items) &&
-                          section.items.map((item, i) => (
-                            <li key={i}>✓ {renderInline(item)}</li>
-                          ))}
-                      </ul>
-                    </SecaoColapsavel>
-                  );
-                }
-
-                // TIPO: PLAN7
-                if (section.type === 'plan7') {
-                  return (
-                    <div key={anchor} id={anchor} className="card premium">
-                      <h2 className="h2">{section.title}</h2>
-                      <div className="note-solution">
-                        <b>{section.headline}</b>
-                        <div style={{ marginTop: 10 }}>{section.hook}</div>
-                      </div>
-
-                      <div style={{ marginTop: 14 }}>
-                        <div className="subttl">📍 Passo a passo (7 dias)</div>
-                        <ul className="list-check compact" style={{ marginTop: 8 }}>
-                          {Array.isArray(section.days) &&
-                            section.days.map((day, i) => {
-                              const ck = `plan7_${i}`;
-                              return (
-                                <CheckItem key={i} itemKey={ck} checked={!!checks[ck]} onToggle={toggleCheck}>
-                                  {renderInline(day)}
-                                </CheckItem>
-                              );
-                            })}
-                        </ul>
-                      </div>
-                    </div>
-                  );
-                }
-
-                // TIPO: LOVE
-                if (section.type === 'love') {
-  if (process.env.NODE_ENV === 'development') {
-    console.log('pattern raw:', JSON.stringify(section.pattern));
-  }
-
-  return (
-    <Fragment key={anchor}>
-    <SecaoColapsavel anchor={anchor} title={section.title} destaque={destaqueFrase(section.pattern)}>
-      <div className="note noteLove">
-        <b>{section.headline}</b>
-
-<div style={{ marginTop: 12, fontSize: 19, lineHeight: 1.95, whiteSpace: 'pre-wrap' }}>
-  {String(section.pattern || '')
-    .replace(/\r\n/g, '\n')
-    .replace(/\*\*/g, '')
-    .replace(/\*/g, '')}
-</div>
-      </div>
-
-                      <div className="grid2" style={{ marginTop: 14 }}>
-                        <div className="subcard danger">
-                          <div className="subttl">🚫 Pare de fazer isso</div>
-                          <ul className="list-check compact">
-                            {Array.isArray(section.whatToStop) &&
-                              section.whatToStop.map((item, i) => (
-                                <li key={i}>✓ {item}</li>
-                              ))}
-                          </ul>
-                        </div>
-
-                        <div className="subcard highlight">
-                          <div className="subttl">✅ Comece a fazer isso</div>
-                          <ul className="list-check compact">
-                            {Array.isArray(section.whatToStart) &&
-                              section.whatToStart.map((item, i) => (
-                                <li key={i}>✓ {item}</li>
-                              ))}
-                          </ul>
-                        </div>
-                      </div>
-
-                      <div className="note-mantra" style={{ marginTop: 14 }}>
-                        <b>Frases prontas (sem joguinho):</b>
-                        <div style={{ marginTop: 10, textAlign: 'left' }}>
-                          <ul className="list-check compact">
-                            {Array.isArray(section.microScript) &&
-                              section.microScript.map((script, i) => (
-                                <li key={i}>✓ {script}</li>
-                              ))}
-                          </ul>
-                        </div>
-                      </div>
-                    </SecaoColapsavel>
-
-                    {/* ========== COMPATIBILIDADE ASTRAL (5 pontos) ========== */}
-                    {row && (
-                      <div className="card premium" id="compatibilidade-astral">
-                        <h2 className="h2">Compatibilidade Astral</h2>
-                        <p className="richText-p" style={{ marginTop: 4, marginBottom: 4 }}>
-                          Com quem cada parte do seu mapa combina — calculado a partir do seu Sol, Lua, Ascendente, Vênus e Marte.
-                        </p>
-                        {[
-                          { chave: 'signo',            rotulo: 'Sol · Identidade' },
-                          { chave: 'signo_lua',        rotulo: 'Lua · Emoção' },
-                          { chave: 'signo_ascendente', rotulo: 'Ascendente · Máscara social' },
-                          { chave: 'signo_venus',      rotulo: 'Vênus · Amor' },
-                          { chave: 'signo_marte',      rotulo: 'Marte · Ação' },
-                        ].map(({ chave, rotulo }) => {
-                          const signoPonto = row[chave];
-                          if (!signoPonto) return null;
-                          const matches = getTopMatches(signoPonto, 3);
-                          if (!matches.length) return null;
-                          return (
-                            <div key={chave} className="diag-block">
-                              <div className="diag-block-label">{rotulo} — {signoPonto}</div>
-                              {matches.map((m) => (
-                                <div key={m.signo.nome} className="compat-match">
-                                  <div className="compat-match-top">
-                                    <span className="compat-match-name">{m.signo.simbolo} {m.signo.nome}</span>
-                                    <span className="compat-match-score">{m.score}%</span>
-                                  </div>
-                                  <div className="compat-track">
-                                    <div className="compat-fill" style={{ width: `${m.score}%` }} />
-                                  </div>
-                                  <p className="compat-match-text">{m.headline}</p>
-                                </div>
-                              ))}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-
-                    {/* ========== BÔNUS GRÁTIS — COMPATIBILIDADE COMPLETA ========== */}
-                    {row && (
-                      <div className="card premium" id="compatibilidade-completa">
-                        <div className="tier2-bonus-tag">🎁 Bônus Grátis</div>
-                        <h2 className="h2">💞 Compatibilidade Completa</h2>
-                        <p className="richText-p" style={{ marginTop: 4, marginBottom: 12 }}>
-                          Cruze seu mapa de verdade com o de outra pessoa específica — Sol, Lua, Vênus e Marte
-                          dos dois, ponto a ponto. Diferente da compatibilidade genérica acima.
-                        </p>
-                        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                          <input
-                            type="text"
-                            placeholder="Nome da pessoa"
-                            value={pessoa2Nome}
-                            onChange={(e) => setPessoa2Nome(e.target.value)}
-                            style={{ flex: 1, minWidth: 160, padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border-strong, rgba(216,180,254,0.3))', background: 'rgba(255,255,255,0.03)', color: 'var(--text)', fontFamily: 'inherit', fontSize: 15 }}
-                          />
-                          <input
-                            type="date"
-                            value={pessoa2Data}
-                            onChange={(e) => setPessoa2Data(e.target.value)}
-                            style={{ flex: 1, minWidth: 140, padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border-strong, rgba(216,180,254,0.3))', background: 'rgba(255,255,255,0.03)', color: 'var(--text)', fontFamily: 'inherit', fontSize: 15 }}
-                          />
-                        </div>
-
-                        {compatResultado && compatResultado.eixos.length > 0 && (
+                        {/* Amor: compatibilidade astral (5 pontos) + Compatibilidade Completa grátis */}
+                        {section.type === 'love' && (
                           <>
-                            <p className="richText-p" style={{ marginTop: 16, marginBottom: 4 }}>
-                              Com <strong>{pessoa2Nome}</strong> — compatibilidade geral: <strong>{compatResultado.scoreGeral}%</strong>
-                            </p>
-                            {compatResultado.eixos.map((e) => (
-                              <div key={e.chave} className="subcard highlight" style={{ marginTop: 12 }}>
-                                <div className="subttl">{e.emoji} {e.rotulo} — {e.score}%</div>
-                                <p className="richText-p" style={{ margin: '6px 0 4px' }}><strong>{e.headline}</strong></p>
-                                <p className="richText-p" style={{ margin: 0 }}>{e.corpo}</p>
+                            <section className={m.secao} id="compatibilidade-astral">
+                              <h2 className={m.h2}>Compatibilidade Astral</h2>
+                              <p className={m.p}>Com quem cada parte do seu mapa combina — calculado a partir do seu Sol, Lua, Ascendente, Vênus e Marte.</p>
+                              {[
+                                { chave: 'signo',            rotulo: 'Sol · Identidade' },
+                                { chave: 'signo_lua',        rotulo: 'Lua · Emoção' },
+                                { chave: 'signo_ascendente', rotulo: 'Ascendente · Máscara social' },
+                                { chave: 'signo_venus',      rotulo: 'Vênus · Amor' },
+                                { chave: 'signo_marte',      rotulo: 'Marte · Ação' },
+                              ].map(({ chave, rotulo }) => {
+                                const signoPonto = row[chave];
+                                if (!signoPonto) return null;
+                                const matches = getTopMatches(signoPonto, 3);
+                                if (!matches.length) return null;
+                                return (
+                                  <div key={chave} className={m.bloco}>
+                                    <span className={m.rotuloOuro} style={{ marginTop: 0 }}>{rotulo} · {signoPonto}</span>
+                                    {matches.map((mt) => (
+                                      <div key={mt.signo.nome} className={m.compat}>
+                                        <div className={m.compatTopo}><span>{mt.signo.nome}</span><span className={m.compatScore}>{mt.score}%</span></div>
+                                        <div className={m.compatTrilho}><span style={{ width: `${mt.score}%` }} /></div>
+                                        <p className={m.compatTexto}>{mt.headline}</p>
+                                      </div>
+                                    ))}
+                                  </div>
+                                );
+                              })}
+                            </section>
+
+                            <section className={m.secao} id="compatibilidade-completa">
+                              <span className={m.selo}>Bônus grátis</span>
+                              <h2 className={m.h2}>Compatibilidade Completa</h2>
+                              <p className={m.p}>
+                                Cruze seu mapa de verdade com o de outra pessoa específica — Sol, Lua, Vênus e Marte
+                                dos dois, ponto a ponto. Diferente da compatibilidade genérica acima.
+                              </p>
+                              <div className={m.campos}>
+                                <input type="text" className={m.campo} placeholder="Nome da pessoa" value={pessoa2Nome} onChange={(e) => setPessoa2Nome(e.target.value)} />
+                                <input type="date" className={m.campo} value={pessoa2Data} onChange={(e) => setPessoa2Data(e.target.value)} />
                               </div>
-                            ))}
+                              {compatResultado && compatResultado.eixos.length > 0 && (
+                                <>
+                                  <p className={m.p}>Com <strong>{pessoa2Nome}</strong> — compatibilidade geral: <strong>{compatResultado.scoreGeral}%</strong></p>
+                                  {compatResultado.eixos.map((e) => (
+                                    <div key={e.chave} className={m.bloco}>
+                                      <span className={m.rotuloOuro} style={{ marginTop: 0 }}>{e.rotulo} · {e.score}%</span>
+                                      <p className={m.h3}>{e.headline}</p>
+                                      <p className={m.p}>{e.corpo}</p>
+                                    </div>
+                                  ))}
+                                </>
+                              )}
+                            </section>
                           </>
                         )}
-                      </div>
-                    )}
-                    </Fragment>
-                  );
-                }
-
-                // TIPO: MONEY
-                if (section.type === 'money') {
-                  return (
-                    <SecaoColapsavel key={anchor} anchor={anchor} title={section.title} destaque={destaqueFrase(section.headline)}>
-                      <div className="note">
-                        <b>{section.headline}</b>
-                      </div>
-
-                      <div className="grid2" style={{ marginTop: 14 }}>
-                        <div className="subcard danger">
-                          <div className="subttl">⛔ Bloqueios</div>
-                          <ul className="list-check compact">
-                            {Array.isArray(section.blocks) && 
-                              section.blocks.map((block, i) => (
-                                <li key={i}>✓ {block}</li>
-                              ))}
-                          </ul>
-                        </div>
-
-                        <div className="subcard highlight">
-                          <div className="subttl">🚀 Ações práticas</div>
-                          <ul className="list-check compact">
-                            {Array.isArray(section.actions) && 
-                              section.actions.map((action, i) => (
-                                <li key={i}>✓ {action}</li>
-                              ))}
-                          </ul>
-
-                          <div className="subttl" style={{ marginTop: 12 }}>
-                            ⚡ Micro-hábitos
-                          </div>
-                          <ul className="list-check compact">
-                            {Array.isArray(section.microHabits) && 
-                              section.microHabits.map((habit, i) => (
-                                <li key={i}>✓ {habit}</li>
-                              ))}
-                          </ul>
-                        </div>
-                      </div>
-                    </SecaoColapsavel>
-                  );
-                }
-
-                // TIPO: CALENDAR30
-                if (section.type === 'calendar30') {
-                  const diasDoCalendario = (Array.isArray(section.weeks) ? section.weeks : [])
-                    .flatMap((week, i) => (Array.isArray(week.days) ? week.days.map((_, j) => `calendar30_w${i}d${j}`) : []));
-                  const totalDias = diasDoCalendario.length;
-                  const diasFeitos = diasDoCalendario.filter((ck) => checks[ck]).length;
-                  const progressoPct = totalDias > 0 ? Math.round((diasFeitos / totalDias) * 100) : 0;
-
-                  return (
-                    <div key={anchor} id={anchor} className="card premium">
-                      <h2 className="h2">{section.title}</h2>
-
-                      {totalDias > 0 && (
-                        <div className="calendar-progress">
-                          <div className="calendar-progress-row">
-                            <span className="calendar-progress-label">{diasFeitos} de {totalDias}</span>
-                            <span className="calendar-progress-pct">{progressoPct}%</span>
-                          </div>
-                          <div className="calendar-progress-track">
-                            <div className="calendar-progress-fill" style={{ width: `${progressoPct}%` }} />
-                          </div>
-                        </div>
-                      )}
-
-                      {Array.isArray(section.weeks) &&
-                        section.weeks.map((week, i) => (
-                          <div key={i} className="subcard" style={{ marginTop: 12 }}>
-                            <div className="subttl">{week.week}</div>
-                            <div className="muted" style={{ marginTop: 6 }}>
-                              <b>{week.focus}</b>
-                            </div>
-                            <ul className="list-check compact" style={{ marginTop: 10 }}>
-                              {Array.isArray(week.days) &&
-                                week.days.map((day, j) => {
-                                  const ck = `calendar30_w${i}d${j}`;
-                                  return (
-                                    <CheckItem key={j} itemKey={ck} checked={!!checks[ck]} onToggle={toggleCheck}>
-                                      {renderInline(day)}
-                                    </CheckItem>
-                                  );
-                                })}
-                            </ul>
-                          </div>
-                        ))}
-                    </div>
-                  );
-                }
-
-                // TIPO: CLOSING
-                if (section.type === 'closing') {
-                  const { paragraphs: closingParas, quote: closingQuote } = splitBodyIntoParasAndQuote(section.body);
-                  return (
-                    <div key={anchor} id={anchor} className="card premium closing">
-                      <h2 className="h2">{section.title}</h2>
-                      {closingParas.map((p, i) => (
-                        <p key={i} className="richText-p">{renderInline(p)}</p>
-                      ))}
-                      {closingQuote && <blockquote className="pullQuote">"{renderInline(closingQuote)}"</blockquote>}
-
-                      {section.mantra && (
-                        <div className="note-mantra" style={{ marginTop: 14 }}>
-                          <b>Mantra:</b> {section.mantra}
-                          {section.signature && (
-                            <div style={{ marginTop: 10 }}>{section.signature}</div>
-                          )}
-                          <BotaoCompartilharStory
-                            analiseId={id} pago={hasPaid} tipo="mantra" origem="manual_mantra"
-                            style={{ marginTop: 16, marginBottom: 0, fontSize: 15, padding: '10px 20px' }}
-                          />
-                        </div>
-                      )}
-
-                      <button 
-                        className="btnBig pulse" 
-                        onClick={copyMarkdown} 
-                        disabled={!markdown} 
-                        style={{ marginTop: 14 }}
-                      >
-                        Copiar Manual (Markdown)
-                      </button>
-                    </div>
-                  );
-                }
-
-                // FALLBACK: tipo desconhecido
-                return (
-                  <div key={anchor} id={anchor} className="card premium">
-                    <h2 className="h2">{section.title || 'Seção'}</h2>
-                    <div className="muted">
-                      Tipo de seção desconhecido: <code>{section.type}</code>
-                    </div>
+                      </Fragment>
+                    ))}
                   </div>
-                );
-              })();
+                ))}
 
-              if (!conteudo || section.type === 'cover' || section.type === 'toc') return conteudo;
-              return (
-                <Fragment key={`sec_${idx}`}>
-                  {conteudo}
-                  <FeedbackSecao manualId={id} secao={chaveSecao(section)} />
-                </Fragment>
-              );
-            })}
-
-            {/* ========== FIM DO MANUAL: CARD DE STORY ========== */}
-            <div className="card premium" style={{ textAlign: 'center' }}>
-              <h2 className="h2">Leve seu número pro story</h2>
-              <p className="muted" style={{ marginTop: 6 }}>
-                Um card só com seu número de vida, seu arquétipo e uma frase do seu mapa. Nenhum dado pessoal.
-              </p>
-              <BotaoCompartilharStory analiseId={id} pago={hasPaid} numero={row?.numero_vida} origem="manual" />
+                {/* FIM DO MANUAL: CARD DE STORY */}
+                <section className={m.secao}>
+                  <span className={m.rotulo}>Compartilhar</span>
+                  <h2 className={m.h2}>Leve seu número pro story</h2>
+                  <p className={m.p}>Um card só com seu número de vida, seu arquétipo e uma frase do seu mapa. Nenhum dado pessoal.</p>
+                  <BotaoCompartilharStory analiseId={id} pago={hasPaid} numero={row?.numero_vida} origem="manual" className={m.btnSec} style={{ marginTop: 16 }} />
+                </section>
+              </div>
             </div>
+
+            {/* SEU DIA (no fim) */}
+            {blocoSeuDia('fim')}
           </>
         )}
-        {/* ========== TIER 2 — PROJEÇÃO DE 12 MESES (upsell R$97) ========== */}
+
+        {/* COMPLEMENTOS: Projeção de 12 Meses e Human Design (compra ou conteúdo) */}
         {row && (
-          <div className="card premium" id="projecao-12-meses">
-            {row.tier2_payment_status === 'paid' && (
-              <div className="tier2-bonus-tag">🎁 Bônus Desbloqueado</div>
-            )}
-            <h2 className="h2">🔮 Projeção dos Próximos 12 Meses</h2>
-
-            {row.tier2_payment_status === 'paid' ? (
-              <>
-                <p className="richText-p" style={{ marginTop: 4, marginBottom: 18 }}>
-                  Seu Ano Pessoal e Mês Pessoal, mês a mês, a partir de agora — com o que cada
-                  ciclo favorece, o que pede cuidado, e espaço pra marcar o que já foi vivido.
-                </p>
-                {gerarProjecao12Meses(row.data_nascimento).map((m, i) => {
-                  const ck = `tier2_mes_${m.ano}_${m.mes}`;
-                  return (
-                    <div key={`${m.ano}-${m.mes}`} className="mes-card">
-                      <div className="mes-card-header">
-                        <div>
-                          <div className="mes-card-label">
-                            {m.label} {i === 0 && <span className="mes-card-agora">📍 mês atual</span>}
-                          </div>
-                          <div className="mes-card-title">{m.titulo} <span className="mes-card-numero">— Mês Pessoal {m.mesPessoal}</span></div>
-                        </div>
-                        <ListenButton text={buildProjecaoMesNarration(m)} label="Ouvir" pauseLabel="Pausar" />
-                      </div>
-
-                      <p className="richText-p" style={{ marginTop: 10 }}>{m.texto}</p>
-
-                      <div className="grid2" style={{ marginTop: 12 }}>
-                        <div className="subcard highlight">
-                          <div className="subttl">✅ O que favorece</div>
-                          <ul className="list-check compact">
-                            {m.foco.map((f, fi) => <li key={fi}>✓ {f}</li>)}
-                          </ul>
-                        </div>
-                        <div className="subcard danger">
-                          <div className="subttl">⚠️ Cuidado com</div>
-                          <ul className="list-check compact">
-                            {m.atencao.map((a, ai) => <li key={ai}>✓ {a}</li>)}
-                          </ul>
-                        </div>
-                      </div>
-
-                      <ul className="list-check compact" style={{ marginTop: 10 }}>
-                        <CheckItem itemKey={ck} checked={!!checks[ck]} onToggle={toggleCheck}>
-                          Já vivenciei este mês
-                        </CheckItem>
-                      </ul>
-                    </div>
-                  );
-                })}
-              </>
-            ) : (
-              <div className="offer-mini">
-                <p className="p">
-                  Além do seu diagnóstico atual, dá pra saber o que cada um dos próximos 12 meses
-                  pede de você — mês a mês, com o Ano Pessoal e o Mês Pessoal calculados a partir
-                  da sua data de nascimento.
-                </p>
-                <ul className="list-check compact">
-                  <li>✓ 12 meses, um por um, a partir de hoje</li>
-                  <li>✓ Vira o ano com você — sem "esquecer" de recalcular</li>
-                  <li>✓ Tema prático de cada mês (o que favorece, o que evitar)</li>
-                </ul>
-                {row.hd_payment_status !== 'paid' && (
-                  <ComboUpsellToggle
-                    label="o Mapa de Human Design"
-                    checked={comboProjecao}
-                    onChange={setComboProjecao}
-                  />
-                )}
-                <button
-                  className="btnMedium pulse"
-                  onClick={() => handleComprarUpsell('projecao12m', comboProjecao)}
-                  disabled={processandoUpsell}
-                  style={{ marginTop: 10 }}
-                >
-                  {processandoUpsell
-                    ? 'Abrindo…'
-                    : comboProjecao
-                    ? `Desbloquear os dois — R$ ${PRECO_BONUS_COMBO}`
-                    : `Desbloquear a Projeção de 12 meses — R$ ${PRECO_BONUS_AVULSO}`}
-                </button>
-              </div>
-            )}
+          <div className={m.coluna} style={{ marginTop: 40 }}>
+            <Complementos row={row} id={id} checks={checks} toggleCheck={toggleCheck} />
           </div>
         )}
-
-        {/* ========== UPSELL — MAPA DE HUMAN DESIGN ========== */}
-        {row && (() => {
-          const hd = calcularHumanDesign(row.data_nascimento, row.hora_nascimento, offsetSalvo(row) ?? -3);
-          if (!hd) return null;
-          const tipoInfo = TIPO_DESCRICAO[hd.tipo];
-          const autoridadeInfo = AUTORIDADE_DESCRICAO[hd.autoridade];
-          const integracao = gerarIntegracaoHumanDesign({
-            tipo: hd.tipo,
-            signo: row.signo,
-            numeroVida: row.numero_vida,
-            objetivoPrincipal: row.objetivo_principal,
-          });
-          return (
-            <div className="card premium" id="human-design">
-              {row.hd_payment_status === 'paid' && (
-                <div className="tier2-bonus-tag">🎁 Bônus Desbloqueado</div>
-              )}
-              <h2 className="h2">🧬 Mapa de Human Design</h2>
-
-              {row.hd_payment_status === 'paid' ? (
-                <>
-                  <div className="mes-card">
-                    <div className="mes-card-header">
-                      <div>
-                        <div className="mes-card-label">Tipo · Autoridade · Perfil</div>
-                        <div className="mes-card-title">
-                          {tipoInfo?.titulo ?? hd.tipo} <span className="mes-card-numero">— Perfil {hd.perfil}</span>
-                        </div>
-                      </div>
-                      <ListenButton text={narracaoHumanDesign(hd)} label="Ouvir" pauseLabel="Pausar" />
-                    </div>
-
-                    <p className="richText-p" style={{ marginTop: 10 }}>{tipoInfo?.texto}</p>
-                    <div className="subcard highlight" style={{ marginTop: 12 }}>
-                      <div className="subttl">Como agir</div>
-                      <p className="richText-p" style={{ margin: 0 }}>{tipoInfo?.comoAgir}</p>
-                    </div>
-
-                    <p className="richText-p" style={{ marginTop: 16 }}>
-                      <strong>Autoridade: {autoridadeInfo?.titulo ?? hd.autoridade}.</strong> {autoridadeInfo?.texto}
-                    </p>
-                    <div className="subcard highlight" style={{ marginTop: 12 }}>
-                      <div className="subttl">Como decidir</div>
-                      <p className="richText-p" style={{ margin: 0 }}>{autoridadeInfo?.comoAgir}</p>
-                    </div>
-
-                    <div className="grid2" style={{ marginTop: 16 }}>
-                      <div className="subcard highlight">
-                        <div className="subttl">✅ Centros definidos</div>
-                        <ul className="list-check compact">
-                          {hd.centrosDefinidos.length ? (
-                            hd.centrosDefinidos.map((c) => <li key={c}>✓ {CENTRO_NOME_AMIGAVEL[c]}</li>)
-                          ) : (
-                            <li>Nenhum — mapa de Refletor</li>
-                          )}
-                        </ul>
-                      </div>
-                      <div className="subcard">
-                        <div className="subttl">〰️ Centros abertos</div>
-                        <ul className="list-check compact">
-                          {hd.centrosIndefinidos.map((c) => <li key={c}>· {CENTRO_NOME_AMIGAVEL[c]}</li>)}
-                        </ul>
-                      </div>
-                    </div>
-
-                    {hd.canaisDefinidos.length > 0 && (
-                      <div className="subcard" style={{ marginTop: 12 }}>
-                        <div className="subttl">Canais definidos</div>
-                        <p className="richText-p" style={{ margin: 0 }}>
-                          {hd.canaisDefinidos.map((c) => `${c[0]}-${c[1]}`).join(' · ')}
-                        </p>
-                      </div>
-                    )}
-
-                    {integracao?.textoIntegracao && (
-                      <div className="subcard" style={{ marginTop: 12 }}>
-                        <div className="subttl">🧩 Seu Human Design + seu mapa</div>
-                        <p className="richText-p" style={{ margin: 0 }}>{integracao.textoIntegracao}</p>
-                      </div>
-                    )}
-
-                    {integracao?.planoAcao?.length > 0 && (
-                      <div className="subcard highlight" style={{ marginTop: 12 }}>
-                        <div className="subttl">🎯 Pra {row.objetivo_principal}</div>
-                        <ul className="list-check compact">
-                          {integracao.planoAcao.map((a, ai) => <li key={ai}>✓ {a}</li>)}
-                        </ul>
-                      </div>
-                    )}
-
-                    <p className="muted" style={{ marginTop: 14, marginBottom: 0, fontSize: 12 }}>
-                      {hd.avisoPrecisao}
-                    </p>
-                  </div>
-                </>
-              ) : (
-                <div className="offer-mini">
-                  <p className="p">
-                    Além do seu diagnóstico numerológico e astrológico, existe um outro sistema —
-                    o Human Design — que cruza sua data, hora e local de nascimento pra revelar como
-                    sua energia funciona de verdade: seu Tipo, sua Autoridade (como tomar decisões
-                    certas) e seu Perfil.
-                  </p>
-                  <ul className="list-check compact">
-                    <li>✓ Seu Tipo energético (Gerador, Manifestador, Projetor...)</li>
-                    <li>✓ Sua Autoridade — a forma mais confiável de decidir</li>
-                    <li>✓ Seu Perfil e os centros definidos do seu mapa</li>
-                  </ul>
-                  {row.tier2_payment_status !== 'paid' && (
-                    <ComboUpsellToggle
-                      label="a Projeção de 12 Meses"
-                      checked={comboHumanDesign}
-                      onChange={setComboHumanDesign}
-                    />
-                  )}
-                  <button
-                    className="btnMedium pulse"
-                    onClick={() => handleComprarUpsell('humandesign', comboHumanDesign)}
-                    disabled={processandoUpsell}
-                    style={{ marginTop: 10 }}
-                  >
-                    {processandoUpsell
-                      ? 'Abrindo…'
-                      : comboHumanDesign
-                      ? `Desbloquear os dois — R$ ${PRECO_BONUS_COMBO}`
-                      : `Desbloquear o Human Design — R$ ${PRECO_BONUS_AVULSO}`}
-                  </button>
-                </div>
-              )}
-            </div>
-          );
-        })()}
 
         {/* FOOTER */}
-        <div className="footer-note">
-          <div className="muted">
-            Precisa de ajuda? Email: <strong>conceptintuitive@gmail.com</strong>
-          </div>
-        </div>
+        <footer className={m.fim}>
+          <p>Precisa de ajuda? <strong>conceptintuitive@gmail.com</strong></p>
+        </footer>
         </>
         )}
+        </div>
       </div>
 
-      {/* ══ ASSISTENTE DE IA — livre (com teto diário) pra quem já comprou ══ */}
+      {/* ÍNDICE NO CELULAR */}
+      {hasPaid && !gerando && capitulos.length > 0 && noConteudo && (
+        <>
+          <button type="button" className={m.botaoIndice} onClick={() => { setIndiceAberto(true); evento('manual_indice_abrir'); }}>Índice</button>
+          {indiceAberto && (
+            <>
+              <div className={m.folhaFundo} onClick={() => setIndiceAberto(false)} />
+              <nav className={m.folha} aria-label="Índice do Manual">
+                <div className={m.folhaTopo}>
+                  <span className={m.eyebrow}>Índice</span>
+                  <button type="button" className={m.fecharPeq} aria-label="Fechar índice" onClick={() => setIndiceAberto(false)}>✕</button>
+                </div>
+                {listaIndice(() => setIndiceAberto(false))}
+              </nav>
+            </>
+          )}
+        </>
+      )}
+
+      {/* ASSISTENTE DE IA — livre (com teto diário) pra quem já comprou */}
       {hasPaid && <ChatAssistente analiseId={id} isPaid firstName={firstName} autoOpen={abrirChat} />}
-    </div>
+    </Pagina>
   );
 }
-
-// ==============================================
-// CSS GLOBAL
-// ==============================================
-const globalCss = `
-  :root {
-    --bg1: #0a0118;
-    --bg2: #1a0933;
-    --primary: #ec4899;
-    --secondary: #8b5cf6;
-    --success: #10b981;
-    --danger: #ef4444;
-    --warning: #f59e0b;
-    --text: #faf5ff;
-    --muted: rgba(233, 213, 255, 0.8);
-    --card: rgba(17, 7, 32, 0.6);
-    --border: rgba(216, 180, 254, 0.15);
-  }
-
-  * { 
-    box-sizing: border-box; 
-    margin: 0; 
-    padding: 0; 
-  }
-  
-  html, body {
-    max-width: 100%;
-    overflow-x: hidden;
-  }
-
-  html {
-    scroll-behavior: smooth;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    html {
-      scroll-behavior: auto;
-    }
-  }
-
-  body {
-    font-family: 'Cormorant Garamond', serif;
-    color: var(--text);
-    background: linear-gradient(135deg, var(--bg1) 0%, var(--bg2) 50%, var(--bg1) 100%);
-    line-height: 1.65;
-  }
-
-  .wrap { 
-    min-height: 100vh; 
-    position: relative; 
-  }
-
-  .container {
-    max-width: 980px;
-    margin: 0 auto;
-    padding: 20px 16px 70px;
-    position: relative;
-    z-index: 5;
-  }
-
-  /* O FAB do Oráculo (ChatAssistente.js, .chat-fab) é fixed no canto inferior
-     direito — em mobile sobe pra bottom:92px por causa da barra de CTA do
-     /resultado, então aqui no Manual fica ainda mais perto do fim da tela.
-     56px de botão + 92px de offset ≈ 150px: dá folga pro conteúdo (e o
-     "Ler mais" dos cards) nunca ficar embaixo dele. */
-  @media (max-width: 767px) {
-    .container { padding-bottom: 180px; }
-  }
-
-  /* ========== STARS ========== */
-  .stars { 
-    position: fixed; 
-    inset: 0; 
-    pointer-events: none; 
-    z-index: 0; 
-  }
-
-  .star {
-    position: absolute; 
-    width: 2px; 
-    height: 2px;
-    background: rgba(255, 255, 255, 0.9);
-    border-radius: 50%;
-    animation: twinkle 3s infinite;
-  }
-
-  @keyframes twinkle { 
-    0%, 100% { opacity: 0.3; } 
-    50% { opacity: 1; } 
-  }
-
-  /* ========== HERO ========== */
-  .hero { 
-    padding: 22px 0 10px; 
-    text-align: center; 
-  }
-
-  .badge {
-    display: inline-block;
-    padding: 8px 14px;
-    border-radius: 999px;
-    border: 1px solid var(--border);
-    background: rgba(17, 7, 32, 0.5);
-    backdrop-filter: blur(10px);
-    color: var(--muted);
-    font-size: 13px;
-    margin-bottom: 12px;
-  }
-
-  .title {
-    margin: 12px 0 10px;
-    font-family: 'Cinzel', serif;
-    font-size: clamp(28px, 5vw, 48px);
-    line-height: 1.1;
-    font-weight: 700;
-    background: linear-gradient(90deg, #fb7185, #a855f7, #fbbf24);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-
-  .subtitle {
-    font-size: 18px;
-    color: var(--muted);
-    margin: 10px auto 0;
-    max-width: 680px;
-  }
-
-  .pills { 
-    display: flex; 
-    gap: 10px; 
-    justify-content: center; 
-    flex-wrap: wrap; 
-    margin-top: 14px; 
-  }
-
-  .pill {
-    padding: 8px 14px;
-    border-radius: 999px;
-    border: 1px solid var(--border);
-    background: rgba(17, 7, 32, 0.4);
-    color: rgba(216, 180, 254, 0.95);
-    font-size: 13px;
-  }
-
-  /* ========== CARDS ========== */
-  .card {
-    margin-top: 22px;
-    border-radius: 24px;
-    padding: 22px;
-    background: var(--card);
-    border: 1px solid var(--border);
-    backdrop-filter: blur(12px);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  }
-
-  .premium {
-    border: 1px solid rgba(236, 72, 153, 0.25);
-    background: linear-gradient(135deg, rgba(236, 72, 153, 0.06), rgba(139, 92, 246, 0.06));
-  }
-
-  .premiumTag {
-    display: inline-block;
-    font-family: 'Cinzel', serif;
-    font-weight: 900;
-    font-size: 12px;
-    color: #fde68a;
-    border: 1px solid rgba(245, 158, 11, 0.35);
-    background: rgba(245, 158, 11, 0.08);
-    padding: 8px 12px;
-    border-radius: 999px;
-    margin-bottom: 12px;
-  }
-
-  .paywall {
-    border: 2px dashed rgba(236, 72, 153, 0.45);
-    background: linear-gradient(135deg, rgba(236, 72, 153, 0.10), rgba(139, 92, 246, 0.10));
-  }
-
-  .h2 {
-    font-family: 'Cinzel', serif;
-    margin: 0 0 12px;
-    font-size: 24px;
-    font-weight: 700;
-    color: var(--warning);
-  }
-
-  .p { 
-    margin: 0 0 12px; 
-    color: var(--text); 
-    font-size: 18px; 
-  }
-
-  .muted { 
-    color: var(--muted); 
-  }
-
-  /* ========== RICH TEXT ========== */
-  .richText {
-    white-space: pre-wrap;
-    font-size: 18px;
-    color: var(--text);
-    line-height: 1.8;
-    margin-top: 10px;
-  }
-
-  .richText-p {
-    white-space: pre-wrap;
-    font-size: 18px;
-    color: var(--text);
-    line-height: 1.8;
-    margin-top: 14px;
-  }
-  .richText-p:first-of-type { margin-top: 10px; }
-
-  /* ========== SEÇÃO EM CAMADAS: destaque + Ler mais ========== */
-  .section-destaque {
-    margin: 0 0 14px;
-    font-family: 'Cormorant Garamond', serif;
-    font-style: italic;
-    font-size: 20px;
-    line-height: 1.5;
-    color: rgba(243, 232, 255, 0.92);
-  }
-  /* Com a seção aberta, a frase do destaque já aparece de novo lá dentro
-     (ela é a 1ª frase do conteúdo completo) — esconde o destaque avulso
-     pra não repetir. */
-  .card.premium:has(.section-details[open]) .section-destaque {
-    display: none;
-  }
-  .section-details summary.section-summary {
-    list-style: none;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    min-height: 44px;
-    padding: 10px 18px;
-    border-radius: 999px;
-    border: 1px solid rgba(232, 196, 122, 0.4);
-    background: rgba(232, 196, 122, 0.08);
-    color: var(--warning);
-    font-family: 'Cinzel', serif;
-    font-size: 13px;
-    letter-spacing: 0.04em;
-  }
-  .section-details summary.section-summary::-webkit-details-marker { display: none; }
-  .section-details summary.section-summary::marker { content: ''; }
-  .section-details .only-open { display: none; }
-  .section-details[open] .only-closed { display: none; }
-  .section-details[open] .only-open { display: inline; }
-  .section-details .section-full { margin-top: 16px; }
-
-  /* ========== PULL-QUOTE ========== */
-  .pullQuote {
-    margin: 20px 0 6px;
-    padding: 14px 20px;
-    border-left: 3px solid var(--secondary);
-    background: rgba(139, 92, 246, 0.08);
-    border-radius: 0 14px 14px 0;
-    font-family: 'Cormorant Garamond', serif;
-    font-style: italic;
-    font-size: 21px;
-    line-height: 1.6;
-    color: rgba(216, 180, 254, 0.98);
-  }
-  .pullQuote.small { font-size: 18px; margin: 14px 0 4px; }
-
-  /* ========== DIAGNÓSTICO: blocos com subtítulo ========== */
-  .diag-block { margin-top: 18px; }
-  .diag-block:first-of-type { margin-top: 6px; }
-  .diag-block-label {
-    font-family: 'Cinzel', serif;
-    font-size: 14px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--secondary);
-    font-weight: 700;
-    margin-bottom: 4px;
-  }
-
-  /* ========== PROJEÇÃO DE 12 MESES: tag de bônus + cards por mês ========== */
-  .tier2-bonus-tag {
-    display: inline-block;
-    font-family: 'Cinzel', serif;
-    font-size: 12px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: #1a1206;
-    background: linear-gradient(135deg, #fbbf24, #f59e0b);
-    padding: 6px 16px;
-    border-radius: 999px;
-    font-weight: 700;
-    margin-bottom: 12px;
-  }
-  .combo-upsell {
-    display: flex; align-items: center; justify-content: center; gap: 10px;
-    width: 100%; max-width: 460px;
-    margin: 14px auto 0;
-    padding: 12px 18px; border-radius: 999px;
-    background: linear-gradient(135deg, rgba(139,92,246,0.16), rgba(236,72,153,0.12));
-    border: 1.5px solid rgba(139,92,246,0.55);
-    box-shadow: 0 6px 20px rgba(139,92,246,0.18);
-    text-align: center; cursor: pointer;
-    font-size: 14px; color: var(--text); line-height: 1.45;
-    transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
-  }
-  .combo-upsell:hover {
-    border-color: rgba(139,92,246,0.8);
-    transform: translateY(-1px);
-    box-shadow: 0 8px 26px rgba(139,92,246,0.28);
-  }
-  .combo-upsell.is-checked {
-    background: linear-gradient(135deg, rgba(139,92,246,0.32), rgba(236,72,153,0.24));
-    border-color: rgba(16,185,129,0.6);
-    box-shadow: 0 6px 22px rgba(16,185,129,0.2);
-  }
-  .combo-upsell input { flex-shrink: 0; accent-color: var(--secondary); width: 17px; height: 17px; cursor: pointer; }
-  .mes-card {
-    margin-top: 18px;
-    padding: 20px 20px 16px;
-    border-radius: 18px;
-    background: rgba(139, 92, 246, 0.06);
-    border: 1px solid rgba(216, 180, 254, 0.15);
-  }
-  .mes-card:first-of-type { margin-top: 10px; }
-  .mes-card-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 12px;
-    flex-wrap: wrap;
-  }
-  .mes-card-label {
-    font-family: 'Cinzel', serif;
-    font-size: 12.5px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--warning);
-  }
-  .mes-card-agora {
-    display: inline-block;
-    margin-left: 8px;
-    font-size: 11px;
-    letter-spacing: 0.04em;
-    color: rgba(167, 243, 208, 0.95);
-    background: rgba(16, 185, 129, 0.12);
-    border: 1px solid rgba(16, 185, 129, 0.35);
-    padding: 2px 9px;
-    border-radius: 999px;
-    text-transform: none;
-  }
-  .mes-card-title {
-    font-family: 'Cinzel', serif;
-    font-size: 19px;
-    font-weight: 700;
-    color: rgba(250, 245, 255, 0.98);
-    margin-top: 4px;
-  }
-  .mes-card-numero {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 14px;
-    font-weight: 400;
-    color: var(--muted);
-  }
-
-  /* ========== COMPATIBILIDADE ASTRAL: barras de score ========== */
-  .compat-match { margin-top: 12px; }
-  .compat-match-top {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 10px;
-    margin-bottom: 6px;
-  }
-  .compat-match-name {
-    font-size: 16px;
-    font-weight: 600;
-    color: rgba(250, 245, 255, 0.95);
-  }
-  .compat-match-score {
-    font-family: 'Cinzel', serif;
-    font-size: 13px;
-    color: var(--warning);
-    font-variant-numeric: tabular-nums;
-    flex-shrink: 0;
-  }
-  .compat-track {
-    height: 6px;
-    border-radius: 3px;
-    background: rgba(255, 255, 255, 0.06);
-    overflow: hidden;
-  }
-  .compat-fill {
-    height: 100%;
-    border-radius: 3px;
-    background: linear-gradient(90deg, var(--secondary), var(--primary));
-  }
-
-  /* ========== CALENDÁRIO DE 30 DIAS: barra de progresso ========== */
-  .calendar-progress {
-    margin: 4px 0 18px;
-  }
-  .calendar-progress-row {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    margin-bottom: 8px;
-    font-family: 'Cinzel', serif;
-  }
-  .calendar-progress-label {
-    font-size: 14px;
-    color: var(--warning);
-    letter-spacing: 0.03em;
-  }
-  .calendar-progress-pct {
-    font-size: 12px;
-    color: var(--muted);
-    font-variant-numeric: tabular-nums;
-  }
-  .calendar-progress-track {
-    height: 8px;
-    border-radius: 4px;
-    background: rgba(255, 255, 255, 0.06);
-    overflow: hidden;
-  }
-  .calendar-progress-fill {
-    height: 100%;
-    border-radius: 4px;
-    background: linear-gradient(90deg, var(--secondary), var(--primary));
-    transition: width 0.3s ease;
-  }
-  .compat-match-text {
-    margin-top: 6px;
-    font-size: 14px;
-    color: var(--muted);
-    line-height: 1.55;
-  }
-
-  /* ========== ARQUÉTIPOS / RITUAIS: cards ========== */
-  .archetype-card, .ritual-card { margin-top: 14px; }
-
-  .listen-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    margin-top: 12px;
-    padding: 8px 16px;
-    border-radius: 999px;
-    border: 1px solid rgba(139, 92, 246, 0.4);
-    background: rgba(139, 92, 246, 0.1);
-    color: rgba(216, 180, 254, 0.98);
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-  }
-  .listen-btn:hover { background: rgba(139, 92, 246, 0.18); }
-  .ritual-steps {
-    list-style: none;
-    counter-reset: step;
-    padding: 0;
-    margin: 10px 0 0;
-  }
-  .ritual-steps li {
-    counter-increment: step;
-    padding: 8px 0 8px 34px;
-    position: relative;
-    font-size: 17px;
-    color: var(--text);
-    line-height: 1.6;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-  }
-  .ritual-steps li::before {
-    content: counter(step);
-    position: absolute;
-    left: 0; top: 8px;
-    width: 22px; height: 22px;
-    border-radius: 50%;
-    background: rgba(139, 92, 246, 0.25);
-    color: rgba(216, 180, 254, 0.98);
-    font-size: 13px;
-    font-weight: 700;
-    display: flex; align-items: center; justify-content: center;
-  }
-
-  /* ========== READING PROGRESS BAR ========== */
-  .reading-progress-track {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    height: 4px;
-    background: rgba(255,255,255,0.06);
-    z-index: 100;
-  }
-  .reading-progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--primary), var(--secondary), var(--warning));
-    transition: width 0.15s ease-out;
-  }
-
-  /* ========== CHECKLIST INTERATIVO ========== */
-  .check-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    cursor: pointer;
-    user-select: none;
-  }
-  .check-item .check-box { flex-shrink: 0; font-size: 16px; margin-top: 2px; }
-  .check-item .check-label { flex: 1; }
-  .check-item.is-checked .check-label {
-    color: var(--muted);
-    text-decoration: line-through;
-    text-decoration-color: rgba(233, 213, 255, 0.35);
-  }
-
-  /* ========== LISTS ========== */
-  .list-check { 
-    list-style: none; 
-    padding: 0; 
-    margin: 12px 0; 
-  }
-
-  .list-check li {
-    padding: 10px 0;
-    color: var(--text);
-    font-size: 18px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  }
-
-  .list-check.compact li { 
-    padding: 6px 0; 
-    font-size: 18px; 
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06); 
-  }
-
-  /* ========== NOTES ========== */
-  .note {
-    margin-top: 14px;
-    padding: 14px;
-    border-radius: 16px;
-    border: 1px solid rgba(139, 92, 246, 0.3);
-    background: rgba(139, 92, 246, 0.1);
-    color: var(--text);
-    font-size: 18px;
-  }
-
-  .note-solution {
-    margin-top: 14px;
-    padding: 14px;
-    border-radius: 16px;
-    border: 1px solid rgba(16, 185, 129, 0.4);
-    background: rgba(16, 185, 129, 0.1);
-    color: #a7f3d0;
-    font-size: 18px;
-  }
-
-  .note-mantra {
-    margin-top: 14px;
-    padding: 14px;
-    border-radius: 16px;
-    border: 1px solid rgba(245, 158, 11, 0.4);
-    background: rgba(245, 158, 11, 0.1);
-    color: #fde68a;
-    font-size: 18px;
-    font-style: italic;
-    text-align: center;
-  }
-
-  /* ========== GRID ========== */
-  .grid2 { 
-    display: grid; 
-    grid-template-columns: 1fr; 
-    gap: 14px; 
-    margin-top: 14px; 
-  }
-
-  @media (min-width: 768px) { 
-    .grid2 { 
-      grid-template-columns: 1fr 1fr; 
-    } 
-  }
-
-  .subcard {
-    border-radius: 18px;
-    padding: 16px;
-    border: 1px solid var(--border);
-    background: rgba(17, 7, 32, 0.4);
-  }
-
-  .subcard.highlight {
-    border-color: rgba(16, 185, 129, 0.4);
-    background: rgba(16, 185, 129, 0.05);
-  }
-
-  .subcard.danger {
-    border-color: rgba(239, 68, 68, 0.4);
-    background: rgba(239, 68, 68, 0.05);
-  }
-
-  .subttl {
-    font-family: 'Cinzel', serif;
-    font-size: 18px;
-    font-weight: 700;
-    color: rgba(216, 180, 254, 0.95);
-    margin-bottom: 8px;
-  }
-
-  /* ========== TOOLBAR + TOC ========== */
-  .toolbar { 
-    padding: 18px; 
-  }
-
-  .toolbarLeft { 
-    display: flex; 
-    flex-direction: column; 
-    gap: 6px; 
-  }
-
-  .toolbarRight { 
-    display: flex; 
-    gap: 10px; 
-    flex-wrap: wrap; 
-    margin-top: 14px; 
-  }
-
-  .toolbarTitle { 
-    font-family: 'Cinzel', serif; 
-    font-weight: 900; 
-    color: rgba(216, 180, 254, 0.98); 
-  }
-
-  .toc {
-    margin-top: 14px;
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-
-  .tocItem {
-    text-decoration: none;
-    color: rgba(233, 213, 255, 0.95);
-    border: 1px solid rgba(216, 180, 254, 0.18);
-    background: rgba(17, 7, 32, 0.35);
-    padding: 8px 12px;
-    border-radius: 999px;
-    font-size: 18px;
-    transition: transform 0.15s ease;
-  }
-
-  .tocItem:hover { 
-    transform: translateY(-1px); 
-    background: rgba(139, 92, 246, 0.15);
-  }
-
-  /* ========== BUTTONS ========== */
-  .btn {
-    padding: 12px 20px;
-    border-radius: 14px;
-    border: 1px solid var(--border);
-    background: rgba(17, 7, 32, 0.6);
-    color: var(--text);
-    cursor: pointer;
-    font-family: 'Cinzel', serif;
-    font-weight: 700;
-    font-size: 18px;
-    transition: all 0.2s ease;
-  }
-
-  .btn:hover { 
-    transform: translateY(-2px); 
-    box-shadow: 0 8px 25px rgba(139, 92, 246, 0.3); 
-  }
-
-  .btnMedium, .btnBig {
-    width: 100%;
-    padding: 16px 22px;
-    border-radius: 999px;
-    border: none;
-    cursor: pointer;
-    font-family: 'Cinzel', serif;
-    font-weight: 900;
-    font-size: 18px;
-    color: white;
-    background: linear-gradient(90deg, #ec4899, #8b5cf6);
-    box-shadow: 0 16px 50px rgba(236, 72, 153, 0.25);
-    transition: all 0.2s ease;
-  }
-
-  .btnBig { 
-    font-size: 18px; 
-    padding: 18px 24px; 
-  }
-
-  .btnMedium:hover, .btnBig:hover { 
-    transform: translateY(-2px); 
-    box-shadow: 0 22px 70px rgba(236, 72, 153, 0.35); 
-  }
-
-  .btnMedium:disabled, .btnBig:disabled { 
-    opacity: 0.6; 
-    cursor: not-allowed; 
-    transform: none; 
-  }
-
-  .pulse { 
-    animation: pulse-btn 1.8s infinite; 
-  }
-
-  @keyframes pulse-btn { 
-    0%, 100% { filter: brightness(1); } 
-    50% { filter: brightness(1.15); } 
-  }
-
-  /* ========== LOADING ========== */
-  .center {
-    min-height: 70vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 14px;
-    position: relative;
-    z-index: 5;
-    padding: 0 20px;
-    text-align: center;
-  }
-
-  .spinner {
-    width: 48px; 
-    height: 48px;
-    border-radius: 50%;
-    border: 3px solid rgba(255, 255, 255, 0.2);
-    border-top-color: white;
-    animation: spin 0.8s linear infinite;
-  }
-
-  @keyframes spin { 
-    to { transform: rotate(360deg); } 
-  }
-
-  /* ========== FOOTER ========== */
-  .footer-note { 
-    margin-top: 28px; 
-    text-align: center; 
-    font-size: 14px; 
-    opacity: 0.9; 
-  }
-
- .noteLove{
-  font-size: 20px;
-  line-height: 1.95;
-  white-space: pre-wrap; /* mantém quebras */
-}
-
-.noteLove b{
-  display:block;
-  font-size: 22px;
-  margin-bottom: 10px;
-}
-
-  /* ========== OFFER MINI ========== */
-  .offer-mini {
-    margin-top: 14px;
-    padding: 14px;
-    border-radius: 18px;
-    background: rgba(0, 0, 0, 0.25);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-  }
-
-  .offer-section {
-    margin-top: 12px;
-    margin-bottom: 8px;
-    font-size: 16px;
-    color: var(--warning);
-    font-family: 'Cinzel', serif;
-  }
-
-  /* ========== CODE ========== */
-  code {
-    background: rgba(139, 92, 246, 0.15);
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-family: 'Courier New', monospace;
-    font-size: 0.9em;
-    color: #c4b5fd;
-  }
-
-/* ========== FRASE MESTRE ========== */
-  .fraseMestre {
-  margin: 36px 0;
-  padding: 22px 26px;
-  border-radius: 18px;
-  background: linear-gradient(145deg, rgba(236,72,153,.12), rgba(139,92,246,.12));
-  border: 1px solid rgba(236,72,153,.35);
-  font-size: 20px;
-  font-weight: 600;
-  line-height: 1.5;
-  text-align: center;
-  letter-spacing: .2px;
-}
-
-  /* ========== RESPONSIVIDADE ========== */
-  @media (max-width: 768px) {
-    .toolbarRight {
-      flex-direction: column;
-    }
-
-    .btn, .btnMedium {
-      width: 100%;
-    }
-  }
-
-  /* ========== PROGRESS BAR ========== */
-  .progressBar {
-    width: 100%;
-    max-width: 400px;
-    height: 6px;
-    background: rgba(255, 255, 255, 0.12);
-    border-radius: 999px;
-    overflow: hidden;
-  }
-
-  .progressFill {
-    height: 100%;
-    width: 0%;
-    background: linear-gradient(90deg, #ec4899, #8b5cf6);
-    border-radius: 999px;
-    animation: progress-fill 45s cubic-bezier(0.05, 0.8, 0.5, 1) forwards;
-  }
-
-  @keyframes progress-fill {
-    0% { width: 0%; }
-    100% { width: 95%; }
-  }
-`;

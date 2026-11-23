@@ -31,6 +31,7 @@ import { textoTeste } from '@/lib/testeSeuDia';
 import TelaConfirmar from './TelaConfirmar';
 import { precisaConfirmar, marcaConfirmacao } from '@/lib/minhaArea';
 import { consumirEmailSeuDia } from '@/lib/seuDiaRepasse';
+import { CHAVE_JORNADA, lerJornada, diaDaJornada, hojeBrasilia } from '@/lib/manualLeitura';
 import ma from './minhaArea.module.css';
 
 // "Esta é você?": a confirmação também fica no aparelho (migração 0021 opcional).
@@ -492,6 +493,29 @@ function AppSeuDia({ perfil, setPerfil, onEditar, onSair }) {
 
 const dataBR = (iso) => (iso ? new Date(iso).toLocaleDateString('pt-BR') : '');
 
+// "Dia N do seu plano" — o plano de 7 dias ou o calendário do Manual, quando a
+// pessoa começou a marcar neste aparelho (lib/manualLeitura.js, localStorage
+// ic_manual_jornada). Link pro trecho do Manual; quem vem daqui não vê a
+// abertura (ic_olho_visto_<id>, mesma regra do Início).
+function LinhaJornada() {
+  const [dia, setDia] = useState(null);
+  useEffect(() => {
+    try { setDia(diaDaJornada(lerJornada(window.localStorage.getItem(CHAVE_JORNADA)), hojeBrasilia())); } catch {} // eslint-disable-line react-hooks/set-state-in-effect
+  }, []);
+  if (!dia) return null;
+  const abrir = () => {
+    try { window.localStorage.setItem(`ic_olho_visto_${dia.id}`, '1'); } catch {}
+    evento('sd_jornada_clique', { tipo: dia.tipo, dia: dia.n });
+  };
+  return (
+    <a className={ma.jornada} href={dia.href} onClick={abrir}>
+      <span className={ma.eyebrow}>Dia {dia.n} do seu {dia.tipo === 'plano' ? 'plano de 7 dias' : 'calendário'}</span>
+      <span className={ma.jornadaTitulo}>{dia.titulo}</span>
+      <span className={ma.jornadaLink}>Abrir no seu Manual →</span>
+    </a>
+  );
+}
+
 function BannerAcesso({ perfil, onDesbloquear }) {
   if (perfil.motivoAcesso === 'assinatura') {
     return <p className={ma.linhaMono}>Intuitive Completo ativo até {dataBR(perfil.assinatura?.acessoAte)}.</p>;
@@ -550,6 +574,7 @@ function AbaHoje({ perfil, leitura, completo, onDesbloquear }) {
   return (
     <>
       <BannerAcesso perfil={perfil} onDesbloquear={onDesbloquear} />
+      <LinhaJornada />
 
       <div className={ma.duas}>
         <div className={ma.coluna}>
