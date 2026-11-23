@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 import { getPrecoManual } from "@/lib/preco";
+import { salvarAtribuicao } from "@/lib/ga4";
 
 export const runtime = "nodejs"; // força Node (Stripe não roda no Edge)
 
@@ -155,6 +156,8 @@ if (analise.payment_status === "paid") {
     if (trackingErr) {
       console.error("⚠️ Não foi possível salvar checkout_ip/checkout_user_agent (coluna existe?):", trackingErr.message);
     }
+    // Atribuição do Google Ads pro purchase do GA4 (best effort, migração 0023).
+    if (body?.atribuicao) await salvarAtribuicao(supabase, analiseId, body.atribuicao);
 
     return NextResponse.json({
       success: true,

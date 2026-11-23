@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { MercadoPagoConfig, Preference } from "mercadopago";
 import { createClient } from "@supabase/supabase-js";
+import { salvarAtribuicao } from "@/lib/ga4";
 
 export const runtime = "nodejs";
 
@@ -102,6 +103,8 @@ export async function POST(request) {
         updated_at: new Date().toISOString(),
       })
       .eq("id", analiseId);
+    // Atribuição do Google Ads pro purchase do GA4 (best effort, migração 0023).
+    if (body?.atribuicao) await salvarAtribuicao(supabase, analiseId, body.atribuicao);
 
     return NextResponse.json({
       success: true,

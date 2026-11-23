@@ -3,6 +3,7 @@ import { MercadoPagoConfig, Preference } from "mercadopago";
 import { createClient } from "@supabase/supabase-js";
 import { getPrecoManual, PRECO_BONUS_AVULSO, PRECO_BONUS_COMBO } from "@/lib/preco";
 import { emailValido } from "@/lib/emailValidacao";
+import { salvarAtribuicao } from "@/lib/ga4";
 
 export const runtime = "nodejs";
 
@@ -191,6 +192,10 @@ export async function POST(request) {
     if (trackingErr) {
       console.error("⚠️ Não foi possível salvar checkout_ip/checkout_user_agent (coluna existe?):", trackingErr.message);
     }
+
+    // Atribuição do Google Ads (client_id + session_id DESTA sessão + gclid),
+    // usada no purchase do GA4 pelo webhook. Best effort (migração 0023).
+    if (body?.atribuicao) await salvarAtribuicao(supabase, analiseId, body.atribuicao);
 
     return NextResponse.json({
       success: true,

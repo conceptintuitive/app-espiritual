@@ -18,6 +18,7 @@ import { lerCeuDados, consumirAbrirQuiz, limparCeuDados } from '@/lib/ceuDados';
 import { lerPerfil, salvarPerfil } from '@/lib/perfilLocal';
 import { TESTE_SEU_DIA_ATIVO } from '@/lib/testeSeuDia';
 import SiteNav, { EVENTO_ABRIR_QUIZ } from '@/app/components/SiteNav';
+import { coletarAtribuicao } from '@/app/components/CapturaAtribuicao';
 import h from './home.module.css';
 
 const PreviaSeuDia = dynamic(() => import('@/app/components/home/PreviaSeuDia'), { ssr: false });
@@ -155,7 +156,9 @@ function QuizOverlay({ onClose }) {
       const res = await fetch('/api/gerar-analise', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        // atribuicao: client_id/session_id do GA4 e gclid da visita, só com
+        // aceite de cookies (lib/atribuicao.js); o servidor guarda na análise.
+        body: JSON.stringify({ ...payload, atribuicao: await coletarAtribuicao() }),
       });
       const ct = res.headers.get('content-type') || '';
       const data = ct.includes('application/json')

@@ -4,6 +4,7 @@ import { TIKTOK_PIXEL_ID } from "@/lib/tiktok";
 import { META_PIXEL_ID } from "@/lib/meta";
 import "./globals.css";
 import AvisoCookies from "@/app/components/AvisoCookies";
+import CapturaAtribuicao from "@/app/components/CapturaAtribuicao";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -97,6 +98,7 @@ export default function RootLayout({ children }) {
       });
       gtag('js', new Date());
 
+      // O mesmo ID está em lib/atribuicao.js (GA4_WEB_ID) pro client_id/session_id do checkout.
       gtag('config', 'G-4YT1QFSD1P');
       gtag('config', 'AW-16938088515');
       gtag('config', 'AW-17660841644');
@@ -164,6 +166,8 @@ export default function RootLayout({ children }) {
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         {children}
         <AvisoCookies />
+        {/* gclid/gbraid/wbraid e UTMs da entrada, só no aparelho (lib/atribuicao.js) */}
+        <CapturaAtribuicao />
       </body>
     </html>
   );

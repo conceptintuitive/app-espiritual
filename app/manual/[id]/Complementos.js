@@ -13,6 +13,7 @@ import { TIPO_DESCRICAO, AUTORIDADE_DESCRICAO, narracaoHumanDesign, gerarIntegra
 import { PRECO_BONUS_AVULSO, PRECO_BONUS_COMBO } from '@/lib/preco';
 import { offsetSalvo } from '@/lib/sky';
 import { CheckItem, ListenButton, buildProjecaoMesNarration } from './pecas';
+import { coletarAtribuicao } from '@/app/components/CapturaAtribuicao';
 import m from './manual.module.css';
 
 // TOGGLE DE COMBO — oferece incluir o outro upsell junto, por
@@ -46,7 +47,7 @@ export default function Complementos({ row, id, checks, toggleCheck }) {
       const response = await fetch('/api/criar-checkout-upsell-mp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ analiseId: id, produtos }),
+        body: JSON.stringify({ analiseId: id, produtos, atribuicao: await coletarAtribuicao() }),
       });
       const data = await response.json().catch(() => ({}));
       const checkoutUrl = data?.url || data?.sandbox_url;
