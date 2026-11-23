@@ -360,6 +360,14 @@ export default function ResultadoPage() {
     return () => { previewObs.disconnect(); offerObs.disconnect(); };
   }, [analise]);
 
+  // Vindo do cadeado da Minha Área (/resultado/<id>#comprar): o conteúdo só
+  // aparece depois do fetch, então o navegador não acha a âncora sozinho.
+  useEffect(() => {
+    if (!analise || typeof window === 'undefined' || window.location.hash !== '#comprar') return;
+    const t = setTimeout(() => document.querySelector('.offer-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
+    return () => clearTimeout(t);
+  }, [analise]);
+
   // Instrumentação: primeira vez que a oferta final entra na tela — separa
   // "não leu até lá" de "leu e não clicou". Dispara só 1x por visita.
   useEffect(() => {

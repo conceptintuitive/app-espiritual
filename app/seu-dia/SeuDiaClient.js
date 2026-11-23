@@ -1,6 +1,8 @@
 'use client';
 
-// /seu-dia — o app diário (fase 1: grátis + 7 dias de Completo + lista de espera).
+// /seu-dia — o app diário. Grátis: o resumo do dia e o Meu Mapa inteiro; o resto
+// fica atrás do Cadeado (Manual do seu Mapa = 30 dias do Completo, ou assinatura).
+// O teste de 7 dias acabou pra perfis novos (nov/2026); os antigos terminam o prazo.
 // A leitura é calculada no navegador (lib/seuDia.js, sem IA); o servidor só
 // guarda perfil, visitas, lista de espera e inscrições de aviso.
 // Estados: carregando → entrar (sem sessão) → dados (sem nascimento) →
@@ -23,6 +25,7 @@ import { salvarPerfil, lerPerfil } from '@/lib/perfilLocal';
 import AbaMapa from './AbaMapa';
 import AbaInicio, { TituloDoDia } from './AbaInicio';
 import FaixaCeu from './FaixaCeu';
+import Cadeado from './Cadeado';
 import TelaConfirmar from './TelaConfirmar';
 import { precisaConfirmar, marcaConfirmacao } from '@/lib/minhaArea';
 import ma from './minhaArea.module.css';
@@ -434,9 +437,9 @@ function AppSeuDia({ perfil, setPerfil, onEditar, onSair }) {
           <AbaHoje perfil={perfil} leitura={leitura} completo={completo} onDesbloquear={() => abrirModal('hoje')} />
         )}
         {aba === 'semana' && (
-          <AbaSemana semana={semana} depois={depois} completo={completo} onDesbloquear={() => abrirModal('semana')} />
+          <AbaSemana perfil={perfil} semana={semana} depois={depois} completo={completo} />
         )}
-        {aba === 'mapa' && <AbaMapa perfil={perfil} />}
+        {aba === 'mapa' && <AbaMapa perfil={perfil} completo={completo} />}
         {aba === 'conta' && (
           <AbaAjustes perfil={perfil} onEditar={onEditar} onSair={onSair} onDesbloquear={() => abrirModal('conta')} />
         )}
@@ -480,15 +483,12 @@ function BannerAcesso({ perfil, onDesbloquear }) {
     );
   }
   if (perfil.motivoAcesso === 'teste') {
+    // Só existe pra quem começou o teste antes de ele acabar (nov/2026).
     const dias = perfil.testeDiasRestantes || 1;
     return <p className={ma.linhaMono}>Teste do Seu Dia Completo: {dias === 1 ? 'último dia' : `faltam ${dias} dias`}.</p>;
   }
-  return (
-    <p className={ma.linhaMono}>
-      Seu teste acabou — o resumo do dia segue grátis.{' '}
-      <button type="button" onClick={onDesbloquear}>Quero o Completo</button>
-    </p>
-  );
+  // Sem Completo: nada aqui — os cadeados de cada aba explicam o que falta.
+  return null;
 }
 
 function AbaHoje({ perfil, leitura, completo, onDesbloquear }) {
@@ -509,22 +509,21 @@ function AbaHoje({ perfil, leitura, completo, onDesbloquear }) {
     } catch {}
   }
 
+  // Sem Completo: títulos nítidos, conteúdo borrado e o cadeado único.
   const travado = (
-    <section className="sd-card sd-travado">
-      <div className="sd-travado-topo">
-        <h2 className="sd-card-titulo">No Seu Dia Completo</h2>
-        <Icone nome="cadeado" />
-      </div>
-      <ul>
-        <li>As 5 lentes do seu dia, uma por uma</li>
-        <li>Suas horas de força e de atenção</li>
-        <li>A semana e os próximos 30 dias</li>
-        <li>Como o dia mexe com cada parte do seu mapa</li>
-        <li>O Kin Maia e o anjo do dia, cruzados com os seus</li>
-      </ul>
-      <p className="sd-borrado" aria-hidden="true">{l.chinesa.texto} {l.numerologia.texto}</p>
-      <button type="button" className="sd-btn" onClick={onDesbloquear}>Desbloquear Seu Dia Completo</button>
-    </section>
+    <Cadeado
+      perfil={perfil}
+      origem="hoje"
+      titulos={[
+        'Por que esse tema e esse tom?',
+        'Suas horas hoje',
+        `Dia de ${l.chinesa.deusNome}`,
+        'Seus animais hoje',
+        'As outras lentes',
+        'Kin Maia do dia',
+        'Anjo destes dias',
+      ]}
+    />
   );
 
   return (
@@ -551,11 +550,11 @@ function AbaHoje({ perfil, leitura, completo, onDesbloquear }) {
           <div className={ma.faceEvite}>
             <div className={ma.faceCol}>
               <span className={ma.rotuloFaca}>Faça</span>
-              {(completo ? l.faca : l.faca.slice(0, 1)).map((f) => <p key={f}>{f}</p>)}
+              {l.faca.map((f) => <p key={f}>{f}</p>)}
             </div>
             <div className={ma.faceCol}>
               <span className={ma.rotuloEvite}>Evite</span>
-              {(completo ? l.evite : l.evite.slice(0, 1)).map((f) => <p key={f}>{f}</p>)}
+              {l.evite.map((f) => <p key={f}>{f}</p>)}
             </div>
           </div>
 
@@ -785,23 +784,28 @@ function LinhaHora({ h }) {
 const TOM_CLASSE = { fluxo: 'tomFluxo', misto: '', tensao: 'tomTensao' };
 const DIA_CURTO = (r) => `${r.semana.slice(0, 3)} ${r.curto}`;
 
-function AbaSemana({ semana, depois, completo, onDesbloquear }) {
+function AbaSemana({ perfil, semana, depois, completo }) {
   return (
     <>
       <p className={ma.intro}>Cada dia lido pelo seu mapa: onde tem força e onde pede cuidado.</p>
       <ol className={ma.dias}>
         {semana.map((d, i) => {
-          const travado = !completo && i > 0;
+          // Sem Completo: hoje e amanhã inteiros; os outros dias só com o título.
+          const aberto = completo || i < 2;
           const classeTom = d.melhor ? ma.tomMelhor : ma[TOM_CLASSE[d.tom]] || '';
           return (
-            <li key={d.data} className={ma.diaLinha}>
+            <li key={d.data} className={`${ma.diaLinha}${aberto ? '' : ` ${ma.diaSoTitulo}`}`}>
               <span className={ma.diaRotulo}>{i === 0 ? 'Hoje' : i === 1 ? 'Amanhã' : DIA_CURTO(d.rotulo)}</span>
-              <div className={`${ma.diaMeio}${travado ? ' sd-borrado' : ''}`} aria-hidden={travado ? 'true' : undefined}>
+              <div className={ma.diaMeio}>
                 <p className={ma.diaMeioTitulo}>{d.titulo}</p>
-                <p className={ma.diaMeioTexto}>{d.frase}</p>
-                <p className={ma.diaMeioMeta}><span lang="zh">{d.deusHanzi}</span> {d.deusNome} · {d.pilarNome} · {d.concordam}/{d.totalLentes} sistemas</p>
+                {aberto && (
+                  <>
+                    <p className={ma.diaMeioTexto}>{d.frase}</p>
+                    <p className={ma.diaMeioMeta}><span lang="zh">{d.deusHanzi}</span> {d.deusNome} · {d.pilarNome} · {d.concordam}/{d.totalLentes} sistemas</p>
+                  </>
+                )}
               </div>
-              <span className={`${ma.pilulaTom} ${classeTom}`}>{d.melhor ? 'Melhor dia' : TOM[d.tom].rotulo}</span>
+              {aberto && <span className={`${ma.pilulaTom} ${classeTom}`}>{d.melhor ? 'Melhor dia' : TOM[d.tom].rotulo}</span>}
             </li>
           );
         })}
@@ -821,9 +825,7 @@ function AbaSemana({ semana, depois, completo, onDesbloquear }) {
           </ul>
         </section>
       ) : (
-        <div className={ma.acoes}>
-          <button type="button" className={ma.btn} onClick={onDesbloquear}>Ver a semana e os próximos 30 dias</button>
-        </div>
+        <Cadeado perfil={perfil} origem="semana" titulos={['Até o fim do mês']} />
       )}
     </>
   );

@@ -13,6 +13,7 @@ import { dadosDoCard } from '@/lib/cardStory';
 import { desenharCard, canvasParaBlob } from './cardStory';
 import { sistemasDaPessoa, sinteseDoMapa, TEMAS } from '@/lib/mapaSintese';
 import ma from './minhaArea.module.css';
+import { BotoesCadeado, TEXTO_CADEADO } from './Cadeado';
 
 function evento(nome, params = {}) {
   try { window.gtag?.('event', nome, { event_category: 'seu_dia', ...params }); } catch {}
@@ -20,7 +21,7 @@ function evento(nome, params = {}) {
 
 const listaHumana = (xs) => (xs.length <= 1 ? xs.join('') : `${xs.slice(0, -1).join(', ')} e ${xs[xs.length - 1]}`);
 
-export default function AbaMapa({ perfil }) {
+export default function AbaMapa({ perfil, completo = false }) {
   const sistemas = useMemo(() => sistemasDaPessoa({
     dataNascimento: perfil.dataNascimento,
     hora: perfil.hora || null,
@@ -180,6 +181,16 @@ export default function AbaMapa({ perfil }) {
           {aviso && <p>{aviso}</p>}
         </section>
       </div>
+
+      {/* Sem Completo: o mapa inteiro fica aberto (é o que a pessoa divulga);
+          no fim, o convite pro Manual com o mesmo botão dos cadeados. */}
+      {!completo && (
+        <section className={ma.cadeadoCaixa} style={{ gridColumn: '1 / -1' }} aria-label="Manual do seu Mapa">
+          <p className={ma.cadeadoTexto}>O Manual do seu Mapa explica por que seu mapa repete isso, e o que fazer com cada parte.</p>
+          <p className={ma.sistemasTexto} style={{ margin: 0 }}>{TEXTO_CADEADO}</p>
+          <BotoesCadeado perfil={perfil} origem="mapa" />
+        </section>
+      )}
     </div>
   );
 }

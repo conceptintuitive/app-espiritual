@@ -160,7 +160,7 @@ export default function ExplorarClient() {
 
         <Link href="/seu-dia" className="card seudia">
           <div className="icon-badge">☀</div>
-          <span className="tag">Novo · 7 dias do Completo grátis</span>
+          <span className="tag">Grátis · o resumo do seu dia</span>
           <h3>Seu Dia</h3>
           <p>Seu mapa lido todo dia: astrologia chinesa, numerologia, a Lua e o tarô cruzados num recado só — com suas horas de força.</p>
           <span className="cta">Ver meu dia →</span>

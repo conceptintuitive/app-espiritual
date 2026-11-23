@@ -16,7 +16,8 @@ export async function GET(request) {
 }
 
 // POST { nome, dataNascimento, hora, cidade } → salva os dados de nascimento.
-// A 1ª vez que salva começa o teste de 7 dias do Seu Dia Completo. Salvar
+// Perfil novo NÃO ganha mais o teste de 7 dias do Seu Dia Completo (nov/2026);
+// quem já tinha teste_inicio continua com ele até o fim do prazo. Salvar
 // também confirma o perfil (perfil_confirmado_em).
 export async function POST(request) {
   const email = emailDaSessao(request);
@@ -45,7 +46,8 @@ export async function POST(request) {
       latitude: cidade?.lat ?? null,
       longitude: cidade?.lon ?? null,
       fuso_iana: cidade?.tz ?? null,
-      teste_inicio: atual?.teste_inicio ?? new Date().toISOString(),
+      // Sem teste de 7 dias pra perfil novo (nov/2026): só mantém o de quem já tinha.
+      teste_inicio: atual?.teste_inicio ?? null,
     }, { onConflict: 'email' });
     if (error) throw error;
     // Quem salvou os próprios dados já conferiu: não precisa ver "Esta é você?".

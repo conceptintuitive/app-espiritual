@@ -133,3 +133,19 @@ test('cartoesLeitura: ordem Manual, Compatibilidade, Previsão, Human Design + s
   assert.equal(m.href, '/resultado/b');
   assert.deepEqual(cartoesLeitura(null), []);
 });
+
+test('mapaDoPerfil: só o mapa da própria pessoa; o pago ganha, depois o mais recente', async () => {
+  const { mapaDoPerfil } = await import('../lib/minhaArea.js');
+  const rows = [
+    { id: 'ana', nome: 'Ana', data_nascimento: '1995-09-03', payment_status: 'paid', created_at: '2026-11-20' },
+    { id: 'velha', nome: 'Bianca P', data_nascimento: '1994-12-21', payment_status: 'pending', created_at: '2026-10-01' },
+    { id: 'nova', nome: 'bianca', data_nascimento: '1994-12-21', payment_status: 'pending', created_at: '2026-11-10' },
+  ];
+  assert.deepEqual(mapaDoPerfil(rows, { dataNascimento: '1994-12-21', nome: 'Bianca' }), { id: 'nova', pago: false });
+  const comPaga = [...rows, { id: 'paga', nome: 'Bianca', data_nascimento: '1994-12-21', payment_status: 'paid', created_at: '2026-09-01' }];
+  assert.deepEqual(mapaDoPerfil(comPaga, { dataNascimento: '1994-12-21', nome: 'Bianca' }), { id: 'paga', pago: true });
+  // mesma data, outro nome: não é dela
+  assert.equal(mapaDoPerfil([{ id: 'x', nome: 'Carla', data_nascimento: '1994-12-21' }], { dataNascimento: '1994-12-21', nome: 'Bianca' }), null);
+  assert.equal(mapaDoPerfil(rows, { dataNascimento: null }), null);
+  assert.equal(mapaDoPerfil([], { dataNascimento: '1994-12-21' }), null);
+});
