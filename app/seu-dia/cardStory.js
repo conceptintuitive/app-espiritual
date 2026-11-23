@@ -4,12 +4,14 @@
 //   'ceu'    (padrão) o céu real do nascimento no alto, nome grande, síntese,
 //            os 6 sistemas em grid, a frase em primeira pessoa e o rodapé.
 //   'numero' o céu em tela cheia e o número de vida gigante no centro.
+// E o card de frase do Manual (desenharCardFrase): o céu da pessoa em tela
+// cheia + uma frase do Manual em Instrument Serif + intuitiveconcept.com.br.
 // O céu é o mesmo do topo da Minha Área (lib/ceuNascimento.js +
 // app/components/ceu/ceuCanvas.js), com modo dia. Textos: lib/cardStory.js.
 // As fontes (Instrument Serif + Geist Mono, public/olho/fonts) são carregadas
 // com FontFace ANTES de desenhar — senão o canvas usa a fonte reserva.
 
-import { projetarCeu, pontoNaCapa } from '@/lib/ceuNascimento';
+import { projetarCeu, pontoNaCapa, resumoCeu, lugarDoPerfil } from '@/lib/ceuNascimento';
 import { IMAGENS_CEU, carregarSky, desenharCeu } from '@/app/components/ceu/ceuCanvas';
 
 export const LARGURA = 1080;
@@ -282,4 +284,68 @@ export async function desenharCard(modelo, dados) {
 
 export function canvasParaBlob(cv) {
   return new Promise((ok, erro) => cv.toBlob((b) => (b ? ok(b) : erro(new Error('canvas'))), 'image/png'));
+}
+
+/**
+ * Card de frase do Manual (1080×1920): o céu do nascimento em tela cheia, a
+ * frase no meio em Instrument Serif itálico e o rodapé com o site.
+ * @param {{ frase: string, nome?: string|null, dataNascimento: string, hora?: string|null, cidade?: object|null }} p
+ */
+export async function desenharCardFrase({ frase, nome = null, dataNascimento, hora = null, cidade = null }) {
+  await carregarFontes().catch(() => {});
+  const W = LARGURA;
+  const H = ALTURA;
+  const lugar = lugarDoPerfil(cidade);
+  const dados = { ceu: resumoCeu({ data: dataNascimento, hora, lugar }), lugar };
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d');
+  ctx.fillStyle = COR.fundo;
+  ctx.fillRect(0, 0, W, H);
+  ctx.drawImage(await canvasDoCeu(dados, W, H, { zenite: { x: W / 2, y: 250 * K }, rotuloMinY: 80 * K, rotuloMaxY: 380 * K }), 0, 0);
+  // Escurece o meio e o pé pra frase e o rodapé ficarem legíveis.
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, 'rgba(7,4,13,.45)'); g.addColorStop(0.18, 'rgba(7,4,13,0)'); g.addColorStop(0.34, 'rgba(7,4,13,.55)');
+  g.addColorStop(0.7, 'rgba(7,4,13,.8)'); g.addColorStop(1, 'rgba(7,4,13,.96)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+
+  const cx = W / 2;
+  ctx.textBaseline = 'alphabetic';
+  ctx.font = `400 ${11 * K}px ${MONO}`;
+  ctx.fillStyle = COR.ouro;
+  texto(ctx, 'INTUITIVE CONCEPT', cx, PAD + 11 * K, { esp: 0.3 * 11 * K, align: 'center' });
+
+  // Frase: diminui a fonte até caber em 9 linhas.
+  const limpa = String(frase || '').replace(/\*\*/g, '').replace(/\*/g, '').replace(/^["“”]+|["“”]+$/g, '').trim();
+  const max = W - 2 * PAD - 20 * K;
+  let tam = 46 * K;
+  let linhas;
+  for (;;) {
+    ctx.font = `italic 400 ${tam}px ${SERIF}`;
+    linhas = quebrar(ctx, `“${limpa}”`, max);
+    if (linhas.length <= 9 || tam <= 26 * K) break;
+    tam -= 2 * K;
+  }
+  const entre = tam * 1.18;
+  const meio = 560 * K;
+  let y = meio - ((linhas.length - 1) * entre) / 2;
+  ctx.fillStyle = COR.texto;
+  for (const l of linhas) { texto(ctx, l, cx, y, { align: 'center' }); y += entre; }
+
+  const quem = String(nome || '').trim().split(/\s+/)[0];
+  ctx.font = `400 ${10 * K}px ${MONO}`;
+  ctx.fillStyle = COR.ouro;
+  texto(ctx, quem ? `DO MANUAL DE ${quem.toUpperCase()}` : 'DO MANUAL DO MEU MAPA', cx, y + 22 * K, { esp: 0.26 * 10 * K, align: 'center' });
+
+  // Rodapé
+  const base = H - 34 * K;
+  const esp = 0.14 * 10 * K;
+  ctx.fillStyle = COR.apagado;
+  caber(ctx, dados.ceu.legenda, W - 2 * PAD, 10 * K, (s) => `400 ${s}px ${MONO}`);
+  texto(ctx, dados.ceu.legenda, cx, base - 16 * K, { esp, align: 'center' });
+  ctx.font = `400 ${10 * K}px ${MONO}`;
+  ctx.fillStyle = COR.ouro;
+  texto(ctx, 'intuitiveconcept.com.br', cx, base, { esp, align: 'center' });
+  return cv;
 }

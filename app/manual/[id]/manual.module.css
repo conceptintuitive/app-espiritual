@@ -1,0 +1,200 @@
+/* /manual/[id] no visual da Minha Área (nov/2026). Tokens e fontes repetidos
+   aqui de propósito (sem o CSS da Minha Área nem o Google Fonts). Coluna de
+   leitura de ~680px; seções separadas por linha dourada, sem cartões. */
+
+@font-face { font-family: 'Instrument Serif'; font-style: normal; font-weight: 400; font-display: swap; src: url(/olho/fonts/instrument-serif-latin-400-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Instrument Serif'; font-style: italic; font-weight: 400; font-display: swap; src: url(/olho/fonts/instrument-serif-latin-400-italic.woff2) format('woff2'); }
+@font-face { font-family: 'Geist Mono'; font-weight: 400; font-display: swap; src: url(/olho/fonts/geist-mono-latin-400-normal.woff2) format('woff2'); }
+
+.pagina {
+  --fundo: #07040d; --texto: #f3e9da; --ouro: #f2c77b; --ouro-2: #ffdca0; --apagado: #b9a9c9; --areia: #d9cbb8; --verde: #9fe0c0; --alerta: #f3a68b;
+  --linha: rgba(242,199,123,.16);
+  --serif: 'Instrument Serif', Georgia, serif;
+  --sans: var(--font-geist-sans), 'Geist', system-ui, sans-serif;
+  --mono: 'Geist Mono', var(--font-geist-mono), ui-monospace, monospace;
+  min-height: 100vh; background: var(--fundo); color: var(--texto);
+  font-family: var(--sans); font-weight: 300; -webkit-font-smoothing: antialiased;
+}
+.pagina p { margin: 0; }
+.pagina a { color: var(--ouro-2); }
+.pagina :focus-visible { outline: 2px solid var(--ouro); outline-offset: 3px; }
+
+.rotulo { display: block; font-family: var(--mono); font-weight: 400; font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--apagado); }
+.rotuloOuro { composes: rotulo; color: var(--ouro); margin-top: 18px; }
+.rotuloAlerta { composes: rotulo; color: var(--alerta); margin-top: 18px; }
+.eyebrow { font-family: var(--mono); font-weight: 400; font-size: 11px; letter-spacing: .26em; text-transform: uppercase; color: var(--ouro-2); }
+.h2 { font-family: var(--serif); font-weight: 400; font-size: 36px; line-height: 1.05; letter-spacing: -.01em; margin: 6px 0 0; }
+.h3 { font-family: var(--serif); font-weight: 400; font-size: 24px; line-height: 1.15; margin: 4px 0 0; }
+.apagado { color: var(--apagado); }
+.p { font-size: 18px; line-height: 1.75; color: var(--texto); margin: 14px 0 0 !important; }
+.p strong { font-weight: 500; color: var(--ouro-2); }
+.nota { font-size: 13px; line-height: 1.55; color: var(--apagado); margin-top: 14px !important; }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 54px; padding: 0 26px; border: 0; border-radius: 999px; cursor: pointer; box-sizing: border-box;
+  background: var(--ouro); text-decoration: none; text-align: center; margin-top: 18px;
+  font-family: var(--mono); font-weight: 400; font-size: 12px; letter-spacing: .16em; text-transform: uppercase; line-height: 1.3; }
+.pagina .btn, .btn { color: #1a1020; }
+.btn:hover { background: var(--ouro-2); }
+.btn:disabled { opacity: .6; cursor: default; }
+.btnSec { display: inline-flex; align-items: center; justify-content: center; min-height: 46px; padding: 0 20px; border-radius: 999px; cursor: pointer; box-sizing: border-box;
+  border: 1px solid rgba(243,233,218,.25); background: transparent; text-decoration: none;
+  font-family: var(--mono); font-weight: 400; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; }
+.pagina .btnSec, .btnSec { color: var(--texto); }
+.btnSec:hover { border-color: var(--ouro); }
+.acao { display: inline-flex; align-items: center; gap: 6px; background: none; border: 0; padding: 6px 0; cursor: pointer;
+  font-family: var(--mono); font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--ouro); text-decoration: underline; text-underline-offset: 4px; }
+.acao:hover { color: var(--ouro-2); }
+.acao:disabled { opacity: .6; cursor: default; }
+.acoes { display: flex; flex-wrap: wrap; gap: 4px 20px; margin-top: 12px; }
+
+/* Barra de progresso de leitura */
+.progresso { position: fixed; top: 0; left: 0; right: 0; height: 2px; z-index: 1000; pointer-events: none; }
+.progresso span { display: block; height: 100%; background: var(--ouro); transition: width .15s linear; }
+
+/* Estados: carregando, erro, gerando, confirmando */
+.centro { min-height: 70vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 40px 24px; text-align: center; }
+.centroTitulo { font-family: var(--serif); font-weight: 400; font-size: 34px; line-height: 1.1; margin: 0; max-width: 560px; }
+.texto { font-size: 16px; line-height: 1.65; color: var(--areia); max-width: 520px; }
+.spinner { width: 44px; height: 44px; border-radius: 50%; border: 2px solid rgba(242,199,123,.18); border-top-color: var(--ouro); animation: girar .9s linear infinite; }
+.spinnerPeq { composes: spinner; width: 22px; height: 22px; flex-shrink: 0; }
+@keyframes girar { to { transform: rotate(360deg); } }
+.barraGerando { width: min(320px, 80vw); height: 2px; background: rgba(242,199,123,.16); overflow: hidden; border-radius: 2px; }
+.barraGerando span { display: block; height: 100%; width: 40%; background: var(--ouro); animation: correr 1.6s ease-in-out infinite; }
+@keyframes correr { 0% { transform: translateX(-100%); } 100% { transform: translateX(260%); } }
+
+/* ── Topo ───────────────────────────────────────────────────────────────── */
+.manual { position: relative; z-index: 1; }
+.largura { max-width: 1120px; margin: 0 auto; padding: 0 24px; box-sizing: border-box; }
+.topo { max-width: 680px; margin: 0 auto; padding: 48px 0 8px; display: flex; flex-direction: column; gap: 14px; }
+.titulo { font-family: var(--serif); font-weight: 400; font-size: 44px; line-height: 1.02; letter-spacing: -.015em; margin: 0; text-wrap: balance; }
+.titulo em { font-style: italic; color: var(--ouro); }
+.subtitulo { font-size: 17px; line-height: 1.65; color: var(--areia); }
+.chips { font-family: var(--mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--areia); }
+
+/* Paywall e confirmação do MP (quem não pagou) */
+.caixa { max-width: 680px; margin: 32px auto 0; padding: 26px 22px; border: 1px solid rgba(242,199,123,.3); border-radius: 20px; background: rgba(242,199,123,.03); box-sizing: border-box; }
+.caixaCentro { composes: caixa; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+
+/* Continuar de onde parou */
+.continuar { max-width: 680px; margin: 24px auto 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border: 1px solid rgba(242,199,123,.35); border-radius: 14px; background: rgba(242,199,123,.04); box-sizing: border-box; }
+.continuarTexto { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.continuarTitulo { font-family: var(--serif); font-size: 20px; line-height: 1.15; color: var(--texto); }
+.fecharPeq { background: none; border: 0; color: var(--apagado); cursor: pointer; font-size: 16px; padding: 6px; }
+
+/* Abertura: a carta do dia */
+.abertura { max-width: 680px; margin: 32px auto 0; }
+.cartaImg { position: relative; aspect-ratio: 1200 / 630; border-radius: 16px; overflow: hidden; border: 1px solid var(--linha); background: #0d0816; }
+.cartaImg img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.cartaVeu { position: absolute; inset: 0; background: linear-gradient(to top, rgba(7,4,13,.85) 0%, rgba(7,4,13,0) 55%); display: flex; align-items: flex-end; padding: 18px; }
+.cartaNome { font-family: var(--serif); font-size: 26px; color: var(--texto); }
+
+/* Bloco do Seu Dia */
+.seuDia { max-width: 680px; margin: 40px auto 0; padding: 26px 22px; border: 1px solid rgba(242,199,123,.35); border-radius: 20px; background: rgba(242,199,123,.04); box-sizing: border-box; display: flex; flex-direction: column; gap: 10px; }
+.seuDiaTitulo { font-family: var(--serif); font-weight: 400; font-size: 30px; line-height: 1.08; margin: 0; }
+.seuDiaTitulo em { font-style: italic; color: var(--ouro); }
+.seuDia .btn { align-self: flex-start; }
+.linkMono { font-family: var(--mono); font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--apagado); text-decoration: underline; text-underline-offset: 4px; }
+.pagina a.linkMono { color: var(--apagado); }
+
+/* ── Leitura: índice + coluna ───────────────────────────────────────────── */
+.leitura { display: block; margin-top: 24px; }
+.coluna { max-width: 680px; margin: 0 auto; min-width: 0; }
+.indice { display: none; }
+.capitulo { padding-top: 40px; }
+.capituloRotulo { display: flex; align-items: center; gap: 14px; font-family: var(--mono); font-size: 11px; letter-spacing: .26em; text-transform: uppercase; color: var(--ouro); padding-bottom: 6px; }
+.capituloRotulo::after { content: ''; flex: 1; height: 1px; background: rgba(242,199,123,.35); }
+
+.secao { position: relative; padding: 40px 0; border-top: 1px solid var(--linha); scroll-margin-top: 24px; }
+.capitulo .secao:first-of-type { border-top: 0; padding-top: 24px; }
+.selo { position: absolute; top: 40px; right: 0; font-family: var(--mono); font-size: 9px; letter-spacing: .18em; text-transform: uppercase; color: var(--verde); }
+
+.destaque { margin: 22px 0 6px; }
+.citacao { font-family: var(--serif); font-style: italic; font-size: 30px; line-height: 1.2; color: var(--ouro-2); }
+.citacaoMenor { font-family: var(--serif); font-style: italic; font-size: 22px; line-height: 1.3; color: var(--ouro-2); margin: 16px 0 0 !important; padding-left: 16px; border-left: 1px solid rgba(242,199,123,.45); }
+
+.bloco { padding: 22px 0 6px; border-top: 1px solid var(--linha); margin-top: 22px; }
+.blocoTopo { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+.lista { list-style: none; margin: 10px 0 0; padding: 0; }
+.lista li { position: relative; padding: 9px 0 9px 22px; border-top: 1px solid rgba(242,199,123,.1); font-size: 17px; line-height: 1.6; }
+.lista li:first-child { border-top: 0; }
+.lista li::before { content: ''; position: absolute; left: 2px; top: 22px; width: 10px; height: 1px; background: var(--ouro); }
+.duasListas { display: grid; grid-template-columns: 1fr; gap: 4px 32px; }
+.passos { margin: 12px 0 0; padding-left: 22px; font-size: 17px; line-height: 1.65; }
+.passos li { padding: 4px 0; }
+.passos li::marker { font-family: var(--mono); font-size: 12px; color: var(--ouro); }
+.pre { white-space: pre-wrap; }
+
+/* Checklist (plano, calendário, rituais, meses) */
+.checks { list-style: none; margin: 12px 0 0; padding: 0; }
+.check { display: flex; gap: 12px; align-items: flex-start; padding: 11px 0; border-top: 1px solid rgba(242,199,123,.1); cursor: pointer; font-size: 17px; line-height: 1.55; scroll-margin-top: 80px; }
+.check:first-child { border-top: 0; }
+.checkCaixa { width: 18px; height: 18px; margin-top: 3px; flex-shrink: 0; border: 1px solid rgba(243,233,218,.35); border-radius: 4px; display: grid; place-content: center; }
+.checkOn .checkCaixa { background: var(--ouro); border-color: var(--ouro); }
+.checkOn .checkCaixa::after { content: ''; width: 9px; height: 5px; border: solid #1a1020; border-width: 0 0 2px 2px; transform: translateY(-1px) rotate(-45deg); }
+.checkOn .checkTexto { color: var(--apagado); }
+.semana { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--linha); }
+.progressoCal { margin-top: 18px; display: flex; flex-direction: column; gap: 8px; }
+.progressoCalLinha { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 11px; letter-spacing: .12em; color: var(--areia); }
+.progressoCalTrilho { height: 3px; background: rgba(242,199,123,.16); border-radius: 2px; overflow: hidden; }
+.progressoCalTrilho span { display: block; height: 100%; background: var(--ouro); }
+
+/* Compatibilidade */
+.compat { padding: 12px 0; border-top: 1px solid rgba(242,199,123,.1); }
+.compatTopo { display: flex; justify-content: space-between; font-size: 17px; }
+.compatScore { font-family: var(--mono); font-size: 12px; color: var(--ouro); }
+.compatTrilho { height: 2px; margin: 8px 0; background: rgba(242,199,123,.14); }
+.compatTrilho span { display: block; height: 100%; background: var(--ouro); }
+.compatTexto { font-size: 15px; line-height: 1.55; color: var(--areia); }
+.campos { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+.campo { flex: 1; min-width: 150px; box-sizing: border-box; min-height: 48px; padding: 10px 14px; border-radius: 12px;
+  border: 1px solid rgba(243,233,218,.2); background: rgba(243,233,218,.03); color: var(--texto); font-family: var(--sans); font-weight: 400; font-size: 16px; outline: none; color-scheme: dark; }
+.campo:focus { border-color: var(--ouro); }
+.pagina .campo:focus-visible { outline: none; }
+
+/* Ofertas dos complementos */
+.oferta { margin-top: 8px; }
+.combo { display: flex; gap: 12px; align-items: flex-start; margin-top: 18px; padding: 14px; border: 1px solid rgba(243,233,218,.18); border-radius: 14px; cursor: pointer; font-size: 15px; line-height: 1.5; color: var(--areia); }
+.combo strong { font-weight: 500; color: var(--texto); }
+.comboOn { border-color: var(--ouro); background: rgba(242,199,123,.05); }
+.combo input { appearance: none; -webkit-appearance: none; width: 18px; height: 18px; margin: 2px 0 0; flex-shrink: 0; cursor: pointer; border: 1px solid rgba(243,233,218,.35); border-radius: 4px; display: grid; place-content: center; }
+.combo input:checked { background: var(--ouro); border-color: var(--ouro); }
+.combo input:checked::after { content: ''; width: 9px; height: 5px; border: solid #1a1020; border-width: 0 0 2px 2px; transform: translateY(-1px) rotate(-45deg); }
+
+.fim { max-width: 680px; margin: 0 auto; padding: 40px 0 140px; display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; font-size: 13px; color: var(--apagado); }
+.fim strong { font-weight: 400; color: var(--texto); }
+
+/* Índice no celular: botão fixo + folha */
+.botaoIndice { position: fixed; left: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); z-index: 900; min-height: 44px; padding: 0 18px; border-radius: 999px;
+  border: 1px solid rgba(242,199,123,.5); background: rgba(7,4,13,.92); color: var(--ouro); cursor: pointer;
+  font-family: var(--mono); font-size: 11px; letter-spacing: .18em; text-transform: uppercase; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+.folhaFundo { position: fixed; inset: 0; z-index: 1001; background: rgba(7,4,13,.6); }
+.folha { position: fixed; left: 0; right: 0; bottom: 0; z-index: 1002; max-height: 78vh; overflow-y: auto; padding: 22px 20px calc(24px + env(safe-area-inset-bottom));
+  background: #0e0818; border-top: 1px solid rgba(242,199,123,.35); border-radius: 20px 20px 0 0; box-sizing: border-box; }
+.folhaTopo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+
+/* Lista do índice (folha e coluna lateral) */
+.indiceCap { margin-top: 18px; }
+.indiceCap:first-of-type { margin-top: 10px; }
+.indiceItens { list-style: none; margin: 6px 0 0; padding: 0; }
+.indiceItem { display: flex; align-items: baseline; gap: 10px; padding: 7px 0; text-decoration: none; font-size: 15px; line-height: 1.35; }
+.pagina a.indiceItem { color: var(--areia); }
+.pagina a.indiceItem:hover { color: var(--texto); }
+.indiceMarca { width: 12px; flex-shrink: 0; font-family: var(--mono); font-size: 11px; color: var(--verde); }
+.pagina a.indiceAtual { color: var(--ouro-2); }
+.indiceRodape { margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--linha); display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+
+/* ── Desktop ────────────────────────────────────────────────────────────── */
+@media (min-width: 700px) {
+  .titulo { font-size: 60px; }
+  .h2 { font-size: 44px; }
+  .citacao { font-size: 36px; }
+  .duasListas { grid-template-columns: 1fr 1fr; }
+  .topo { padding-top: 72px; }
+  .caixa, .seuDia { padding: 30px 32px; }
+}
+@media (min-width: 1100px) {
+  .leitura { display: grid; grid-template-columns: 240px minmax(0, 680px); justify-content: center; gap: 72px; align-items: start; }
+  .coluna { margin: 0; }
+  .indice { display: block; position: sticky; top: 24px; max-height: calc(100vh - 48px); overflow-y: auto; padding: 36px 0 24px; scrollbar-width: thin; }
+  .botaoIndice, .folha, .folhaFundo { display: none; }
+}

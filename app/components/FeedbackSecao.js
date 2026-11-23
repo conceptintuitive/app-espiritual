@@ -24,7 +24,9 @@ export function chaveSecao(section) {
   return base || String(section?.type || 'secao');
 }
 
-export default function FeedbackSecao({ manualId, secao }) {
+// `visual="ma"` = linha discreta no visual da Minha Área (/manual, nov/2026).
+export default function FeedbackSecao({ manualId, secao, visual = 'classico' }) {
+  const e = visual === 'ma' ? estilosMa : estilos;
   const storageKey = `feedback:${manualId}:${secao}`;
   const [votou, setVotou] = useState(false);
   const [erro, setErro] = useState(false);
@@ -37,7 +39,7 @@ export default function FeedbackSecao({ manualId, secao }) {
   }, [storageKey]);
 
   if (votou) {
-    return <div style={estilos.obrigada}>Obrigada! 💜</div>;
+    return <div style={e.obrigada}>{visual === 'ma' ? 'Obrigada pela resposta.' : 'Obrigada! 💜'}</div>;
   }
 
   function votar(resposta) {
@@ -55,22 +57,22 @@ export default function FeedbackSecao({ manualId, secao }) {
   }
 
   return (
-    <div style={estilos.wrap}>
-      <div style={estilos.pergunta}>Isso bate com você?</div>
-      <div style={estilos.botoes}>
+    <div style={e.wrap}>
+      <div style={e.pergunta}>Isso bate com você?</div>
+      <div style={e.botoes}>
         {OPCOES.map((o) => (
           <button
             key={o.valor}
             type="button"
             onClick={() => votar(o.valor)}
             disabled={pendente}
-            style={{ ...estilos.botao, opacity: pendente ? 0.5 : 1 }}
+            style={{ ...e.botao, opacity: pendente ? 0.5 : 1 }}
           >
             {o.rotulo}
           </button>
         ))}
       </div>
-      {erro && <div style={estilos.erro}>Não conseguimos salvar. Tenta de novo?</div>}
+      {erro && <div style={e.erro}>Não conseguimos salvar. Tenta de novo?</div>}
     </div>
   );
 }
@@ -111,4 +113,17 @@ const estilos = {
     color: 'rgba(233,213,255,0.85)',
   },
   erro: { marginTop: 8, fontSize: 13, color: '#fca5a5' },
+};
+
+const MONO = "'Geist Mono', var(--font-geist-mono), ui-monospace, monospace";
+const estilosMa = {
+  wrap: { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px 14px', marginTop: 22 },
+  pergunta: { fontFamily: MONO, fontSize: 10, letterSpacing: '.2em', textTransform: 'uppercase', color: '#b9a9c9' },
+  botoes: { display: 'flex', flexWrap: 'wrap', gap: 8 },
+  botao: {
+    minHeight: 34, padding: '0 14px', borderRadius: 999, border: '1px solid rgba(243,233,218,.22)', background: 'transparent',
+    color: '#f3e9da', fontFamily: MONO, fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase', cursor: 'pointer',
+  },
+  obrigada: { marginTop: 22, fontFamily: MONO, fontSize: 10, letterSpacing: '.2em', textTransform: 'uppercase', color: '#9fe0c0' },
+  erro: { width: '100%', fontSize: 13, color: '#fca5a5' },
 };

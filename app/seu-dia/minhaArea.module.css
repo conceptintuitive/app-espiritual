@@ -402,3 +402,10 @@
 .abaCorpo :global(.sd-hora-faixa) { flex: none; width: 104px; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
 .abaCorpo :global(.sd-tag) { border-radius: 999px; white-space: nowrap; text-transform: uppercase; }
 .abaCorpo :global(.sd-hora p) { margin: 0; font-size: 15px; line-height: 1.6; color: var(--areia); }
+
+/* "Dia N do seu plano" na aba Hoje (plano/calendário do Manual) */
+.jornada { display: flex; flex-direction: column; gap: 6px; margin: 4px 0 8px; padding: 16px 0; border-top: 1px solid var(--linha); border-bottom: 1px solid var(--linha); text-decoration: none; }
+.ma a.jornada { color: var(--texto); }
+.jornadaTitulo { font-family: var(--serif); font-size: 22px; line-height: 1.2; color: var(--texto); }
+.jornadaLink { font-family: var(--mono); font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--ouro); }
+.jornada:hover .jornadaTitulo { color: var(--ouro-2); }
