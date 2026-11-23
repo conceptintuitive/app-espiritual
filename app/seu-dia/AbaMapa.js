@@ -11,9 +11,9 @@
 import { useMemo, useRef, useState } from 'react';
 import { dadosDoCard } from '@/lib/cardStory';
 import { desenharCard, canvasParaBlob } from './cardStory';
-import { sistemasDaPessoa, sinteseDoMapa, TEMAS } from '@/lib/mapaSintese';
+import { sistemasDaPessoa, sinteseDoMapa, previaDoManual, TEMAS } from '@/lib/mapaSintese';
 import ma from './minhaArea.module.css';
-import { BotoesCadeado, TEXTO_CADEADO } from './Cadeado';
+import { BotoesCadeado } from './Cadeado';
 
 function evento(nome, params = {}) {
   try { window.gtag?.('event', nome, { event_category: 'seu_dia', ...params }); } catch {}
@@ -21,13 +21,17 @@ function evento(nome, params = {}) {
 
 const listaHumana = (xs) => (xs.length <= 1 ? xs.join('') : `${xs.slice(0, -1).join(', ')} e ${xs[xs.length - 1]}`);
 
-export default function AbaMapa({ perfil, completo = false }) {
+export default function AbaMapa({ perfil }) {
+  // Quem tem o Manual (pago agora ou no anual) vê o conselho da tensão; quem
+  // não tem vê só a frase e, no fim, a prévia do Manual com os temas dela.
+  const temManual = !!perfil.mapa?.pago || perfil.motivoAcesso === 'manual';
   const sistemas = useMemo(() => sistemasDaPessoa({
     dataNascimento: perfil.dataNascimento,
     hora: perfil.hora || null,
     cidade: perfil.cidade || null,
   }), [perfil.dataNascimento, perfil.hora, perfil.cidade]);
   const s = useMemo(() => sinteseDoMapa(sistemas), [sistemas]);
+  const previa = useMemo(() => previaDoManual(s), [s]);
   const [gerando, setGerando] = useState(false);
   const [aviso, setAviso] = useState('');
   const nome = (perfil.nome || '').split(' ')[0];
@@ -121,7 +125,7 @@ export default function AbaMapa({ perfil, completo = false }) {
               <span className={ma.temaQuem}>
                 {s.tensao.nomeA}: {listaHumana(s.tensao.sistemasA)} · {s.tensao.nomeB}: {listaHumana(s.tensao.sistemasB)}
               </span>
-              <p className={ma.temaFrase}>{s.tensao.texto}</p>
+              <p className={ma.temaFrase}>{temManual ? s.tensao.texto : s.tensao.frase}</p>
             </div>
           </section>
         )}
@@ -182,13 +186,25 @@ export default function AbaMapa({ perfil, completo = false }) {
         </section>
       </div>
 
-      {/* Sem Completo: o mapa inteiro fica aberto (é o que a pessoa divulga);
-          no fim, o convite pro Manual com o mesmo botão dos cadeados. */}
-      {!completo && (
-        <section className={ma.cadeadoCaixa} style={{ gridColumn: '1 / -1' }} aria-label="Manual do seu Mapa">
-          <p className={ma.cadeadoTexto}>O Manual do seu Mapa explica por que seu mapa repete isso, e o que fazer com cada parte.</p>
-          <p className={ma.sistemasTexto} style={{ margin: 0 }}>{TEXTO_CADEADO}</p>
-          <BotoesCadeado perfil={perfil} origem="mapa" />
+      {/* Sem Manual: o mapa inteiro fica aberto (é o que a pessoa divulga) e,
+          no fim, a prévia do que o Manual traz pra ELA (lib/mapaSintese.js →
+          previaDoManual: títulos fixos por tema/tensão, começo borrado). */}
+      {!temManual && (
+        <section className={ma.previaManual} aria-labelledby="mp-previa">
+          <h2 id="mp-previa" className={ma.h2Ed}>No Manual do seu Mapa</h2>
+          {previa.map((x) => (
+            <div key={x.chave} className={ma.previaLinha}>
+              <p className={ma.previaTitulo}>{x.titulo}</p>
+              <p className={ma.cadeadoBorrado} aria-hidden="true">{x.inicio}</p>
+            </div>
+          ))}
+          <BotoesCadeado
+            perfil={perfil}
+            origem="mapa"
+            rotuloResultado="Desbloquear o Manual do seu Mapa"
+            rotuloQuiz="Ver a prévia grátis do meu Manual"
+            nota="e ganhe 30 dias do Seu Dia Completo"
+          />
         </section>
       )}
     </div>
