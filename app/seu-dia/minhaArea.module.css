@@ -372,3 +372,14 @@
 .cardOpcaoOn img { border: 2px solid var(--ouro); }
 .cardRotulo { font-family: var(--mono); font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--apagado); }
 .cardOpcaoOn .cardRotulo { color: var(--ouro); }
+
+/* Cadeado (sem Seu Dia Completo): títulos nítidos, conteúdo borrado e o mesmo CTA */
+.cadeado { display: flex; flex-direction: column; padding-top: 8px; }
+.cadeadoSecao { display: flex; flex-direction: column; gap: 10px; padding: 22px 0; border-bottom: 1px solid var(--linha); }
+.cadeadoBorrado { font-size: 15px; line-height: 1.65; color: var(--areia); filter: blur(6px); user-select: none; pointer-events: none; }
+.cadeadoCaixa { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; margin-top: 24px; padding: 22px 20px; border: 1px solid rgba(242,199,123,.35); border-radius: 18px; background: rgba(242,199,123,.04); color: var(--ouro); }
+.cadeadoTexto { margin: 0; font-family: var(--serif); font-size: 24px; line-height: 1.15; color: var(--texto); }
+.cadeadoAcoes { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+.ma a.cadeadoLink, .cadeadoLink { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; color: var(--apagado); text-decoration: underline; text-underline-offset: 3px; }
+.diaSoTitulo { grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 560px) { .diaSoTitulo { grid-template-columns: 76px minmax(0, 1fr); } }
