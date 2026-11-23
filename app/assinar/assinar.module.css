@@ -1,0 +1,74 @@
+/* /assinar no visual da Minha Área (nov/2026). Tokens e fontes vêm do
+   .ma de app/seu-dia/minhaArea.module.css (variáveis herdadas). */
+
+.corpo { box-sizing: border-box; max-width: 1180px; margin: 0 auto; padding: 8px 24px 72px; display: flex; flex-direction: column; }
+.sub { margin: 6px 0 0; font-size: 15px; line-height: 1.55; color: var(--areia); max-width: 520px; }
+.cortesia { margin: 10px 0 0; font-family: var(--mono); font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--ouro-2); }
+
+.aviso { margin: 16px 0 0; font-family: var(--mono); font-size: 11px; letter-spacing: .06em; line-height: 1.6; color: #f4b07a; }
+.ok { margin: 16px 0 0; font-family: var(--mono); font-size: 11px; letter-spacing: .06em; line-height: 1.6; color: var(--verde); }
+
+.secao { display: flex; flex-direction: column; gap: 14px; padding: 28px 0; border-bottom: 1px solid var(--linha); }
+.topoSecao { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.h2 { margin: 0; font-family: var(--serif); font-weight: 400; font-size: 34px; line-height: 1.05; }
+.exemplo { font-family: var(--mono); font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--apagado); border: 1px solid rgba(243,233,218,.22); border-radius: 999px; padding: 4px 8px; }
+
+/* Prévia do Hoje: caixa com borda fina; anula o espaçamento do .abaCorpo */
+.previa { padding: 20px 18px !important; border: 1px solid rgba(242,199,123,.22); border-radius: 18px; background: rgba(242,199,123,.025); }
+.previaHoras { padding-top: 18px; display: flex; flex-direction: column; gap: 8px; }
+.previaHorasRotulo { font-family: var(--mono); font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--ouro); }
+
+.itens { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.item { display: flex; flex-direction: column; gap: 4px; padding: 14px 0; border-top: 1px solid var(--linha); }
+.itemRotulo { font-family: var(--mono); font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--apagado); }
+.itemDestaque .itemRotulo { color: var(--ouro); }
+.itemTexto { margin: 0; font-size: 15px; line-height: 1.55; color: var(--texto); }
+
+.form { display: flex; flex-direction: column; gap: 14px; padding: 28px 0; border-bottom: 1px solid var(--linha); }
+.planos { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.plano { position: relative; display: flex; flex-direction: column; gap: 6px; text-align: left; cursor: pointer; padding: 20px 18px; border-radius: 18px; border: 1px solid rgba(243,233,218,.18); background: transparent; color: var(--texto); font: inherit; }
+.plano:hover { border-color: rgba(242,199,123,.5); }
+.planoOn { border: 2px solid var(--ouro); background: rgba(242,199,123,.05); padding: 19px 17px; }
+.planoNome { font-family: var(--mono); font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: var(--apagado); }
+.planoOn .planoNome { color: var(--ouro); }
+.planoPreco { font-family: var(--serif); font-size: 40px; line-height: 1; }
+.planoPreco small { font-size: 20px; color: var(--areia); }
+.planoLinha { margin: 0; font-size: 14px; line-height: 1.5; color: var(--areia); }
+.planoEconomia { margin: 4px 0 0; font-family: var(--mono); font-size: 10px; letter-spacing: .08em; line-height: 1.6; color: var(--verde); }
+.selo { align-self: flex-start; font-family: var(--mono); font-size: 9px; letter-spacing: .18em; text-transform: uppercase; padding: 5px 8px; border-radius: 999px; border: 1px solid rgba(242,199,123,.55); color: var(--ouro-2); margin-bottom: 4px; }
+
+.rotulo { font-family: var(--mono); font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--apagado); margin-top: 8px; }
+.metodos { display: flex; flex-direction: column; }
+.metodo { display: flex; align-items: flex-start; gap: 12px; text-align: left; cursor: pointer; padding: 14px 0; border: 0; border-top: 1px solid var(--linha); background: none; color: var(--texto); font: inherit; }
+.metodo:last-child { border-bottom: 1px solid var(--linha); }
+.bolinha { flex: none; width: 16px; height: 16px; margin-top: 3px; border-radius: 999px; border: 1px solid rgba(243,233,218,.4); box-sizing: border-box; }
+.metodoOn .bolinha { border: 5px solid var(--ouro); }
+.metodoTexto { display: flex; flex-direction: column; gap: 2px; }
+.metodoNome { font-family: var(--serif); font-size: 22px; line-height: 1.1; }
+.metodoSub { font-size: 14px; color: var(--areia); }
+.pix { font-family: var(--mono); font-size: 9px; letter-spacing: .16em; text-transform: uppercase; color: var(--verde); margin-left: 6px; vertical-align: middle; }
+.mudo { margin: 0; font-size: 13px; line-height: 1.55; color: var(--apagado); }
+
+.campo { width: 100%; box-sizing: border-box; min-height: 50px; padding: 10px 14px; border-radius: 12px; border: 1px solid rgba(243,233,218,.25); background: transparent; color: var(--texto); font-family: var(--sans); font-size: 16px; }
+.campo:focus { outline: none; border-color: var(--ouro); }
+.link { align-self: flex-start; background: none; border: 0; padding: 0; cursor: pointer; font: inherit; font-size: 14px; color: var(--ouro-2); text-decoration: underline; }
+.erro { margin: 0; font-size: 14px; color: #f4a3a3; }
+
+.botao { width: 100%; }
+.garantia { margin: -2px 0 0; font-size: 13px; line-height: 1.55; color: var(--areia); }
+.garantia strong { font-weight: 500; color: var(--texto); }
+
+.duvidas { display: flex; flex-direction: column; }
+.duvida { display: flex; flex-direction: column; gap: 4px; padding: 16px 0; border-top: 1px solid var(--linha); }
+.duvida h3 { margin: 0; font-family: var(--serif); font-weight: 400; font-size: 22px; }
+.duvida p { margin: 0; font-size: 15px; line-height: 1.6; color: var(--areia); }
+
+@media (min-width: 960px) {
+  .corpo { padding: 16px 40px 96px; }
+  .h2 { font-size: 40px; }
+  .duas { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 0 64px; align-items: start; }
+  .form { max-width: 860px; }
+  .planos { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .botao { width: auto; align-self: flex-start; min-width: 320px; }
+  .duvidas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 56px; }
+}

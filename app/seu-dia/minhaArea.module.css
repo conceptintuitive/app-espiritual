@@ -383,3 +383,14 @@
 .ma a.cadeadoLink, .cadeadoLink { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; color: var(--apagado); text-decoration: underline; text-underline-offset: 3px; }
 .diaSoTitulo { grid-template-columns: minmax(0, 1fr); }
 @media (min-width: 560px) { .diaSoTitulo { grid-template-columns: 76px minmax(0, 1fr); } }
+
+/* Faixa alta (/assinar) e visitante sem perfil (imagem da estrela) */
+.faixaImg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 48%; }
+.faixaAlta { height: 330px; }
+@media (min-width: 960px) { .faixaAlta { height: 380px; } }
+
+/* Base da linha das horas (o Seu Dia tem isso no CSS global; aqui vale também fora dele) */
+.abaCorpo :global(.sd-hora) { display: flex; gap: 12px; }
+.abaCorpo :global(.sd-hora-faixa) { flex: none; width: 104px; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.abaCorpo :global(.sd-tag) { border-radius: 999px; white-space: nowrap; text-transform: uppercase; }
+.abaCorpo :global(.sd-hora p) { margin: 0; font-size: 15px; line-height: 1.6; color: var(--areia); }

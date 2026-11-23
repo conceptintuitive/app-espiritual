@@ -23,8 +23,9 @@ import { TEXTO_ANJO } from '@/lib/anjosTextos';
 import { longitudeSolar } from '@/lib/bazi';
 import { salvarPerfil, lerPerfil } from '@/lib/perfilLocal';
 import AbaMapa from './AbaMapa';
-import AbaInicio, { TituloDoDia } from './AbaInicio';
+import AbaInicio from './AbaInicio';
 import FaixaCeu from './FaixaCeu';
+import { DiaResumo, LinhaHora } from './DiaResumo';
 import Cadeado from './Cadeado';
 import TelaConfirmar from './TelaConfirmar';
 import { precisaConfirmar, marcaConfirmacao } from '@/lib/minhaArea';
@@ -532,31 +533,7 @@ function AbaHoje({ perfil, leitura, completo, onDesbloquear }) {
 
       <div className={ma.duas}>
         <div className={ma.coluna}>
-          <section className={ma.diaHero} aria-labelledby="sd-titulo-dia">
-            <div className={ma.hojeTopo}>
-              <span className={ma.eyebrow}>{`${l.rotulo.semana} · ${l.rotulo.dia} de ${l.rotulo.mes}`}</span>
-              <span className={ma.pilula}>{tom.rotulo}</span>
-            </div>
-            <h2 id="sd-titulo-dia" className={ma.diaTitulo}><TituloDoDia texto={l.titulo} /></h2>
-            <p className={ma.diaFrase}>{l.frase}</p>
-            <div className={ma.sistemasLinha}>
-              <div className={ma.barras} aria-hidden="true">
-                {Array.from({ length: l.totalLentes }, (_, i) => <span key={i} className={i < l.concordam ? ma.barraOn : ''} />)}
-              </div>
-              <span className={ma.sistemasTexto}>{l.concordam} de {l.totalLentes} sistemas apontam pra {l.temaNome.toLowerCase()}</span>
-            </div>
-          </section>
-
-          <div className={ma.faceEvite}>
-            <div className={ma.faceCol}>
-              <span className={ma.rotuloFaca}>Faça</span>
-              {l.faca.map((f) => <p key={f}>{f}</p>)}
-            </div>
-            <div className={ma.faceCol}>
-              <span className={ma.rotuloEvite}>Evite</span>
-              {l.evite.map((f) => <p key={f}>{f}</p>)}
-            </div>
-          </div>
+          <DiaResumo l={l} rotuloTom={tom.rotulo} />
 
           {completo ? (
             <>
@@ -762,22 +739,6 @@ function Lente({ titulo, destaque, children }) {
         {children}
       </div>
     </section>
-  );
-}
-
-function LinhaHora({ h }) {
-  const forca = h.tipo === 'forca';
-  return (
-    <div className="sd-hora">
-      <div className="sd-hora-faixa">
-        <strong>{h.faixa}</strong>
-        <span className={`sd-tag ${forca ? 'sd-tom-fluxo' : 'sd-tom-tensao'}`}>{forca ? 'FORÇA' : 'ATENÇÃO'}</span>
-      </div>
-      <div>
-        <p className="sd-hora-deus">Hora {['Serpente', 'Cabra'].includes(h.animal) ? 'da' : 'do'} {h.animal} · {h.deusNome}</p>
-        <p>{h.texto}</p>
-      </div>
-    </div>
   );
 }
 
