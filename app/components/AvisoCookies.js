@@ -64,19 +64,24 @@ export default function AvisoCookies() {
         <button type="button" className="ic-cookies-sim" onClick={() => escolher(true)}>Aceitar</button>
       </div>
       <style>{`
+        /* Visual da Minha Área (nov/2026): fundo escuro, linha dourada, Geist,
+           botões em Geist Mono; "Aceitar" = botão principal dourado. */
         .ic-cookies {
           position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 70;
-          max-width: 560px; margin: 0 auto; padding: 14px 16px; border-radius: 16px;
-          background: rgba(19, 8, 40, 0.97); border: 1px solid rgba(216, 180, 254, 0.3); box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-          color: #faf5ff; font-family: 'Cormorant Garamond', Georgia, serif;
+          max-width: 560px; margin: 0 auto; padding: 14px 16px; border-radius: 16px; box-sizing: border-box;
+          background: rgba(14, 8, 24, 0.97); border: 1px solid rgba(242, 199, 123, 0.3); box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+          color: #f3e9da; font-family: var(--font-geist-sans), 'Geist', system-ui, sans-serif; font-weight: 300;
           display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px;
         }
-        .ic-cookies p { margin: 0; flex: 1 1 260px; font-size: 16px; line-height: 1.4; }
-        .ic-cookies a { color: #f5d48a; }
+        .ic-cookies p { margin: 0; flex: 1 1 260px; font-size: 15px; line-height: 1.45; }
+        .ic-cookies a { color: #ffdca0; }
         .ic-cookies-botoes { display: flex; gap: 8px; flex: 0 0 auto; }
-        .ic-cookies button { min-height: 40px; padding: 0 16px; border-radius: 999px; cursor: pointer; font-family: 'Cinzel', Georgia, serif; font-weight: 700; font-size: 13px; }
-        .ic-cookies-nao { background: transparent; color: #e9dcff; border: 1px solid rgba(216, 180, 254, 0.35); }
-        .ic-cookies-sim { background: linear-gradient(135deg, #8b5cf6, #ec4899); color: #fff; border: 0; }
+        .ic-cookies button { min-height: 40px; padding: 0 16px; border-radius: 999px; cursor: pointer;
+          font-family: 'Geist Mono', var(--font-geist-mono), ui-monospace, monospace; font-weight: 400; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; }
+        .ic-cookies-nao { background: transparent; color: #f3e9da; border: 1px solid rgba(243, 233, 218, 0.25); }
+        .ic-cookies-nao:hover { border-color: #f2c77b; }
+        .ic-cookies-sim { background: #f2c77b; color: #1a1020; border: 0; }
+        .ic-cookies-sim:hover { background: #ffdca0; }
       `}</style>
     </div>
   );

@@ -729,7 +729,9 @@ export default function ResultadoPage() {
                 <li>3 rituais com áudio guiado</li>
                 <li>De bônus: a Compatibilidade Completa com uma pessoa (vendida por R$ 29,90)</li>
                 <li>30 dias do Seu Dia Completo, sem cobrança</li>
-                {!ofertaExpirada && <li>Enquanto esse preço valer: o Ritual de Ativação Personalizado</li>}
+                {/* Só o que o Manual entrega de verdade. O antigo "Ritual de
+                    Ativação Personalizado" (bônus das 24h) não existia em lugar
+                    nenhum — os 3 rituais são os mesmos a R$ 27 ou R$ 47. */}
               </ul>
               <ComboToggle checked={incluirTier2} onChange={setIncluirTier2} precoTotal={precoAtual + PRECO_BONUS_COMBO} />
               <button className={`${r.btn} ${r.btnLargo}`} onClick={() => handleComprar()} disabled={processando}>
