@@ -1,5 +1,6 @@
 // PNG da capa do blog (ImageResponse). Só servidor/build: lê o sky.json e as
-// fontes do disco. A arte (céu, Lua, legenda) vem de lib/blogCapa.js.
+// fontes do disco (skyDoDisco/fontes também servem as artes do Instagram,
+// app/api/social/_arte/respostaArte.js). A arte (céu, Lua, legenda) vem de lib/blogCapa.js.
 
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -8,12 +9,12 @@ import { FORMATOS_CAPA, svgDoCeu, legendaCapa } from '@/lib/blogCapa';
 
 // Promises no escopo do módulo: lê do disco uma vez por processo de build.
 let promessaSky = null;
-function skyDoDisco() {
+export function skyDoDisco() {
   promessaSky ||= readFile(join(process.cwd(), 'public/olho/sky.json'), 'utf8').then(JSON.parse);
   return promessaSky;
 }
 let promessaFontes = null;
-function fontes() {
+export function fontes() {
   const dir = join(process.cwd(), 'lib/blogCapaFontes');
   const ler = (f) => readFile(join(dir, f));
   promessaFontes ||= Promise.all([
