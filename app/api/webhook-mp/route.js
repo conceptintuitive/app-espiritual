@@ -12,7 +12,7 @@ import {
   gerarRituaisIA, gerarObjetivoIA, gerarLeituraIA, gerarCalendarioIA,
   gerarFechamentoIA, gerarSinteseIA,
 } from "@/lib/ia";
-import { sendGA4Purchase } from "@/lib/ga4";
+import { sendGA4Purchase, buscarAtribuicao } from "@/lib/ga4";
 import { sendTikTokPurchase } from "@/lib/tiktok";
 import { sendMetaPurchase } from "@/lib/meta";
 import { getOrigemVenda } from "@/lib/testEmails";
@@ -171,6 +171,8 @@ export async function POST(request) {
           value: payment.transaction_amount ?? 0,
           currency: (payment.currency_id || "BRL").toUpperCase(),
           clientId: `server.${paymentId}`,
+          atribuicao: await buscarAtribuicao(supabase, analiseId),
+          item: produtosUpsellLabel,
         });
 
         // Meta e TikTok não recebiam Purchase nesse fluxo (só GA4) — mesmo
@@ -240,6 +242,8 @@ export async function POST(request) {
           value: payment.transaction_amount ?? 0,
           currency: (payment.currency_id || "BRL").toUpperCase(),
           clientId: `server.${paymentId}`,
+          atribuicao: await buscarAtribuicao(supabase, analiseId),
+          item: "Compatibilidade Completa",
         });
 
         // Meta e TikTok não recebiam Purchase nesse fluxo (só GA4).

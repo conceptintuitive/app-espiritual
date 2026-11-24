@@ -14,7 +14,7 @@ import {
   gerarRituaisIA, gerarObjetivoIA, gerarLeituraIA, gerarCalendarioIA,
   gerarFechamentoIA, gerarSinteseIA,
 } from "@/lib/ia";
-import { sendGA4Purchase } from "@/lib/ga4";
+import { sendGA4Purchase, buscarAtribuicao } from "@/lib/ga4";
 import { sendTikTokPurchase } from "@/lib/tiktok";
 import { sendMetaPurchase } from "@/lib/meta";
 import { getOrigemVenda } from "@/lib/testEmails";
@@ -168,6 +168,8 @@ async function handlePaymentSuccess(session, supabase) {
       value: (session.amount_total ?? 0) / 100,
       currency: (session.currency || "brl").toUpperCase(),
       clientId: `server.${session.id}`,
+      atribuicao: await buscarAtribuicao(supabase, analiseId),
+      item: "Manual do seu Mapa",
     });
 
     // TikTok CompletePayment ───────────────────────────────────────────────────

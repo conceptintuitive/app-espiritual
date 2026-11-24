@@ -31,6 +31,7 @@ import { salvarSeForMeu } from '@/lib/perfilLocal';
 import { salvarEmailSeuDia } from '@/lib/seuDiaRepasse';
 import { TESTE_SEU_DIA_ATIVO } from '@/lib/testeSeuDia';
 import { secoesDoManual, rotuloContador, faqResultado } from '@/lib/resultadoManual';
+import { coletarAtribuicao } from '@/app/components/CapturaAtribuicao';
 import r from './resultado.module.css';
 
 // Fora do pacote inicial: o céu e a linha anjo/Kin do topo, o dia de hoje
@@ -442,6 +443,8 @@ export default function ResultadoPage() {
           incluirTier2,
           ...(ehPresente && { presenteEmail: presenteEmail.trim(), presenteDe: presenteDe.trim() }),
           ...(emailCorrigido && { emailCorrigido }),
+          // client_id + session_id desta sessão e gclid (só com aceite de cookies)
+          atribuicao: await coletarAtribuicao(),
         }),
       });
       const data = await response.json().catch(() => ({}));

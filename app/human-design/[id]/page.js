@@ -10,6 +10,7 @@ import { PRECO_BONUS_AVULSO, PRECO_BONUS_COMBO } from '@/lib/preco';
 import { offsetSalvo, buscarOffsetNascimento } from '@/lib/sky';
 import SiteNav from '@/app/components/SiteNav';
 import { useAssinatura, CtaAssinatura } from '@/app/components/assinatura';
+import { coletarAtribuicao } from '@/app/components/CapturaAtribuicao';
 
 function getSupabaseClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -57,7 +58,7 @@ export default function HumanDesignPage() {
       const response = await fetch('/api/criar-checkout-upsell-mp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ analiseId: id, produtos, redirectTo: 'humandesign' }),
+        body: JSON.stringify({ analiseId: id, produtos, redirectTo: 'humandesign', atribuicao: await coletarAtribuicao() }),
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {

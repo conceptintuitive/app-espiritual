@@ -36,6 +36,7 @@ import {
   renderInline, splitBodyIntoParasAndQuote, CheckItem, ListenButton,
   buildRitualNarration, buildDiagBlockNarration, buildArchetypeNarration,
 } from './pecas';
+import { coletarAtribuicao } from '@/app/components/CapturaAtribuicao';
 import m from './manual.module.css';
 
 // Olho Cósmico (abertura "Meu Mapa"): chunk separado, só baixa pra quem pagou.
@@ -627,7 +628,7 @@ export default function ManualPage() {
       const response = await fetch('/api/criar-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ analiseId: id }),
+        body: JSON.stringify({ analiseId: id, atribuicao: await coletarAtribuicao() }),
       });
 
       if (!response.ok) {

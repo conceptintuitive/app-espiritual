@@ -5,6 +5,7 @@ import { gerarPreviewIA, gerarDiagnosticoIA, gerarAmorIA, gerarArquetiposIA, ger
 import { buildDiagnosticoCtx, buildAmorCtx, buildArquetiposCtx, buildPlano7Ctx } from '@/lib/manualgenerator';
 import { sortearCarta, TAROT_PROMPTS_EN } from '@/lib/tarot';
 import { sendMetaLead } from '@/lib/meta';
+import { salvarAtribuicao } from '@/lib/ga4';
 import { emailValido } from '@/lib/emailValidacao';
 import { FUSOS_BR } from '@/lib/fusoBR';
 import { utcOffsetHoras } from '@/lib/sky';
@@ -241,6 +242,11 @@ export async function POST(request) {
           console.error('⚠️ Não foi possível salvar utc_offset_nascimento (migração 0016 rodou?):', offErr.message);
         }
       }
+
+      // Atribuição do Google Ads (migração 0023, lib/atribuicao.js): client_id,
+      // session_id e gclid da visita do quiz, só com aceite de cookies. Mesmo
+      // padrão best effort; cada checkout regrava com a sessão da compra.
+      if (body?.atribuicao) await salvarAtribuicao(supabase, analiseId, body.atribuicao);
 
       if (municipio) {
         const { error: munErr } = await supabase

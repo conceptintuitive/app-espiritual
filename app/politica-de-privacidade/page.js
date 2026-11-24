@@ -84,6 +84,13 @@ export default function PoliticaDePrivacidadePage() {
           originou. Alguns desses prestadores processam dados em servidores fora do Brasil — nesses
           casos, exigimos que sigam padrões de proteção de dados compatíveis com a LGPD.
         </p>
+        <p style={styles.p}>
+          Quando você chega por um anúncio, o identificador do clique (como o <code>gclid</code> do
+          Google) e a origem da campanha ficam guardados só no seu aparelho. Se você aceitar os
+          cookies, ao fazer o mapa ou uma compra guardamos esse identificador e o identificador do
+          Google Analytics junto com a sua análise, para que a compra seja atribuída ao anúncio
+          certo. Sem o aceite, nada disso sai do seu aparelho.
+        </p>
 
         <h2 style={styles.h2}>4. Cookies</h2>
         <p style={styles.p}>
