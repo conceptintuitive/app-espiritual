@@ -243,3 +243,13 @@ test('JSON da IA: aceita cerca de código e texto antes/depois', () => {
   assert.deepEqual(_parseJSON('{"t": "linha 1\nlinha 2"}'), { t: 'linha 1\nlinha 2' });
   assert.throws(() => _parseJSON('sem json nenhum'));
 });
+
+test('validação: conselho do dia longo demais (domingo) vai pra revisão', () => {
+  const dados = dadosDoDia('2026-11-29', null);
+  assert.equal(dados.tema, 'semana');
+  const ok = reservaDoDia(dados);
+  assert.ok(validarConteudo(ok, dados).ok, JSON.stringify(validarConteudo(ok, dados).problemas));
+  const longo = { ...ok, dias: ok.dias.map((d, k) => (k === 2 ? { ...d, conselho: 'Um conselho comprido demais pra caber na arte. '.repeat(4).trim() } : d)) };
+  const p = validarConteudo(longo, dados).problemas;
+  assert.ok(p.some((x) => /^conselho de 2026-12-02 longo \(\d+ caracteres; máximo 130/.test(x)), JSON.stringify(p));
+});
