@@ -1,37 +1,50 @@
-// GET /api/social/imagem/<YYYY-MM-DD>/<story|feed>.jpg?i=<índice da série>&t=<assinatura>
-// Arte do dia em JPEG, pública pra o Instagram e o TikTok baixarem na hora de
-// postar (e pra prévia). A URL é assinada com HMAC (lib/social.js,
-// segredo = CRON_SECRET): sem a assinatura certa, 404 — ninguém usa o
-// servidor pra gerar arte nem troca o item da série pela URL.
-// Conteúdo não tem nada pessoal e é sempre o mesmo pra mesma URL: cache longo.
+// GET /api/social/imagem/<AAAA-MM-DD>/<arquivo>?i=<índice>&v=<versão>&t=<assinatura>
+// Artes do dia, públicas pra o Instagram, o TikTok e o Creatomate baixarem (e
+// pra prévia). arquivo: story.jpg, c1.jpg…c7.jpg (carrossel; feed.jpg = c1),
+// ceu.jpg (fundo do Reels), r1.png…r3.png (textos do Reels).
+// A URL é assinada com HMAC (lib/social.js, segredo = CRON_SECRET): sem a
+// assinatura certa, 404. O texto vem de social_conteudos (ou da reserva, pelo
+// índice da URL). `v` muda quando o texto muda, então o cache longo é seguro.
 
-import { conferirAssinatura, dataValida } from '@/lib/social';
-import { arteJpeg } from '../../../_arte/respostaArte';
+import { createClient } from '@supabase/supabase-js';
+import { conferirAssinatura, dataValida, FORMATOS } from '@/lib/social';
+import { conteudoParaArte } from '@/lib/socialServidor';
+import { gerarArte } from '../../../_arte/respostaArte';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
 
+function supabaseServidor() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  return url && key ? createClient(url, key, { auth: { persistSession: false } }) : null;
+}
+
 export async function GET(request, { params }) {
   const { data, arquivo } = await params;
-  const formato = { 'story.jpg': 'story', 'feed.jpg': 'feed' }[arquivo];
+  const m = /^([a-z0-9]+)\.(jpg|png)$/.exec(arquivo || '');
+  const formato = m && FORMATOS[m[1]] && FORMATOS[m[1]].ext === m[2] ? m[1] : null;
   const { searchParams } = new URL(request.url);
   const iTexto = searchParams.get('i');
   const indice = iTexto != null && /^\d{1,6}$/.test(iTexto) ? Number(iTexto) : null;
+  const v = searchParams.get('v') || '';
   const t = searchParams.get('t');
 
-  if (!formato || !dataValida(data) || (iTexto != null && indice == null)
-    || !conferirAssinatura({ data, formato, indice, t }, process.env.CRON_SECRET)) {
+  if (!formato || !dataValida(data) || (iTexto != null && indice == null) || !/^[0-9a-f]{0,16}$/.test(v)
+    || !conferirAssinatura({ data, formato, indice, v, t }, process.env.CRON_SECRET)) {
     return new Response('Não encontrado', { status: 404 });
   }
 
   try {
-    const jpg = await arteJpeg(data, formato, indice);
-    if (!jpg) return new Response('Sem post neste dia', { status: 404 });
-    return new Response(jpg, {
+    const { dados, conteudo } = await conteudoParaArte(supabaseServidor(), data, indice);
+    const arte = await gerarArte({ data, formato, dados, conteudo });
+    if (!arte) return new Response('Essa tela não existe', { status: 404 });
+    return new Response(arte.buffer, {
       headers: {
-        'Content-Type': 'image/jpeg',
-        'Content-Length': String(jpg.length),
-        'Cache-Control': 'public, max-age=86400, s-maxage=604800, immutable',
+        'Content-Type': arte.tipo,
+        'Content-Length': String(arte.buffer.length),
+        // Com versão na URL o conteúdo nunca muda; sem versão (reserva), cache curto.
+        'Cache-Control': v ? 'public, max-age=86400, s-maxage=604800, immutable' : 'public, max-age=600, s-maxage=3600',
       },
     });
   } catch (err) {

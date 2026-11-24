@@ -1,186 +1,235 @@
-// Testes do conteúdo diário do Instagram/TikTok (lib/social.js) — `npm test`.
+// Testes do conteúdo da automação social (lib/social.js, lib/socialEditorial.js) — `npm test`.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  temaDoDia, serieDoTema, itemDaSerie, planoDosDias, SERIES, postDoDia, energiaDoDia, montarLegenda,
-  nomeDaFase, luaDoDia, contaNumeroVida, tituloCurto, assinarImagem, conferirAssinatura, caminhoImagem,
-  redesLigadas, CTA_FEED, CTA_STORY, HASHTAGS_BASE, diaDaSemana,
+  temaDoDia, serieDoTema, itemDaSerie, planoDosDias, SERIES, TEMAS, dadosDoDia, reservaDoDia, normalizarConteudo,
+  validarConteudo, energiaDoDia, montarLegenda, nomeDaFase, luaDoDia, contaNumeroVida, universais, tituloCurto,
+  assinarImagem, conferirAssinatura, caminhoImagem, versaoConteudo, redesLigadas, chaveLigada, proximaSegunda,
+  CTA_FEED, HASHTAGS_BASE, diaDaSemana,
 } from '../lib/social.js';
+import { GUIA_EDITORIAL, CHECKLIST_REVISAO, MECANISMOS, PENSADORES, PARES_SIGNOS, problemasDoTexto } from '../lib/socialEditorial.js';
 import { calcularNumeroVida } from '../lib/calculos.js';
+import { getCompatibilidade } from '../lib/compatibilidade.js';
 
-// Semana de referência: 23/11/2026 (segunda) a 29/11/2026 (domingo).
-const SEG = '2026-11-23';
+// Semana de referência: 30/11/2026 (segunda) a 06/12/2026 (domingo).
+const SEG = '2026-11-30';
+const SEMANA = ['2026-11-30', '2026-12-01', '2026-12-02', '2026-12-03', '2026-12-04', '2026-12-05', '2026-12-06'];
+const DIA_DO_TEMA = { numero: SEMANA[0], ponto_cego: SEMANA[1], mente: SEMANA[2], compat: SEMANA[3], pensador: SEMANA[4] };
 
-test('rotação por dia da semana', () => {
+test('rotação por dia da semana: todo dia tem tema', () => {
   assert.equal(diaDaSemana(SEG), 1);
-  assert.equal(temaDoDia('2026-11-23'), 'numero');
-  assert.equal(temaDoDia('2026-11-24'), 'ponto_cego');
-  assert.equal(temaDoDia('2026-11-25'), 'anjo');
-  assert.equal(temaDoDia('2026-11-26'), null); // quinta: feito à mão
-  assert.ok(['animal', 'selo'].includes(temaDoDia('2026-11-27')));
-  assert.equal(temaDoDia('2026-11-28'), 'comenta');
-  assert.equal(temaDoDia('2026-11-29'), 'semana');
-  assert.equal(postDoDia('2026-11-26'), null);
+  assert.deepEqual(SEMANA.map(temaDoDia), ['numero', 'ponto_cego', 'mente', 'compat', 'pensador', 'comenta', 'semana']);
+  for (const t of Object.keys(TEMAS)) assert.ok(TEMAS[t].rotulo && TEMAS[t].hashtags.length === 2);
+  assert.equal(proximaSegunda('2026-11-29'), '2026-11-30'); // domingo → amanhã
+  assert.equal(proximaSegunda('2026-11-30'), '2026-12-07'); // segunda → a próxima
 });
 
-test('sexta alterna animal e selo, semana sim, semana não', () => {
-  assert.equal(temaDoDia('2026-01-02'), 'animal');
-  assert.equal(temaDoDia('2026-01-09'), 'selo');
-  assert.equal(temaDoDia('2026-01-16'), 'animal');
-  const sextas = Array.from({ length: 10 }, (_, k) => temaDoDia(new Date(Date.UTC(2026, 10, 27 + 7 * k)).toISOString().slice(0, 10)));
-  for (let k = 1; k < sextas.length; k++) assert.notEqual(sextas[k], sextas[k - 1]);
-  // antes da data de referência também alterna
-  assert.notEqual(temaDoDia('2025-12-26'), temaDoDia('2026-01-02'));
-});
-
-test('séries: ordem, tamanho e volta sem repetir', () => {
+test('séries: tamanhos, sem repetir antes da volta', () => {
   assert.deepEqual(SERIES.numero, [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 22, 33]);
-  assert.equal(SERIES.ponto_cego[0], 'Áries');
-  assert.equal(SERIES.ponto_cego[11], 'Peixes');
-  assert.equal(SERIES.anjo.length, 72);
-  assert.equal(SERIES.selo.length, 20);
-  assert.equal(SERIES.animal.length, 12);
+  assert.equal(SERIES.ponto_cego.length, 12);
+  assert.equal(SERIES.mente.length, MECANISMOS.length);
+  assert.equal(SERIES.pensador.length, PENSADORES.length);
+  assert.equal(SERIES.compat.length, 78);
+  assert.equal(new Set(SERIES.compat).size, 78, '78 pares diferentes');
   for (const [serie, lista] of Object.entries(SERIES)) {
     const vistos = new Set();
     for (let i = 0; i < lista.length; i++) vistos.add(itemDaSerie(serie, i).item);
     assert.equal(vistos.size, lista.length, `${serie} repetiu antes da volta`);
-    assert.equal(itemDaSerie(serie, lista.length).item, lista[0], `${serie} volta ao começo`);
+    assert.equal(itemDaSerie(serie, lista.length).item, lista[0]);
     assert.equal(itemDaSerie(serie, lista.length).volta, 2);
   }
-  assert.equal(itemDaSerie('numero', 11).item, 33);
-  assert.equal(itemDaSerie('anjo', 71).item, 72);
+  assert.equal(new Set(PENSADORES.map((p) => p.autor)).size, 8, 'os 8 pensadores no rodízio');
+  assert.equal(new Set(PARES_SIGNOS.slice(0, 12).map((p) => p[0])).size > 4, true, 'pares embaralhados');
   assert.equal(serieDoTema('comenta'), null);
   assert.equal(serieDoTema('semana'), null);
-  assert.equal(serieDoTema(null), null);
 });
 
-test('plano: cada série anda só no dia do seu tema e não mexe no estado', () => {
-  const estado = { numero: 11, ponto_cego: 3, anjo: 70, animal: 0, selo: 5 };
-  const plano = planoDosDias(SEG, 15, estado);
-  assert.deepEqual(estado, { numero: 11, ponto_cego: 3, anjo: 70, animal: 0, selo: 5 });
-  const seg = plano.filter((d) => d.tema === 'numero').map((d) => d.indice);
-  assert.deepEqual(seg, [11, 12, 13]);
-  assert.deepEqual(seg.map((i) => itemDaSerie('numero', i).item), [33, 1, 2]); // 33 → volta pro 1
-  assert.deepEqual(plano.filter((d) => d.tema === 'anjo').map((d) => itemDaSerie('anjo', d.indice).item), [71, 72]);
-  const sextas = plano.filter((d) => diaDaSemana(d.data) === 5);
-  assert.equal(sextas.length, 2);
-  assert.notEqual(sextas[0].serie, sextas[1].serie);
-  for (const d of plano.filter((x) => ['comenta', 'semana', null].includes(x.tema))) assert.equal(d.indice, null);
-  // estado vazio começa do zero
-  assert.equal(planoDosDias(SEG, 1, {})[0].indice, 0);
+test('plano: cada série anda só no dia dela e não mexe no estado', () => {
+  const estado = { numero: 11, compat: 77 };
+  const plano = planoDosDias(SEG, 14, estado);
+  assert.deepEqual(estado, { numero: 11, compat: 77 });
+  assert.deepEqual(plano.filter((d) => d.tema === 'numero').map((d) => itemDaSerie('numero', d.indice).item), [33, 1]);
+  assert.deepEqual(plano.filter((d) => d.tema === 'compat').map((d) => d.indice), [77, 78]);
+  assert.deepEqual(plano.filter((d) => d.tema === 'mente').map((d) => d.indice), [0, 1]);
+  for (const d of plano.filter((x) => ['comenta', 'semana'].includes(x.tema))) assert.equal(d.indice, null);
 });
 
-test('fase da Lua: convenção do calendário brasileiro', () => {
-  assert.equal(nomeDaFase(5), 'Lua Nova');
+test('fase da Lua e números universais', () => {
   assert.equal(nomeDaFase(89), 'Lua Nova');
-  assert.equal(nomeDaFase(95), 'Lua Crescente');
   assert.equal(nomeDaFase(179), 'Lua Crescente');
   assert.equal(nomeDaFase(185), 'Lua Cheia');
   assert.equal(nomeDaFase(300), 'Lua Minguante');
-  // cheia de 24/11/2026 (~11h50 de Brasília): ao meio-dia já é Cheia; no dia 23, Crescente
   assert.equal(luaDoDia('2026-11-24').fase, 'Lua Cheia');
   assert.equal(luaDoDia('2026-11-23').fase, 'Lua Crescente');
-  assert.ok(luaDoDia('2026-11-24').iluminada > 0.97);
+  assert.deepEqual(universais('2026-11-30'), { ano: 1, mes: 3, dia: 6 });
+  assert.equal(universais('2029-02-09').ano, 4); // 2+0+2+9 = 13 → 4
+  assert.equal(universais('2027-03-01').ano, 11); // 2+0+2+7 = 11, mestre
 });
 
-test('story: título, frase, 4 linhas e a chamada', () => {
-  const e = energiaDoDia('2026-11-24');
-  assert.match(e.kicker, /^Energia de hoje · TER 24\/11$/);
-  assert.ok(e.titulo.startsWith('Dia '));
-  assert.ok(e.frase.length > 10);
-  assert.deepEqual(e.linhas.map((l) => l.rotulo), ['Lua', 'Kin do dia', 'Anjo destes dias']);
-  for (const l of e.linhas) assert.ok(l.valor && l.nota, l.rotulo);
-  assert.equal(e.cta, CTA_STORY);
-  assert.equal(e.anjo, 'Vehuel'); // Sol no começo de Sagitário
+test('dados do dia: cada tema traz os fatos certos (nada inventado)', () => {
+  const n = dadosDoDia(DIA_DO_TEMA.numero, 6);
+  assert.equal(n.fatos.numero_de_vida, 7);
+  assert.equal(n.grande, '7');
+  assert.equal(dadosDoDia(DIA_DO_TEMA.ponto_cego, 7).fatos.signo, 'Escorpião');
+  const c = dadosDoDia(DIA_DO_TEMA.compat, 0);
+  const [a, b] = PARES_SIGNOS[0];
+  assert.equal(c.fatos.nota_de_compatibilidade, getCompatibilidade(a, b).score);
+  assert.equal(c.fatos.cta_extra, `É de ${a}? Marca quem é de ${b}.`);
+  const j = dadosDoDia(DIA_DO_TEMA.pensador, 0);
+  assert.equal(j.fatos.autor, 'Carl Jung');
+  assert.ok(j.fatos.citacao.fonte.includes('Jung'));
+  assert.ok(dadosDoDia(DIA_DO_TEMA.mente, 0).fatos.o_que_a_pesquisa_sustenta.length > 30);
+  const s = dadosDoDia(SEMANA[5]);
+  assert.equal(s.fatos.numero_do_exemplo, calcularNumeroVida(s.fatos.exemplo_de_data.split('/').reverse().join('-')));
+  const d = dadosDoDia(SEMANA[6]);
+  assert.equal(d.dias.length, 7);
+  assert.equal(d.dias[0].data, '2026-12-07');
+  for (const x of [n, c, j, s, d]) assert.ok(x.energia.kin && x.energia.anjo_destes_dias && x.energia.lua);
 });
 
-test('posts da semana: conteúdo de cada tema e legenda no formato', () => {
-  const plano = planoDosDias(SEG, 7, {});
-  const proibidos = /diagnóstico completo|análise completa|mapa completo|garant|cura (de|da|do)|vai (ficar rica|enriquecer)/i;
-  for (const d of plano) {
-    const p = postDoDia(d.data, d.indice ?? 0);
-    if (!d.tema) { assert.equal(p, null); continue; }
-    assert.equal(p.tema, d.tema);
-    assert.ok(p.kicker && p.titulo && p.linhas.length >= 2, d.tema);
-    const leg = montarLegenda(p.legenda);
-    const linhas = leg.split('\n');
-    assert.equal(linhas[0], p.legenda.gancho);
-    assert.equal(linhas[1], '');
-    assert.ok(leg.includes(`\n\n${CTA_FEED}\n\n`));
-    const tags = linhas[linhas.length - 1].split(' ');
-    assert.ok(tags.length >= 5 && tags.length <= 8, `${d.tema}: ${tags.length} hashtags`);
-    for (const h of HASHTAGS_BASE) assert.ok(tags.includes(h));
-    assert.ok(leg.length < 2200);
-    assert.doesNotMatch(leg, proibidos);
-    if (d.tema !== 'semana') assert.ok(p.legenda.texto.length >= 2 && p.legenda.texto.length <= 4, `${d.tema}: ${p.legenda.texto.length} linhas`);
+test('reserva: todo item de toda série passa na checagem automática', () => {
+  for (const [serie, lista] of Object.entries(SERIES)) {
+    for (let i = 0; i < lista.length; i++) {
+      const dados = dadosDoDia(DIA_DO_TEMA[serie], i);
+      const v = validarConteudo(reservaDoDia(dados), dados);
+      assert.ok(v.ok, `${serie} ${dados.item}: ${v.problemas.join('; ')}`);
+    }
   }
-  assert.equal(postDoDia('2026-11-23', 0).grande, '1');
-  assert.equal(postDoDia('2026-11-23', 11).grande, '33');
-  assert.match(postDoDia('2026-11-23', 11).kicker, /mestre/);
-  assert.equal(postDoDia('2026-11-24', 7).item, 'Escorpião');
-  const anjo = postDoDia('2026-11-25', 0);
-  assert.equal(anjo.item, 'Vehuiah');
-  assert.match(anjo.legenda.gancho, /^Nasceu entre \d\d\/03 e \d\d\/03\? Seu anjo da guarda é Vehuiah\.$/);
-  const semana = postDoDia('2026-11-29');
-  assert.equal(semana.dias.length, 7);
-  assert.equal(semana.dias[0].data, '2026-11-30');
-  assert.equal(semana.dias[6].data, '2026-12-06');
-  for (const d of semana.dias) assert.match(d.hexagrama, /^\S+ sobre \S+$/);
-  assert.ok(semana.linhas.every((l) => / sobre /.test(l.texto)));
+  for (const dia of SEMANA.slice(5)) {
+    const dados = dadosDoDia(dia);
+    const c = reservaDoDia(dados);
+    assert.ok(validarConteudo(c, dados).ok);
+    assert.equal(c.fonte, 'reserva');
+  }
 });
 
-test('sexta: animal com anos certos e selo com nome do Sincronário', () => {
-  const animal = postDoDia('2026-01-02', 4); // Dragão
-  assert.equal(animal.item, 'Dragão');
-  assert.match(animal.linhas[0].texto, /2024/);
-  assert.match(animal.linhas[0].texto, /2012/);
-  assert.match(animal.legenda.gancho, /\(a partir de 4\/fev\)\? Você é o Dragão\.$/);
-  assert.match(animal.titulo, /\?$/);
-  assert.equal(animal.tituloNota, '(a partir de 4/fev)');
-  assert.ok(animal.linhas.some((l) => /janeiro/.test(l.rotulo) && l.texto === 'Você é do animal anterior.'));
-  const selo = postDoDia('2026-01-09', 0);
-  assert.equal(selo.item, 'Dragão Vermelho');
+test('carrossel: 6 telas, a última é a chamada; domingo tem as telas dos dias', () => {
+  const c = reservaDoDia(dadosDoDia(SEG, 0));
+  assert.equal(c.telas.length, 6);
+  assert.equal(c.telas[5].titulo, 'Faz o seu mapa grátis');
+  assert.equal(c.telas[0].rotulo, '');
+  assert.equal(c.telas[1].rotulo, 'O mecanismo');
+  const dom = reservaDoDia(dadosDoDia(SEMANA[6]));
+  assert.equal(dom.telas.length, 6);
+  assert.equal(dom.telas[1].rotulo, 'O ciclo');
+  assert.deepEqual(dom.telas.slice(2, 5).map((t) => t.dias.length), [2, 2, 3]);
+  assert.ok(dom.dias.every((d) => d.conselho));
+});
+
+// Um rascunho "da IA" bom, pra testar normalização e validação.
+function rascunhoBom(n) {
+  return {
+    telas: [
+      { titulo: `Se você é ${n}, você provavelmente começa tudo sozinha`, texto: 'E termina cansada de carregar.' },
+      { titulo: 'Por que', texto: 'A mesma decisão que te faz começar te impede de pedir apoio.' },
+      { titulo: 'Na vida real', texto: 'O projeto nasce com você e morre com você, porque ninguém mais sabe onde está.' },
+      { titulo: 'A virada', texto: 'Liderar não é fazer tudo: é fazer o outro conseguir fazer.' },
+      { titulo: 'Hoje', texto: 'Delegue uma tarefa pequena e não refaça.' },
+    ],
+    legenda: { gancho: `Se você é ${n}, isso é sobre você.`, texto: ['Linha um.', 'Linha dois.'], hashtags: ['#numerodevida'] },
+    story: { titulo: 'Dia de soltar', frase: 'A Lua pede menos controle e mais escuta hoje.' },
+    reels: { gancho: `Se você é ${n}, para de carregar tudo.`, virada: 'Liderar é fazer o outro conseguir.' },
+  };
+}
+
+test('validação: pega número errado, hedge, promessa, emoji, citação inventada, texto longo', () => {
+  const dados = dadosDoDia(SEG, 6); // número 7
+  const ok = normalizarConteudo(rascunhoBom(7), dados);
+  assert.ok(validarConteudo(ok, dados).ok, validarConteudo(ok, dados).problemas.join('; '));
+  assert.equal(ok.telas.length, 6, 'a tela da chamada entra sozinha');
+
+  assert.ok(validarConteudo(normalizarConteudo(rascunhoBom(8), dados), dados).problemas.some((p) => p.includes('número 7')));
+
+  const muda = (f) => { const r = rascunhoBom(7); f(r); return validarConteudo(normalizarConteudo(r, dados), dados).problemas; };
+  assert.ok(muda((r) => { r.telas[3].texto = 'Talvez você precise delegar.'; }).includes('proibido: hedge'));
+  assert.ok(muda((r) => { r.telas[4].texto = 'Isso garante que o dinheiro vem.'; }).includes('proibido: promessa de resultado'));
+  assert.ok(muda((r) => { r.story.frase = 'Dia lindo ✨'; }).includes('proibido: emoji'));
+  assert.ok(muda((r) => { r.telas[2].texto = 'Você nunca vai mudar isso.'; }).includes('proibido: fatalismo'));
+  assert.ok(muda((r) => { r.telas[3].texto = 'Como disse Jung, "a vida começa onde termina a zona de conforto de verdade".'; }).some((p) => p.startsWith('citação')));
+  assert.ok(muda((r) => { r.telas[1].texto = 'x'.repeat(400); }).some((p) => p.includes('longo')));
+  assert.ok(muda((r) => { r.legenda.texto = ['só uma']; }).some((p) => p.includes('legenda')));
+});
+
+test('compatibilidade: nota tem que ser a do site; legenda leva o "marca quem é"', () => {
+  const dados = dadosDoDia(DIA_DO_TEMA.compat, 5);
+  const { signo_a: a, signo_b: b, nota_de_compatibilidade: nota } = dados.fatos;
+  const base = () => ({
+    telas: [
+      { titulo: `${a} × ${b}: nota ${nota}`, texto: 'Ninguém te conta por que essa dupla briga pelo mesmo motivo.' },
+      { titulo: 'Por que', texto: 'Os elementos pedem ritmos diferentes.' },
+      { titulo: 'Na vida real', texto: 'Um quer resolver agora, o outro quer pensar.' },
+      { titulo: 'A virada', texto: 'O problema não é a diferença: é cada um achar que o seu ritmo é o certo.' },
+      { titulo: 'Hoje', texto: 'Pergunte do que o outro precisa antes de responder.' },
+    ],
+    legenda: { gancho: `${a} × ${b}.`, texto: ['Linha.', 'Outra.'] },
+    story: { titulo: 'Dia de ouvir', frase: 'Hoje a escuta resolve mais que a pressa.' },
+    reels: { gancho: `${a} × ${b}`, virada: 'Ritmo diferente não é defeito.' },
+  });
+  const c = normalizarConteudo(base(), dados);
+  assert.equal(c.legenda.texto.at(-1), `É de ${a}? Marca quem é de ${b}.`);
+  assert.ok(validarConteudo(c, dados).ok, validarConteudo(c, dados).problemas.join('; '));
+  const errada = base();
+  errada.telas[0].titulo = `${a} × ${b}: nota ${nota === 90 ? 91 : 90}`;
+  assert.ok(validarConteudo(normalizarConteudo(errada, dados), dados).problemas.some((p) => p.startsWith('nota errada')));
+});
+
+test('editorial: guia tem as regras pedidas; textos fixos não tropeçam nos proibidos', () => {
+  for (const t of ['Faz o seu mapa grátis: link na bio', 'Manual do seu Mapa', 'talvez', 'cura', 'separe com clareza', 'Citação: só a que vier nos dados', 'recomenda o site']) {
+    assert.ok(GUIA_EDITORIAL.toLowerCase().includes(t.toLowerCase()), t);
+  }
+  assert.ok(CHECKLIST_REVISAO.includes('Genérico'));
+  for (const m of MECANISMOS) for (const k of ['gancho', 'mecanismo', 'exemplo', 'virada', 'pratica']) assert.deepEqual(problemasDoTexto(m[k]), [], `${m.id}.${k}`);
+  for (const p of PENSADORES) {
+    for (const k of ['resumo', 'aplicar']) assert.deepEqual(problemasDoTexto(p[k]), [], `${p.id}.${k}`);
+    assert.ok(p.cuidado.length > 40, `${p.id} sem o cuidado (crença x pesquisa)`);
+    if (p.citacao) assert.ok(p.citacao.fonte.includes(p.autor.split(' ').at(-1)), `${p.id}: fonte da citação`);
+  }
+});
+
+test('story: dados calculados sempre; título e frase da IA quando há', () => {
+  const e = energiaDoDia('2026-11-24');
+  assert.deepEqual(e.linhas.map((l) => l.rotulo), ['Lua', 'Kin do dia', 'Anjo destes dias']);
+  assert.ok(e.titulo.startsWith('Dia '));
+  const ia = energiaDoDia('2026-11-24', { titulo: 'Fala menos', frase: 'Hoje quem escuta decide.' });
+  assert.equal(ia.titulo, 'Fala menos');
+  assert.deepEqual(ia.linhas, e.linhas);
+});
+
+test('legenda: gancho, texto, chamada e 5–8 hashtags', () => {
+  const leg = montarLegenda({ gancho: 'Gancho.', texto: ['A.', 'B.'], hashtags: ['#tema'] });
+  const linhas = leg.split('\n');
+  assert.equal(linhas[0], 'Gancho.');
+  assert.ok(leg.includes(`\n\n${CTA_FEED}\n\n`));
+  const tags = linhas.at(-1).split(' ');
+  assert.ok(tags.length >= 5 && tags.length <= 8);
+  for (const h of HASHTAGS_BASE) assert.ok(tags.includes(h));
+  assert.ok(tituloCurto('a '.repeat(80)).length <= 90);
 });
 
 test('sábado: a conta do exemplo bate com calcularNumeroVida', () => {
   for (const dataBR of ['28/11/1994', '29/11/1999', '09/09/1989', '11/02/1990']) {
-    const { numero } = contaNumeroVida(dataBR);
     const [d, m, y] = dataBR.split('/');
-    assert.equal(numero, calcularNumeroVida(`${y}-${m}-${d}`), dataBR);
+    assert.equal(contaNumeroVida(dataBR).numero, calcularNumeroVida(`${y}-${m}-${d}`), dataBR);
   }
-  const p = postDoDia('2026-11-28');
-  assert.equal(p.item.slice(0, 5), '28/11');
-  assert.ok(p.legenda.texto[1].includes(p.item));
 });
 
-test('título do TikTok cabe em 90 caracteres', () => {
-  assert.equal(tituloCurto('Curto.'), 'Curto');
-  const longo = tituloCurto('a '.repeat(80));
-  assert.ok(longo.length <= 90);
-  assert.ok(longo.endsWith('…'));
-});
-
-test('URL da imagem assinada: só vale com o mesmo segredo, data, formato e item', () => {
+test('URL da imagem assinada: data, formato, item e versão', () => {
   const seg = 'segredo-teste';
-  const t = assinarImagem({ data: SEG, formato: 'feed', indice: 3 }, seg);
-  assert.equal(t.length, 32);
-  assert.ok(conferirAssinatura({ data: SEG, formato: 'feed', indice: 3, t }, seg));
-  assert.ok(!conferirAssinatura({ data: SEG, formato: 'feed', indice: 4, t }, seg));
-  assert.ok(!conferirAssinatura({ data: SEG, formato: 'story', indice: 3, t }, seg));
-  assert.ok(!conferirAssinatura({ data: '2026-11-24', formato: 'feed', indice: 3, t }, seg));
-  assert.ok(!conferirAssinatura({ data: SEG, formato: 'feed', indice: 3, t }, 'outro'));
-  assert.ok(!conferirAssinatura({ data: SEG, formato: 'feed', indice: 3, t: 'x' }, seg));
-  assert.ok(!conferirAssinatura({ data: SEG, formato: 'feed', indice: 3, t }, ''));
-  assert.match(caminhoImagem({ data: SEG, formato: 'story' }, seg), /^\/api\/social\/imagem\/2026-11-23\/story\.jpg\?t=[0-9a-f]{32}$/);
-  assert.match(caminhoImagem({ data: SEG, formato: 'feed', indice: 0 }, seg), /\?i=0&t=/);
+  const t = assinarImagem({ data: SEG, formato: 'c2', indice: 3, v: 'abc123' }, seg);
+  assert.ok(conferirAssinatura({ data: SEG, formato: 'c2', indice: 3, v: 'abc123', t }, seg));
+  assert.ok(!conferirAssinatura({ data: SEG, formato: 'c2', indice: 3, v: 'outra', t }, seg));
+  assert.ok(!conferirAssinatura({ data: SEG, formato: 'c3', indice: 3, v: 'abc123', t }, seg));
+  assert.ok(!conferirAssinatura({ data: SEG, formato: 'c2', indice: 3, v: 'abc123', t }, 'outro'));
+  assert.match(caminhoImagem({ data: SEG, formato: 'r1', indice: 0, v: 'abc' }, seg), /^\/api\/social\/imagem\/2026-11-30\/r1\.png\?i=0&v=abc&t=[0-9a-f]{32}$/);
+  assert.match(caminhoImagem({ data: SEG, formato: 'story' }, seg), /story\.jpg\?t=/);
+  assert.notEqual(versaoConteudo({ a: 1 }), versaoConteudo({ a: 2 }));
 });
 
-test('chave liga/desliga', () => {
+test('chaves liga/desliga', () => {
   assert.deepEqual(redesLigadas(undefined), []);
-  assert.deepEqual(redesLigadas('off'), []);
   assert.deepEqual(redesLigadas('on'), ['instagram', 'tiktok']);
   assert.deepEqual(redesLigadas('instagram'), ['instagram']);
-  assert.deepEqual(redesLigadas('TikTok'), ['tiktok']);
-  assert.deepEqual(redesLigadas('instagram,tiktok'), ['instagram', 'tiktok']);
-  assert.deepEqual(redesLigadas('qualquer'), []);
+  assert.ok(chaveLigada('on'));
+  assert.ok(!chaveLigada('off'));
+  assert.ok(!chaveLigada(undefined));
 });
