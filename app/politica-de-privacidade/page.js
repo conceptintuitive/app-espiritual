@@ -38,7 +38,7 @@ export default function PoliticaDePrivacidadePage() {
       <div style={styles.container}>
         <Link href="/" style={styles.back}>← Voltar para o início</Link>
         <h1 style={styles.h1}>Política de Privacidade</h1>
-        <p style={styles.updated}>Última atualização: 19 de novembro de 2026</p>
+        <p style={styles.updated}>Última atualização: 1 de dezembro de 2026</p>
 
         <p style={styles.p}>
           Esta política explica quais dados a <strong>Intuitive Concept</strong>{' '}
@@ -55,6 +55,7 @@ export default function PoliticaDePrivacidadePage() {
           <li style={styles.li}><strong>Dados de pagamento:</strong> ao comprar o Manual do seu Mapa, o processamento é feito pelo Stripe ou pelo Mercado Pago — não armazenamos número de cartão de crédito completo em nossos servidores.</li>
           <li style={styles.li}><strong>Minha Área e Seu Dia:</strong> e-mail, nome, data, hora e cidade de nascimento, os dias em que você abriu a Minha Área (para medir o uso) se você quer receber o seu dia por e-mail (e quando foi o último envio) e, se você ativar, a inscrição do aviso diário no seu aparelho. O código de entrada enviado por e-mail é guardado só em forma cifrada e apagado depois do uso ou em 15 minutos.</li>
           <li style={styles.li}><strong>Assinatura:</strong> plano, forma de pagamento (cartão recorrente ou pré-pago), situação e datas de acesso, e os identificadores da cobrança no Mercado Pago. Não guardamos número de cartão.</li>
+          <li style={styles.li}><strong>Comentários no nosso Instagram:</strong> se você comentar sua data de nascimento num post da nossa conta, um sistema automático usa essa data só para calcular o seu número de vida e responder ao comentário, uma vez. A data é usada na hora e descartada: não guardamos a data, o texto do comentário nem o seu usuário. Guardamos apenas o identificador do comentário, para não responder duas vezes. Comentários ofensivos ou sem data não são respondidos.</li>
           <li style={styles.li}><strong>Dados de navegação:</strong> endereço IP, tipo de navegador, páginas visitadas e interações no site, coletados automaticamente por ferramentas de análise.</li>
         </ul>
 

@@ -1,9 +1,11 @@
 // Post automático do dia no Instagram e no TikTok.
 //   GET /api/cron/social?secret=CRON_SECRET   (ou Authorization: Bearer CRON_SECRET)
-// Chamado pelo cron-job.org às 7h de Brasília. Faz:
-//   - story "Energia de hoje" no Instagram (todo dia);
-//   - post do feed do tema do dia (lib/social.js) no Instagram e, como foto,
-//     nos rascunhos do TikTok (quinta não tem: post à mão).
+// Chamado pelo cron-job.org às 7h de Brasília. Faz (lib/socialServidor.js → postarDia):
+//   - story "Energia de hoje" no Instagram;
+//   - carrossel do tema do dia no Instagram e as mesmas fotos no TikTok
+//     (rascunho, ou Direct Post se aprovado em /admin/tiktok);
+//   - começa o Reels (SOCIAL_REELS=on), terminado aqui ou pelo cron da hora.
+// O texto vem de social_conteudos (gerado no domingo pela IA); sem ele, gera na hora.
 // Idempotente: no máximo 1 story e 1 post por rede por dia (trava em
 // social_posts, migração 0024), mesmo se o cron rodar 2 vezes; erro é tentado
 // de novo no próximo disparo do dia (até 3x) e vai por e-mail.
