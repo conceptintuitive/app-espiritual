@@ -325,6 +325,62 @@ test('IA: se nada passa na checagem, usa a reserva; IA fora do ar também', asyn
   assert.equal((await gerarConteudoDoDia(dados, { chamar: async () => { throw new Error('boom'); } })).conteudo.fonte, 'reserva');
 });
 
+test('IA: pedido de revisão pede o veredito com o post dentro (não só o post)', async () => {
+  const dados = dadosDoDia('2026-11-30', 6);
+  const pedidos = [];
+  const chamar = async (sistema, usuario) => {
+    pedidos.push(usuario);
+    return pedidos.length === 1 ? rascunho(dados) : { aprovado: true, problemas: [], conteudo: rascunho(dados) };
+  };
+  await gerarConteudoDoDia(dados, { chamar });
+  const rev = pedidos[1];
+  const ultimo = rev.lastIndexOf('Responda SÓ com um JSON válido');
+  assert.ok(ultimo > rev.indexOf('RASCUNHO:'), 'a instrução de resposta vem depois do rascunho');
+  assert.ok(rev.slice(ultimo).startsWith('Responda SÓ com um JSON válido, sem texto antes ou depois, neste formato:\n{ "aprovado"'));
+  assert.ok(rev.includes('"conteudo"'));
+  assert.ok(!pedidos[0].includes('"aprovado"'), 'a geração não pede veredito');
+});
+
+test('IA: revisão que devolve só o post (sem "aprovado") vale como reescrita', async () => {
+  const dados = dadosDoDia('2026-11-30', 6);
+  let n = 0;
+  const chamar = async () => (++n === 1 ? rascunho(dados) : rascunho(dados, (r) => { r.telas[4].texto = 'Escolha uma coisa só hoje e termine antes de começar outra.'; return r; }));
+  const { conteudo, revisao } = await gerarConteudoDoDia(dados, { chamar });
+  assert.equal(conteudo.fonte, 'ia-revisada');
+  assert.equal(conteudo.telas[4].texto, 'Escolha uma coisa só hoje e termine antes de começar outra.');
+  assert.equal(revisao.revisao.aprovado, null);
+});
+
+test('IA: texto longo demais volta pra 2ª rodada de revisão com o problema e sai encurtado', async () => {
+  const dados = dadosDoDia('2026-11-30', 6);
+  const longo = rascunho(dados, (r) => { r.telas[1].texto = 'Uma frase comprida sobre o mecanismo. '.repeat(10).trim(); return r; });
+  const pedidos = [];
+  const chamar = async (sistema, usuario) => {
+    pedidos.push(usuario);
+    if (pedidos.length === 1) return longo;
+    if (pedidos.length === 2) return { aprovado: true, problemas: [], conteudo: longo }; // 1ª rodada não encurtou
+    return { aprovado: false, problemas: ['tela 2 longa'], conteudo: rascunho(dados) };
+  };
+  const { conteudo, revisao } = await gerarConteudoDoDia(dados, { chamar });
+  assert.equal(pedidos.length, 3);
+  assert.match(pedidos[1], /texto da tela 2 longo \(\d+ caracteres; máximo 300/);
+  assert.match(pedidos[2], /texto da tela 2 longo \(\d+ caracteres; máximo 300/, 'a 2ª rodada recebe o problema que sobrou');
+  assert.equal(conteudo.fonte, 'ia-revisada');
+  assert.ok(conteudo.telas.every((t) => t.texto.length <= 300));
+  assert.equal(revisao.revisao.length, 2);
+});
+
+test('IA: nunca passa de 2 rodadas de revisão', async () => {
+  const dados = dadosDoDia('2026-11-30', 6);
+  const longo = rascunho(dados, (r) => { r.telas[1].texto = 'x'.repeat(400); return r; });
+  let n = 0;
+  const chamar = async () => (++n === 1 ? longo : { aprovado: false, problemas: ['longo'], conteudo: longo });
+  const { conteudo, revisao } = await gerarConteudoDoDia(dados, { chamar });
+  assert.equal(n, 3);
+  assert.equal(conteudo.fonte, 'reserva');
+  assert.ok(revisao.checagem.some((p) => /longo/.test(p)));
+});
+
 test('semana: gera 7 dias, anda cada série 1 vez, não refaz o que já existe', async () => {
   const db = novoDb();
   const sb = fakeSupabase(db);

@@ -32,6 +32,20 @@ const EXEMPLOS = [
   { id: 'ex7', texto: '31/02/1990' },
 ];
 
+// Uma rodada da revisão (ou a lista de rodadas) em uma linha.
+function textoRevisao(r) {
+  if (!r) return '';
+  const rodadas = [].concat(r);
+  const uma = (x) => {
+    if (typeof x === 'string') return x;
+    if (x.aprovado === true) return 'aprovado';
+    const p = (x.problemas || []).join('; ');
+    return `reescrito${p ? ` (${p})` : ''}`;
+  };
+  if (rodadas.length === 1 && rodadas[0]?.aprovado === true) return 'Revisão da IA: aprovado de primeira';
+  return `Revisão da IA: ${rodadas.map((x, k) => `${rodadas.length > 1 ? `${k + 1}ª rodada ` : ''}${uma(x)}`).join(' → ')}`;
+}
+
 function blocoComentarios() {
   const linhas = EXEMPLOS.map((c, k) => {
     const d = decidirResposta({ id: `exemplo-${k}`, texto: c.texto });
@@ -63,13 +77,11 @@ export async function GET(request) {
     const c = d.conteudo;
     const telas = c.telas.map((_, k) => `<img src="${img(d, `c${k + 1}`)}" width="288" height="360" alt="Tela ${k + 1}" loading="lazy">`).join('');
     const quadros = ['r1', 'r2', 'r3'].map((r) => `<div class="quadro"><img src="${img(d, 'ceu')}" width="180" height="320" alt="" loading="lazy"><img class="sobre" src="${img(d, r)}" width="180" height="320" alt="" loading="lazy"></div>`).join('');
-    const rev = d.revisao?.revisao && typeof d.revisao.revisao === 'object'
-      ? `Revisão da IA: ${d.revisao.revisao.aprovado ? 'aprovado de primeira' : `reescrito (${esc((d.revisao.revisao.problemas || []).join('; '))})`}`
-      : '';
+    const rev = textoRevisao(d.revisao?.revisao);
     const trilha = trilhaDoDia(d.data);
     return `
     <section class="dia" id="d-${d.data}">
-      <h2>${DIAS[diaDaSemana(d.data)]} ${dataCurta(d.data)} · ${esc(TEMAS[d.tema].rotulo)} <small>${esc(d.dados.item)}${d.dados.posicao ? ` · item ${d.dados.posicao} de ${d.dados.total}` : ''} · texto: ${esc(d.fonte)}${rev ? ` · ${rev}` : ''}${d.aprovacao?.aprovado ? ' · TikTok: aprovado pra Direct Post' : ''}</small></h2>
+      <h2>${DIAS[diaDaSemana(d.data)]} ${dataCurta(d.data)} · ${esc(TEMAS[d.tema].rotulo)} <small>${esc(d.dados.item)}${d.dados.posicao ? ` · item ${d.dados.posicao} de ${d.dados.total}` : ''} · texto: ${esc(d.fonte)}${rev ? ` · ${esc(rev)}` : ''}${d.aprovacao?.aprovado ? ' · TikTok: aprovado pra Direct Post' : ''}</small></h2>
       <h3>Carrossel (Instagram + TikTok)</h3>
       <div class="fila">${telas}</div>
       <div class="artes">
