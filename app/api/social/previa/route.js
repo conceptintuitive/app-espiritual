@@ -14,6 +14,7 @@ import { planoDaPrevia, limiteRespostasPorHora, motorReels } from '@/lib/socialS
 import { modoInstagram } from '@/lib/instagram';
 import { decidirResposta } from '@/lib/socialComentarios';
 import { trilhaDoDia } from '@/lib/socialReels';
+import { TRILHAS_DO_REPOSITORIO, itemDoDia } from '@/lib/reelsVideo';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -87,7 +88,9 @@ export async function GET(request) {
     const telas = c.telas.map((_, k) => `<img src="${img(d, `c${k + 1}`)}" width="288" height="360" alt="Tela ${k + 1}" loading="lazy">`).join('');
     const quadros = ['r1', 'r2', 'r3'].map((r) => `<div class="quadro"><img src="${img(d, 'ceu')}" width="180" height="320" alt="" loading="lazy"><img class="sobre" src="${img(d, r)}" width="180" height="320" alt="" loading="lazy"></div>`).join('');
     const rev = textoRevisao(d.revisao?.revisao);
-    const trilha = trilhaDoDia(d.data);
+    // SOCIAL_TRILHAS manda; vazia, o GitHub usa a do repositório (o Creatomate sai mudo)
+    const urlTrilha = trilhaDoDia(d.data);
+    const trilha = urlTrilha ? urlTrilha.split('/').pop() : motor === 'creatomate' ? null : `${itemDoDia(d.data, TRILHAS_DO_REPOSITORIO)} (do repositório)`;
     return `
     <section class="dia" id="d-${d.data}">
       <h2>${DIAS[diaDaSemana(d.data)]} ${dataCurta(d.data)} · ${esc(TEMAS[d.tema].rotulo)} <small>${esc(d.dados.item)}${d.dados.posicao ? ` · item ${d.dados.posicao} de ${d.dados.total}` : ''} · texto: ${esc(d.fonte)}${rev ? ` · ${esc(rev)}` : ''}${d.aprovacao?.aprovado ? ' · TikTok: aprovado pra Direct Post' : ''}</small></h2>
@@ -95,7 +98,7 @@ export async function GET(request) {
       <div class="fila">${telas}</div>
       <div class="artes">
         <figure><img src="${img(d, 'story')}" width="270" height="480" alt="Story" loading="lazy"><figcaption>Story · Instagram</figcaption></figure>
-        <figure><div class="fila reels">${quadros}</div><figcaption><a href="${animacao(d)}" target="_blank" rel="noreferrer">Ver a animação</a> · Reels (9s) ${reelsLigado ? `via ${NOME_MOTOR[motor]}` : '· desligado (SOCIAL_REELS)'}: céu com zoom lento; gancho 0–4s, virada 4,6–7s, chamada 7,3–9s · trilha: ${trilha ? esc(trilha.split('/').pop()) : 'nenhuma (SOCIAL_TRILHAS)'}</figcaption></figure>
+        <figure><div class="fila reels">${quadros}</div><figcaption><a href="${animacao(d)}" target="_blank" rel="noreferrer">Ver a animação</a> · Reels (9s) ${reelsLigado ? `via ${NOME_MOTOR[motor]}` : '· desligado (SOCIAL_REELS)'}: céu com zoom lento; gancho 0–4s, virada 4,6–7s, chamada 7,3–9s · trilha: ${trilha ? esc(trilha) : 'nenhuma (SOCIAL_TRILHAS)'}</figcaption></figure>
         <div class="textos">
           <h3>Legenda (carrossel e Reels)</h3>
           <pre>${esc(montarLegenda(c.legenda))}</pre>

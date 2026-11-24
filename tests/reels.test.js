@@ -68,3 +68,20 @@ test('Creatomate (alternativa) segue a mesma linha do tempo', () => {
   assert.deepEqual(textos.map((e) => Math.round((e.time + e.duration) * 10) / 10), CAMADAS.map((c) => c.fim));
   assert.equal(r.elements[0].animations[0].end_scale, '112%');
 });
+
+test('trilhas do repositório: arquivos existem, rodízio pelo dia, SOCIAL_TRILHAS tem prioridade', async () => {
+  const { existsSync, statSync } = await import('node:fs');
+  const { TRILHAS_DO_REPOSITORIO, itemDoDia } = await import('../lib/reelsVideo.js');
+  const { trilhaDoDia } = await import('../lib/socialReels.js');
+  assert.ok(TRILHAS_DO_REPOSITORIO.length >= 3);
+  for (const nome of TRILHAS_DO_REPOSITORIO) {
+    const caminho = new URL(`../scripts/reels/trilhas/${nome}`, import.meta.url);
+    assert.ok(existsSync(caminho), `falta ${nome}`);
+    assert.ok(statSync(caminho).size < 1024 * 1024, `${nome} pesado demais pro repositório`);
+  }
+  const semana = ['2026-12-01', '2026-12-02', '2026-12-03', '2026-12-04'].map((d) => itemDoDia(d, TRILHAS_DO_REPOSITORIO));
+  assert.equal(new Set(semana).size, 4, '4 dias seguidos, 4 trilhas diferentes');
+  assert.equal(itemDoDia('2026-12-01', []), null);
+  assert.equal(trilhaDoDia('2026-12-01', ''), null, 'sem SOCIAL_TRILHAS, o GitHub usa a do repositório');
+  assert.equal(trilhaDoDia('2026-12-01', 'https://x/a.mp3'), 'https://x/a.mp3');
+});

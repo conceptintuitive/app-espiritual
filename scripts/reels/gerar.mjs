@@ -7,7 +7,9 @@
 //      já saiu, ou o motor não é o GitHub, para aqui.
 //   2. Playwright abre a página com &captura=1 e fotografa os 270 quadros
 //      (9s × 30fps, 1080x1920), chamando window.__quadro(t) em cada um.
-//   3. ffmpeg monta o MP4 (H.264 veryfast, AAC 48 kHz, faststart) com a trilha.
+//   3. ffmpeg monta o MP4 (H.264 veryfast, AAC 48 kHz, faststart) com a trilha:
+//      a de SOCIAL_TRILHAS (URL), se houver; senão, a do repositório do dia
+//      (scripts/reels/trilhas, rodízio).
 //   4. PUT do MP4 na URL assinada (bucket público "reels").
 //   5. POST {SITE_URL}/api/social/reels/publicar   o site cria o Reels no
 //      Instagram com a URL pública do vídeo (trava de 1 por dia lá).
@@ -19,11 +21,14 @@
 
 import { chromium } from 'playwright';
 import { spawn } from 'node:child_process';
-import { mkdtemp, writeFile, readFile, rm, stat } from 'node:fs/promises';
+import { mkdtemp, writeFile, readFile, rm, stat, access } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { REELS, totalQuadros, tempoDoQuadro } from '../../lib/reelsAnimacao.js';
-import { argumentosFfmpeg } from '../../lib/reelsVideo.js';
+import { argumentosFfmpeg, TRILHAS_DO_REPOSITORIO, itemDoDia } from '../../lib/reelsVideo.js';
+
+const AQUI = dirname(fileURLToPath(import.meta.url));
 
 const SITE = String(process.env.SITE_URL || '').replace(/\/+$/, '');
 const SEGREDO = process.env.CRON_SECRET || '';
@@ -79,6 +84,19 @@ async function baixar(url, destino) {
   await writeFile(destino, Buffer.from(await r.arrayBuffer()));
 }
 
+/** Trilha do dia guardada em scripts/reels/trilhas (rodízio), ou null se faltar o arquivo. */
+async function trilhaDoRepositorio(data) {
+  const nome = itemDoDia(data, TRILHAS_DO_REPOSITORIO);
+  if (!nome) return null;
+  const caminho = join(AQUI, 'trilhas', nome);
+  try {
+    await access(caminho);
+    return caminho;
+  } catch {
+    return null;
+  }
+}
+
 async function montar({ pasta, trilha, saida }) {
   await ffmpeg(argumentosFfmpeg({ padraoQuadros: join(pasta, 'q%04d.jpg'), trilha, saida }));
   const { size } = await stat(saida);
@@ -101,7 +119,8 @@ async function principal() {
       const pagina = process.env.PAGINA_URL;
       if (!pagina) throw new Error('PAGINA_URL é obrigatória no --local');
       await capturar(pagina, pasta);
-      await montar({ pasta, trilha: process.env.TRILHA || null, saida: process.env.SAIDA || join(process.cwd(), 'reels.mp4') });
+      const trilha = process.env.TRILHA || (process.env.DATA ? await trilhaDoRepositorio(process.env.DATA) : null);
+      await montar({ pasta, trilha, saida: process.env.SAIDA || join(process.cwd(), 'reels.mp4') });
       return;
     }
     if (!SITE || !SEGREDO) throw new Error('SITE_URL e CRON_SECRET são obrigatórios');
@@ -115,7 +134,10 @@ async function principal() {
     if (trabalho.trilha) {
       trilha = join(pasta, 'trilha.mp3');
       await baixar(trabalho.trilha, trilha);
+    } else {
+      trilha = await trilhaDoRepositorio(trabalho.data);
     }
+    log(`trilha: ${trilha ? trilha.split('/').pop() : 'nenhuma (vídeo mudo)'}`);
     const saida = join(pasta, 'reels.mp4');
     await montar({ pasta, trilha, saida });
     await subir(trabalho.upload, saida);
