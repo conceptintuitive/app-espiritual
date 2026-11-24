@@ -8,9 +8,9 @@
 
 import { createClient } from '@supabase/supabase-js';
 import {
-  hojeBrasilia, dataValida, energiaDoDia, montarLegenda, caminhoImagem, redesLigadas, chaveLigada, diaDaSemana, dataCurta, TEMAS,
+  hojeBrasilia, dataValida, energiaDoDia, montarLegenda, caminhoImagem, assinarImagem, redesLigadas, chaveLigada, diaDaSemana, dataCurta, TEMAS,
 } from '@/lib/social';
-import { planoDaPrevia, limiteRespostasPorHora } from '@/lib/socialServidor';
+import { planoDaPrevia, limiteRespostasPorHora, motorReels } from '@/lib/socialServidor';
 import { modoInstagram } from '@/lib/instagram';
 import { decidirResposta } from '@/lib/socialComentarios';
 import { trilhaDoDia } from '@/lib/socialReels';
@@ -55,7 +55,16 @@ export async function GET(request) {
   const { dias, aviso } = await planoDaPrevia(supabase, inicio, n);
 
   const redes = redesLigadas(process.env.SOCIAL_AUTOMACAO);
-  const reelsLigado = chaveLigada(process.env.SOCIAL_REELS);
+  const motor = motorReels();
+  const reelsLigado = !!motor;
+  const NOME_MOTOR = { github: 'GitHub Actions', creatomate: 'Creatomate' };
+  const animacao = (d) => {
+    const q = new URLSearchParams();
+    if (d.indice != null) q.set('i', String(d.indice));
+    if (d.versao) q.set('v', d.versao);
+    q.set('t', assinarImagem({ data: d.data, formato: 'reels', indice: d.indice, v: d.versao || '' }, segredo));
+    return esc(`/social/reels/${d.data}?${q.toString()}`);
+  };
   const img = (d, formato) => esc(caminhoImagem({ data: d.data, formato, indice: d.indice, v: d.versao }, segredo));
 
   const blocos = dias.map((d) => {
@@ -74,7 +83,7 @@ export async function GET(request) {
       <div class="fila">${telas}</div>
       <div class="artes">
         <figure><img src="${img(d, 'story')}" width="270" height="480" alt="Story" loading="lazy"><figcaption>Story · Instagram</figcaption></figure>
-        <figure><div class="fila reels">${quadros}</div><figcaption>Reels (9s) ${reelsLigado ? '' : '· desligado (SOCIAL_REELS)'}: céu com zoom lento; gancho 0–4s, virada 4,6–7s, chamada 7,3–9s · trilha: ${trilha ? esc(trilha.split('/').pop()) : 'nenhuma (SOCIAL_TRILHAS)'}</figcaption></figure>
+        <figure><div class="fila reels">${quadros}</div><figcaption><a href="${animacao(d)}" target="_blank" rel="noreferrer">Ver a animação</a> · Reels (9s) ${reelsLigado ? `via ${NOME_MOTOR[motor]}` : '· desligado (SOCIAL_REELS)'}: céu com zoom lento; gancho 0–4s, virada 4,6–7s, chamada 7,3–9s · trilha: ${trilha ? esc(trilha.split('/').pop()) : 'nenhuma (SOCIAL_TRILHAS)'}</figcaption></figure>
         <div class="textos">
           <h3>Legenda (carrossel e Reels)</h3>
           <pre>${esc(montarLegenda(c.legenda))}</pre>
@@ -106,6 +115,7 @@ export async function GET(request) {
   .artes { display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-start; }
   figure { margin: 0; } figure > img { display: block; border-radius: 8px; max-width: 100%; height: auto; background: #140c22; }
   figcaption { color: #b9a9c9; font-size: 12px; margin-top: 6px; max-width: 560px; }
+  figcaption a { color: #f2c77b; }
   .textos { flex: 1 1 320px; min-width: 0; }
   pre { white-space: pre-wrap; word-break: break-word; background: rgba(255,255,255,.04); padding: 12px; border-radius: 8px; margin: 0 0 16px; font: 13px/1.5 ui-monospace, monospace; }
   table { border-collapse: collapse; width: 100%; font-size: 14px; }
@@ -114,7 +124,7 @@ export async function GET(request) {
 </style></head><body><main>
 <h1>Prévia dos posts automáticos</h1>
 <p class="meta">${dataCurta(dias[0].data)} a ${dataCurta(dias[dias.length - 1].data)} · nada aqui é postado.</p>
-<p class="meta">Automação: ${redes.length ? `ligada (${redes.join(' + ')})` : 'desligada (SOCIAL_AUTOMACAO)'} · Reels: ${reelsLigado ? 'ligado' : 'desligado'} · Instagram: ${process.env.INSTAGRAM_ACCESS_TOKEN && process.env.INSTAGRAM_USER_ID ? `configurado (${modoInstagram() === 'facebook' ? 'graph.facebook.com' : 'graph.instagram.com'})` : 'falta token/ID'} · TikTok: ${chaveLigada(process.env.TIKTOK_DIRECT_POST) ? 'Direct Post nos dias aprovados, rascunho nos outros' : 'rascunhos'}</p>
+<p class="meta">Automação: ${redes.length ? `ligada (${redes.join(' + ')})` : 'desligada (SOCIAL_AUTOMACAO)'} · Reels: ${reelsLigado ? `ligado (${NOME_MOTOR[motor]})` : 'desligado'} · Instagram: ${process.env.INSTAGRAM_ACCESS_TOKEN && process.env.INSTAGRAM_USER_ID ? `configurado (${modoInstagram() === 'facebook' ? 'graph.facebook.com' : 'graph.instagram.com'})` : 'falta token/ID'} · TikTok: ${chaveLigada(process.env.TIKTOK_DIRECT_POST) ? 'Direct Post nos dias aprovados, rascunho nos outros' : 'rascunhos'}</p>
 ${aviso ? `<p class="aviso">${esc(aviso)}</p>` : ''}
 ${blocoComentarios()}
 ${blocos}

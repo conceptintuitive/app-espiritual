@@ -6,7 +6,8 @@
 // respondidos 1 vez (guardando só o id), geração da semana com revisão.
 import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { postarDia, reivindicar, avancarReels, responderComentarios, gerarSemana, tarefasDaHora } from '../lib/socialServidor.js';
+import { postarDia, reivindicar, avancarReels, responderComentarios, gerarSemana, tarefasDaHora, motorReels, trabalhoDoReels, publicarReelsDoArquivo, caminhoDoReels } from '../lib/socialServidor.js';
+import { conferirAssinatura } from '../lib/social.js';
 import { gerarConteudoDoDia } from '../lib/socialIA.js';
 import { precisaRenovar, tokenInstagram, hashToken, modoInstagram, conferirContaInstagram, publicarNoInstagram } from '../lib/instagram.js';
 import { dadosDoDia } from '../lib/social.js';
@@ -55,7 +56,22 @@ class Q {
     return { data: this.unico ? (achados[0] || null) : achados.map((r) => JSON.parse(JSON.stringify(r))), error: null };
   }
 }
-const fakeSupabase = (db) => ({ from: (t) => new Q(db, t) });
+// Storage falso: bucket guardado em db.storage[bucket] = Set de caminhos
+const SB = 'https://sb.teste/storage/v1';
+const fakeStorage = (db) => ({
+  from: (b) => ({
+    createSignedUploadUrl: async (p, o = {}) => {
+      if (!db.storage?.[b]) return { data: null, error: { message: 'Bucket not found' } };
+      db.uploadsPedidos = [...(db.uploadsPedidos || []), { b, p, upsert: o.upsert }];
+      return { data: { signedUrl: `${SB}/object/upload/sign/${b}/${p}?token=tok`, path: p, token: 'tok' }, error: null };
+    },
+    getPublicUrl: (p) => ({ data: { publicUrl: `${SB}/object/public/${b}/${p}` } }),
+    list: async () => ({ data: [...(db.storage?.[b] || [])].map((name) => ({ name })), error: null }),
+    remove: async (ps) => { for (const x of ps) db.storage[b].delete(x); return { data: ps, error: null }; },
+  }),
+});
+const fakeSupabase = (db) => ({ from: (t) => new Q(db, t), storage: fakeStorage(db) });
+let bancoAtual = null; // pro HEAD do vídeo saber o que tem no bucket
 
 // ── Instagram, Creatomate e imagens falsos ─────────────────────────────────
 const IG_ID = '17840000000000000';
@@ -89,6 +105,10 @@ global.fetch = async (url, opts = {}) => {
   }
   if (u.includes(`/${IG_ID}/media?`)) return json({ data: [{ id: 'midia-1', timestamp: new Date().toISOString(), comments_count: comentarios.length }, { id: 'midia-velha', timestamp: '2020-01-01T00:00:00+0000', comments_count: 5 }] });
   if (u.includes('/midia-1/comments')) return json({ data: comentarios });
+  if (u.startsWith(`${SB}/object/public/`)) {
+    const [, bucket, ...resto] = u.slice(`${SB}/object/public/`.length - 1).split('/');
+    return new Response(null, { status: bancoAtual?.storage?.[bucket]?.has(resto.join('/')) ? 200 : 404 });
+  }
   if (u.includes('fields=status_code')) return json({ status_code: 'FINISHED' });
   if (u.includes('fields=username')) {
     chamadas.conferencias.push(u);
@@ -180,8 +200,8 @@ test('TikTok sem conta conectada: erro só no TikTok, Instagram segue', async ()
   assert.equal(r.erros[0].rede, 'tiktok');
 });
 
-test('Reels: render no Creatomate → container REELS → publicado, 1 por dia', async () => {
-  process.env.SOCIAL_REELS = 'on';
+test('Reels (Creatomate, alternativa): render → container REELS → publicado, 1 por dia', async () => {
+  process.env.SOCIAL_REELS = 'creatomate';
   try {
     const db = novoDb();
     const sb = fakeSupabase(db);
@@ -393,4 +413,102 @@ test('modo do Instagram e token de usuário do sistema (graph.facebook.com, sem 
   }
   await publicarNoInstagram({ token: 'IGAAantigo', tipo: 'story', imageUrl: `${BASE}/x.jpg` });
   assert.ok(chamadas.containers.at(-1).url.startsWith(`https://graph.instagram.com/v24.0/${IG_ID}/media`));
+});
+
+// ── Reels pelo GitHub Actions (motor padrão) ───────────────────────────────
+test('motor do Reels: on/github = GitHub Actions; creatomate = alternativa; vazio = sem Reels', () => {
+  assert.equal(motorReels('on'), 'github');
+  assert.equal(motorReels('github'), 'github');
+  assert.equal(motorReels('creatomate'), 'creatomate');
+  assert.equal(motorReels('off'), null);
+  assert.equal(motorReels(undefined), null);
+});
+
+test('GitHub: trabalho → upload → publicar → Instagram processa → publicado, 1 por dia', async () => {
+  process.env.SOCIAL_REELS = 'on';
+  process.env.SOCIAL_AUTOMACAO = 'instagram';
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'anon-publica';
+  try {
+    const db = { ...novoDb(), storage: { reels: new Set(['2026-11-01-velho.mp4', '2026-11-29-ontem.mp4']) } };
+    bancoAtual = db;
+    const sb = fakeSupabase(db);
+
+    // o cron das 7h não começa Reels no motor GitHub
+    await rodar(db, '2026-11-30');
+    assert.equal(chamadas.renders.length, 0);
+    assert.equal(db.social_posts.some((p) => p.tipo === 'reels'), false);
+
+    const t = await trabalhoDoReels({ supabase: sb, data: '2026-11-30', baseUrl: BASE, segredo: 'segredo' });
+    assert.ok(!t.pular, t.pular);
+    assert.equal(t.fps, 30);
+    assert.equal(t.duracao, 9);
+    const versao = db.social_conteudos[0].versao;
+    assert.equal(t.upload.caminho, caminhoDoReels('2026-11-30', versao));
+    assert.equal(t.upload.apikey, 'anon-publica');
+    assert.ok(db.uploadsPedidos[0].upsert);
+    // a página da animação vem assinada com o conteúdo do dia
+    const pag = new URL(t.pagina);
+    assert.equal(pag.pathname, '/social/reels/2026-11-30');
+    assert.ok(conferirAssinatura({ data: '2026-11-30', formato: 'reels', indice: 0, v: versao, t: pag.searchParams.get('t') }, 'segredo'));
+    // limpeza: vídeo de mais de 7 dias sai do bucket, o de ontem fica
+    assert.deepEqual([...db.storage.reels], ['2026-11-29-ontem.mp4']);
+
+    // publicar antes de o vídeo estar no bucket = erro claro
+    await assert.rejects(publicarReelsDoArquivo({ supabase: sb, data: '2026-11-30', caminho: t.upload.caminho }), /não está no bucket/);
+    db.social_posts = db.social_posts.filter((p) => p.tipo !== 'reels');
+    await assert.rejects(publicarReelsDoArquivo({ supabase: sb, data: '2026-11-30', caminho: '../x.mp4' }), /inválido/);
+
+    db.storage.reels.add(t.upload.caminho); // o workflow subiu
+    const r = await publicarReelsDoArquivo({ supabase: sb, data: '2026-11-30', caminho: t.upload.caminho });
+    assert.ok(r.ok);
+    const c = chamadas.containers.find((x) => x.tipo === 'REELS');
+    assert.equal(c.video, `${SB}/object/public/reels/${t.upload.caminho}`);
+    assert.equal(c.feed, 'true');
+    const reels = () => db.social_posts.find((p) => p.tipo === 'reels');
+    assert.equal(reels().status, 'aguardando');
+    assert.equal(reels().etapa, 'container');
+
+    // 2ª chamada (repescagem do workflow) não duplica
+    assert.equal((await publicarReelsDoArquivo({ supabase: sb, data: '2026-11-30', caminho: t.upload.caminho })).pulado, 'já publicado ou em andamento');
+    assert.match((await trabalhoDoReels({ supabase: sb, data: '2026-11-30', baseUrl: BASE, segredo: 'segredo' })).pular, /processando/);
+
+    await avancarReels({ supabase: sb });
+    assert.equal(reels().status, 'ok');
+    assert.match((await trabalhoDoReels({ supabase: sb, data: '2026-11-30', baseUrl: BASE, segredo: 'segredo' })).pular, /já foi publicado/);
+  } finally {
+    delete process.env.SOCIAL_REELS;
+    delete process.env.SOCIAL_AUTOMACAO;
+    delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    bancoAtual = null;
+  }
+});
+
+test('GitHub: motor desligado ou Creatomate → workflow não faz nada; sem bucket → erro com a migração', async () => {
+  const db = { ...novoDb(), storage: {} };
+  const sb = fakeSupabase(db);
+  process.env.SOCIAL_AUTOMACAO = 'on';
+  try {
+    assert.match((await trabalhoDoReels({ supabase: sb, data: '2026-11-30', baseUrl: BASE, segredo: 's' })).pular, /SOCIAL_REELS/);
+    process.env.SOCIAL_REELS = 'creatomate';
+    assert.match((await trabalhoDoReels({ supabase: sb, data: '2026-11-30', baseUrl: BASE, segredo: 's' })).pular, /creatomate/);
+    process.env.SOCIAL_REELS = 'on';
+    await assert.rejects(trabalhoDoReels({ supabase: sb, data: '2026-11-30', baseUrl: BASE, segredo: 's' }), /0026/);
+  } finally {
+    delete process.env.SOCIAL_REELS;
+    delete process.env.SOCIAL_AUTOMACAO;
+  }
+});
+
+test('GitHub: o cron da hora avisa se o Reels não chegou até o meio-dia', async () => {
+  process.env.SOCIAL_REELS = 'on';
+  try {
+    const db = novoDb();
+    const manha = await tarefasDaHora({ supabase: fakeSupabase(db), data: '2026-11-30', agora: new Date('2026-11-30T13:00:00Z') }); // 10h
+    assert.equal(manha.reels.erros.length, 0);
+    const tarde = await tarefasDaHora({ supabase: fakeSupabase(db), data: '2026-11-30', agora: new Date('2026-11-30T15:30:00Z') }); // 12h30
+    assert.match(tarde.reels.erros[0].erro, /GitHub Actions/);
+    assert.equal(db.social_alertas[0].ultimo, '2026-11-30', '1 e-mail por dia');
+  } finally {
+    delete process.env.SOCIAL_REELS;
+  }
 });
