@@ -5,7 +5,7 @@ import {
   temaDoDia, serieDoTema, itemDaSerie, planoDosDias, SERIES, TEMAS, dadosDoDia, reservaDoDia, normalizarConteudo,
   validarConteudo, energiaDoDia, montarLegenda, nomeDaFase, luaDoDia, contaNumeroVida, universais, tituloCurto,
   assinarImagem, conferirAssinatura, caminhoImagem, versaoConteudo, redesLigadas, chaveLigada, proximaSegunda,
-  CTA_FEED, HASHTAGS_BASE, diaDaSemana,
+  CTA_FEED, HASHTAGS_BASE, diaDaSemana, slugHashtag,
 } from '../lib/social.js';
 import { GUIA_EDITORIAL, CHECKLIST_REVISAO, MECANISMOS, PENSADORES, PARES_SIGNOS, problemasDoTexto } from '../lib/socialEditorial.js';
 import { calcularNumeroVida } from '../lib/calculos.js';
@@ -252,4 +252,17 @@ test('validação: conselho do dia longo demais (domingo) vai pra revisão', () 
   const longo = { ...ok, dias: ok.dias.map((d, k) => (k === 2 ? { ...d, conselho: 'Um conselho comprido demais pra caber na arte. '.repeat(4).trim() } : d)) };
   const p = validarConteudo(longo, dados).problemas;
   assert.ok(p.some((x) => /^conselho de 2026-12-02 longo \(\d+ caracteres; máximo 130/.test(x)), JSON.stringify(p));
+});
+
+test('hashtags: sexta leva a do autor, nunca #leidaatracao; a IA não decide', () => {
+  assert.equal(slugHashtag('Florence Scovel Shinn'), 'florencescovelshinn');
+  assert.equal(slugHashtag('Carl Jung'), 'carljung');
+  const sexta = '2026-11-27';
+  assert.equal(temaDoDia(sexta), 'pensador');
+  for (let i = 0; i < PENSADORES.length; i++) {
+    const dados = dadosDoDia(sexta, i);
+    const c = normalizarConteudo({ ...reservaDoDia(dados), legenda: { gancho: 'G.', texto: ['A.', 'B.'], hashtags: ['#leidaatracao', '#outra'] } }, dados, 'ia');
+    assert.deepEqual(c.legenda.hashtags, [`#${slugHashtag(PENSADORES[i].autor)}`, '#desenvolvimentopessoal']);
+    assert.ok(!montarLegenda(c.legenda).includes('#leidaatracao'));
+  }
 });
