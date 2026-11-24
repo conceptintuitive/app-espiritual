@@ -1,0 +1,60 @@
+# Reels diário, de graça: filma a animação do dia (página do site) com
+# Playwright, monta o MP4 com ffmpeg, sobe no Supabase Storage e pede pro site
+# publicar como Reels. Tudo em scripts/reels/gerar.mjs.
+#
+# Secret do repositório: CRON_SECRET (o mesmo da Vercel).
+# Variável do repositório: SITE_URL (ex.: https://intuitiveconcept.com.br).
+# Só roda de verdade com SOCIAL_REELS=on na Vercel; senão, o site responde
+# "nada a fazer" e o job termina em segundos.
+name: Reels diário
+
+on:
+  schedule:
+    # Horário em UTC. O GitHub atrasa agendamentos em até ~1h nos horários cheios.
+    - cron: '17 10 * * *'   # 7h17 de Brasília
+    - cron: '17 14 * * *'   # 11h17: repescagem (sai na hora se o de manhã já publicou)
+  workflow_dispatch:
+    inputs:
+      data:
+        description: 'Dia (AAAA-MM-DD). Vazio = hoje em Brasília.'
+        required: false
+        default: ''
+
+concurrency:
+  group: reels-diario
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  reels:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: scripts/reels/package-lock.json
+
+      - name: Dependências (Playwright)
+        working-directory: scripts/reels
+        run: npm ci --no-audit --no-fund
+
+      - name: Chromium
+        working-directory: scripts/reels
+        run: npx playwright install --with-deps chromium
+
+      - name: ffmpeg
+        run: command -v ffmpeg || (sudo apt-get update && sudo apt-get install -y ffmpeg)
+
+      - name: Gerar e publicar o Reels
+        working-directory: scripts/reels
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          DATA: ${{ inputs.data }}
+        run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON gerar.mjs
