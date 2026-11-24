@@ -5,7 +5,7 @@
 import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { postarDia, reivindicar } from '../lib/socialServidor.js';
-import { precisaRenovar, tokenInstagram, hashToken } from '../lib/instagram.js';
+import { precisaRenovar, tokenInstagram, hashToken, modoInstagram, conferirContaInstagram, publicarNoInstagram } from '../lib/instagram.js';
 
 // ── Supabase falso (só o que a automação usa) ──────────────────────────────
 const CHAVES = { social_posts: ['data', 'rede', 'tipo'], social_series: ['serie'], social_tokens: ['rede'] };
@@ -66,10 +66,15 @@ global.fetch = async (url, opts = {}) => {
   }
   if (u.includes('/media') && opts.method === 'POST') {
     const p = new URLSearchParams(opts.body);
-    chamadas.containers.push({ tipo: p.get('media_type') || 'FEED', imagem: p.get('image_url'), legenda: p.get('caption'), token: p.get('access_token') });
+    chamadas.containers.push({ url: u, tipo: p.get('media_type') || 'FEED', imagem: p.get('image_url'), legenda: p.get('caption'), token: p.get('access_token') });
     return json({ id: `cont-${chamadas.containers.length}` });
   }
   if (u.includes('fields=status_code')) return json({ status_code: 'FINISHED' });
+  if (u.includes('fields=username')) {
+    chamadas.conferencias.push(u);
+    if (u.includes('access_token=token-invalido')) return json({ error: { message: 'Invalid OAuth access token', code: 190 } }, 400);
+    return json({ username: 'conta_teste', id: '17840000000000000' });
+  }
   throw new Error(`fetch inesperado: ${u}`);
 };
 
@@ -81,7 +86,7 @@ delete process.env.NEXT_PUBLIC_SUPABASE_URL;
 const novoDb = () => ({ social_posts: [], social_series: [{ serie: 'numero', proximo: 0 }, { serie: 'ponto_cego', proximo: 5 }, { serie: 'anjo', proximo: 71 }, { serie: 'animal', proximo: 0 }, { serie: 'selo', proximo: 0 }], social_tokens: [] });
 const rodar = (db, data, redes = ['instagram']) => postarDia({ supabase: fakeSupabase(db), data, redes, baseUrl: BASE, segredo: 'segredo' });
 
-beforeEach(() => { chamadas = { imagens: [], containers: [], publicados: [], refresh: 0 }; falharPublish = 0; });
+beforeEach(() => { chamadas = { imagens: [], containers: [], publicados: [], refresh: 0, conferencias: [] }; falharPublish = 0; });
 
 test('segunda: story + feed; rodar 2x não posta de novo e a série anda 1 vez', async () => {
   const db = novoDb();
@@ -201,4 +206,64 @@ test('token do Instagram: renova, guarda e usa o do banco; token novo na variáv
   assert.equal(chamadas.refresh, 2, 'token novo na variável: descarta o do banco e renova');
   assert.equal(t3.token, 'token-renovado');
   process.env.INSTAGRAM_ACCESS_TOKEN = 'token-da-variavel';
+});
+
+test('modo do Instagram: variável manda; sem ela, o formato do token decide', () => {
+  assert.equal(modoInstagram('EAAGm0PX4ZCpsBAxyz', undefined), 'facebook');
+  assert.equal(modoInstagram('IGAAJx1234', undefined), 'instagram');
+  assert.equal(modoInstagram('qualquer', undefined), 'instagram'); // caminho antigo
+  assert.equal(modoInstagram('IGAAJx1234', 'facebook'), 'facebook');
+  assert.equal(modoInstagram('EAAGm0PX4ZCpsBAxyz', 'instagram'), 'instagram');
+  assert.equal(modoInstagram('x', 'https://graph.facebook.com'), 'facebook');
+  assert.equal(modoInstagram('x', 'FACEBOOK'), 'facebook');
+});
+
+test('token de usuário do sistema (graph.facebook.com): não renova, não grava e publica no host do Facebook', async () => {
+  process.env.INSTAGRAM_ACCESS_TOKEN = 'EAAsuat-de-teste';
+  try {
+    const db = novoDb();
+    const t = await tokenInstagram(fakeSupabase(db));
+    assert.deepEqual(t, { token: 'EAAsuat-de-teste', modo: 'facebook' });
+    assert.equal(chamadas.refresh, 0);
+    assert.equal(db.social_tokens.length, 0);
+
+    const r = await rodar(db, '2026-11-23');
+    assert.equal(r.erros.length, 0, JSON.stringify(r.erros));
+    assert.equal(chamadas.refresh, 0, 'SUAT nunca é renovado');
+    assert.equal(chamadas.publicados.length, 2);
+    for (const c of chamadas.containers) {
+      assert.ok(c.url.startsWith('https://graph.facebook.com/v24.0/17840000000000000/media'), c.url);
+      assert.equal(c.token, 'EAAsuat-de-teste');
+    }
+  } finally {
+    process.env.INSTAGRAM_ACCESS_TOKEN = 'token-da-variavel';
+  }
+});
+
+test('caminho antigo continua em graph.instagram.com', async () => {
+  await publicarNoInstagram({ token: 'IGAAantigo', tipo: 'story', imageUrl: `${BASE}/x.jpg` });
+  assert.ok(chamadas.containers[0].url.startsWith('https://graph.instagram.com/v24.0/17840000000000000/media'));
+});
+
+test('conferência da conta: GET /{ig-user-id}?fields=username, sem devolver o token', async () => {
+  process.env.INSTAGRAM_ACCESS_TOKEN = 'EAAsuat-de-teste';
+  try {
+    const ok = await conferirContaInstagram();
+    assert.equal(ok.ok, true);
+    assert.equal(ok.modo, 'facebook');
+    assert.equal(ok.renova_sozinho, false);
+    assert.deepEqual(ok.resultado, { username: 'conta_teste', id: '17840000000000000' });
+    assert.match(chamadas.conferencias[0], /^https:\/\/graph\.facebook\.com\/v24\.0\/17840000000000000\?fields=username&access_token=/);
+    assert.ok(!JSON.stringify(ok).includes('EAAsuat'), 'não vaza o token');
+
+    process.env.INSTAGRAM_ACCESS_TOKEN = 'token-invalido';
+    process.env.INSTAGRAM_API_HOST = 'facebook';
+    const erro = await conferirContaInstagram();
+    assert.equal(erro.ok, false);
+    assert.match(erro.erro, /Invalid OAuth access token \(código 190\)/);
+    assert.ok(!JSON.stringify(erro).includes('token-invalido'));
+  } finally {
+    process.env.INSTAGRAM_ACCESS_TOKEN = 'token-da-variavel';
+    delete process.env.INSTAGRAM_API_HOST;
+  }
 });

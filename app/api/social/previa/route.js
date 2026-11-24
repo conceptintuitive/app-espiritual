@@ -10,6 +10,7 @@ import {
   hojeBrasilia, dataValida, energiaDoDia, postDoDia, montarLegenda, caminhoImagem, redesLigadas, diaDaSemana, dataCurta,
 } from '@/lib/social';
 import { planoDaPrevia } from '@/lib/socialServidor';
+import { modoInstagram } from '@/lib/instagram';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -77,7 +78,7 @@ export async function GET(request) {
 </style></head><body><main>
 <h1>Prévia dos posts automáticos</h1>
 <p class="meta">${dataCurta(dias[0].data)} a ${dataCurta(dias[dias.length - 1].data)} · nada aqui é postado.</p>
-<p class="meta">Automação: ${redes.length ? `ligada (${redes.join(' + ')})` : 'desligada (SOCIAL_AUTOMACAO)'} · Instagram: ${process.env.INSTAGRAM_ACCESS_TOKEN && process.env.INSTAGRAM_USER_ID ? 'configurado' : 'falta token/ID'}</p>
+<p class="meta">Automação: ${redes.length ? `ligada (${redes.join(' + ')})` : 'desligada (SOCIAL_AUTOMACAO)'} · Instagram: ${process.env.INSTAGRAM_ACCESS_TOKEN && process.env.INSTAGRAM_USER_ID ? `configurado (${modoInstagram() === 'facebook' ? 'graph.facebook.com, token que não expira' : 'graph.instagram.com, token de 60 dias'})` : 'falta token/ID'}</p>
 ${aviso ? `<p class="aviso">${esc(aviso)}</p>` : ''}
 ${blocos}
 </main></body></html>`;
