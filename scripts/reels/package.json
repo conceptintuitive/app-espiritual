@@ -1,0 +1,12 @@
+{
+  "name": "reels-diario",
+  "private": true,
+  "description": "Gera o Reels diário no GitHub Actions (Playwright + ffmpeg). Ver gerar.mjs.",
+  "type": "module",
+  "scripts": {
+    "gerar": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON gerar.mjs"
+  },
+  "dependencies": {
+    "playwright": "1.63.0"
+  }
+}
