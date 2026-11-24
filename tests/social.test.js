@@ -233,3 +233,13 @@ test('chaves liga/desliga', () => {
   assert.ok(!chaveLigada('off'));
   assert.ok(!chaveLigada(undefined));
 });
+
+// ── leitura do JSON da IA ─────────────────────────────────────────────────
+import { _parseJSON } from '../lib/ia.js';
+
+test('JSON da IA: aceita cerca de código e texto antes/depois', () => {
+  assert.deepEqual(_parseJSON('```json\n{"a":1}\n```'), { a: 1 });
+  assert.deepEqual(_parseJSON('Aqui está a revisão:\n{"aprovado": true, "problemas": []}\nQualquer coisa, me avise.'), { aprovado: true, problemas: [] });
+  assert.deepEqual(_parseJSON('{"t": "linha 1\nlinha 2"}'), { t: 'linha 1\nlinha 2' });
+  assert.throws(() => _parseJSON('sem json nenhum'));
+});
