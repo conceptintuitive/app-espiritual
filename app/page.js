@@ -16,7 +16,7 @@ import { emailValido, sugestaoEmail } from '@/lib/emailValidacao';
 import CidadeAutocomplete from '@/app/components/CidadeAutocomplete';
 import { lerCeuDados, consumirAbrirQuiz, limparCeuDados } from '@/lib/ceuDados';
 import { lerPerfil, salvarPerfil } from '@/lib/perfilLocal';
-import { TESTE_SEU_DIA_ATIVO } from '@/lib/testeSeuDia';
+import { TESTE_SEU_DIA_ATIVO } from '@/lib/testeSeuDiaChave';
 import SiteNav, { EVENTO_ABRIR_QUIZ } from '@/app/components/SiteNav';
 import { coletarAtribuicao } from '@/app/components/CapturaAtribuicao';
 import h from './home.module.css';
@@ -68,6 +68,9 @@ function QuizOverlay({ onClose }) {
   const [nomeErro, setNomeErro] = useState('');
   const [emailErro, setEmailErro] = useState('');
   const [emailSugestao, setEmailSugestao] = useState('');
+  // "Quero receber meu dia às 7h por e-mail": vem marcado. Marcado, o
+  // gerar-analise cria o perfil do Seu Dia e começa o teste (lib/seuDiaQuiz.js).
+  const [querSeuDia, setQuerSeuDia] = useState(true);
 
   // Veio do /ceu (Olho Cósmico)? Pré-preenche nome, data, hora e cidade pra
   // pessoa não responder de novo. Dados no localStorage, validade de 24h.
@@ -147,10 +150,11 @@ function QuizOverlay({ onClose }) {
       objetivo_principal: areaTraada,
       relacao_status: '',
       trabalho_status: '',
+      seu_dia: querSeuDia,
     };
 
     try {
-      try { window?.gtag?.('event', 'lead_submit', { event_category: 'lead', event_label: 'quiz_overlay' }); } catch {}
+      try { window?.gtag?.('event', 'lead_submit', { event_category: 'lead', event_label: 'quiz_overlay', seu_dia: querSeuDia }); } catch {}
       try { window?.fbq?.('track', 'Lead'); } catch {}
 
       const res = await fetch('/api/gerar-analise', {
@@ -170,6 +174,8 @@ function QuizOverlay({ onClose }) {
         throw new Error(msg);
       }
       if (data?.id) {
+        // O /resultado troca "Receber meu dia às 7h" por "já está chegando".
+        if (querSeuDia) { try { window.localStorage.setItem(`ic_sd_quiz_${data.id}`, '1'); } catch {} }
         limparCeuDados();
         salvarPerfil({ nome: nome.trim().split(' ')[0], dataNascimento: dataNasc, hora: noSabeHora ? null : horaNasc, cidade: municipio || null });
         router.push(`/resultado/${data.id}`);
@@ -409,6 +415,12 @@ function QuizOverlay({ onClose }) {
                       </p>
                     )}
                     {emailErro && <p className={h.erro}>{emailErro}</p>}
+                    <label className={h.check}>
+                      <input type="checkbox" checked={querSeuDia} onChange={(e) => setQuerSeuDia(e.target.checked)} />
+                      <span>
+                        Quero receber meu dia às 7h por e-mail{TESTE_SEU_DIA_ATIVO ? ' (7 dias do Seu Dia Completo grátis)' : ''}
+                      </span>
+                    </label>
                   </div>
                 </div>
                 {erro && <div className={h.erroCaixa}>{erro}</div>}

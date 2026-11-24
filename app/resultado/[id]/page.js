@@ -3,14 +3,22 @@
 // /resultado/[id] — o Mapa grátis (prévia) + a venda do Manual do seu Mapa.
 // Visual da Minha Área desde nov/2026 (resultado.module.css). Ordem:
 //   1. Topo: céu do nascimento, nome, arquétipo, signo · número · anjo · Kin
-//   2. Leitura grátis inteira (preview, citação do diagnóstico, carta, 1º passo)
-//   3. Seu dia de hoje (DiaResumo, motor do Seu Dia) → /seu-dia
+//   2. Leitura grátis inteira (preview, citação do diagnóstico, carta, 1º
+//      passo) e, no fim, os 2 primeiros parágrafos reais do Diagnóstico (texto
+//      da IA do quiz) cortados com degradê no 3º + o gancho "o mesmo padrão
+//      em 3 lugares" (trechoDoDiagnostico / ganchoDoMapa, lib/resultadoManual.js)
+//   3. Oferta curta: 1 linha + preço + contador + "Desbloquear" (rola até 4)
 //   4. O Manual do seu Mapa (#comprar): as 14 seções com título da pessoa,
-//      1 trecho borrado, preço + contador, combo, garantia, UM botão
-//   5. Fim: compatibilidade, Você também é…, card do story, presente, FAQ
-// NÃO MUDOU: checkout (/api/criar-checkout-mp, modal de e-mail inválido,
-// ?pagamento=recusado, ?pending=true), preço (lib/preco.js + contador de 24h),
-// combo, eventos GA4/Meta. Peso: nada de lib/manualgenerator.js; céu, anjo,
+//      preço + contador, prova social real (lib/provaSocial.js), combo,
+//      Pix na página (PixManual.js) e cartão pelo checkout de sempre
+//   5. Seu dia de hoje (DiaResumo, motor do Seu Dia) → /seu-dia
+//   6. Fim: compatibilidade, Você também é…, card do story, presente, FAQ
+// GA4 do funil: visualizou_resultado → resultado_leitura_fim →
+// resultado_oferta_vista (bloco: curto|completo) → clique_comprar (metodo:
+// pix|cartao) → checkout_pix_gerado → purchase (servidor).
+// Cartão: o checkout de sempre (/api/criar-checkout-mp, modal de e-mail
+// inválido, ?pagamento=recusado, ?pending=true); preço de lib/preco.js +
+// contador de 24h. Peso: nada de lib/manualgenerator.js; céu, anjo,
 // Kin, Seu Dia, ChatAssistente e VoceTambem entram via next/dynamic.
 // Oráculo: só abre com ?chat=1 (link do /oraculo); sem o balão flutuante nem
 // a abertura automática no fim da página. Exit-intent: removido.
@@ -30,7 +38,8 @@ import SiteNav from '@/app/components/SiteNav';
 import { salvarSeForMeu } from '@/lib/perfilLocal';
 import { salvarEmailSeuDia } from '@/lib/seuDiaRepasse';
 import { TESTE_SEU_DIA_ATIVO } from '@/lib/testeSeuDia';
-import { secoesDoManual, rotuloContador, faqResultado } from '@/lib/resultadoManual';
+import { secoesDoManual, rotuloContador, faqResultado, trechoDoDiagnostico, ganchoDoMapa } from '@/lib/resultadoManual';
+import { ARQUETIPOS } from '@/lib/arquetipoBase';
 import { coletarAtribuicao } from '@/app/components/CapturaAtribuicao';
 import r from './resultado.module.css';
 
@@ -41,6 +50,7 @@ const ExtrasTopo = dynamic(() => import('./TopoCeu').then((m) => m.ExtrasTopo), 
 const DiaHoje = dynamic(() => import('./DiaHoje'), { ssr: false });
 const ChatAssistente = dynamic(() => import('@/app/components/ChatAssistente'), { ssr: false });
 const VoceTambem = dynamic(() => import('@/app/components/VoceTambem'), { ssr: false });
+const PixManual = dynamic(() => import('./PixManual'), { ssr: false });
 
 // ── Supabase ──────────────────────────────────────────────────────────────────
 function getSupabaseClient() {
@@ -187,6 +197,11 @@ export default function ResultadoPage() {
   // Barra fixa do celular: aparece depois do topo, some com o bloco do Manual na tela.
   const [passouTopo, setPassouTopo] = useState(false);
   const [manualNaTela, setManualNaTela] = useState(false);
+  const [curtaNaTela, setCurtaNaTela] = useState(false);
+  // Marcou "Quero receber meu dia às 7h" no quiz (localStorage gravado pela home).
+  const [seuDiaDoQuiz, setSeuDiaDoQuiz] = useState(false);
+  // Prova social real (/api/prova-social): "X de cada 10…" e depoimentos autorizados.
+  const [prova, setProva] = useState({ texto: null, depoimentos: [] });
   // Link manual de reserva: alguns navegadores internos (Instagram/Facebook)
   // bloqueiam o redirecionamento automático pro Mercado Pago sem gerar erro
   // de JS nenhum — a pessoa só fica parada na mesma página. Guardando a URL
@@ -194,6 +209,10 @@ export default function ResultadoPage() {
   const [checkoutUrl, setCheckoutUrl] = useState(null);
   const topoRef = useRef(null);
   const manualRef = useRef(null);
+  const curtaRef = useRef(null);
+  const fimLeituraRef = useRef(null);
+  // Modal de e-mail inválido: o Pix guarda aqui como tentar de novo.
+  const tentarPixRef = useRef(null);
 
   // fetch
   useEffect(() => {
@@ -209,6 +228,7 @@ export default function ResultadoPage() {
         setAnalise(data);
         try { window?.gtag?.('event', 'visualizou_resultado', { event_category: 'engagement', value: 1 }); } catch {}
         try { window.localStorage.setItem('ic_ultima_analise_id', id); } catch {}
+        try { setSeuDiaDoQuiz(window.localStorage.getItem(`ic_sd_quiz_${id}`) === '1'); } catch {}
         salvarSeForMeu(dadosDaAnalise(data));
       } catch (e) {
         if (!mounted) return;
@@ -228,6 +248,15 @@ export default function ResultadoPage() {
     fetch('/api/stats')
       .then((res) => res.json())
       .then((data) => { if (mounted) setStatsCount(data?.count ?? null); })
+      .catch(() => {});
+    return () => { mounted = false; };
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    fetch('/api/prova-social')
+      .then((res) => res.json())
+      .then((d) => { if (mounted && d) setProva({ texto: d.texto || null, depoimentos: Array.isArray(d.depoimentos) ? d.depoimentos : [] }); })
       .catch(() => {});
     return () => { mounted = false; };
   }, []);
@@ -322,16 +351,18 @@ export default function ResultadoPage() {
     return () => clearTimeout(timer);
   }, [analise, retryCount, id, iaCompleta]);
 
-  // Barra fixa do celular: topo fora da tela e bloco do Manual fora da tela.
+  // Barra fixa do celular: topo fora da tela e nenhum bloco do Manual na tela.
   useEffect(() => {
     if (!analise) return;
-    const topo = topoRef.current, manual = manualRef.current;
+    const topo = topoRef.current, manual = manualRef.current, curta = curtaRef.current;
     if (!topo || !manual) return;
     const obsTopo = new IntersectionObserver(([e]) => setPassouTopo(!e.isIntersecting), { threshold: 0 });
     const obsManual = new IntersectionObserver(([e]) => setManualNaTela(e.isIntersecting), { threshold: 0 });
+    const obsCurta = new IntersectionObserver(([e]) => setCurtaNaTela(e.isIntersecting), { threshold: 0 });
     obsTopo.observe(topo);
     obsManual.observe(manual);
-    return () => { obsTopo.disconnect(); obsManual.disconnect(); };
+    if (curta) obsCurta.observe(curta);
+    return () => { obsTopo.disconnect(); obsManual.disconnect(); obsCurta.disconnect(); };
   }, [analise]);
 
   // Vindo do cadeado da Minha Área (/resultado/<id>#comprar): o conteúdo só
@@ -342,23 +373,39 @@ export default function ResultadoPage() {
     return () => clearTimeout(t);
   }, [analise]);
 
-  // Instrumentação: primeira vez que a oferta entra na tela — separa
-  // "não leu até lá" de "leu e não clicou". Dispara só 1x por visita.
+  // Funil no GA4 (1x por visita cada):
+  //   resultado_leitura_fim  — o fim da leitura grátis apareceu na tela
+  //   resultado_oferta_vista — a 1ª oferta do Manual entrou na tela (bloco:
+  //                            'curto' = a logo depois da leitura, 'completo' = #comprar)
+  // Separa "não leu até o fim" de "leu e não viu a oferta" de "viu e não clicou".
+  // (A análise é recarregada enquanto a IA termina; a ref segura o "1x por visita".)
+  const funilRef = useRef({ leitura: false, oferta: false });
   useEffect(() => {
     if (!analise) return;
-    const offerEl = manualRef.current;
-    if (!offerEl) return;
-    const obs = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          try { window?.gtag?.('event', 'resultado_oferta_visivel', { event_category: 'engagement' }); } catch {}
-          obs.disconnect();
-        }
-      },
-      { threshold: 0.2 }
-    );
-    obs.observe(offerEl);
-    return () => obs.disconnect();
+    const obs = [];
+    const fim = fimLeituraRef.current;
+    if (fim && !funilRef.current.leitura) {
+      const o = new IntersectionObserver(([e]) => {
+        if (!e.isIntersecting || funilRef.current.leitura) return;
+        funilRef.current.leitura = true;
+        try { window?.gtag?.('event', 'resultado_leitura_fim', { event_category: 'engagement' }); } catch {}
+        o.disconnect();
+      });
+      o.observe(fim);
+      obs.push(o);
+    }
+    const ofertas = [[curtaRef.current, 'curto'], [manualRef.current, 'completo']].filter(([el]) => el);
+    const o2 = new IntersectionObserver((entradas) => {
+      const e = entradas.find((x) => x.isIntersecting);
+      if (!e || funilRef.current.oferta) return;
+      funilRef.current.oferta = true;
+      const bloco = ofertas.find(([el]) => el === e.target)?.[1] || 'completo';
+      try { window?.gtag?.('event', 'resultado_oferta_vista', { event_category: 'engagement', bloco, pago: analise.payment_status === 'paid' }); } catch {}
+      o2.disconnect();
+    }, { threshold: 0.2 });
+    ofertas.forEach(([el]) => o2.observe(el));
+    obs.push(o2);
+    return () => obs.forEach((o) => o.disconnect());
   }, [analise]);
 
   // Instrumentação: profundidade de rolagem — pra saber até onde a pessoa lê
@@ -433,7 +480,7 @@ export default function ResultadoPage() {
     // precoAtual já é a fonte de verdade (lib/preco.js) usada no botão/CTA.
     const valorTotal = incluirTier2 ? precoAtual + PRECO_BONUS_COMBO : precoAtual;
     try {
-      try { window?.gtag?.('event', 'clique_comprar', { event_category: 'conversion', value: valorTotal, currency: 'BRL' }); } catch {}
+      try { window?.gtag?.('event', 'clique_comprar', { event_category: 'conversion', metodo: 'cartao', value: valorTotal, currency: 'BRL' }); } catch {}
       try { window?.fbq?.('track', 'InitiateCheckout', { value: valorTotal, currency: 'BRL' }); } catch {}
       const response = await fetch('/api/criar-checkout-mp', {
         method: 'POST',
@@ -482,7 +529,24 @@ export default function ResultadoPage() {
       alert('Digite um e-mail válido.');
       return;
     }
+    if (emailCorrecaoInfo?.metodo === 'pix' && tentarPixRef.current) {
+      setEmailCorrecaoInfo(null);
+      tentarPixRef.current(trimmed);
+      return;
+    }
     handleComprar(trimmed);
+  };
+
+  // PixManual: e-mail salvo inválido → mesmo modal; confirmar gera o Pix de novo.
+  const pixEmailInvalido = (info, tentarDeNovo) => {
+    tentarPixRef.current = tentarDeNovo;
+    setEmailCorrecaoInfo({ mensagem: info?.mensagem || 'O e-mail salvo parece inválido.', metodo: 'pix' });
+    setNovoEmailInput(info?.emailAtual || '');
+  };
+
+  const irPraOferta = () => {
+    try { window?.gtag?.('event', 'resultado_oferta_curta_clique', { event_category: 'conversion' }); } catch {}
+    manualRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   // "Receber meu dia todo dia às 7h": o e-mail da análise vai pro login por
@@ -571,11 +635,17 @@ export default function ResultadoPage() {
     objetivo: analise.objetivo_principal, arquetipo: arquetipo?.nome,
     diagnostico: diagnosticoParsed, amor: amorParsed, dinheiro: dinheiroParsed, arquetipos: arquetiposParsed, plano7: plano7Parsed,
   });
-  const trechoBorrado = !pago && diagnosticoParsed?.combinacao ? truncateAtWord(diagnosticoParsed.combinacao, 220) : null;
+  // Fim da leitura grátis: parágrafos reais do Diagnóstico (IA do quiz) + gancho.
+  const diagnosticoCompleto = parseJson(analise.diagnostico_gerado, (x) => x);
+  const trecho = !pago ? trechoDoDiagnostico(diagnosticoCompleto) : null;
+  const gancho = !pago && arquetipo ? ganchoDoMapa({ arquetipo: ARQUETIPOS[arquetipo.chave], amorHeadline: amorParsed?.headline, objetivo: analise.objetivo_principal }) : null;
+  // Sem o trecho acima (IA sem os 3 blocos), o começo borrado continua na lista de seções.
+  const trechoBorrado = !pago && !trecho && diagnosticoParsed?.combinacao ? truncateAtWord(diagnosticoParsed.combinacao, 220) : null;
+  const depoimentos = [...TESTIMONIALS.map((t) => ({ texto: t.texto, nome: t.nome, detalhe: t.cidade })), ...prova.depoimentos.map((d) => ({ texto: d.texto, nome: d.nome, detalhe: d.signo }))].slice(0, 3);
   // Manual pago há menos de 30 dias = Seu Dia Completo de cortesia (Termos, seção 5).
   const cortesiaAtiva = pago && analise.paid_at && Date.now() - new Date(analise.paid_at).getTime() < 30 * 86400000;
   const primeiroPasso = plano7Parsed?.days?.[0] || null;
-  const mostrarBarra = !pago && passouTopo && !manualNaTela;
+  const mostrarBarra = !pago && passouTopo && !manualNaTela && !curtaNaTela;
 
   return (
     <Pagina>
@@ -660,27 +730,65 @@ export default function ResultadoPage() {
                 <span>Gerando o resto da sua leitura… leva alguns segundos.</span>
               </div>
             )}
+
+            {/* Os 2 primeiros parágrafos reais do Diagnóstico do Manual; o 3º corta com degradê. */}
+            {trecho && (
+              <div className={r.linhaLeitura}>
+                <span className={r.rotulo}>Do seu Manual · Diagnóstico</span>
+                <div className={r.diag}>
+                  {trecho.visiveis.map((p, i) => (
+                    <div key={i} className={r.diagPar}>
+                      {p.rotulo && <span className={r.diagRotulo}>{p.rotulo}</span>}
+                      <p className={r.texto}>{p.texto}</p>
+                    </div>
+                  ))}
+                  <div className={`${r.diagPar} ${r.diagCorte}`} aria-hidden="true">
+                    {trecho.cortado.rotulo && <span className={r.diagRotulo}>{trecho.cortado.rotulo}</span>}
+                    <p className={r.texto}>{trecho.cortado.texto}…</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Gancho: o mesmo padrão em 3 lugares; o 3º só no Manual. */}
+            {gancho && (
+              <div className={r.linhaLeitura}>
+                <span className={r.rotulo}>Antes de você ir</span>
+                <p className={r.linhaTitulo}>{gancho.titulo}</p>
+                <ol className={r.gancho}>
+                  {gancho.itens.map((it, i) => (
+                    <li key={i} className={r.ganchoItem}>
+                      <span className={r.ganchoNum}>{i + 1}</span>
+                      <div>
+                        <span className={r.rotulo}>{it.rotulo}</span>
+                        {it.texto
+                          ? <p className={r.texto}>{it.texto}</p>
+                          : <p className={r.ganchoFechado}>Revelado no Manual</p>}
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+                <p className={r.ganchoChamada}><em>{gancho.chamada}</em></p>
+              </div>
+            )}
           </div>
+          <div ref={fimLeituraRef} aria-hidden="true" />
         </section>
 
-        {/* ══ 3. SEU DIA DE HOJE ══ */}
-        {dados && (
-          <section className={r.secao} aria-labelledby="dia-hoje">
-            <div className={r.dia}>
-              <div className={r.diaTexto}>
-                <span className={r.eyebrow}>Seu dia de hoje</span>
-                <h2 id="dia-hoje" className={r.h2}>O seu mapa, <em>lido pro dia de hoje</em></h2>
-                <p className={r.diaFrase}>O que fazer, o que evitar e as melhores horas, todo dia, a partir do seu nascimento.</p>
-                <a className={r.btn} href="/seu-dia" onClick={irProSeuDia}>Receber meu dia todo dia às 7h</a>
-                {cortesiaAtiva
-                  ? <p className={r.teste}>Seu Dia Completo incluso por 30 dias com o seu Manual</p>
-                  : TESTE_SEU_DIA_ATIVO && !pago && <p className={r.teste}>7 dias do Seu Dia Completo grátis, sem cartão</p>}
+        {/* ══ 3. OFERTA CURTA — logo depois da leitura ══ */}
+        {!pago && (
+          <section ref={curtaRef} className={`${r.secao} ${r.curta}`} aria-label="O Manual do seu Mapa">
+            <span className={r.eyebrow}>O Manual do seu Mapa</span>
+            <p className={r.curtaTexto}>O diagnóstico inteiro, o ponto cego, o amor, o dinheiro e um plano de 7 dias: 14 seções só sobre {firstName || 'você'}.</p>
+            <div className={r.curtaPreco}>
+              <div className={r.precoLinha}>
+                {!ofertaExpirada && <span className={r.precoDe}>de R$ {PRECO_MANUAL_PADRAO},00</span>}
+                <span className={r.curtaValor}>R$ {precoAtual}</span>
               </div>
-              <div className={r.diaPrevia}>
-                <span className={r.selo}>hoje, pra você</span>
-                <DiaHoje dados={dados} />
-              </div>
+              {!ofertaExpirada && countdownLabel && <p className={r.contador}>Esse preço por <strong>{countdownLabel}</strong></p>}
             </div>
+            {prova.texto && <p className={r.provaReal}>{prova.texto}</p>}
+            <button type="button" className={`${r.btn} ${r.btnLargo}`} onClick={irPraOferta}>Desbloquear · R$ {precoAtual}</button>
           </section>
         )}
 
@@ -734,10 +842,19 @@ export default function ResultadoPage() {
                     nenhum — os 3 rituais são os mesmos a R$ 27 ou R$ 47. */}
               </ul>
               <ComboToggle checked={incluirTier2} onChange={setIncluirTier2} precoTotal={precoAtual + PRECO_BONUS_COMBO} />
-              <button className={`${r.btn} ${r.btnLargo}`} onClick={() => handleComprar()} disabled={processando}>
-                {processando ? 'Abrindo…' : rotuloComprar}
+              {prova.texto && <p className={r.provaReal}>{prova.texto}</p>}
+              {/* Pix aqui mesmo (QR + copia-e-cola); cartão pelo checkout de sempre. */}
+              <PixManual
+                analiseId={id}
+                valor={precoTotal}
+                incluirTier2={incluirTier2}
+                presente={ehPresente && presenteEmail ? { email: presenteEmail, de: presenteDe } : null}
+                onEmailInvalido={pixEmailInvalido}
+              />
+              <button type="button" className={`${r.btnSec} ${r.btnLargo}`} onClick={() => handleComprar()} disabled={processando}>
+                {processando ? 'Abrindo…' : `Pagar com cartão · R$ ${precoTotal}`}
               </button>
-              <p className={r.nota}>Pix: acesso liberado na hora. Cartão: o link chega por e-mail em poucos minutos (confira o spam).</p>
+              <p className={r.nota}>Pix: o Manual abre aqui mesmo assim que o pagamento cair. Cartão: o link chega por e-mail em poucos minutos (confira o spam).</p>
               <div className={r.garantia}>
                 <span className={r.garantiaTitulo}>Garantia de 7 dias</span>
                 <p className={r.nota}>Se o Manual não trouxer clareza real sobre o seu padrão, devolvemos 100%. Sem perguntas.</p>
@@ -746,20 +863,44 @@ export default function ResultadoPage() {
             </div>
           )}
 
-          {/* Depoimentos: só com conteúdo real em lib/testimonials.js (nunca inventar). */}
-          {TESTIMONIALS.length > 0 && (
+          {/* Depoimentos reais: lib/testimonials.js + os autorizados no e-mail de
+              avaliação (/api/prova-social: só primeiro nome + signo). Nunca inventar. */}
+          {depoimentos.length > 0 && (
             <div className={r.fimLinhas} style={{ gridColumn: '1 / -1' }}>
-              {TESTIMONIALS.slice(0, 3).map((t, i) => (
+              {depoimentos.map((t, i) => (
                 <div key={i} className={r.fimLinha}>
                   <p className={r.linhaTitulo}><em>“{t.texto}”</em></p>
-                  <span className={r.rotulo}>{t.nome}{t.cidade ? ` · ${t.cidade}` : ''}</span>
+                  <span className={r.rotulo}>{t.nome}{t.detalhe ? ` · ${t.detalhe}` : ''}</span>
                 </div>
               ))}
             </div>
           )}
         </section>
 
-        {/* ══ 5. FIM ══ */}
+        {/* ══ 5. SEU DIA DE HOJE — depois do Manual ══ */}
+        {dados && (
+          <section className={r.secao} aria-labelledby="dia-hoje">
+            <div className={r.dia}>
+              <div className={r.diaTexto}>
+                <span className={r.eyebrow}>Seu dia de hoje</span>
+                <h2 id="dia-hoje" className={r.h2}>O seu mapa, <em>lido pro dia de hoje</em></h2>
+                <p className={r.diaFrase}>O que fazer, o que evitar e as melhores horas, todo dia, a partir do seu nascimento.</p>
+                <a className={r.btn} href="/seu-dia" onClick={irProSeuDia}>{seuDiaDoQuiz ? 'Abrir meu dia de hoje' : 'Receber meu dia todo dia às 7h'}</a>
+                {cortesiaAtiva
+                  ? <p className={r.teste}>Seu Dia Completo incluso por 30 dias com o seu Manual</p>
+                  : seuDiaDoQuiz
+                    ? <p className={r.teste}>Ele chega no seu e-mail todo dia às 7h{TESTE_SEU_DIA_ATIVO ? ' · 7 dias do Seu Dia Completo grátis' : ''}</p>
+                    : TESTE_SEU_DIA_ATIVO && !pago && <p className={r.teste}>7 dias do Seu Dia Completo grátis, sem cartão</p>}
+              </div>
+              <div className={r.diaPrevia}>
+                <span className={r.selo}>hoje, pra você</span>
+                <DiaHoje dados={dados} />
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* ══ 6. FIM ══ */}
         <section className={r.secao} aria-label="Mais do seu mapa">
           <div className={r.fimLinhas}>
             {compatTeaser && (

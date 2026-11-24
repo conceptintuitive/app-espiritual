@@ -84,6 +84,43 @@
 .gerando { display: flex; align-items: center; gap: 14px; padding: 22px 0; border-top: 1px solid var(--linha); color: var(--apagado); font-size: 15px; }
 .gerando .spinner { width: 22px; height: 22px; flex-shrink: 0; }
 
+/* Fim da leitura: trecho real do Diagnóstico (o 3º parágrafo some num degradê) */
+.diag { display: flex; flex-direction: column; gap: 14px; }
+.diagPar { display: flex; flex-direction: column; gap: 6px; }
+.diagRotulo { font-family: var(--serif); font-style: italic; font-size: 19px; line-height: 1.2; color: var(--ouro-2); }
+.diagCorte { max-height: 104px; overflow: hidden; user-select: none; pointer-events: none;
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, rgba(0,0,0,.55) 45%, transparent 100%);
+          mask-image: linear-gradient(180deg, #000 0%, rgba(0,0,0,.55) 45%, transparent 100%); }
+
+/* Gancho: o mesmo padrão em 3 lugares */
+.gancho { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; }
+.ganchoItem { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 14px 0; border-top: 1px solid var(--linha); }
+.ganchoItem > div { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.ganchoNum { font-family: var(--serif); font-size: 26px; line-height: 1; color: var(--ouro); }
+.ganchoFechado { align-self: flex-start; font-family: var(--mono); font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--ouro-2);
+  border: 1px dashed rgba(242,199,123,.45); border-radius: 999px; padding: 6px 10px; }
+.ganchoChamada { font-family: var(--serif); font-size: 21px; line-height: 1.3; color: var(--texto); padding-top: 6px; }
+.ganchoChamada em { font-style: italic; }
+
+/* Oferta curta, logo depois da leitura */
+.curta { display: flex; flex-direction: column; gap: 14px; scroll-margin-top: 80px; }
+.curtaTexto { font-family: var(--serif); font-size: 24px; line-height: 1.22; color: var(--texto); }
+.curtaPreco { display: flex; flex-direction: column; gap: 6px; }
+.curtaValor { font-family: var(--serif); font-size: 44px; line-height: .95; color: var(--texto); }
+.provaReal { font-size: 14px; line-height: 1.5; color: var(--verde); }
+
+/* Pix na página */
+.pix { display: flex; flex-direction: column; gap: 12px; padding: 18px; border: 1px solid rgba(242,199,123,.45); border-radius: 16px; background: rgba(242,199,123,.04); }
+/* No celular a pessoa paga no próprio aparelho: copia-e-cola primeiro, QR (pra pagar de outro aparelho) no fim. */
+.pixQr { order: 9; display: block; align-self: center; width: 180px; height: 180px; border-radius: 12px; background: #fff; padding: 10px; box-sizing: border-box; image-rendering: pixelated; }
+.pixPassos { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; font-size: 14px; line-height: 1.5; color: var(--areia); }
+.pix .campo { font-family: var(--mono); font-size: 12px; color: var(--areia); text-overflow: ellipsis; }
+.pixEspera { display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--apagado); }
+.pixPonto { width: 8px; height: 8px; border-radius: 50%; background: var(--verde); animation: piscar 1.4s ease-in-out infinite; flex-shrink: 0; }
+@keyframes piscar { 50% { opacity: .25; } }
+@media (prefers-reduced-motion: reduce) { .pixPonto { animation: none; } }
+.erroPix { font-size: 14px; line-height: 1.5; color: #fecaca; }
+
 /* Seu dia de hoje */
 .dia { display: flex; flex-direction: column; gap: 24px; }
 .diaTexto { display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
@@ -181,6 +218,10 @@
   .carta { grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; }
   .dia { display: grid; grid-template-columns: 1fr 1.1fr; gap: 64px; align-items: center; }
   .manual { display: grid; grid-template-columns: 1.15fr 1fr; gap: 56px; align-items: start; }
+  .pixQr { order: 0; width: 220px; height: 220px; }
+  .curta { display: grid; grid-template-columns: 1.15fr 1fr; column-gap: 56px; row-gap: 12px; align-items: end; }
+  .curta > .eyebrow, .curta > .curtaTexto { grid-column: 1; }
+  .curta > .curtaPreco, .curta > .provaReal, .curta > .btn { grid-column: 2; }
   .manualTopo { grid-column: 1 / -1; }
   .oferta { position: sticky; top: 88px; }
   .barra { display: none; }

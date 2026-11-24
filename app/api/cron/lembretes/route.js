@@ -4,6 +4,7 @@ import { Resend } from "resend";
 import { gerarProjecao12Meses } from "@/lib/transitos12meses";
 import { gerarGanchoNutricaoLead } from "@/lib/nutricaoLeadTextos";
 import { PRECO_MANUAL_JANELA, PRECO_MANUAL_PADRAO } from "@/lib/preco";
+import { processarLoteAvaliacao } from "@/lib/avaliacao";
 
 export const runtime = "nodejs";
 
@@ -366,8 +367,12 @@ export async function GET(request) {
 
     const loteMesPessoal = await processarLoteMesPessoal({ supabase, resend, baseUrl });
     const loteLeadsSemanal = await processarLoteLeadsSemanal({ supabase, resend, baseUrl });
+    // "O seu Manual bate com você?", 3 dias depois da compra (lib/avaliacao.js,
+    // migração 0027; sem ela, pula). Erro aqui não derruba os outros lotes.
+    const loteAvaliacao = await processarLoteAvaliacao({ supabase, resend, baseUrl })
+      .catch((e) => ({ erro: String(e?.message || e) }));
 
-    return NextResponse.json({ ok: true, lote1h, lote24h, loteMesPessoal, loteLeadsSemanal });
+    return NextResponse.json({ ok: true, lote1h, lote24h, loteMesPessoal, loteLeadsSemanal, loteAvaliacao });
   } catch (error) {
     console.error("❌ Erro no cron de lembretes:", error);
     return NextResponse.json(

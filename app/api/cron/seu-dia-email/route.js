@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
-import { admin, tokenDescadastro } from '@/lib/seuDiaServidor';
+import { admin, tokenDescadastro, tokenLinkDia } from '@/lib/seuDiaServidor';
 import { montarPerfil, leituraDoDia, hojeNoFuso } from '@/lib/seuDia';
 import { resumoAcesso } from '@/lib/assinaturaRegras';
 import { dataBrasilia, fimDoTeste } from '@/lib/testeSeuDia';
@@ -13,8 +13,10 @@ export const maxDuration = 300;
 // E-mail do Seu Dia às 7h (o gatilho do hábito) + e-mails do fim do teste
 // (dia 5 e dia 7). Disparado por cron externo às 7h de Brasília:
 //   GET /api/cron/seu-dia-email?secret=CRON_SECRET  (ou Authorization: Bearer)
-// Vai pra todo perfil com e-mail confirmado (verificado_em), dados de
-// nascimento e email_diario = true (migração 0022). Regras em lib/seuDiaEmail.js.
+// Vai pra todo perfil com e-mail confirmado (verificado_em) ou pedido no quiz
+// (cadastro_quiz_em, migração 0027), dados de nascimento e email_diario = true
+// (migração 0022). Regras em lib/seuDiaEmail.js. O link do dia entra logado
+// (tokenLinkDia, 3 dias) por /seu-dia/entrar.
 //
 // Idempotente: antes de enviar, cada e-mail é "reservado" com um UPDATE
 // condicional (email_diario_ultimo <> hoje / email_teste_dN_em is null). Só
@@ -83,13 +85,23 @@ async function handler(request) {
 
   let perfis;
   try {
+    // E-mail confirmado (verificado_em) OU pedido no quiz (cadastro_quiz_em,
+    // migração 0027: checkbox "Quero receber meu dia às 7h", lib/seuDiaQuiz.js).
     perfis = await lerTudo(() => sb.from('seu_dia_perfis').select(COLUNAS)
-      .not('verificado_em', 'is', null).not('data_nascimento', 'is', null).eq('email_diario', true)
+      .or('verificado_em.not.is.null,cadastro_quiz_em.not.is.null').not('data_nascimento', 'is', null).eq('email_diario', true)
       .order('email'));
-  } catch (e) {
-    // Sem a migração 0022 as colunas não existem: não envia nada.
-    console.error('[cron/seu-dia-email] perfis', e?.code, e?.message);
-    return NextResponse.json({ error: 'Rode a migração 0022_seu_dia_email_teste.sql', detalhe: e?.message }, { status: 503 });
+  } catch (e0) {
+    try {
+      // Sem a 0027 (42703 = coluna não existe): só os confirmados, como antes.
+      if (e0?.code !== '42703') throw e0;
+      perfis = await lerTudo(() => sb.from('seu_dia_perfis').select(COLUNAS)
+        .not('verificado_em', 'is', null).not('data_nascimento', 'is', null).eq('email_diario', true)
+        .order('email'));
+    } catch (e) {
+      // Sem a migração 0022 as colunas não existem: não envia nada.
+      console.error('[cron/seu-dia-email] perfis', e?.code, e?.message);
+      return NextResponse.json({ error: 'Rode a migração 0022_seu_dia_email_teste.sql', detalhe: e?.message }, { status: 503 });
+    }
   }
   if (!perfis.length) return NextResponse.json({ hoje, pessoas: 0, enviados: 0 });
 
@@ -129,7 +141,8 @@ async function handler(request) {
           const tz = p.fuso_iana || 'America/Sao_Paulo';
           const perfil = montarPerfil({ dataNascimento: p.data_nascimento, hora: p.hora_nascimento, tz, lon: p.longitude });
           const leitura = leituraDoDia(perfil, hojeNoFuso(tz, new Date(agora)));
-          const linkDia = `${base}/seu-dia?aba=hoje&utm_source=email&utm_medium=seu_dia_7h`;
+          // Entra logado direto no dia, sem código (token "dia", 3 dias).
+          const linkDia = `${base}/seu-dia/entrar?t=${encodeURIComponent(tokenLinkDia(email))}&aba=hoje&utm_source=email&utm_medium=seu_dia_7h`;
           msg = montarEmailDiario({ nome, leitura, completo, linkDia, descadastro });
         } else if (tipo === 'teste_d5') {
           msg = montarEmailTesteD5({ nome, linkAssinar, descadastro });
