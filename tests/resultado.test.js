@@ -48,3 +48,59 @@ test('repasse do e-mail pro /seu-dia: 1 leitura, vence em 24h', () => {
   assert.equal(mem.has(CHAVE_EMAIL_SEU_DIA), false);
   delete globalThis.window;
 });
+
+// ── fim da leitura grátis ───────────────────────────────────────────────────
+import { trechoDoDiagnostico, ganchoDoMapa, textoProvaSocial } from '../lib/resultadoManual.js';
+import { ARQUETIPOS } from '../lib/arquetipoBase.js';
+
+test('trechoDoDiagnostico: 2 parágrafos reais inteiros + o começo do 3º', () => {
+  const d = {
+    combinacao: 'Primeiro parágrafo da combinação.\n\nSegundo parágrafo da combinação.',
+    conflito_central: 'O conflito central é um texto longo '.repeat(10).trim(),
+    diagnostico_objetivo: 'Objetivo.',
+  };
+  const t = trechoDoDiagnostico(d);
+  assert.deepEqual(t.visiveis, [
+    { rotulo: 'A combinação', texto: 'Primeiro parágrafo da combinação.' },
+    { rotulo: null, texto: 'Segundo parágrafo da combinação.' },
+  ]);
+  assert.equal(t.cortado.rotulo, 'O conflito central');
+  assert.ok(t.cortado.texto.length <= 170);
+  assert.ok(d.conflito_central.startsWith(t.cortado.texto), 'o corte é o começo do texto real');
+  assert.ok(!/\s$/.test(t.cortado.texto));
+});
+
+test('trechoDoDiagnostico: 1 parágrafo por bloco; sem IA, null', () => {
+  const t = trechoDoDiagnostico({ combinacao: 'A.', conflito_central: 'B.', diagnostico_objetivo: 'C.' });
+  assert.deepEqual(t.visiveis.map((p) => p.rotulo), ['A combinação', 'O conflito central']);
+  assert.equal(t.cortado.texto, 'C.');
+  assert.equal(trechoDoDiagnostico(null), null);
+  assert.equal(trechoDoDiagnostico({ combinacao: 'Só um.' }), null);
+});
+
+test('ganchoDoMapa: arquétipo da tabela + amor da IA + 3ª área fechada', () => {
+  const g = ganchoDoMapa({ arquetipo: ARQUETIPOS.ORACULO, amorHeadline: '"Você ama no futuro"', objetivo: 'Carreira e Propósito' });
+  assert.equal(g.itens.length, 3);
+  assert.match(g.itens[0].rotulo, /Oráculo/);
+  assert.equal(g.itens[0].texto, `${ARQUETIPOS.ORACULO.sombra.charAt(0).toUpperCase()}${ARQUETIPOS.ORACULO.sombra.slice(1)}.`);
+  assert.equal(g.itens[1].texto, 'Você ama no futuro.');
+  assert.equal(g.itens[2].rotulo, 'Na carreira');
+  assert.equal(g.itens[2].texto, null);
+  assert.match(g.chamada, /Bloqueios invisíveis/);
+});
+
+test('ganchoDoMapa: sem a frase do amor, as 2 áreas ficam fechadas; amor como objetivo vira dinheiro', () => {
+  const g = ganchoDoMapa({ arquetipo: ARQUETIPOS.MAGO, objetivo: 'Amor e Relacionamentos' });
+  assert.equal(g.itens[1].texto, null);
+  assert.equal(g.itens[2].rotulo, 'No dinheiro');
+  assert.match(g.chamada, /As outras duas/);
+  assert.equal(ganchoDoMapa({ arquetipo: null }), null);
+});
+
+test('textoProvaSocial: só com 10+ pessoas, arredondado pra baixo', () => {
+  assert.equal(textoProvaSocial({ pessoas: 9, bate: 9 }), null);
+  assert.equal(textoProvaSocial({ pessoas: 10, bate: 8 }), '8 de cada 10 pessoas disseram que o Manual bate com elas');
+  assert.equal(textoProvaSocial({ pessoas: 37, bate: 32 }), '8 de cada 10 pessoas disseram que o Manual bate com elas'); // 8,6 → 8
+  assert.equal(textoProvaSocial({ pessoas: 20, bate: 1 }), null);
+  assert.equal(textoProvaSocial(null), null);
+});

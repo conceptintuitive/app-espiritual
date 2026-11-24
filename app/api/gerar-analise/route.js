@@ -10,6 +10,9 @@ import { emailValido } from '@/lib/emailValidacao';
 import { FUSOS_BR } from '@/lib/fusoBR';
 import { utcOffsetHoras } from '@/lib/sky';
 import { fusoPorCoordenada } from '@/lib/fusoPorCoordenada';
+import { admin as adminSeuDia } from '@/lib/seuDiaServidor';
+import { cadastrarSeuDiaDoQuiz, dadosDoQuiz } from '@/lib/seuDiaQuiz';
+import { TESTE_SEU_DIA_ATIVO } from '@/lib/testeSeuDiaChave';
 
 // Monta URL da Pollinations.ai a partir da carta sorteada.
 // A URL é estável e cacheada — o browser carrega direto, sem precisar de upload nem API key.
@@ -219,6 +222,24 @@ export async function POST(request) {
     // Geração de IA em background — roda após a resposta ser enviada ao cliente,
     // sem risco da Vercel encerrar a function no meio (after() garante a execução)
     after(async () => {
+      // "Quero receber meu dia às 7h por e-mail" (etapa 4, vem marcado): cria o
+      // perfil do Seu Dia com os dados do quiz e começa o teste de 7 dias
+      // (lib/seuDiaQuiz.js; service role, a tabela não tem policy). Best effort.
+      if (body?.seu_dia === true) {
+        try {
+          const r = await cadastrarSeuDiaDoQuiz({
+            sb: adminSeuDia(),
+            email: email.trim().toLowerCase(),
+            dados: dadosDoQuiz({ nome, data: data_nascimento, hora: temHora ? hora_nascimento : null, municipio, localTexto: local_nascimento }),
+            testeAtivo: TESTE_SEU_DIA_ATIVO,
+          });
+          if (!r.ok) console.error('⚠️ Seu Dia do quiz não criado:', r.motivo);
+          else if (r.aviso) console.error('⚠️ Seu Dia do quiz:', r.aviso);
+        } catch (e) {
+          console.error('⚠️ Seu Dia do quiz não criado:', e?.message);
+        }
+      }
+
       // Telefone fica de fora do insert crítico acima de propósito — um insert
       // com coluna inexistente falha inteiro no Postgres, e essa é a rota que
       // roda em toda submissão do formulário grátis. Update separado e best

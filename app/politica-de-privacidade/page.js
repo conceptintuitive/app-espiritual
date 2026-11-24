@@ -38,7 +38,7 @@ export default function PoliticaDePrivacidadePage() {
       <div style={styles.container}>
         <Link href="/" style={styles.back}>← Voltar para o início</Link>
         <h1 style={styles.h1}>Política de Privacidade</h1>
-        <p style={styles.updated}>Última atualização: 1 de dezembro de 2026</p>
+        <p style={styles.updated}>Última atualização: 24 de novembro de 2026</p>
 
         <p style={styles.p}>
           Esta política explica quais dados a <strong>Intuitive Concept</strong>{' '}
@@ -52,8 +52,9 @@ export default function PoliticaDePrivacidadePage() {
         <ul style={styles.ul}>
           <li style={styles.li}><strong>Dados que você informa diretamente:</strong> nome completo, e-mail, data de nascimento e, se você preencher, hora e local de nascimento — usados para gerar sua análise de numerologia e astrologia.</li>
           <li style={styles.li}><strong>E-mail parcial:</strong> se você começar a preencher o formulário e sair antes de concluir, podemos registrar o e-mail digitado até aquele ponto, para eventualmente entrar em contato sobre a análise que ficou pela metade.</li>
-          <li style={styles.li}><strong>Dados de pagamento:</strong> ao comprar o Manual do seu Mapa, o processamento é feito pelo Stripe ou pelo Mercado Pago — não armazenamos número de cartão de crédito completo em nossos servidores.</li>
-          <li style={styles.li}><strong>Minha Área e Seu Dia:</strong> e-mail, nome, data, hora e cidade de nascimento, os dias em que você abriu a Minha Área (para medir o uso) se você quer receber o seu dia por e-mail (e quando foi o último envio) e, se você ativar, a inscrição do aviso diário no seu aparelho. O código de entrada enviado por e-mail é guardado só em forma cifrada e apagado depois do uso ou em 15 minutos.</li>
+          <li style={styles.li}><strong>Dados de pagamento:</strong> ao comprar o Manual do seu Mapa, o processamento é feito pelo Stripe ou pelo Mercado Pago — não armazenamos número de cartão de crédito completo em nossos servidores. No Pix gerado na página do seu Mapa, enviamos ao Mercado Pago o seu e-mail, o primeiro nome e o valor, e o código Pix fica só no seu navegador enquanto a aba estiver aberta.</li>
+          <li style={styles.li}><strong>Minha Área e Seu Dia:</strong> e-mail, nome, data, hora e cidade de nascimento, os dias em que você abriu a Minha Área (para medir o uso) se você quer receber o seu dia por e-mail (e quando foi o último envio) e, se você ativar, a inscrição do aviso diário no seu aparelho. O código de entrada enviado por e-mail é guardado só em forma cifrada e apagado depois do uso ou em 15 minutos. Se você deixar marcada a opção &ldquo;Quero receber meu dia às 7h por e-mail&rdquo; no quiz do Mapa, criamos a sua Minha Área com o primeiro nome, a data, a hora e a cidade que você informou no quiz, e guardamos quando você marcou a opção.</li>
+          <li style={styles.li}><strong>Avaliação do Manual:</strong> a sua resposta ao e-mail &ldquo;O seu Manual bate com você?&rdquo;, a frase que você escrever (se escrever) e se você autorizou publicar. Não guardamos nome nem signo junto: se você autorizar, o site mostra o primeiro nome e o signo da sua própria análise. Você pode retirar a autorização a qualquer momento pelo e-mail de contato.</li>
           <li style={styles.li}><strong>Assinatura:</strong> plano, forma de pagamento (cartão recorrente ou pré-pago), situação e datas de acesso, e os identificadores da cobrança no Mercado Pago. Não guardamos número de cartão.</li>
           <li style={styles.li}><strong>Comentários no nosso Instagram:</strong> se você comentar sua data de nascimento num post da nossa conta, um sistema automático usa essa data só para calcular o seu número de vida e responder ao comentário, uma vez. A data é usada na hora e descartada: não guardamos a data, o texto do comentário nem o seu usuário. Guardamos apenas o identificador do comentário, para não responder duas vezes. Comentários ofensivos ou sem data não são respondidos.</li>
           <li style={styles.li}><strong>Dados de navegação:</strong> endereço IP, tipo de navegador, páginas visitadas e interações no site, coletados automaticamente por ferramentas de análise.</li>
@@ -64,7 +65,8 @@ export default function PoliticaDePrivacidadePage() {
           <li style={styles.li}>Gerar sua análise personalizada de numerologia e astrologia;</li>
           <li style={styles.li}>Processar pagamentos e liberar o acesso ao conteúdo comprado;</li>
           <li style={styles.li}>Enviar por e-mail o link de acesso ao seu manual e, quando aplicável, comunicações sobre sua análise;</li>
-          <li style={styles.li}>Se você deixou marcada a opção no cadastro da Minha Área, enviar o seu dia às 7h por e-mail e, durante o teste grátis de 7 dias, os avisos de que ele está acabando. Todo e-mail tem um link para parar de receber;</li>
+          <li style={styles.li}>Se você deixou marcada a opção no quiz do Mapa ou no cadastro da Minha Área, enviar o seu dia às 7h por e-mail (o botão do e-mail entra direto na sua Minha Área por até 3 dias) e, durante o teste grátis de 7 dias, os avisos de que ele está acabando. Todo e-mail tem um link para parar de receber;</li>
+          <li style={styles.li}>Alguns dias depois da compra do Manual, perguntar por e-mail se ele bate com você; com a sua autorização, mostrar a sua frase no site com o primeiro nome e o signo. As respostas (sem nome) também viram o número &ldquo;X de cada 10 pessoas disseram que o Manual bate com elas&rdquo;;</li>
           <li style={styles.li}>Entender como o site é usado, para corrigir problemas e melhorar a experiência;</li>
           <li style={styles.li}>Medir a eficácia de campanhas de anúncios (Google, Meta/Instagram/Facebook e TikTok).</li>
         </ul>
@@ -74,7 +76,7 @@ export default function PoliticaDePrivacidadePage() {
         <ul style={styles.ul}>
           <li style={styles.li}><strong>Stripe</strong> e <strong>Mercado Pago</strong> — processamento de pagamentos;</li>
           <li style={styles.li}><strong>Supabase</strong> — armazenamento do banco de dados;</li>
-          <li style={styles.li}><strong>Resend</strong> — envio dos e-mails transacionais (acesso ao manual);</li>
+          <li style={styles.li}><strong>Resend</strong> — envio dos e-mails (acesso ao manual, o seu dia às 7h, avisos do teste e a avaliação do Manual);</li>
           <li style={styles.li}><strong>Google Analytics (GA4) e Google Ads</strong> — métricas de uso e de campanhas;</li>
           <li style={styles.li}><strong>Meta Pixel / Conversions API</strong> (Facebook e Instagram) — medição de campanhas no Meta Ads;</li>
           <li style={styles.li}><strong>TikTok Pixel</strong> — medição de campanhas no TikTok Ads.</li>

@@ -38,7 +38,7 @@ export default function TermosDeUsoPage() {
       <div style={styles.container}>
         <Link href="/" style={styles.back}>← Voltar para o início</Link>
         <h1 style={styles.h1}>Termos de Uso</h1>
-        <p style={styles.updated}>Última atualização: 19 de novembro de 2026</p>
+        <p style={styles.updated}>Última atualização: 24 de novembro de 2026</p>
 
         <p style={styles.p}>
           Estes Termos de Uso regem o acesso e uso do site <strong>Intuitive Concept</strong>
@@ -75,8 +75,10 @@ export default function TermosDeUsoPage() {
         <p style={styles.p}>
           <strong>Minha Área.</strong> Para entrar na Minha Área você informa seu e-mail e recebe um
           código de 6 dígitos (ou um link) — não há senha. O código vale por 15 minutos e uma única vez.
-          Depois de entrar, o acesso fica salvo no aparelho por até 180 dias. Como o acesso depende do
-          seu e-mail, mantenha sua caixa de entrada protegida e não compartilhe os códigos recebidos.
+          Depois de entrar, o acesso fica salvo no aparelho por até 180 dias. O botão do e-mail diário do
+          Seu Dia também entra direto na sua Minha Área, sem código, por até 3 dias depois do envio. Como o
+          acesso depende do seu e-mail, mantenha sua caixa de entrada protegida e não encaminhe os códigos
+          nem os e-mails do Seu Dia.
         </p>
 
         <h2 style={styles.h2}>4. Pagamento, preços e reembolso</h2>
@@ -85,7 +87,9 @@ export default function TermosDeUsoPage() {
           por tempo limitado (como o preço de lançamento exibido nas primeiras 24 horas após gerar
           sua análise) só valem dentro do prazo informado na própria página. Os pagamentos são
           processados por parceiros externos (Stripe e Mercado Pago) — não armazenamos dados
-          completos de cartão de crédito em nossos servidores.
+          completos de cartão de crédito em nossos servidores. No Pix gerado na própria página do seu
+          Mapa, o código vale por 30 minutos e o acesso ao Manual é liberado assim que o Mercado Pago
+          confirma o pagamento; se o código vencer, é só gerar outro.
         </p>
         <p style={styles.p}>
           Oferecemos <strong>garantia de 7 dias</strong>: se o Manual do seu Mapa não trouxer clareza
@@ -128,14 +132,25 @@ export default function TermosDeUsoPage() {
         <p style={styles.p}>
           <strong>Teste grátis de 7 dias do Seu Dia Completo:</strong> quem cria a Minha Área ganha 7 dias do
           Seu Dia completo, sem cartão e sem cobrança. O teste começa quando você salva seus dados de nascimento
-          pela primeira vez e vale até o fim do 7º dia (horário de Brasília). Depois disso o Seu Dia volta pro
-          resumo grátis; nada é cobrado automaticamente. É um teste por e-mail.
+          pela primeira vez, ou quando você gera o seu Mapa com a opção &ldquo;Quero receber meu dia às 7h por
+          e-mail&rdquo; marcada (nesse caso, a Minha Área é criada com os dados do quiz). Vale até o fim do 7º dia
+          (horário de Brasília). Depois disso o Seu Dia volta pro resumo grátis; nada é cobrado
+          automaticamente. É um teste por e-mail.
         </p>
         <p style={styles.p}>
           <strong>E-mails do Seu Dia:</strong> se você deixar marcada a opção &ldquo;Quero receber meu dia às 7h
-          por e-mail&rdquo; no cadastro, enviamos todo dia, por volta das 7h, o tema do seu dia. Durante o teste
-          também avisamos no 5º e no 7º dia que ele está acabando. Todo e-mail tem um link para parar de receber,
-          e você pode mudar a opção a qualquer momento em Minha Área → Conta → Editar dados.
+          por e-mail&rdquo; no quiz do Mapa ou no cadastro da Minha Área, enviamos todo dia, por volta das 7h, o tema
+          do seu dia. Durante o teste também avisamos no 5º e no 7º dia que ele está acabando. Todo e-mail tem um
+          link para parar de receber, e você pode mudar a opção a qualquer momento em Minha Área → Conta → Editar
+          dados.
+        </p>
+        <p style={styles.p}>
+          <strong>Avaliação do Manual:</strong> alguns dias depois da compra, mandamos um e-mail perguntando se o
+          Manual bate com você (um clique). Se quiser, você escreve uma frase; ela só aparece no site se você
+          autorizar, e só com o seu primeiro nome e signo. Você pode pedir para tirar a qualquer momento pelo
+          e-mail de contato. No site, &ldquo;X de cada 10 pessoas disseram que o Manual bate com elas&rdquo; é
+          calculado só com essas respostas e as do &ldquo;Isso bate com você?&rdquo; do Manual, arredondado para
+          baixo e mostrado só a partir de 10 pessoas.
         </p>
         <p style={styles.p}>
           <strong>Mudança de preço:</strong> se o preço mudar, avisamos por e-mail com pelo menos 30 dias de
