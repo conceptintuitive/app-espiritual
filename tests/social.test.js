@@ -88,7 +88,7 @@ test('story: título, frase, 4 linhas e a chamada', () => {
   assert.match(e.kicker, /^Energia de hoje · TER 24\/11$/);
   assert.ok(e.titulo.startsWith('Dia '));
   assert.ok(e.frase.length > 10);
-  assert.deepEqual(e.linhas.map((l) => l.rotulo), ['Lua', 'Kin do dia', 'Hexagrama', 'Anjo do dia']);
+  assert.deepEqual(e.linhas.map((l) => l.rotulo), ['Lua', 'Kin do dia', 'Anjo destes dias']);
   for (const l of e.linhas) assert.ok(l.valor && l.nota, l.rotulo);
   assert.equal(e.cta, CTA_STORY);
   assert.equal(e.anjo, 'Vehuel'); // Sol no começo de Sagitário
@@ -125,6 +125,8 @@ test('posts da semana: conteúdo de cada tema e legenda no formato', () => {
   assert.equal(semana.dias.length, 7);
   assert.equal(semana.dias[0].data, '2026-11-30');
   assert.equal(semana.dias[6].data, '2026-12-06');
+  for (const d of semana.dias) assert.match(d.hexagrama, /^\S+ sobre \S+$/);
+  assert.ok(semana.linhas.every((l) => / sobre /.test(l.texto)));
 });
 
 test('sexta: animal com anos certos e selo com nome do Sincronário', () => {
@@ -132,7 +134,10 @@ test('sexta: animal com anos certos e selo com nome do Sincronário', () => {
   assert.equal(animal.item, 'Dragão');
   assert.match(animal.linhas[0].texto, /2024/);
   assert.match(animal.linhas[0].texto, /2012/);
-  assert.match(animal.legenda.gancho, /Você é o Dragão\.$/);
+  assert.match(animal.legenda.gancho, /\(a partir de 4\/fev\)\? Você é o Dragão\.$/);
+  assert.match(animal.titulo, /\?$/);
+  assert.equal(animal.tituloNota, '(a partir de 4/fev)');
+  assert.ok(animal.linhas.some((l) => /janeiro/.test(l.rotulo) && l.texto === 'Você é do animal anterior.'));
   const selo = postDoDia('2026-01-09', 0);
   assert.equal(selo.item, 'Dragão Vermelho');
 });
