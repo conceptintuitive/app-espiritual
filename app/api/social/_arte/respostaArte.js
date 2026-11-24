@@ -58,14 +58,14 @@ function Story({ e, ceu }) {
         {e.linhas.map((l, k) => (
           <div key={l.rotulo} style={{ display: 'flex', flexDirection: 'column', paddingTop: 22, paddingBottom: 22, borderTop: k ? `1px solid ${LINHA}` : 'none' }}>
             <div style={{ display: 'flex', alignItems: 'center' }}>
-              <span style={mono(22, APAGADO)}>{l.rotulo}</span>
+              <span style={mono(26, APAGADO)}>{l.rotulo}</span>
               {k === 0 && (
                 // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
                 <img src={svg64(lua)} width={64} height={64} style={{ marginLeft: 10, marginTop: -20, marginBottom: -20 }} />
               )}
             </div>
             <span style={serif(48, TEXTO, { marginTop: 8 })}>{l.valor}</span>
-            {l.nota && <span style={{ fontFamily: MONO, fontSize: 23, lineHeight: 1.4, color: AREIA, marginTop: 8 }}>{l.nota}</span>}
+            {l.nota && <span style={{ fontFamily: MONO, fontSize: 28, lineHeight: 1.38, color: AREIA, marginTop: 8 }}>{l.nota}</span>}
           </div>
         ))}
         <div style={{ display: 'flex', flexGrow: 1 }} />
@@ -102,6 +102,7 @@ function Feed({ p, ceu, data }) {
         <span style={mono(24, OURO)}>{p.kicker}</span>
         {p.grande && <span style={serif(tamG, OURO, { lineHeight: 1, marginTop: tamG > 200 ? 6 : 28 })}>{p.grande}</span>}
         <span style={serif(semana ? 84 : p.tema === 'comenta' ? 62 : 58, semana ? OURO : TEXTO, { marginTop: semana ? 26 : 18, lineHeight: 1.1 })}>{p.titulo}</span>
+        {p.tituloNota && <span style={serif(40, AREIA, { marginTop: 6, whiteSpace: 'nowrap' })}>{p.tituloNota}</span>}
         <div style={{ display: 'flex', height: 1, backgroundColor: LINHA, marginTop: semana ? 30 : 36, marginBottom: semana ? 4 : 10 }} />
         {semana
           ? p.dias.map((d, k) => (
@@ -110,6 +111,7 @@ function Feed({ p, ceu, data }) {
               <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
                 <span style={serif(38, TEXTO)}>{d.lua}{d.mudaFase ? ` · ${d.fase.replace('Lua ', '')}` : ''}</span>
                 <span style={{ fontFamily: MONO, fontSize: 21, color: AREIA, marginTop: 4 }}>{`Kin ${d.kin}`}</span>
+                <span style={{ fontFamily: MONO, fontSize: 21, color: APAGADO, marginTop: 3 }}>{`Hexagrama ${d.hexagrama}`}</span>
               </div>
             </div>
           ))
