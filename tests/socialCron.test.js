@@ -267,7 +267,7 @@ test('comentários: responde 1x quem mandou data; guarda só o id', async () => 
   const r = await responderComentarios({ supabase: sb, pausaMs: 0 });
   assert.equal(r.respondidas, 2);
   assert.deepEqual(chamadas.respostas.map((x) => x.comentario), ['c1', 'c5']);
-  assert.ok(chamadas.respostas[0].mensagem.includes('Seu mapa completo é grátis: link na bio'));
+  assert.ok(chamadas.respostas[0].mensagem.includes('Seu mapa é grátis: link na bio'));
   // guardado: só o id e o modelo
   // (created_at/tentativas são do banco falso; o código grava só id e modelo)
   for (const linha of db.social_respostas) assert.deepEqual(Object.keys(linha).filter((k) => !['created_at', 'tentativas'].includes(k)).sort(), ['comentario_id', 'modelo']);
@@ -963,7 +963,7 @@ test('bot: no Reels interativo de carta publicado, "2" ganha o recado da carta 2
   const cartas = cartasDoDia(hoje, ARCANOS_MAIORES);
   assert.ok(chamadas.respostas[0].mensagem.includes(cartas[1].nome) && chamadas.respostas[0].mensagem.includes(cartas[1].significado));
   assert.ok(chamadas.respostas[1].mensagem.includes(cartas[2].nome));
-  assert.ok(chamadas.respostas.every((x) => x.mensagem.endsWith('Seu mapa completo é grátis: link na bio.')));
+  assert.ok(chamadas.respostas.every((x) => x.mensagem.endsWith('Seu mapa é grátis: link na bio.')));
   assert.equal(r.respondidas, 3);
   const salvo = JSON.stringify(db.social_respostas);
   for (const proibido of ['alguem', 'u1', 'carta 3', '1990']) assert.ok(!salvo.includes(proibido), `guardou ${proibido}`);

@@ -168,8 +168,8 @@ test('resposta: frase da carta/número do site + chamada; 4 modelos; outro forma
   assert.equal(respostaInterativa({ formato: 'carta', dataISO: '2026-12-01', texto: '4' }), null);
   assert.equal(respostaInterativa({ formato: 'pausa', dataISO: '2026-12-02', texto: '2' }), null);
   assert.equal(respostaInterativa({ formato: 'carta', dataISO: '2026-12-01', texto: 'amei' }), null);
-  // a chamada é a mesma do bot de datas (CTA_RESPOSTA); o resto vem das tabelas e não pode ter nada proibido
-  for (const t of [...modelos, rn, r28]) assert.deepEqual(problemasDoTexto(t.replace(` ${CTA_RESPOSTA}`, '')), []);
+  // a chamada é a mesma do bot de datas (CTA_RESPOSTA); a resposta inteira, chamada junto, não pode ter nada proibido
+  for (const t of [...modelos, rn, r28]) assert.deepEqual(problemasDoTexto(t), []);
 });
 
 test('bot: "2" só ganha resposta no Reels interativo do dia; ofensa e a própria conta continuam fora; data vale em qualquer post', () => {
@@ -177,7 +177,7 @@ test('bot: "2" só ganha resposta no Reels interativo do dia; ofensa e a própri
   assert.deepEqual(decidirResposta({ id: 'c1', texto: '2' }), { responder: false, motivo: 'sem data' }, 'fora do Reels interativo, "2" não é nada');
   const d = decidirResposta({ id: 'c1', texto: '2', interativo });
   assert.equal(d.responder, true);
-  assert.match(d.texto, /^.+ Seu mapa completo é grátis: link na bio\.$/);
+  assert.match(d.texto, /^.+ Seu mapa é grátis: link na bio\.$/);
   assert.equal(decidirResposta({ id: 'c1', texto: '2', interativo, proprio: true }).responder, false);
   assert.equal(decidirResposta({ id: 'c1', texto: '2 porra', interativo }).motivo, 'ofensivo ou spam');
   assert.equal(decidirResposta({ id: 'c1', texto: 'que lindo', interativo }).motivo, 'sem escolha');

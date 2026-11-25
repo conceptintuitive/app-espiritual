@@ -92,3 +92,11 @@ test('Reels: trilha alterna pelo dia e ignora o que não é https', () => {
   assert.ok(dias.every((t) => t.startsWith('https://')));
   assert.equal(trilhaDoDia('2026-12-01', ''), null);
 });
+
+test('chamada das respostas: "Seu mapa é grátis", dentro do vocabulário da marca', async () => {
+  const { problemasDoTexto } = await import('../lib/socialEditorial.js');
+  assert.equal(CTA_RESPOSTA, 'Seu mapa é grátis: link na bio.');
+  assert.deepEqual(problemasDoTexto(CTA_RESPOSTA), []);
+  // a resposta inteira (número + chamada) também passa, nos 4 modelos
+  for (const m of [0, 1, 2, 3]) assert.deepEqual(problemasDoTexto(respostaParaData('1990-07-14', m).texto), [], `modelo ${m}`);
+});
