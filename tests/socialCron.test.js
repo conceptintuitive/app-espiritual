@@ -961,7 +961,10 @@ test('bot: no Reels interativo de carta publicado, "2" ganha o recado da carta 2
   const r = await responderComentarios({ supabase: sb, pausaMs: 0 });
   assert.deepEqual(chamadas.respostas.map((x) => x.comentario), ['k1', 'k2', 'k7']);
   const cartas = cartasDoDia(hoje, ARCANOS_MAIORES);
-  assert.ok(chamadas.respostas[0].mensagem.includes(cartas[1].nome) && chamadas.respostas[0].mensagem.includes(cartas[1].significado));
+  const { REFLEXAO_ARCANOS } = await import('../lib/tarotReflexao.js');
+  const carta2 = REFLEXAO_ARCANOS[cartas[1].id];
+  assert.ok(chamadas.respostas[0].mensagem.includes(cartas[1].nome) && chamadas.respostas[0].mensagem.includes(carta2.central) && chamadas.respostas[0].mensagem.includes(carta2.pratica));
+  assert.ok(carta2.perguntas.some((q) => chamadas.respostas[0].mensagem.includes(q)), '1 das 3 perguntas da carta');
   assert.ok(chamadas.respostas[1].mensagem.includes(cartas[2].nome));
   assert.ok(chamadas.respostas.every((x) => x.mensagem.endsWith('Seu mapa é grátis: link na bio.')));
   assert.equal(r.respondidas, 3);

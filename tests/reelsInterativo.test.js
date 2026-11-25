@@ -11,7 +11,8 @@ import { problemasDoTexto } from '../lib/socialEditorial.js';
 import { ARCANOS_MAIORES } from '../lib/tarot.js';
 import { TEMAS } from '../lib/seuDiaTextos.js';
 import { NUMERO_PROFUNDO } from '../lib/manualgenerator.js';
-import { numeroEscolhido, respostaInterativa, decidirResposta, CTA_RESPOSTA } from '../lib/socialComentarios.js';
+import { numeroEscolhido, respostaInterativa, decidirResposta, CTA_RESPOSTA, ABERTURAS_CARTA, variacaoDaCarta } from '../lib/socialComentarios.js';
+import { REFLEXAO_ARCANOS } from '../lib/tarotReflexao.js';
 import { montarLegenda } from '../lib/social.js';
 
 const F = { arcanos: ARCANOS_MAIORES, temasSeuDia: TEMAS, numeroProfundo: NUMERO_PROFUNDO };
@@ -152,13 +153,18 @@ test('comentário: número escolhido (1–3 na carta, 1–9 no número), datas e
   assert.equal(numeroEscolhido('10', 9), null);
 });
 
-test('resposta: frase da carta/número do site + chamada; 4 modelos; outro formato não responde', () => {
+test('resposta: carta (abertura + significado + prática + 1 pergunta) e número + chamada; outro formato não responde', () => {
   const cartas = cartasDoDia('2026-12-01', ARCANOS_MAIORES);
-  const rc = respostaInterativa({ formato: 'carta', dataISO: '2026-12-01', texto: '2' });
-  assert.equal(rc, `Carta 2: ${cartas[1].nome}. ${cartas[1].significado} ${CTA_RESPOSTA}`);
-  const modelos = [0, 1, 2, 3].map((modelo) => respostaInterativa({ formato: 'carta', dataISO: '2026-12-01', texto: 'carta 2', modelo }));
-  assert.equal(new Set(modelos).size, 4, 'não repete o mesmo texto em todo comentário');
-  for (const t of modelos) assert.ok(t.includes(cartas[1].nome) && t.includes(cartas[1].significado), 'sempre a carta 2 do dia');
+  const rc = respostaInterativa({ formato: 'carta', dataISO: '2026-12-01', texto: '2', id: 'c1' });
+  const r2 = REFLEXAO_ARCANOS[cartas[1].id];
+  const v = variacaoDaCarta('c1');
+  assert.equal(rc, `${ABERTURAS_CARTA[v.abertura](2, cartas[1].nome)} ${r2.central} ${r2.pratica} ${r2.perguntas[v.pergunta]} ${CTA_RESPOSTA}`);
+  // 40 comentários "2": abertura e pergunta variam, a carta é sempre a 2 do dia
+  const modelos = Array.from({ length: 40 }, (_, k) => respostaInterativa({ formato: 'carta', dataISO: '2026-12-01', texto: 'carta 2', id: `id-${k}` }));
+  assert.ok(new Set(modelos).size >= 10, `${new Set(modelos).size} textos diferentes em 40`);
+  assert.equal(new Set(modelos.map((t) => t.split('.')[0])).size, ABERTURAS_CARTA.length, 'as 5 aberturas aparecem');
+  for (const t of modelos) assert.ok(t.includes(cartas[1].nome) && t.includes(r2.central) && t.includes(r2.pratica) && r2.perguntas.some((q) => t.includes(q)), 'sempre a carta 2 do dia, com significado, prática e 1 pergunta');
+  assert.equal(respostaInterativa({ formato: 'carta', dataISO: '2026-12-01', texto: 'carta 2', id: 'id-7' }), modelos[7], 'mesmo comentário, mesma resposta');
   const rn = respostaInterativa({ formato: 'numero', dataISO: '2026-11-30', texto: 'sou 4' });
   assert.equal(rn, `Número 4: ${NUMERO_PROFUNDO['4'].essencia}. ${CTA_RESPOSTA}`);
   // o dia inteiro ("28") é reduzido na resposta
@@ -170,6 +176,7 @@ test('resposta: frase da carta/número do site + chamada; 4 modelos; outro forma
   assert.equal(respostaInterativa({ formato: 'carta', dataISO: '2026-12-01', texto: 'amei' }), null);
   // a chamada é a mesma do bot de datas (CTA_RESPOSTA); a resposta inteira, chamada junto, não pode ter nada proibido
   for (const t of [...modelos, rn, r28]) assert.deepEqual(problemasDoTexto(t), []);
+  assert.ok(modelos.every((t) => t.length <= 600), 'resposta curta o bastante pra ler no comentário');
 });
 
 test('bot: "2" só ganha resposta no Reels interativo do dia; ofensa e a própria conta continuam fora; data vale em qualquer post', () => {
@@ -205,4 +212,32 @@ test('legenda do post: chamada pro comentário, hashtags do formato, promessa de
   const n = legendaInterativa(roteiroInterativo('2026-11-30', 'numero', F));
   const { dia, numero } = roteiroInterativo('2026-11-30', 'numero', F).cena.exemplo;
   assert.match(n.texto[0], new RegExp(`dia ${dia}: .*Número ${numero}\\.`));
+});
+
+test('tabela das 22 cartas pro bot: significado em 1–2 frases, prática de hoje, 3 perguntas diferentes, dentro do guia', () => {
+  assert.deepEqual(Object.keys(REFLEXAO_ARCANOS).map(Number).sort((a, b) => a - b), ARCANOS_MAIORES.map((c) => c.id));
+  const frases = (t) => t.split(/(?<=[.!?])\s+/).filter(Boolean).length;
+  const GENERO = /\b(sozinha|sozinho|mesma|pronta|pronto|preso|presa|cansada|cansado|sua própria)\b/i;
+  for (const c of ARCANOS_MAIORES) {
+    const r = REFLEXAO_ARCANOS[c.id];
+    assert.ok(frases(r.central) >= 1 && frases(r.central) <= 2, `${c.nome}: significado em 1–2 frases`);
+    assert.ok(!r.central.includes(c.nome), `${c.nome}: o significado não repete o nome (a abertura já diz)`);
+    assert.match(r.pratica, /^Hoje, /, `${c.nome}: prática começa com "Hoje,"`);
+    assert.equal(frases(r.pratica), 1, `${c.nome}: prática em 1 frase`);
+    assert.equal(r.perguntas.length, 3, c.nome);
+    assert.equal(new Set(r.perguntas).size, 3, `${c.nome}: perguntas diferentes`);
+    for (const q of r.perguntas) assert.match(q, /\?$/, `${c.nome}: "${q}" é pergunta`);
+    for (const t of [r.central, r.pratica, ...r.perguntas]) {
+      assert.deepEqual(problemasDoTexto(t), [], `${c.nome}: ${t}`);
+      assert.doesNotMatch(t, GENERO, `${c.nome}: sem marcar gênero: ${t}`);
+    }
+    // todas as 15 combinações de cada carta passam e cabem
+    for (let a = 0; a < ABERTURAS_CARTA.length; a++) {
+      for (const q of r.perguntas) {
+        const resp = `${ABERTURAS_CARTA[a](1, c.nome)} ${r.central} ${r.pratica} ${q} ${CTA_RESPOSTA}`;
+        assert.deepEqual(problemasDoTexto(resp), []);
+        assert.ok(resp.length <= 600, `${c.nome}: ${resp.length} caracteres`);
+      }
+    }
+  }
 });
