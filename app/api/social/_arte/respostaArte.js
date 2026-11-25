@@ -3,6 +3,7 @@
 // lib/blogCapa.js), Instrument Serif + Geist Mono, dourado sobre #07040d.
 // Texto: o conteúdo do dia (social_conteudos, da IA, ou a reserva).
 //   story    1080x1920 JPEG  "Energia de hoje"
+//   frase    1080x1920 JPEG  "Frase do dia" (21h): frase + "— Autor, Livro" (lib/frases.js)
 //   c1…c7    1080x1350 JPEG  telas do carrossel (capa → … → chamada)
 //   ceu      1080x1920 JPEG  só o céu (fundo do Reels)
 //   r1…r3    1080x1920 PNG   textos do Reels, fundo transparente
@@ -16,6 +17,7 @@ import sharp from 'sharp';
 import { svgDoCeu, svgFaseLua, legendaCapa } from '@/lib/blogCapa';
 import { FORMATOS, SITE, energiaDoDia } from '@/lib/social';
 import { skyDoDisco, fontes } from '@/app/blog/_capa/respostaCapa';
+import { FRASES, fraseDoDia, creditoDaFrase } from '@/lib/frases';
 
 const OURO = '#f2c77b';
 const TEXTO = '#f3e9da';
@@ -72,6 +74,31 @@ function Story({ e, ceu }) {
         <div style={{ display: 'flex', flexGrow: 1 }} />
         <span style={mono(22, OURO, { lineHeight: 1.5, letterSpacing: '0.12em' })}>{e.cta}</span>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 18 }}>
+          <span style={mono(19, 'rgba(217,203,184,.7)')}>{SITE}</span>
+          <span style={mono(19, 'rgba(217,203,184,.55)')}>Céu de Brasília · 21h</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Story da frase do dia ───────────────────────────────────────────────────
+// Só a frase e o crédito ("— Autor, Livro"). A marca fica pequena no pé, longe
+// do nome do autor, e não há chamada pro mapa: nada que pareça endosso.
+function StoryFrase({ f, ceu }) {
+  const { width: W, height: H } = FORMATOS.frase;
+  return (
+    <div style={{ width: W, height: H, display: 'flex', position: 'relative', backgroundColor: '#07040d' }}>
+      <Fundo svg={ceu.svg} W={W} H={H} escurecer={0.55} />
+      <div style={{ position: 'absolute', left: 96, right: 96, top: SAFE_STORY.topo + 24, height: SAFE_STORY.base - SAFE_STORY.topo - 24, display: 'flex', flexDirection: 'column' }}>
+        <span style={mono(26, OURO)}>Frase do dia</span>
+        <div style={{ display: 'flex', flexGrow: 1, flexDirection: 'column', justifyContent: 'center' }}>
+          <span style={serif(200, OURO, { lineHeight: 0.6, height: 110 })}>“</span>
+          <span style={serif(porTamanho(f.frase, [[60, 96], [110, 80], [160, 68], [220, 60]]), TEXTO, { lineHeight: 1.14 })}>{f.frase}</span>
+          <div style={{ display: 'flex', width: 120, height: 1, backgroundColor: OURO, marginTop: 56, marginBottom: 28 }} />
+          <span style={{ fontFamily: MONO, fontSize: 30, lineHeight: 1.4, letterSpacing: '0.06em', color: OURO }}>{creditoDaFrase(f)}</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
           <span style={mono(19, 'rgba(217,203,184,.7)')}>{SITE}</span>
           <span style={mono(19, 'rgba(217,203,184,.55)')}>Céu de Brasília · 21h</span>
         </div>
@@ -177,7 +204,7 @@ function Sobreposicao({ rotulo, texto, cta = false }) {
  * @param {{ data: string, formato: string, dados: object, conteudo: object }} p
  * @returns {Promise<{ buffer: Buffer, tipo: string }|null>} null = tela que não existe
  */
-export async function gerarArte({ data, formato, dados, conteudo }) {
+export async function gerarArte({ data, formato, dados, conteudo, indice = null }) {
   const { width: W, height: H } = FORMATOS[formato];
   const [sky, fonts] = await Promise.all([skyDoDisco(), fontes()]);
   let el;
@@ -185,6 +212,11 @@ export async function gerarArte({ data, formato, dados, conteudo }) {
 
   if (formato === 'story') {
     el = <Story e={energiaDoDia(data, conteudo.story)} ceu={svgDoCeu(sky, data, { W, H, rotulos: false })} />;
+  } else if (formato === 'frase') {
+    // a frase vai na URL (índice na tabela): o Story mostra a que foi escolhida na hora de postar
+    const f = (indice != null && FRASES[indice]) || fraseDoDia(data);
+    if (!f) return null;
+    el = <StoryFrase f={f} ceu={svgDoCeu(sky, data, { W, H, rotulos: false })} />;
   } else if (formato === 'ceu') {
     const ceu = svgDoCeu(sky, data, { W, H, rotulos: false });
     el = <div style={{ width: W, height: H, display: 'flex', position: 'relative', backgroundColor: '#07040d' }}><Fundo svg={ceu.svg} W={W} H={H} escurecer={0.25} /></div>;

@@ -3,10 +3,12 @@
 // Faz só GET /{INSTAGRAM_USER_ID}?fields=username no host do modo atual
 // (graph.facebook.com pro token de usuário do sistema, graph.instagram.com pro
 // token do login do Instagram; ver lib/instagram.js) e devolve o resultado.
-// Nunca devolve o token.
+// Em `token`: o que o debug_token da Meta diz dele (app que gerou, tipo:
+// usuário ou usuário do sistema, permissões, o que falta pra automação, se a
+// conta do Instagram está coberta, quando expira). Nunca devolve o token.
 
 import { NextResponse } from 'next/server';
-import { conferirContaInstagram } from '@/lib/instagram';
+import { conferirContaInstagram, inspecionarToken } from '@/lib/instagram';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -17,6 +19,6 @@ export async function GET(request) {
   const provided = searchParams.get('secret') || (request.headers.get('authorization') || '').replace(/^Bearer\s+/i, '');
   if (!cronSecret || provided !== cronSecret) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
-  const r = await conferirContaInstagram();
-  return NextResponse.json(r, { status: r.ok ? 200 : 502, headers: { 'Cache-Control': 'no-store' } });
+  const [r, token] = await Promise.all([conferirContaInstagram(), inspecionarToken()]);
+  return NextResponse.json({ ...r, token }, { status: r.ok ? 200 : 502, headers: { 'Cache-Control': 'no-store' } });
 }
