@@ -31,7 +31,7 @@ test('tabela: campos, ids únicos, crédito "— Autor, Livro", nada fora das re
 
 test('verificadas: passam no teste das regras da marca (frase, "Hoje" e crédito); fora quem a revisão tirou', () => {
   const ok = frasesNoRodizio();
-  assert.equal(ok.length, 30);
+  assert.equal(ok.length, 31);
   for (const f of ok) {
     assert.deepEqual(problemasDoTexto(f.frase), [], `${f.id}: ${f.frase}`);
     assert.deepEqual(problemasDoTexto(f.hoje), [], `${f.id}: ${f.hoje}`);
@@ -40,7 +40,8 @@ test('verificadas: passam no teste das regras da marca (frase, "Hoje" e crédito
   const autores = new Set(FRASES.map((f) => f.autor));
   for (const fora of ['Rumi', 'Louise Hay', 'Napoleon Hill', 'Neville Goddard', 'Bob Proctor']) assert.ok(!autores.has(fora), `${fora} saiu na revisão`);
   // conferir e 2º lote ficam fora do rodízio até a revisão
-  for (const id of ['shinn-22', 'jung-32', 'jung-35', 'dispenza-44', 'dyer-55', 'epicteto-61', 'william-james-80']) {
+  assert.equal(FRASES.find((f) => f.id === 'shinn-22').frase, 'O medo é só fé invertida.');
+  for (const id of ['jung-32', 'jung-35', 'dispenza-44', 'dyer-55', 'epicteto-61', 'william-james-80']) {
     assert.equal(FRASES.find((f) => f.id === id).verificada, false, id);
   }
 });
