@@ -265,7 +265,19 @@ with esperado(migracao, tipo, tabela, item) as (
   ('0028_reels_narrado', 'coluna', 'social_narracao_uso', 'caracteres'),
   ('0028_reels_narrado', 'indice', 'social_narracao_uso', 'social_narracao_uso_mes_idx'),
   ('0028_reels_narrado', 'rls', 'social_narracao_uso', null),
-  ('0028_reels_narrado', 'mime', 'reels', 'audio/mpeg')
+  ('0028_reels_narrado', 'mime', 'reels', 'audio/mpeg'),
+  -- 0029
+  ('0029_reels_interativo', 'tabela', 'social_reels_interativos', null),
+  ('0029_reels_interativo', 'coluna', 'social_reels_interativos', 'data'),
+  ('0029_reels_interativo', 'coluna', 'social_reels_interativos', 'formato'),
+  ('0029_reels_interativo', 'coluna', 'social_reels_interativos', 'roteiro'),
+  ('0029_reels_interativo', 'coluna', 'social_reels_interativos', 'texto'),
+  ('0029_reels_interativo', 'coluna', 'social_reels_interativos', 'segmentos'),
+  ('0029_reels_interativo', 'coluna', 'social_reels_interativos', 'linha'),
+  ('0029_reels_interativo', 'coluna', 'social_reels_interativos', 'gerado_em'),
+  ('0029_reels_interativo', 'coluna', 'social_reels_interativos', 'narrado_em'),
+  ('0029_reels_interativo', 'coluna', 'social_reels_interativos', 'publicado_em'),
+  ('0029_reels_interativo', 'rls', 'social_reels_interativos', null)
 ),
 conferido as (
   select e.*,

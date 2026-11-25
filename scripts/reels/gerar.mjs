@@ -19,13 +19,21 @@
 // narração) e o ffmpeg mistura a voz com a trilha a −20 dB. Se qualquer passo
 // do narrado falhar aqui, pede o trabalho de novo com &card=1 e faz o card de
 // 9s: o dia nunca fica sem Reels.
+// Reels INTERATIVO (SOCIAL_REELS_INTERATIVO=on): o trabalho vem com
+// interativo: 'carta'|'pausa'|'numero' e a narração em trechos (vozes, cada
+// uma com o segundo em que entra). Mesma filmagem; o ffmpeg põe cada trecho no
+// seu tempo. Falhou aqui = pede &narrado=1 (o narrado do dia) e, se esse
+// também falhar, &card=1.
 // Variáveis: SITE_URL, CRON_SECRET (secret do repositório), DATA (opcional,
 // AAAA-MM-DD; vazio = hoje em Brasília), PREVIA ("sim" = Reels narrado de
-// prévia, salvo como AAAA-MM-DD-previa.mp4 e NUNCA publicado).
+// prévia, salvo como AAAA-MM-DD-previa.mp4 e NUNCA publicado), FORMATO (só com
+// PREVIA: carta, pausa, numero ou narrado; vazio = o formato do dia).
 //
 // Teste local, sem servidor de verdade (só filma e monta):
 //   PAGINA_URL='http://localhost:3000/social/reels/…' SAIDA=/tmp/r.mp4 [TRILHA=/tmp/t.mp3] node gerar.mjs --local
 //   narrado: + NARRACAO_JSON=/tmp/n.json ({ palavras, duracao }) NARRACAO_MP3=/tmp/n.mp3
+//   interativo: + NARRACAO_JSON=/tmp/i.json ({ formato, cena, eventos, palavras,
+//     duracao, vozes: [{ arquivo: '/tmp/v0.mp3', inicio }] }), sem NARRACAO_MP3
 
 import { chromium } from 'playwright';
 import { spawn } from 'node:child_process';
@@ -42,6 +50,7 @@ const SITE = String(process.env.SITE_URL || '').replace(/\/+$/, '');
 const SEGREDO = process.env.CRON_SECRET || '';
 const DATA = String(process.env.DATA || '').trim();
 const PREVIA = /^(sim|true|1|on)$/i.test(String(process.env.PREVIA || '').trim());
+const FORMATO = String(process.env.FORMATO || '').trim().toLowerCase(); // só na prévia
 const LOCAL = process.argv.includes('--local');
 const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
 
@@ -114,13 +123,31 @@ async function trilhaDoRepositorio(data) {
   }
 }
 
-async function montar({ pasta, trilha, saida, narracao = null, duracao }) {
+async function montar({ pasta, trilha, saida, vozes = null, duracao }) {
   const padraoQuadros = join(pasta, 'q%04d.jpg');
-  await ffmpeg(narracao
-    ? argumentosFfmpegNarrado({ padraoQuadros, narracao, trilha, saida, duracao })
+  await ffmpeg(vozes?.length
+    ? argumentosFfmpegNarrado({ padraoQuadros, vozes, trilha, saida, duracao })
     : argumentosFfmpeg({ padraoQuadros, trilha, saida }));
   const { size } = await stat(saida);
   log(`MP4 pronto: ${(size / 1024 / 1024).toFixed(1)} MB`);
+}
+
+async function limparQuadros(pasta) {
+  for (const f of await readdir(pasta)) if (/^q\d+\.jpg$/.test(f)) await rm(join(pasta, f), { force: true });
+}
+
+/** Narrado ou interativo: baixa os trechos de voz, filma e monta. */
+async function fazerNarrado(trabalho, { pasta, trilha, saida }) {
+  const n = trabalho.narracao;
+  const lista = n.vozes?.length ? n.vozes : [{ audio: n.audio, inicio: 0 }];
+  const vozes = [];
+  for (const [k, v] of lista.entries()) {
+    const caminho = join(pasta, `voz-${k}.mp3`);
+    await baixar(v.audio, caminho);
+    vozes.push({ caminho, inicio: Number(v.inicio) || 0 });
+  }
+  await capturar(trabalho.pagina, pasta, { narracao: n, duracao: trabalho.duracao });
+  await montar({ pasta, trilha, saida, vozes, duracao: trabalho.duracao });
 }
 
 async function subir(upload, arquivo) {
@@ -139,10 +166,14 @@ async function principal() {
       const pagina = process.env.PAGINA_URL;
       if (!pagina) throw new Error('PAGINA_URL é obrigatória no --local');
       const narracao = process.env.NARRACAO_JSON ? JSON.parse(await readFile(process.env.NARRACAO_JSON, 'utf8')) : null;
-      const duracao = narracao ? Number(process.env.DURACAO || narracao.duracaoVideo || narracao.duracao + 1) : REELS.duracao;
+      // interativo: a duração já vem pronta da linha do tempo; narrado: fala + ~1s
+      const duracao = narracao ? Number(process.env.DURACAO || narracao.duracaoVideo || (narracao.formato ? narracao.duracao : narracao.duracao + 1)) : REELS.duracao;
       await capturar(pagina, pasta, { narracao, duracao });
       const trilha = process.env.TRILHA || (process.env.DATA ? await trilhaDoRepositorio(process.env.DATA) : null);
-      await montar({ pasta, trilha, saida: process.env.SAIDA || join(process.cwd(), 'reels.mp4'), narracao: narracao ? process.env.NARRACAO_MP3 : null, duracao });
+      const vozes = narracao?.vozes?.length
+        ? narracao.vozes.map((v) => ({ caminho: v.arquivo, inicio: Number(v.inicio) || 0 }))
+        : narracao ? [{ caminho: process.env.NARRACAO_MP3, inicio: 0 }] : null;
+      await montar({ pasta, trilha, saida: process.env.SAIDA || join(process.cwd(), 'reels.mp4'), vozes, duracao });
       return;
     }
     if (!SITE || !SEGREDO) throw new Error('SITE_URL e CRON_SECRET são obrigatórios');
@@ -150,10 +181,12 @@ async function principal() {
     const q = new URLSearchParams();
     if (DATA) q.set('data', DATA);
     if (PREVIA) q.set('previa', '1');
+    if (PREVIA && FORMATO) q.set('formato', FORMATO);
     let trabalho = await api(`/api/social/reels/trabalho${q.size ? `?${q}` : ''}`);
     if (trabalho.pular) { log(`nada a fazer: ${trabalho.pular}`); return; }
     if (trabalho.aviso) log(`aviso: ${trabalho.aviso}`);
-    log(`Reels de ${trabalho.data}${trabalho.narrado ? ` (narrado, ${trabalho.duracao.toFixed(1)}s)` : ' (card de 9s)'}${trabalho.previa ? ' · PRÉVIA, não publica' : ''}`);
+    const tipo = (t) => (t.interativo ? `interativo "${t.interativo}", ${t.duracao.toFixed(1)}s` : t.narrado ? `narrado, ${t.duracao.toFixed(1)}s` : 'card de 9s');
+    log(`Reels de ${trabalho.data} (${tipo(trabalho)})${trabalho.previa ? ' · PRÉVIA, não publica' : ''}`);
 
     let trilha = null;
     if (trabalho.trilha) {
@@ -165,31 +198,31 @@ async function principal() {
     log(`trilha: ${trilha ? trilha.split('/').pop() : 'nenhuma'}`);
     const saida = join(pasta, 'reels.mp4');
 
-    let narrado = false;
-    if (trabalho.narrado) {
+    // interativo → narrado → card: nunca fica sem post
+    let feito = null;
+    while (trabalho.narrado && !feito) {
       try {
-        const voz = join(pasta, 'narracao.mp3');
-        await baixar(trabalho.narracao.audio, voz);
-        await capturar(trabalho.pagina, pasta, { narracao: { palavras: trabalho.narracao.palavras, duracao: trabalho.narracao.duracao }, duracao: trabalho.duracao });
-        await montar({ pasta, trilha, saida, narracao: voz, duracao: trabalho.duracao });
-        narrado = true;
+        await fazerNarrado(trabalho, { pasta, trilha, saida });
+        feito = trabalho.interativo ? 'interativo' : 'narrado';
       } catch (err) {
         if (trabalho.previa) throw err;
-        // nunca fica sem post: refaz no card de 9s
-        log(`⚠️ narrado falhou aqui (${err.message}); fazendo o card de 9s`);
-        for (const f of await readdir(pasta)) if (/^q\d+\.jpg$/.test(f)) await rm(join(pasta, f), { force: true });
-        const tCard = await api(`/api/social/reels/trabalho?${new URLSearchParams({ data: trabalho.data, card: '1' })}`);
-        if (tCard.pular) { log(`nada a fazer: ${tCard.pular}`); return; }
-        trabalho = tCard;
+        const proximo = trabalho.interativo ? { narrado: '1' } : { card: '1' };
+        log(`⚠️ ${trabalho.interativo ? 'interativo' : 'narrado'} falhou aqui (${err.message}); tentando o ${proximo.narrado ? 'narrado' : 'card de 9s'}`);
+        await limparQuadros(pasta);
+        const t2 = await api(`/api/social/reels/trabalho?${new URLSearchParams({ data: trabalho.data, ...proximo })}`);
+        if (t2.pular) { log(`nada a fazer: ${t2.pular}`); return; }
+        if (t2.aviso) log(`aviso: ${t2.aviso}`);
+        trabalho = t2;
       }
     }
-    if (!narrado) {
+    if (!feito) {
       await capturar(trabalho.pagina, pasta);
       await montar({ pasta, trilha, saida });
     }
     await subir(trabalho.upload, saida);
     if (trabalho.previa) { log(`prévia pronta: ${trabalho.upload.caminho} (não vai pro Instagram)`); return; }
-    const r = await api('/api/social/reels/publicar', { method: 'POST', body: { data: trabalho.data, caminho: trabalho.upload.caminho, narrado } });
+    const body = { data: trabalho.data, caminho: trabalho.upload.caminho, narrado: !!feito, ...(feito === 'interativo' && { interativo: trabalho.interativo }) };
+    const r = await api('/api/social/reels/publicar', { method: 'POST', body });
     log(r.pulado ? `não publicado: ${r.pulado}` : `enviado pro Instagram (container ${r.container}); o site termina a publicação`);
   } finally {
     await rm(pasta, { recursive: true, force: true });

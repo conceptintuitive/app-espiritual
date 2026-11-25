@@ -7,6 +7,12 @@
 // o MP4 de prévia (se o workflow rodou com previa=sim). Pra gerar o roteiro e a
 // narração de UM dia antes de ligar SOCIAL_REELS_NARRADO (gasta IA + caracteres):
 //   &narrado=AAAA-MM-DD&gerar=1[&refazer=1]
+// Reels interativo (migração 0029): o rodízio da semana no topo e, nos dias
+// de carta/pausa/número, o roteiro (das tabelas do site), as cartas, as frases
+// ou os números, a legenda, as respostas do bot e, depois de narrado, o áudio
+// de cada trecho e o link pra assistir. Pra narrar UM dia antes de ligar
+// SOCIAL_REELS_INTERATIVO (gasta caracteres do ElevenLabs, sem IA):
+//   &interativo=AAAA-MM-DD&gerar=1[&formato=carta|pausa|numero]
 // Mostra o conteúdo já gerado (social_conteudos, da IA); dia ainda não gerado
 // aparece com o texto de reserva, andando as séries a partir do banco. As
 // imagens usam as mesmas URLs assinadas que as redes vão baixar.
@@ -17,8 +23,11 @@ import {
 } from '@/lib/social';
 import {
   planoDaPrevia, limiteRespostasPorHora, motorReels, narradoLigado, TABELA_NARRADOS, garantirRoteiroNarrado, garantirNarracao,
-  usoDoMes, bucketReels, caminhoDaPrevia,
+  usoDoMes, bucketReels, caminhoDaPrevia, interativoLigado, TABELA_INTERATIVOS, garantirInterativo, FONTES_INTERATIVO,
 } from '@/lib/socialServidor';
+import {
+  FORMATO_POR_DIA, FORMATOS_INTERATIVOS, NOME_FORMATO, formatoDoDia, roteiroInterativo, textoDoSegmento, textoDoRoteiro, legendaInterativa,
+} from '@/lib/reelsInterativo';
 import { narracaoConfigurada, limiteMensal, mesBrasilia } from '@/lib/elevenlabs';
 import { contarPalavras, duracaoDoVideo } from '@/lib/reelsRoteiro';
 import { modoInstagram } from '@/lib/instagram';
@@ -90,6 +99,18 @@ export async function GET(request) {
     }
   }
 
+  // Narrar o interativo de um dia, sob pedido (antes de ligar a chave).
+  const diaInterativo = dataValida(searchParams.get('interativo')) ? searchParams.get('interativo') : null;
+  if (diaInterativo && searchParams.get('gerar') === '1' && supabase) {
+    const formato = FORMATOS_INTERATIVOS.includes(searchParams.get('formato')) ? searchParams.get('formato') : formatoDoDia(diaInterativo);
+    try {
+      await garantirInterativo({ supabase, data: diaInterativo, formato });
+      avisos.push(`Reels interativo (${NOME_FORMATO[formato]}) de ${dataCurta(diaInterativo)} narrado.`);
+    } catch (err) {
+      avisos.push(`Reels interativo de ${dataCurta(diaInterativo)}: ${err.message}`);
+    }
+  }
+
   const { dias, aviso } = await planoDaPrevia(supabase, inicio, n);
   if (aviso) avisos.push(aviso);
 
@@ -101,6 +122,12 @@ export async function GET(request) {
     if (error) avisos.push(`Reels narrado: ${error.message} (rode a migração 0028)`);
     narrados = new Map((rows || []).map((r) => [r.data, r]));
     try { uso = await usoDoMes(supabase, mesBrasilia()); } catch { uso = null; }
+  }
+  let interativos = new Map();
+  if (supabase) {
+    const { data: rows, error } = await supabase.from(TABELA_INTERATIVOS).select('*').in('data', dias.map((d) => d.data));
+    if (error) avisos.push(`Reels interativo: ${error.message} (rode a migração 0029)`);
+    interativos = new Map((rows || []).map((r) => [r.data, r]));
   }
   const publico = (caminho) => (supabase ? supabase.storage.from(bucketReels()).getPublicUrl(caminho).data?.publicUrl : null);
   const previasMp4 = new Map(await Promise.all(dias.map(async (d) => {
@@ -168,6 +195,75 @@ export async function GET(request) {
     </div>`;
   };
 
+  const animacaoInterativa = (d) => {
+    const q = new URLSearchParams();
+    if (d.indice != null) q.set('i', String(d.indice));
+    if (d.versao) q.set('v', d.versao);
+    q.set('n', '2');
+    q.set('t', assinarImagem({ data: d.data, formato: 'reels-interativo', indice: d.indice, v: d.versao || '' }, segredo));
+    return esc(`/social/reels/${d.data}?${q.toString()}`);
+  };
+  const linkInterativo = (data, formato) => {
+    const q = new URLSearchParams(searchParams);
+    q.set('interativo', data);
+    q.set('gerar', '1');
+    q.set('formato', formato);
+    q.delete('narrado');
+    q.delete('refazer');
+    return esc(`?${q.toString()}#d-${data}`);
+  };
+  const respostasBot = chaveLigada(process.env.SOCIAL_RESPOSTAS);
+  const blocoInterativo = (d) => {
+    const guardado = interativos.get(d.data);
+    const formato = guardado?.formato || formatoDoDia(d.data);
+    if (!FORMATOS_INTERATIVOS.includes(formato)) return '';
+    const r = roteiroInterativo(d.data, formato, FONTES_INTERATIVO);
+    const pronto = guardado?.formato === formato && guardado.linha?.palavras?.length;
+    const trechos = r.segmentos.map((seg, k) => {
+      const narr = pronto ? guardado.segmentos.find((x) => x.id === seg.id) : null;
+      const pausa = seg.pausaDepois ? ` <small>· depois, ${seg.pausaDepois.toFixed(1)}s sem voz (${formato === 'carta' ? 'contador 3-2-1' : 'rajada de frases'})</small>` : '';
+      return `<p class="rot">Trecho ${k + 1}${narr ? ` · entra aos ${guardado.linha.vozes[k].inicio.toFixed(1)}s` : ''}</p><p>${esc(textoDoSegmento(seg))}${pausa}</p>${narr ? `<audio controls preload="none" src="${esc(publico(narr.audio_caminho))}"></audio>` : ''}`;
+    }).join('');
+    let cena = '';
+    if (formato === 'carta') {
+      cena = `<p class="rot">As 3 cartas do dia (sorteio fixo pela data)</p><ol>${r.cartas.map((c) => `<li><strong>${esc(c.nome)}</strong> (${esc(c.romano)}): ${esc(c.frase)}</li>`).join('')}</ol>`;
+    } else if (formato === 'pausa') {
+      cena = `<p class="rot">As ${r.cena.mensagens.length} práticas (0,4s cada, do "Faça" do Seu Dia)</p><ol>${r.cena.mensagens.map((m) => `<li>${esc(m)}</li>`).join('')}</ol>`;
+    } else {
+      const { dia, numero, passos } = r.cena.exemplo;
+      cena = `<p class="rot">Exemplo na tela</p><p>dia ${dia}: ${passos.map(([de, so]) => `${String(de).split('').join(' + ')} = ${so}`).join(' → ')} → ${numero}</p>
+        <p class="rot">Os 9 números (essência do Manual)</p><ol>${r.cena.numeros.map((x) => `<li>${esc(x.curta)}</li>`).join('')}</ol>`;
+    }
+    const exemplos = formato === 'carta' ? ['2', 'carta 3', 'escolhi a um!', 'amei', '14/07/1990'] : formato === 'numero' ? ['7', 'sou o 4', 'nasci dia 28', '1 ou 2?', '14/07/1990'] : ['peguei a terceira', '3'];
+    const bot = exemplos.map((texto, k) => {
+      const dec = decidirResposta({ id: `previa-${d.data}-${k}`, texto, interativo: { formato, data: d.data } });
+      return `<tr><td>${esc(texto)}</td><td>${dec.responder ? esc(dec.texto) : `Não responde: ${esc(dec.motivo)}`}</td></tr>`;
+    }).join('');
+    const mp4 = previasMp4.get(d.data);
+    return `<div class="narrado interativo">
+      <h3>Reels interativo · ${esc(NOME_FORMATO[formato])} · ${contarPalavras(textoDoRoteiro(r))} palavras · sem IA (tabelas do site)${pronto ? ` · vídeo de ${Number(guardado.linha.duracao).toFixed(1)}s` : ''}</h3>
+      <div class="artes">
+        <div class="textos">${trechos}${cena}
+          <p class="rot">Legenda do Reels interativo</p><pre>${esc(montarLegenda(legendaInterativa(r, { respostas: respostasBot })))}</pre>
+        </div>
+        <div class="textos">
+          ${pronto ? `<p><a href="${animacaoInterativa(d)}" target="_blank" rel="noreferrer">Assistir o vídeo com som</a> (a mesma página que o GitHub filma)</p>` : `<p class="meta">Sem narração ainda. <a href="${linkInterativo(d.data, formato)}">Narrar este dia</a> (uns ${textoDoRoteiro(r).length} caracteres do ElevenLabs, sem IA).</p>`}
+          ${mp4 ? `<p class="rot">MP4 de prévia</p><video controls preload="none" width="270" src="${esc(mp4)}"></video>` : '<p class="meta">MP4 de prévia: Actions → Reels diário → Run workflow com esta data, previa = sim (e o formato, se quiser outro).</p>'}
+          <p class="rot">Bot nos comentários deste Reels ${respostasBot ? '(ligado)' : '(desligado: SOCIAL_RESPOSTAS)'}</p>
+          <table><tbody>${bot}</tbody></table>
+        </div>
+      </div>
+    </div>`;
+  };
+  const formatoDoReels = (d) => {
+    const f = formatoDoDia(d.data);
+    if (interativoLigado() && FORMATOS_INTERATIVOS.includes(f)) return `interativo, ${NOME_FORMATO[f]}`;
+    if (narradoLigado() || interativoLigado()) return 'narrado';
+    return motor ? 'card de 9s' : `sem Reels (SOCIAL_REELS) · no rodízio: ${NOME_FORMATO[f]}`;
+  };
+  const rodizio = `<section class="dia"><h2>Reels da semana <small>${interativoLigado() ? 'interativo ligado (SOCIAL_REELS_INTERATIVO=on): carta, pausa e número nos dias abaixo, narrado nos outros; falhou = narrado, depois card' : 'interativo desligado (SOCIAL_REELS_INTERATIVO): o rodízio abaixo é o que sai quando ligar'}</small></h2>
+  <table><thead><tr><th>Dia</th><th>Formato</th></tr></thead><tbody>${FORMATO_POR_DIA.map((f, k) => `<tr><td>${DIAS[k]}</td><td>${esc(NOME_FORMATO[f])}${f === 'narrado' ? ' (roteiro da IA, #158)' : ''}</td></tr>`).join('')}</tbody></table></section>`;
+
   const blocos = dias.map((d) => {
     const e = energiaDoDia(d.data, d.conteudo.story);
     const c = d.conteudo;
@@ -179,7 +275,7 @@ export async function GET(request) {
     const trilha = urlTrilha ? urlTrilha.split('/').pop() : motor === 'creatomate' ? null : `${itemDoDia(d.data, TRILHAS_DO_REPOSITORIO)} (do repositório)`;
     return `
     <section class="dia" id="d-${d.data}">
-      <h2>${DIAS[diaDaSemana(d.data)]} ${dataCurta(d.data)} · ${esc(TEMAS[d.tema].rotulo)} <small>${esc(d.dados.item)}${d.dados.posicao ? ` · item ${d.dados.posicao} de ${d.dados.total}` : ''} · texto: ${esc(d.fonte)}${rev ? ` · ${esc(rev)}` : ''}${d.aprovacao?.aprovado ? ' · TikTok: aprovado pra Direct Post' : ''}</small></h2>
+      <h2>${DIAS[diaDaSemana(d.data)]} ${dataCurta(d.data)} · ${esc(TEMAS[d.tema].rotulo)} <small>Reels: ${esc(formatoDoReels(d))} · ${esc(d.dados.item)}${d.dados.posicao ? ` · item ${d.dados.posicao} de ${d.dados.total}` : ''} · texto: ${esc(d.fonte)}${rev ? ` · ${esc(rev)}` : ''}${d.aprovacao?.aprovado ? ' · TikTok: aprovado pra Direct Post' : ''}</small></h2>
       <h3>Carrossel (Instagram + TikTok)</h3>
       <div class="fila">${telas}</div>
       <div class="artes">
@@ -192,6 +288,7 @@ export async function GET(request) {
           <pre>${esc([e.titulo, e.frase, ...e.linhas.map((l) => `${l.rotulo}: ${l.valor} — ${l.nota}`)].join('\n'))}</pre>
         </div>
       </div>
+      ${blocoInterativo(d)}
       ${blocoNarrado(d)}
     </section>`;
   }).join('');
@@ -228,6 +325,8 @@ export async function GET(request) {
   .narrado .rot { margin: 12px 0 4px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: #b9a9c9; }
   .narrado a { color: #f2c77b; }
   .ganchos { margin: 0 0 10px; padding-left: 20px; }
+  .interativo ol { margin: 0 0 10px; padding-left: 20px; }
+  .interativo small { color: #b9a9c9; }
   .ganchos li { margin: 2px 0; color: #b9a9c9; }
   .ganchos li.escolhido { color: #f3e9da; }
   .ganchos small { color: #f2c77b; }
@@ -238,6 +337,7 @@ export async function GET(request) {
 <p class="meta">Automação: ${redes.length ? `ligada (${redes.join(' + ')})` : 'desligada (SOCIAL_AUTOMACAO)'} · Reels: ${reelsLigado ? `ligado (${NOME_MOTOR[motor]})` : 'desligado'} · Instagram: ${process.env.INSTAGRAM_ACCESS_TOKEN && process.env.INSTAGRAM_USER_ID ? `configurado (${modoInstagram() === 'facebook' ? 'graph.facebook.com' : 'graph.instagram.com'})` : 'falta token/ID'} · TikTok: ${chaveLigada(process.env.TIKTOK_DIRECT_POST) ? 'Direct Post nos dias aprovados, rascunho nos outros' : 'rascunhos'}</p>
 <p class="meta">Reels narrado: ${narradoLigado() ? 'ligado (SOCIAL_REELS_NARRADO=on)' : 'desligado (SOCIAL_REELS_NARRADO); o Reels sai no card de 9s'} · ElevenLabs: ${narracaoConfigurada() ? 'configurado' : 'falta ELEVENLABS_API_KEY/ELEVENLABS_VOICE_ID'} · uso do mês: ${uso == null ? '? (migração 0028)' : `${uso.toLocaleString('pt-BR')} de ${limiteMensal().toLocaleString('pt-BR')} caracteres`}</p>
 ${avisos.map((a) => `<p class="aviso">${esc(a)}</p>`).join('')}
+${rodizio}
 ${blocoComentarios()}
 ${blocos}
 </main></body></html>`;

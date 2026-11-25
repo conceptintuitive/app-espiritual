@@ -13,7 +13,7 @@ import { precisaRenovar, tokenInstagram, hashToken, modoInstagram, conferirConta
 import { dadosDoDia } from '../lib/social.js';
 
 // ── Supabase falso (só o que a automação usa) ──────────────────────────────
-const CHAVES = { social_posts: ['data', 'rede', 'tipo'], social_series: ['serie'], social_tokens: ['rede'], social_conteudos: ['data'], social_respostas: ['comentario_id'], social_alertas: ['chave'], social_reels_narrados: ['data'], social_narracao_uso: [] };
+const CHAVES = { social_posts: ['data', 'rede', 'tipo'], social_series: ['serie'], social_tokens: ['rede'], social_conteudos: ['data'], social_respostas: ['comentario_id'], social_alertas: ['chave'], social_reels_narrados: ['data'], social_narracao_uso: [], social_reels_interativos: ['data'] };
 class Q {
   constructor(db, t) { Object.assign(this, { db, t, f: [], op: 'select', unico: false }); }
   select() { return this; }
@@ -25,6 +25,7 @@ class Q {
   in(c, vs) { this.f.push((r) => vs.includes(r[c])); return this; }
   not(c) { this.f.push((r) => r[c] != null); return this; }
   lt(c, v) { this.f.push((r) => r[c] < v); return this; }
+  gte(c, v) { this.f.push((r) => r[c] >= v); return this; }
   or(expr) {
     const m = /^status\.eq\.erro,and\(status\.eq\.enviando,updated_at\.lt\.(.+)\)$/.exec(expr);
     assert.ok(m, `or() inesperado: ${expr}`);
@@ -95,7 +96,8 @@ global.fetch = async (url, opts = {}) => {
   if (u.startsWith('https://api.elevenlabs.io/v1/text-to-speech/')) {
     const corpo = JSON.parse(opts.body);
     chamadas.eleven.push({ url: u, corpo, chave: opts.headers['xi-api-key'] });
-    if (elevenFalha) return json({ detail: { status: 'invalid_api_key', message: 'Invalid API key' } }, 401);
+    // elevenFalha: true = sempre; número N = só a N-ª chamada
+    if (elevenFalha === true || elevenFalha === chamadas.eleven.length) return json({ detail: { status: 'invalid_api_key', message: 'Invalid API key' } }, 401);
     const chars = [...corpo.text];
     return json({
       audio_base64: Buffer.from('MP3-FALSO').toString('base64'),
@@ -778,4 +780,207 @@ test('narrado: a geração de domingo escreve os roteiros falados da semana (nar
     // fechamento alterna (sem resposta automática: salva / manda)
     assert.deepEqual(new Set(db[TABELA_NARRADOS].map((l) => l.roteiro.fechamentoTipo)), new Set(['salva', 'manda']));
   });
+});
+
+// ── Reels interativo (SOCIAL_REELS_INTERATIVO=on, migração 0029) ───────────
+const ENV_INTERATIVO = { ...ENV_NARRADO, SOCIAL_REELS_NARRADO: null, SOCIAL_REELS_INTERATIVO: 'on' };
+const dbInterativo = () => ({ ...dbNarrado(), social_reels_interativos: [] });
+const TERCA = '2026-12-01'; // carta
+const QUINTA = '2026-12-03'; // narrado
+
+test('interativo: dia de carta → 1 narração por trecho, linha do tempo, página n=2 assinada; repescagem não narra de novo; legenda pede o comentário', async () => {
+  const { roteiroInterativo, textoDoSegmento } = await import('../lib/reelsInterativo.js');
+  const { FONTES_INTERATIVO } = await import('../lib/socialServidor.js');
+  await comEnv(ENV_INTERATIVO, async () => {
+    const db = dbInterativo();
+    bancoAtual = db;
+    const sb = fakeSupabase(db);
+    const ia = { roteiro: 0 };
+    const t = await trabalhoDoReels({ supabase: sb, data: TERCA, baseUrl: BASE, segredo: 'segredo', chamar: iaNarrado(ia) });
+    assert.equal(t.interativo, 'carta', t.aviso);
+    assert.equal(t.narrado, true);
+    assert.equal(t.aviso, undefined);
+    assert.equal(ia.roteiro, 0, 'o interativo não usa IA: sai das tabelas do site');
+    const r = roteiroInterativo(TERCA, 'carta', FONTES_INTERATIVO);
+    // 2 trechos (antes e depois do contador), cada um narrado 1 vez com o texto exato
+    assert.deepEqual(chamadas.eleven.map((c) => c.corpo.text), r.segmentos.map(textoDoSegmento));
+    assert.ok(chamadas.eleven.every((c) => c.corpo.model_id === 'eleven_multilingual_v2' && /\/voz-1\/with-timestamps/.test(c.url)));
+    const mp3s = db.uploadsFeitos.filter((u) => u.p.endsWith('.mp3'));
+    assert.deepEqual(mp3s.map((u) => u.p.replace(/-[0-9a-f]{10}\.mp3$/, '')), ['2026-12-01-interativo-escolha', '2026-12-01-interativo-revelacao']);
+    assert.ok(mp3s.every((u) => u.tipo === 'audio/mpeg'));
+    assert.equal(db.social_narracao_uso.reduce((s, x) => s + x.caracteres, 0), r.segmentos.map(textoDoSegmento).join('').length);
+    // o que a página recebe: vozes com o segundo de entrada, cena e eventos
+    const row = db.social_reels_interativos[0];
+    assert.equal(row.formato, 'carta');
+    assert.ok(row.narrado_em && !row.publicado_em);
+    assert.equal(t.duracao, row.linha.duracao);
+    assert.deepEqual(t.narracao.vozes.map((v) => v.inicio), row.linha.vozes.map((v) => v.inicio));
+    assert.equal(t.narracao.vozes[0].inicio, 0.5);
+    assert.ok(t.narracao.vozes[1].inicio > t.narracao.vozes[0].inicio + 3, 'a revelação entra depois do contador');
+    assert.ok(t.narracao.vozes.every((v, k) => v.audio === `${SB}/object/public/reels/${mp3s[k].p}`));
+    assert.equal(t.narracao.cena.cartas.length, 3);
+    assert.equal(t.narracao.eventos.revelar.length, 3);
+    assert.ok(t.narracao.eventos.contador.fim > t.narracao.eventos.contador.ini);
+    const pag = new URL(t.pagina);
+    assert.equal(pag.searchParams.get('n'), '2');
+    const v = db.social_conteudos[0].versao;
+    assert.ok(conferirAssinatura({ data: TERCA, formato: 'reels-interativo', indice: db.social_conteudos[0].indice, v, t: pag.searchParams.get('t') }, 'segredo'));
+    assert.ok(!conferirAssinatura({ data: TERCA, formato: 'reels-narrado', indice: db.social_conteudos[0].indice, v, t: pag.searchParams.get('t') }, 'segredo'));
+
+    // repescagem (11h17): nada de ElevenLabs de novo
+    const t2 = await trabalhoDoReels({ supabase: sb, data: TERCA, baseUrl: BASE, segredo: 'segredo', chamar: iaNarrado(ia) });
+    assert.equal(t2.interativo, 'carta');
+    assert.equal(chamadas.eleven.length, 2);
+
+    // publicado: legenda do formato (sem prometer resposta com o bot desligado) e a marca pro bot
+    db.storage.reels.add(t.upload.caminho);
+    const pub = await publicarReelsDoArquivo({ supabase: sb, data: TERCA, caminho: t.upload.caminho, narrado: true, interativo: 'carta' });
+    assert.ok(pub.ok);
+    const c = chamadas.containers.find((x) => x.tipo === 'REELS');
+    assert.ok(c.legenda.startsWith('Escolhe uma carta: 1, 2 ou 3.'));
+    assert.match(c.legenda, /Comenta o número da sua carta\./);
+    assert.doesNotMatch(c.legenda, /responde/);
+    assert.match(c.legenda, /Faz o seu mapa grátis: link na bio/);
+    assert.match(c.legenda, /#tarot/);
+    assert.ok(db.social_reels_interativos[0].publicado_em, 'marcado: o bot responde "1/2/3" neste Reels');
+  });
+  bancoAtual = null;
+});
+
+test('interativo: nos outros dias (e com a chave), o narrado; chave desligada = só o narrado do #158', async () => {
+  await comEnv(ENV_INTERATIVO, async () => {
+    const db = dbInterativo();
+    const t = await trabalhoDoReels({ supabase: fakeSupabase(db), data: QUINTA, baseUrl: BASE, segredo: 's', chamar: iaNarrado() });
+    assert.equal(t.interativo, undefined);
+    assert.equal(t.narrado, true, 'a chave do interativo liga o narrado dos outros dias');
+    assert.equal(new URL(t.pagina).searchParams.get('n'), '1');
+    assert.equal(db.social_reels_interativos.length, 0);
+  });
+  await comEnv(ENV_NARRADO, async () => {
+    const db = dbInterativo();
+    const t = await trabalhoDoReels({ supabase: fakeSupabase(db), data: TERCA, baseUrl: BASE, segredo: 's', chamar: iaNarrado() });
+    assert.equal(t.interativo, undefined);
+    assert.equal(t.narrado, true);
+    assert.equal(db.social_reels_interativos.length, 0, 'sem a chave, nem tenta o interativo');
+  });
+});
+
+test('interativo: falha cai no narrado (com aviso), e o narrado falhando cai no card', async () => {
+  await comEnv(ENV_INTERATIVO, async () => {
+    // sem a migração 0029: narrado
+    let db = dbNarrado();
+    let t = await trabalhoDoReels({ supabase: fakeSupabase(db), data: TERCA, baseUrl: BASE, segredo: 's', chamar: iaNarrado() });
+    assert.equal(t.interativo, undefined);
+    assert.equal(t.narrado, true);
+    assert.match(t.aviso, /interativo falhou, foi pro narrado: .*0029/);
+    assert.ok(db.social_alertas.some((a) => /reels-interativo/.test(a.chave)), 'e-mail 1x por dia');
+
+    // ElevenLabs fora: interativo e narrado caem, sai o card
+    elevenFalha = true;
+    db = dbInterativo();
+    t = await trabalhoDoReels({ supabase: fakeSupabase(db), data: TERCA, baseUrl: BASE, segredo: 's', chamar: iaNarrado() });
+    assert.equal(t.narrado, false);
+    assert.equal(t.duracao, 9);
+    assert.match(t.aviso, /interativo falhou.*\| narrado falhou, saiu o card de 9s/);
+    elevenFalha = false;
+
+    // o workflow pede &narrado=1 quando o vídeo interativo falha lá
+    chamadas.eleven = [];
+    db = dbInterativo();
+    t = await trabalhoDoReels({ supabase: fakeSupabase(db), data: TERCA, baseUrl: BASE, segredo: 's', chamar: iaNarrado(), semInterativo: true });
+    assert.equal(t.interativo, undefined);
+    assert.equal(t.narrado, true);
+    assert.equal(t.aviso, undefined);
+    assert.equal(db.social_reels_interativos.length, 0);
+
+    // limite do mês: não chama o ElevenLabs no interativo
+    chamadas.eleven = [];
+    await comEnv({ ELEVENLABS_LIMITE_MES: '50' }, async () => {
+      db = dbInterativo();
+      t = await trabalhoDoReels({ supabase: fakeSupabase(db), data: TERCA, baseUrl: BASE, segredo: 's', chamar: iaNarrado() });
+      assert.equal(t.narrado, false);
+      assert.match(t.aviso, /limite do ElevenLabs/);
+      assert.equal(chamadas.eleven.length, 0);
+    });
+  });
+});
+
+test('interativo: o 2º trecho falhou → o 1º fica guardado e não é cobrado de novo', async () => {
+  await comEnv(ENV_INTERATIVO, async () => {
+    const db = dbInterativo();
+    const sb = fakeSupabase(db);
+    elevenFalha = 2;
+    const t = await trabalhoDoReels({ supabase: sb, data: TERCA, baseUrl: BASE, segredo: 's', chamar: iaNarrado() });
+    assert.equal(t.interativo, undefined, 'caiu no narrado');
+    assert.equal(db.social_reels_interativos[0].segmentos.length, 1);
+    assert.equal(db.social_reels_interativos[0].linha, null);
+    elevenFalha = false;
+    chamadas.eleven = [];
+    const t2 = await trabalhoDoReels({ supabase: sb, data: TERCA, baseUrl: BASE, segredo: 's', chamar: iaNarrado(), semInterativo: false, card: false });
+    // o narrado já tinha ficado pronto; o interativo só narra o trecho que faltou
+    assert.equal(t2.interativo, 'carta');
+    assert.equal(chamadas.eleven.length, 1);
+    assert.match(chamadas.eleven[0].corpo.text, /^Carta um:/);
+  });
+});
+
+test('interativo: prévia filma o formato pedido em qualquer dia, sem as travas', async () => {
+  await comEnv({ ...ENV_NARRADO, SOCIAL_REELS_NARRADO: null }, async () => {
+    const db = dbInterativo();
+    db.social_posts.push({ data: QUINTA, rede: 'instagram', tipo: 'reels', status: 'ok' });
+    const sb = fakeSupabase(db);
+    let t = await trabalhoDoReels({ supabase: sb, data: QUINTA, baseUrl: BASE, segredo: 's', chamar: iaNarrado(), previa: true, formato: 'numero' });
+    assert.equal(t.interativo, 'numero');
+    assert.equal(t.upload.caminho, caminhoDaPrevia(QUINTA));
+    assert.equal(t.narracao.eventos.numeros.length, 9);
+    t = await trabalhoDoReels({ supabase: sb, data: TERCA, baseUrl: BASE, segredo: 's', chamar: iaNarrado(), previa: true });
+    assert.equal(t.interativo, 'carta', 'sem formato: o do rodízio do dia');
+    t = await trabalhoDoReels({ supabase: sb, data: TERCA, baseUrl: BASE, segredo: 's', chamar: iaNarrado(), previa: true, formato: 'narrado' });
+    assert.equal(t.interativo, undefined);
+    assert.equal(t.narrado, true);
+  });
+});
+
+test('bot: no Reels interativo de carta publicado, "2" ganha o recado da carta 2; ofensa, a própria conta e 2x continuam fora; guarda só o id', async () => {
+  const { hojeBrasilia } = await import('../lib/social.js');
+  const { cartasDoDia } = await import('../lib/reelsInterativo.js');
+  const { ARCANOS_MAIORES } = await import('../lib/tarot.js');
+  const hoje = hojeBrasilia();
+  const db = { ...novoDb(), social_reels_interativos: [{ data: hoje, formato: 'carta', publicado_em: new Date().toISOString() }] };
+  db.social_posts.push({ data: hoje, rede: 'instagram', tipo: 'reels', status: 'ok', post_id: 'midia-1' });
+  comentarios = [
+    { id: 'k1', text: '2', from: { id: 'u1', username: 'alguem' } },
+    { id: 'k2', text: 'carta 3 ✨', from: { id: 'u2' } },
+    { id: 'k3', text: '2 golpe', from: { id: 'u3' } },
+    { id: 'k4', text: '1', from: { id: IG_ID } },
+    { id: 'k5', text: 'amei demais', from: { id: 'u5' } },
+    { id: 'k6', text: '4', from: { id: 'u6' } },
+    { id: 'k7', text: '14/07/1990', from: { id: 'u7' } },
+  ];
+  const sb = fakeSupabase(db);
+  const r = await responderComentarios({ supabase: sb, pausaMs: 0 });
+  assert.deepEqual(chamadas.respostas.map((x) => x.comentario), ['k1', 'k2', 'k7']);
+  const cartas = cartasDoDia(hoje, ARCANOS_MAIORES);
+  assert.ok(chamadas.respostas[0].mensagem.includes(cartas[1].nome) && chamadas.respostas[0].mensagem.includes(cartas[1].significado));
+  assert.ok(chamadas.respostas[1].mensagem.includes(cartas[2].nome));
+  assert.ok(chamadas.respostas.every((x) => x.mensagem.endsWith('Seu mapa completo é grátis: link na bio.')));
+  assert.equal(r.respondidas, 3);
+  const salvo = JSON.stringify(db.social_respostas);
+  for (const proibido of ['alguem', 'u1', 'carta 3', '1990']) assert.ok(!salvo.includes(proibido), `guardou ${proibido}`);
+  const r2 = await responderComentarios({ supabase: sb, pausaMs: 0 });
+  assert.equal(r2.respondidas, 0, 'nunca responde 2x');
+
+  // o mesmo "2" num post que não é o interativo (ou interativo não publicado): sem resposta
+  chamadas.respostas = [];
+  const db2 = { ...novoDb(), social_reels_interativos: [{ data: hoje, formato: 'carta', publicado_em: null }] };
+  db2.social_posts.push({ data: hoje, rede: 'instagram', tipo: 'reels', status: 'ok', post_id: 'midia-1' });
+  comentarios = [{ id: 'z1', text: '2', from: { id: 'u1' } }];
+  await responderComentarios({ supabase: fakeSupabase(db2), pausaMs: 0 });
+  assert.equal(chamadas.respostas.length, 0);
+  // sem a tabela 0029: o bot segue só com datas, sem erro
+  const db3 = novoDb();
+  comentarios = [{ id: 'y1', text: '2', from: { id: 'u1' } }, { id: 'y2', text: '14/07/1990', from: { id: 'u2' } }];
+  const r3 = await responderComentarios({ supabase: fakeSupabase(db3), pausaMs: 0 });
+  assert.deepEqual(chamadas.respostas.map((x) => x.comentario), ['y2']);
+  assert.equal(r3.erros.length, 0);
 });
