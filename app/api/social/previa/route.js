@@ -17,6 +17,9 @@
 // fixa (lib/frases.js), o card do Story das 21h e, na sexta, o Reel da frase.
 // Desempenho dos Reels por dia da semana (insights do Instagram dos últimos 56
 // dias, precisa da permissão de insights no token); &insights=0 pula.
+// Funil das redes por formato (migração 0031, lib/utmSocialServidor.js):
+// visitas → quiz → teste grátis → assinatura (+ Manual) e o link da bio;
+// &funil=0 pula.
 // Mostra o conteúdo já gerado (social_conteudos, da IA); dia ainda não gerado
 // aparece com o texto de reserva, andando as séries a partir do banco. As
 // imagens usam as mesmas URLs assinadas que as redes vão baixar.
@@ -41,6 +44,8 @@ import { modoInstagram } from '@/lib/instagram';
 import { decidirResposta } from '@/lib/socialComentarios';
 import { trilhaDoDia } from '@/lib/socialReels';
 import { TRILHAS_DO_REPOSITORIO, itemDoDia } from '@/lib/reelsVideo';
+import { funilSocial } from '@/lib/utmSocialServidor';
+import { CAMINHO_DA_BIO, taxa } from '@/lib/utmSocial';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -306,6 +311,25 @@ export async function GET(request) {
     }
   }
 
+  // Funil das redes por formato (migração 0031): visitas → quiz → teste → assinatura
+  let funil = '';
+  if (supabase && searchParams.get('funil') !== '0') {
+    try {
+      const f = await funilSocial({ supabase });
+      const site = 'https://intuitiveconcept.com.br';
+      const bio = Object.entries(CAMINHO_DA_BIO).map(([rede, c]) => `${rede === 'instagram' ? 'Instagram' : 'TikTok'}: <code>${site}${c}</code>`).join(' · ');
+      const linha = (l, total = false) => `<tr${total ? ' class="total"' : ''}><td>${total ? 'Total' : `${esc(l.rede)} · ${esc(l.rotulo)}${l.provavel ? ' <small>(provável)</small>' : ''}`}</td><td>${l.visitas}</td><td>${l.quiz} <small>${taxa(l.quiz, l.visitas)}</small></td><td>${l.teste} <small>${taxa(l.teste, l.quiz)}</small></td><td>${l.assinatura} <small>${taxa(l.assinatura, l.teste)}</small></td><td>${l.manual} <small>${taxa(l.manual, l.quiz)}</small></td></tr>`;
+      const corpo = f.linhas.length
+        ? `<table><thead><tr><th>Rede · formato</th><th>Visitas</th><th>Quiz <small>/visitas</small></th><th>Teste grátis <small>/quiz</small></th><th>Assinatura <small>/teste</small></th><th>Manual pago <small>/quiz</small></th></tr></thead><tbody>${f.linhas.map((l) => linha(l)).join('')}${linha(f.total, true)}</tbody></table>`
+        : '<p class="meta">Ainda sem visitas das redes com UTM nos últimos 56 dias.</p>';
+      funil = `<section class="dia" id="funil"><h2>Funil das redes por formato <small>chegadas desde ${dataCurta(f.desde)} · pessoas contadas 1x por linha · "provável" = visita pelo link da bio, contada pro Reel publicado no dia da chegada (link em legenda e comentário não é clicável)</small></h2>
+      <p class="meta">Link da bio: ${bio}</p>
+      ${f.avisos.map((a) => `<p class="aviso">${esc(a)}</p>`).join('')}${corpo}</section>`;
+    } catch (err) {
+      funil = `<section class="dia"><h2>Funil das redes por formato</h2><p class="aviso">${esc(err.message)}</p></section>`;
+    }
+  }
+
   const blocos = dias.map((d) => {
     const e = energiaDoDia(d.data, d.conteudo.story);
     const c = d.conteudo;
@@ -374,6 +398,8 @@ export async function GET(request) {
   .ganchos li.escolhido { color: #f3e9da; }
   .ganchos small { color: #f2c77b; }
   audio { width: 100%; max-width: 420px; margin-bottom: 8px; }
+  td small { color: #b9a9c9; } tr.total td { color: #f2c77b; border-top: 1px solid rgba(242,199,123,.4); }
+  code { font: 13px ui-monospace, monospace; color: #f2c77b; }
 </style></head><body><main>
 <h1>Prévia dos posts automáticos</h1>
 <p class="meta">${dataCurta(dias[0].data)} a ${dataCurta(dias[dias.length - 1].data)} · nada aqui é postado.</p>
@@ -382,6 +408,7 @@ export async function GET(request) {
 <p class="meta">Reels narrado: ${narradoLigado() ? 'ligado (SOCIAL_REELS_NARRADO=on)' : 'desligado (SOCIAL_REELS_NARRADO); o Reels sai no card de 9s'} · ElevenLabs: ${narracaoConfigurada() ? 'configurado' : 'falta ELEVENLABS_API_KEY/ELEVENLABS_VOICE_ID'} · uso do mês: ${uso == null ? '? (migração 0028)' : `${uso.toLocaleString('pt-BR')} de ${limiteMensal().toLocaleString('pt-BR')} caracteres`}</p>
 ${avisos.map((a) => `<p class="aviso">${esc(a)}</p>`).join('')}
 ${rodizio}
+${funil}
 ${desempenho}
 ${blocoComentarios()}
 ${blocos}

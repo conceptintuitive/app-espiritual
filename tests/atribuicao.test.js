@@ -28,9 +28,13 @@ test('client_id e session_id dos cookies do GA4 (formatos antigo e novo)', () =>
   assert.equal(sessionIdDoCookie(''), null);
 });
 
-test('normalizar: sem consentimento não guarda nada identificável; com, só campos válidos', () => {
+test('normalizar: sem consentimento não guarda nada identificável (só as UTMs, rótulos de campanha); com, só campos válidos', () => {
   const agora = new Date('2026-11-23T12:00:00Z');
   assert.deepEqual(normalizarAtribuicao({ consent: false, gclid: GCLID, client_id: '1.2' }, agora), { consent: false, em: agora.toISOString() });
+  assert.deepEqual(
+    normalizarAtribuicao({ consent: false, gclid: GCLID, client_id: '1.2', session_id: '17', utm_source: 'instagram', utm_medium: 'bio', clique_ts: 1764000000000 }, agora),
+    { consent: false, em: agora.toISOString(), utm_source: 'instagram', utm_medium: 'bio', clique_ts: 1764000000000 },
+  );
   assert.equal(normalizarAtribuicao(null), null);
   const n = normalizarAtribuicao({ consent: true, client_id: '123.456', session_id: '1700000123', gclid: GCLID, gbraid: '<script>', utm_source: ' google ', lixo: 'x' }, agora);
   assert.deepEqual(n, { consent: true, em: agora.toISOString(), client_id: '123.456', session_id: '1700000123', gclid: GCLID, utm_source: 'google' });

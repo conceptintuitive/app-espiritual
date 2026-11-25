@@ -3,18 +3,21 @@ import { Resend } from 'resend';
 import { emailValido } from '@/lib/emailValidacao';
 import { getBaseUrl } from '@/lib/baseUrl';
 import { admin, tokenLogin, gerarCodigo, hashCodigo, CODIGO_MS } from '@/lib/seuDiaServidor';
+import { gravarUtmNoPerfil } from '@/lib/utmSocialServidor';
 
 export const runtime = 'nodejs';
 
-// POST { email } → manda o código de 6 dígitos (e, de reserva, o link) pra
+// POST { email, utm? } → manda o código de 6 dígitos (e, de reserva, o link) pra
 // entrar na Minha Área. Responde ok mesmo se o e-mail já recebeu há menos de
 // 60s (não reenvia, não revela nada). `codigo: false` = migração 0019 ainda
 // não rodou: o e-mail sai só com o link.
 export async function POST(request) {
   let email;
+  let utm = null;
   try {
     const body = await request.json();
     email = String(body?.email || '').trim().toLowerCase();
+    utm = body?.utm ?? null;
   } catch {
     return NextResponse.json({ error: 'Pedido inválido' }, { status: 400 });
   }
@@ -37,6 +40,11 @@ export async function POST(request) {
       const e = new Error(error.message);
       e.codigo = error.code === '42P01' || /does not exist|schema cache/i.test(error.message || '') ? 'tabela' : 'banco';
       throw e;
+    }
+    // Conta nova: guarda de onde a pessoa veio (só a UTM, migração 0031, best effort).
+    if (!atual && utm) {
+      const r = await gravarUtmNoPerfil(sb, email, utm);
+      if (!r.ok && r.motivo !== 'sem utm') console.error('[seu-dia/entrar] utm:', r.motivo);
     }
 
     // Código: só o HMAC vai pro banco. Se as colunas não existirem (0019 não
