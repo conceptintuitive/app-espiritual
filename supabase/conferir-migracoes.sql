@@ -289,7 +289,10 @@ with esperado(migracao, tipo, tabela, item) as (
   ('0031_utm_social', 'coluna', 'social_visitas', 'content'),
   ('0031_utm_social', 'indice', 'social_visitas', 'social_visitas_dia_idx'),
   ('0031_utm_social', 'rls', 'social_visitas', null),
-  ('0031_utm_social', 'coluna', 'seu_dia_perfis', 'atribuicao')
+  ('0031_utm_social', 'coluna', 'seu_dia_perfis', 'atribuicao'),
+  -- 0032
+  ('0032_comecar', 'coluna', 'social_visitas', 'sessao'),
+  ('0032_comecar', 'indice', 'social_visitas', 'social_visitas_sessao_idx')
 ),
 conferido as (
   select e.*,

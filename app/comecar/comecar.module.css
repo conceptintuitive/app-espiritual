@@ -1,0 +1,108 @@
+/* /comecar no visual da Minha Área. Tokens e fontes vêm do .blog
+   (app/blog/blog.module.css), como nas páginas de SEO. */
+
+.pagina { position: relative; overflow-x: hidden; }
+
+/* a estrela no alto, sumindo no fundo */
+.ceu { position: absolute; inset: 0 0 auto 0; height: 360px; overflow: hidden; pointer-events: none; }
+.ceu img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; display: block; opacity: .7; }
+.ceu::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(7,4,13,.2) 0%, rgba(7,4,13,.55) 55%, var(--fundo) 100%); }
+
+.marca { position: relative; padding: 22px 20px 0; font-family: var(--mono); font-size: 11px; letter-spacing: .28em; text-transform: uppercase; color: var(--texto); }
+
+.coluna { position: relative; max-width: 620px; margin: 0 auto; padding: 120px 20px 64px; box-sizing: border-box; }
+.dia { font-family: var(--mono); font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--apagado); margin: 0 0 18px; }
+
+.post { display: flex; flex-direction: column; gap: 10px; }
+.eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .24em; text-transform: uppercase; color: var(--ouro-2); }
+.titulo { font-family: var(--serif); font-weight: 400; font-size: 40px; line-height: 1.04; letter-spacing: -.015em; margin: 0; text-wrap: balance; }
+.sub { font-size: 16px; line-height: 1.55; color: var(--areia); }
+
+.bloco { display: flex; flex-direction: column; gap: 12px; margin-top: 14px; }
+.rotulo { font-family: var(--mono); font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--apagado); margin-top: 6px; }
+.texto { font-size: 17px; line-height: 1.65; color: var(--texto); }
+.pratica { font-family: var(--serif); font-size: 26px; line-height: 1.2; color: var(--texto); }
+.pergunta { font-family: var(--serif); font-style: italic; font-size: 22px; line-height: 1.25; color: var(--ouro); }
+.virada { font-family: var(--serif); font-size: 26px; line-height: 1.2; color: var(--ouro-2); }
+.dica { font-family: var(--mono); font-size: 12px; letter-spacing: .04em; color: var(--apagado); }
+.erro { font-size: 14px; color: #fca5a5; }
+.revelacao { display: flex; flex-direction: column; gap: 10px; padding-top: 18px; border-top: 1px solid var(--linha); margin-top: 6px; }
+.link { align-self: flex-start; background: none; border: 0; padding: 6px 0; cursor: pointer; font-family: var(--mono); font-size: 10px; letter-spacing: .18em; text-transform: uppercase;
+  color: var(--apagado); text-decoration: underline; text-underline-offset: 4px; }
+.link:hover { color: var(--texto); }
+
+/* cartas viradas pra baixo; a escolhida gira */
+.cartas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; perspective: 900px; }
+.carta { position: relative; aspect-ratio: 2 / 3; border: 0; padding: 0; background: none; cursor: pointer; transform-style: preserve-3d; transition: transform .6s cubic-bezier(.2,.7,.2,1); }
+.carta:disabled { cursor: default; }
+.cartaVirada { transform: rotateY(180deg); }
+.cartaFrente, .cartaVerso { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; border-radius: 14px; backface-visibility: hidden; -webkit-backface-visibility: hidden; box-sizing: border-box; padding: 10px; text-align: center; }
+.cartaFrente { border: 1px solid rgba(242,199,123,.45); color: var(--ouro);
+  background: radial-gradient(circle at 50% 40%, rgba(242,199,123,.16), rgba(242,199,123,.02) 60%), #0d0816;
+  font-family: var(--serif); font-size: 44px; }
+.carta:not(:disabled):hover .cartaFrente { border-color: var(--ouro); }
+.cartaVerso { transform: rotateY(180deg); border: 1px solid var(--ouro); background: #140c22; color: var(--texto); font-family: var(--serif); font-size: 17px; line-height: 1.1; }
+.cartaVerso b { font-family: var(--mono); font-weight: 400; font-size: 10px; letter-spacing: .2em; color: var(--ouro); }
+.cartaEscolhida .cartaVerso { background: rgba(242,199,123,.1); }
+.nomeCarta { font-family: var(--serif); font-weight: 400; font-size: 34px; line-height: 1.05; margin: 0; }
+.outras { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; font-size: 15px; line-height: 1.55; color: var(--areia); }
+.outras b { font-weight: 500; color: var(--texto); }
+
+/* número */
+.form { display: flex; flex-direction: column; gap: 8px; }
+.linhaForm { display: flex; gap: 10px; }
+.campo { flex: 1; min-width: 0; min-height: 50px; padding: 10px 14px; border-radius: 12px; border: 1px solid rgba(243,233,218,.22); background: rgba(243,233,218,.03);
+  color: var(--texto); font-family: var(--sans); font-size: 18px; outline: none; color-scheme: dark; box-sizing: border-box; }
+.campo:focus { border-color: var(--ouro); }
+.btnSec { flex-shrink: 0; min-height: 50px; padding: 0 18px; border-radius: 999px; border: 1px solid rgba(243,233,218,.3); background: transparent; color: var(--texto); cursor: pointer;
+  font-family: var(--mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; }
+.btnSec:hover { border-color: var(--ouro); }
+.grade9 { display: grid; grid-template-columns: repeat(9, 1fr); gap: 6px; }
+.num { aspect-ratio: 1; min-height: 34px; border-radius: 10px; border: 1px solid rgba(243,233,218,.2); background: transparent; color: var(--areia); cursor: pointer; font-family: var(--serif); font-size: 20px; padding: 0; }
+.num:hover { border-color: var(--ouro); }
+.numOn { border-color: var(--ouro); color: var(--ouro); background: rgba(242,199,123,.08); }
+.numeroLinha { display: flex; align-items: center; gap: 16px; }
+.numeroGrande { font-family: var(--serif); font-size: 84px; line-height: .9; color: var(--ouro); flex-shrink: 0; }
+
+/* pausa */
+.praticas { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.praticaBtn { width: 100%; text-align: left; padding: 13px 16px; border-radius: 14px; border: 1px solid rgba(243,233,218,.16); background: rgba(243,233,218,.02); color: var(--texto);
+  cursor: pointer; font-family: var(--sans); font-weight: 300; font-size: 15px; line-height: 1.45; }
+.praticaBtn:hover { border-color: rgba(242,199,123,.55); }
+.praticaOn { border-color: var(--ouro); background: rgba(242,199,123,.08); color: var(--ouro-2); }
+
+/* frase */
+.frase { margin: 4px 0 0; font-family: var(--serif); font-size: 30px; line-height: 1.15; color: var(--texto); text-wrap: pretty; }
+.credito { font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--ouro); }
+
+/* outros posts */
+.outrosPosts { margin-top: 34px; padding-top: 20px; border-top: 1px solid var(--linha); display: flex; flex-direction: column; gap: 10px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { min-height: 38px; padding: 0 14px; border-radius: 999px; border: 1px solid rgba(243,233,218,.2); background: transparent; color: var(--areia); cursor: pointer;
+  font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; }
+.chip:hover { border-color: rgba(242,199,123,.55); }
+.chipOn { border-color: var(--ouro); color: var(--ouro); background: rgba(242,199,123,.06); }
+
+/* o botão */
+.cta { margin-top: 38px; padding: 28px 0 8px; border-top: 1px solid var(--linha); display: flex; flex-direction: column; align-items: stretch; gap: 14px; }
+.ctaTexto { font-family: var(--serif); font-size: 28px; line-height: 1.12; }
+.btn { display: flex; align-items: center; justify-content: center; min-height: 56px; padding: 0 24px; border-radius: 999px; background: var(--ouro); text-decoration: none; box-sizing: border-box;
+  font-family: var(--mono); font-size: 12px; letter-spacing: .18em; text-transform: uppercase; }
+a.btn:any-link { color: #1a1020; }
+.btn:hover { background: var(--ouro-2); }
+.linhaTeste { font-size: 14px; line-height: 1.55; color: var(--apagado); text-align: center; }
+
+@media (min-width: 700px) {
+  .ceu { height: 440px; }
+  .marca { padding: 28px 32px 0; }
+  .coluna { padding-top: 170px; }
+  .titulo { font-size: 54px; }
+  .cta { align-items: flex-start; }
+  .btn { padding: 0 34px; }
+  .linhaTeste { text-align: left; max-width: 460px; }
+  .cartaVerso { font-size: 20px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .carta { transition: none; }
+}
