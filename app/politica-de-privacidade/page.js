@@ -94,6 +94,13 @@ export default function PoliticaDePrivacidadePage() {
           Google Analytics junto com a sua análise, para que a compra seja atribuída ao anúncio
           certo. Sem o aceite, nada disso sai do seu aparelho.
         </p>
+        <p style={styles.p}>
+          Também registramos de qual campanha ou rede você veio (por exemplo, &ldquo;Instagram, link da
+          bio&rdquo;), com ou sem o aceite de cookies: são só rótulos da campanha, que não identificam
+          você. Contamos as visitas que chegam das redes sem guardar nada seu, e guardamos esse rótulo
+          junto com o seu mapa e com a sua conta do Seu Dia, para saber quais conteúdos ajudam as
+          pessoas a chegar até aqui. Esse rótulo nunca é enviado a ferramentas de anúncio.
+        </p>
 
         <h2 style={styles.h2}>4. Cookies</h2>
         <p style={styles.p}>

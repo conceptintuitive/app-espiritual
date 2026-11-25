@@ -279,7 +279,17 @@ with esperado(migracao, tipo, tabela, item) as (
   ('0029_reels_interativo', 'coluna', 'social_reels_interativos', 'publicado_em'),
   ('0029_reels_interativo', 'rls', 'social_reels_interativos', null),
   -- 0030
-  ('0030_frase_do_dia', 'coluna', 'social_posts', 'formato')
+  ('0030_frase_do_dia', 'coluna', 'social_posts', 'formato'),
+  -- 0031
+  ('0031_utm_social', 'tabela', 'social_visitas', null),
+  ('0031_utm_social', 'coluna', 'social_visitas', 'dia'),
+  ('0031_utm_social', 'coluna', 'social_visitas', 'source'),
+  ('0031_utm_social', 'coluna', 'social_visitas', 'medium'),
+  ('0031_utm_social', 'coluna', 'social_visitas', 'campaign'),
+  ('0031_utm_social', 'coluna', 'social_visitas', 'content'),
+  ('0031_utm_social', 'indice', 'social_visitas', 'social_visitas_dia_idx'),
+  ('0031_utm_social', 'rls', 'social_visitas', null),
+  ('0031_utm_social', 'coluna', 'seu_dia_perfis', 'atribuicao')
 ),
 conferido as (
   select e.*,

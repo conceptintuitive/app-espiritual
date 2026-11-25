@@ -65,7 +65,10 @@ test('cadastrar: cria o perfil, liga o e-mail das 7h e grava o consentimento', a
   const linhas = [];
   const sb = fakeSb(linhas);
   const r = await cadastrarSeuDiaDoQuiz({ sb, email: 'a@x.com', dados: dadosDoQuiz({ nome: 'Ana', data: '1990-01-02' }), testeAtivo: true, agora: AGORA });
-  assert.deepEqual(r, { ok: true, novo: true });
+  assert.deepEqual(r, { ok: true, novo: true, comecouTeste: true });
+  // sem o teste ligado, o perfil sai sem começar teste (a UTM só vai pro perfil novo)
+  const semTeste = await cadastrarSeuDiaDoQuiz({ sb: fakeSb([]), email: 'b@x.com', dados: dadosDoQuiz({ nome: 'Bia', data: '1990-01-02' }), testeAtivo: false, agora: AGORA });
+  assert.deepEqual(semTeste, { ok: true, novo: true, comecouTeste: false });
   assert.equal(linhas[0].nome, 'Ana');
   assert.equal(linhas[0].email_diario, true);
   assert.equal(linhas[0].cadastro_quiz_em, new Date(AGORA).toISOString());

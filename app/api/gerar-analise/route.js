@@ -12,6 +12,7 @@ import { utcOffsetHoras } from '@/lib/sky';
 import { fusoPorCoordenada } from '@/lib/fusoPorCoordenada';
 import { admin as adminSeuDia } from '@/lib/seuDiaServidor';
 import { cadastrarSeuDiaDoQuiz, dadosDoQuiz } from '@/lib/seuDiaQuiz';
+import { gravarUtmNoPerfil } from '@/lib/utmSocialServidor';
 import { TESTE_SEU_DIA_ATIVO } from '@/lib/testeSeuDiaChave';
 
 // Monta URL da Pollinations.ai a partir da carta sorteada.
@@ -235,6 +236,11 @@ export async function POST(request) {
           });
           if (!r.ok) console.error('⚠️ Seu Dia do quiz não criado:', r.motivo);
           else if (r.aviso) console.error('⚠️ Seu Dia do quiz:', r.aviso);
+          // Conta nova ou teste que começou agora: a UTM da chegada vai pro perfil (0031).
+          if (r.ok && (r.novo || r.comecouTeste) && body?.atribuicao) {
+            const u = await gravarUtmNoPerfil(adminSeuDia(), email.trim().toLowerCase(), body.atribuicao);
+            if (!u.ok && u.motivo !== 'sem utm') console.error('⚠️ UTM no perfil do Seu Dia:', u.motivo);
+          }
         } catch (e) {
           console.error('⚠️ Seu Dia do quiz não criado:', e?.message);
         }

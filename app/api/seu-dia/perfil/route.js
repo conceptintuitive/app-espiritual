@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { TESTE_SEU_DIA_ATIVO } from '@/lib/testeSeuDia';
 import { admin, emailDaSessao, gravarEmailDiario, marcarConfirmado, perfilParaFront, validarDados } from '@/lib/seuDiaServidor';
+import { gravarUtmNoPerfil } from '@/lib/utmSocialServidor';
 
 export const runtime = 'nodejs';
 
@@ -16,7 +17,7 @@ export async function GET(request) {
   }
 }
 
-// POST { nome, dataNascimento, hora, cidade } → salva os dados de nascimento.
+// POST { nome, dataNascimento, hora, cidade, utm? } → salva os dados de nascimento.
 // O 1º salvamento começa o teste de 7 dias do Seu Dia Completo (de volta em
 // nov/2026, sem cartão). `emailDiario` (opcional) grava o checkbox do e-mail das 7h. Salvar
 // também confirma o perfil (perfil_confirmado_em).
@@ -26,9 +27,11 @@ export async function POST(request) {
 
   let dados;
   let emailDiario;
+  let utm = null;
   try {
     const body = await request.json();
     if (typeof body?.emailDiario === 'boolean') emailDiario = body.emailDiario;
+    utm = body?.utm ?? null;
     dados = validarDados(body);
   } catch {
     return NextResponse.json({ error: 'Pedido inválido' }, { status: 400 });
@@ -59,6 +62,11 @@ export async function POST(request) {
     await marcarConfirmado(sb, email);
     // Checkbox "Quero receber meu dia às 7h por e-mail" (migração 0022, best effort).
     if (emailDiario !== undefined) await gravarEmailDiario(sb, email, emailDiario);
+    // Começou o teste agora: guarda de onde veio (só se o perfil ainda não tem; 0031, best effort).
+    if (!atual?.teste_inicio && utm) {
+      const r = await gravarUtmNoPerfil(sb, email, utm);
+      if (!r.ok && r.motivo !== 'sem utm') console.error('[seu-dia/perfil] utm:', r.motivo);
+    }
     return NextResponse.json({ logado: true, perfil: await perfilParaFront(sb, email) });
   } catch (e) {
     console.error('[seu-dia/perfil POST]', e);

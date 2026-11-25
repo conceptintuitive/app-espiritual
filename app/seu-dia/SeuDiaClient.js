@@ -31,6 +31,7 @@ import { textoTeste } from '@/lib/testeSeuDia';
 import TelaConfirmar from './TelaConfirmar';
 import { precisaConfirmar, marcaConfirmacao } from '@/lib/minhaArea';
 import { consumirEmailSeuDia } from '@/lib/seuDiaRepasse';
+import { utmGuardada } from '@/app/components/CapturaAtribuicao';
 import { CHAVE_JORNADA, lerJornada, diaDaJornada, hojeBrasilia } from '@/lib/manualLeitura';
 import ma from './minhaArea.module.css';
 
@@ -193,7 +194,7 @@ function TelaEntrar({ erroLink, onEntrou }) {
     setErro('');
     if (!emailValido(email)) { setErro('Confira o e-mail.'); return; }
     setEnviando(true);
-    const { ok, json } = await api('/api/seu-dia/entrar', { method: 'POST', body: { email } });
+    const { ok, json } = await api('/api/seu-dia/entrar', { method: 'POST', body: { email, utm: utmGuardada() } });
     setEnviando(false);
     if (!ok) { setErro(json?.error || 'Não conseguimos enviar agora.'); return; }
     evento('sd_codigo_enviado', { com_codigo: json?.codigo !== false });
@@ -319,6 +320,7 @@ function TelaDados({ perfil, onSalvo, onCancelar }) {
         hora: naoSei ? null : hora,
         cidade: cidade ? { ibge: cidade.ibge, nome: cidade.nome, uf: cidade.uf, lat: cidade.lat, lon: cidade.lon, tz: cidade.tz } : null,
         emailDiario,
+        utm: utmGuardada(),
       },
     });
     setSalvando(false);
