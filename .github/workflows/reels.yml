@@ -10,6 +10,10 @@
 # narrado falhar, sai o card de 9s. Rodar à mão com previa=sim gera o vídeo
 # narrado de um dia (AAAA-MM-DD-previa.mp4 no bucket) sem publicar: aparece
 # em /api/social/previa.
+# Com SOCIAL_REELS_INTERATIVO=on, nos dias de carta (ter, sáb), pausa (qua) e
+# número (seg) o Reels é o INTERATIVO; nos outros, o narrado. Falha no
+# interativo = narrado; falha no narrado = card. Na prévia, `formato` escolhe
+# qual filmar (vazio = o do dia).
 name: Reels diário
 
 on:
@@ -29,6 +33,12 @@ on:
         default: 'nao'
         type: choice
         options: ['nao', 'sim']
+      formato:
+        description: 'Só na prévia: qual formato filmar (vazio = o do dia)'
+        required: false
+        default: ''
+        type: choice
+        options: ['', 'carta', 'pausa', 'numero', 'narrado']
 
 concurrency:
   group: reels-diario
@@ -68,4 +78,5 @@ jobs:
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
           DATA: ${{ inputs.data }}
           PREVIA: ${{ inputs.previa }}
+          FORMATO: ${{ inputs.formato }}
         run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON gerar.mjs
