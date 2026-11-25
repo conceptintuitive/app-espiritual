@@ -1,4 +1,5 @@
-// POST /api/social/reels/publicar   { data, caminho }   (Authorization: Bearer CRON_SECRET)
+// POST /api/social/reels/publicar   { data, caminho, narrado? }   (Authorization: Bearer CRON_SECRET)
+// narrado: true = o vídeo é o narrado; a legenda vem do roteiro (social_reels_narrados).
 // O workflow do GitHub subiu o MP4 no bucket: cria o Reels no Instagram com a
 // URL pública do vídeo (share_to_feed). Responde assim que o Instagram aceita
 // o vídeo; a publicação, que sai quando o Instagram termina de processar, é
@@ -25,7 +26,7 @@ export async function POST(request) {
   const supabase = createClient(url, key, { auth: { persistSession: false } });
 
   try {
-    const r = await publicarReelsDoArquivo({ supabase, data: body.data, caminho: body.caminho });
+    const r = await publicarReelsDoArquivo({ supabase, data: body.data, caminho: body.caminho, narrado: body.narrado === true });
     if (r.ok) after(() => avancarReels({ supabase, esperarMs: 240000 }).catch((e) => console.error('❌ reels/avançar:', e.message)));
     return NextResponse.json(r);
   } catch (err) {

@@ -1,4 +1,8 @@
-// GET /api/social/reels/trabalho[?data=AAAA-MM-DD]   (Authorization: Bearer CRON_SECRET)
+// GET /api/social/reels/trabalho[?data=AAAA-MM-DD][&card=1][&previa=1]   (Authorization: Bearer CRON_SECRET)
+// card=1: força o card de 9s (o workflow pede quando o vídeo narrado falha).
+// previa=1: Reels narrado de prévia (workflow com previa=sim), nunca publicado.
+// Com SOCIAL_REELS_NARRADO=on, gera o roteiro e a narração aqui se faltarem
+// (IA + ElevenLabs, por isso maxDuration 300).
 // Chamado pelo workflow do GitHub (scripts/reels/gerar.mjs): devolve a página
 // da animação do Reels (assinada), a trilha do dia e uma URL de upload
 // assinada do Supabase Storage — ou { pular } quando não há nada a fazer
@@ -12,7 +16,7 @@ import { getBaseUrl } from '@/lib/baseUrl';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-export const maxDuration = 120;
+export const maxDuration = 300;
 
 export async function GET(request) {
   const segredo = process.env.CRON_SECRET;
@@ -26,7 +30,9 @@ export async function GET(request) {
   const data = dataValida(searchParams.get('data')) ? searchParams.get('data') : hojeBrasilia();
   try {
     const supabase = createClient(url, key, { auth: { persistSession: false } });
-    return NextResponse.json(await trabalhoDoReels({ supabase, data, baseUrl: getBaseUrl(), segredo }), { headers: { 'Cache-Control': 'no-store' } });
+    const card = searchParams.get('card') === '1';
+    const previa = searchParams.get('previa') === '1';
+    return NextResponse.json(await trabalhoDoReels({ supabase, data, baseUrl: getBaseUrl(), segredo, card, previa }), { headers: { 'Cache-Control': 'no-store' } });
   } catch (err) {
     console.error('❌ reels/trabalho:', err.message);
     return NextResponse.json({ error: err.message }, { status: 500 });

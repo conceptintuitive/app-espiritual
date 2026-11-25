@@ -4,7 +4,8 @@
 -- Migração nova = acrescentar as linhas dela no VALUES abaixo.
 --
 -- tipo: tabela | coluna | view | indice | rls (RLS ligado) | enum | regra
---       (texto dentro de uma CHECK constraint) | bucket (Storage público)
+--       (texto dentro de uma CHECK constraint) | bucket (Storage público) |
+--       mime (tipo de arquivo que o bucket aceita)
 
 with esperado(migracao, tipo, tabela, item) as (
   values
@@ -244,7 +245,27 @@ with esperado(migracao, tipo, tabela, item) as (
   ('0027_conversao_resultado', 'coluna', 'manual_avaliacoes', 'atualizado_em'),
   ('0027_conversao_resultado', 'rls', 'manual_avaliacoes', null),
   ('0027_conversao_resultado', 'coluna', 'analises', 'avaliacao_email_em'),
-  ('0027_conversao_resultado', 'coluna', 'seu_dia_perfis', 'cadastro_quiz_em')
+  ('0027_conversao_resultado', 'coluna', 'seu_dia_perfis', 'cadastro_quiz_em'),
+  -- 0028
+  ('0028_reels_narrado', 'tabela', 'social_reels_narrados', null),
+  ('0028_reels_narrado', 'coluna', 'social_reels_narrados', 'data'),
+  ('0028_reels_narrado', 'coluna', 'social_reels_narrados', 'tema'),
+  ('0028_reels_narrado', 'coluna', 'social_reels_narrados', 'roteiro'),
+  ('0028_reels_narrado', 'coluna', 'social_reels_narrados', 'fonte'),
+  ('0028_reels_narrado', 'coluna', 'social_reels_narrados', 'revisao'),
+  ('0028_reels_narrado', 'coluna', 'social_reels_narrados', 'texto'),
+  ('0028_reels_narrado', 'coluna', 'social_reels_narrados', 'audio_caminho'),
+  ('0028_reels_narrado', 'coluna', 'social_reels_narrados', 'palavras'),
+  ('0028_reels_narrado', 'coluna', 'social_reels_narrados', 'duracao'),
+  ('0028_reels_narrado', 'coluna', 'social_reels_narrados', 'gerado_em'),
+  ('0028_reels_narrado', 'coluna', 'social_reels_narrados', 'narrado_em'),
+  ('0028_reels_narrado', 'rls', 'social_reels_narrados', null),
+  ('0028_reels_narrado', 'tabela', 'social_narracao_uso', null),
+  ('0028_reels_narrado', 'coluna', 'social_narracao_uso', 'mes'),
+  ('0028_reels_narrado', 'coluna', 'social_narracao_uso', 'caracteres'),
+  ('0028_reels_narrado', 'indice', 'social_narracao_uso', 'social_narracao_uso_mes_idx'),
+  ('0028_reels_narrado', 'rls', 'social_narracao_uso', null),
+  ('0028_reels_narrado', 'mime', 'reels', 'audio/mpeg')
 ),
 conferido as (
   select e.*,
@@ -274,6 +295,8 @@ conferido as (
           and pg_get_constraintdef(k.oid) like '%' || split_part(e.item, ':', 2) || '%')
       when 'bucket' then exists (
         select 1 from storage.buckets b where b.id = e.tabela and b.public)
+      when 'mime' then exists (
+        select 1 from storage.buckets b where b.id = e.tabela and e.item = any(b.allowed_mime_types))
     end as existe
   from esperado e
 )

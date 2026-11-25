@@ -6,6 +6,10 @@
 # Variável do repositório: SITE_URL (ex.: https://intuitiveconcept.com.br).
 # Só roda de verdade com SOCIAL_REELS=on na Vercel; senão, o site responde
 # "nada a fazer" e o job termina em segundos.
+# Com SOCIAL_REELS_NARRADO=on, o Reels é o NARRADO (30–40s, ElevenLabs); se o
+# narrado falhar, sai o card de 9s. Rodar à mão com previa=sim gera o vídeo
+# narrado de um dia (AAAA-MM-DD-previa.mp4 no bucket) sem publicar: aparece
+# em /api/social/previa.
 name: Reels diário
 
 on:
@@ -19,6 +23,12 @@ on:
         description: 'Dia (AAAA-MM-DD). Vazio = hoje em Brasília.'
         required: false
         default: ''
+      previa:
+        description: 'Prévia do Reels narrado? (sim = gera o vídeo e NÃO publica)'
+        required: false
+        default: 'nao'
+        type: choice
+        options: ['nao', 'sim']
 
 concurrency:
   group: reels-diario
@@ -30,7 +40,7 @@ permissions:
 jobs:
   reels:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -57,4 +67,5 @@ jobs:
           SITE_URL: ${{ vars.SITE_URL }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
           DATA: ${{ inputs.data }}
+          PREVIA: ${{ inputs.previa }}
         run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON gerar.mjs
