@@ -13,26 +13,35 @@
 //   4. PUT do MP4 na URL assinada (bucket público "reels").
 //   5. POST {SITE_URL}/api/social/reels/publicar   o site cria o Reels no
 //      Instagram com a URL pública do vídeo (trava de 1 por dia lá).
+// Reels NARRADO (SOCIAL_REELS_NARRADO=on na Vercel): o trabalho vem com
+// narrado: true, a duração (fala + ~1s) e a narração (MP3 + tempo de cada
+// palavra). A página é filmada no modo narrado (window.__carregar entrega a
+// narração) e o ffmpeg mistura a voz com a trilha a −20 dB. Se qualquer passo
+// do narrado falhar aqui, pede o trabalho de novo com &card=1 e faz o card de
+// 9s: o dia nunca fica sem Reels.
 // Variáveis: SITE_URL, CRON_SECRET (secret do repositório), DATA (opcional,
-// AAAA-MM-DD; vazio = hoje em Brasília).
+// AAAA-MM-DD; vazio = hoje em Brasília), PREVIA ("sim" = Reels narrado de
+// prévia, salvo como AAAA-MM-DD-previa.mp4 e NUNCA publicado).
 //
 // Teste local, sem servidor de verdade (só filma e monta):
 //   PAGINA_URL='http://localhost:3000/social/reels/…' SAIDA=/tmp/r.mp4 [TRILHA=/tmp/t.mp3] node gerar.mjs --local
+//   narrado: + NARRACAO_JSON=/tmp/n.json ({ palavras, duracao }) NARRACAO_MP3=/tmp/n.mp3
 
 import { chromium } from 'playwright';
 import { spawn } from 'node:child_process';
-import { mkdtemp, writeFile, readFile, rm, stat, access } from 'node:fs/promises';
+import { mkdtemp, readdir, writeFile, readFile, rm, stat, access } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { REELS, totalQuadros, tempoDoQuadro } from '../../lib/reelsAnimacao.js';
-import { argumentosFfmpeg, TRILHAS_DO_REPOSITORIO, itemDoDia } from '../../lib/reelsVideo.js';
+import { REELS, totalQuadros, tempoDoQuadro, quadrosDe } from '../../lib/reelsAnimacao.js';
+import { argumentosFfmpeg, argumentosFfmpegNarrado, TRILHAS_DO_REPOSITORIO, itemDoDia } from '../../lib/reelsVideo.js';
 
 const AQUI = dirname(fileURLToPath(import.meta.url));
 
 const SITE = String(process.env.SITE_URL || '').replace(/\/+$/, '');
 const SEGREDO = process.env.CRON_SECRET || '';
 const DATA = String(process.env.DATA || '').trim();
+const PREVIA = /^(sim|true|1|on)$/i.test(String(process.env.PREVIA || '').trim());
 const LOCAL = process.argv.includes('--local');
 const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
 
@@ -47,7 +56,11 @@ async function api(caminho, { method = 'GET', body } = {}) {
   return json;
 }
 
-async function capturar(pagina, pasta) {
+/**
+ * Filma a página quadro a quadro. narracao = { palavras, duracao } no modo
+ * narrado (entregue por window.__carregar); sem ela, os 270 quadros do card.
+ */
+async function capturar(pagina, pasta, { narracao = null, duracao = REELS.duracao } = {}) {
   const navegador = await chromium.launch();
   try {
     const p = await navegador.newPage({ viewport: { width: REELS.largura, height: REELS.altura }, deviceScaleFactor: 1 });
@@ -56,8 +69,12 @@ async function capturar(pagina, pasta) {
     const url = `${pagina}${pagina.includes('?') ? '&' : '?'}captura=1`;
     const r = await p.goto(url, { waitUntil: 'networkidle', timeout: 120000 });
     if (!r || !r.ok()) throw new Error(`a página da animação respondeu ${r ? r.status() : 'nada'}`);
+    if (narracao) {
+      await p.waitForFunction(() => typeof window.__carregar === 'function', null, { timeout: 60000 });
+      await p.evaluate((n) => window.__carregar(n), narracao);
+    }
     await p.waitForFunction(() => window.__pronto === true, null, { timeout: 90000 });
-    const n = totalQuadros();
+    const n = narracao ? quadrosDe(duracao) : totalQuadros();
     for (let i = 0; i < n; i++) {
       await p.evaluate((t) => window.__quadro(t), tempoDoQuadro(i));
       const foto = await p.screenshot({ type: 'jpeg', quality: 92 });
@@ -97,8 +114,11 @@ async function trilhaDoRepositorio(data) {
   }
 }
 
-async function montar({ pasta, trilha, saida }) {
-  await ffmpeg(argumentosFfmpeg({ padraoQuadros: join(pasta, 'q%04d.jpg'), trilha, saida }));
+async function montar({ pasta, trilha, saida, narracao = null, duracao }) {
+  const padraoQuadros = join(pasta, 'q%04d.jpg');
+  await ffmpeg(narracao
+    ? argumentosFfmpegNarrado({ padraoQuadros, narracao, trilha, saida, duracao })
+    : argumentosFfmpeg({ padraoQuadros, trilha, saida }));
   const { size } = await stat(saida);
   log(`MP4 pronto: ${(size / 1024 / 1024).toFixed(1)} MB`);
 }
@@ -118,18 +138,23 @@ async function principal() {
     if (LOCAL) {
       const pagina = process.env.PAGINA_URL;
       if (!pagina) throw new Error('PAGINA_URL é obrigatória no --local');
-      await capturar(pagina, pasta);
+      const narracao = process.env.NARRACAO_JSON ? JSON.parse(await readFile(process.env.NARRACAO_JSON, 'utf8')) : null;
+      const duracao = narracao ? Number(process.env.DURACAO || narracao.duracaoVideo || narracao.duracao + 1) : REELS.duracao;
+      await capturar(pagina, pasta, { narracao, duracao });
       const trilha = process.env.TRILHA || (process.env.DATA ? await trilhaDoRepositorio(process.env.DATA) : null);
-      await montar({ pasta, trilha, saida: process.env.SAIDA || join(process.cwd(), 'reels.mp4') });
+      await montar({ pasta, trilha, saida: process.env.SAIDA || join(process.cwd(), 'reels.mp4'), narracao: narracao ? process.env.NARRACAO_MP3 : null, duracao });
       return;
     }
     if (!SITE || !SEGREDO) throw new Error('SITE_URL e CRON_SECRET são obrigatórios');
 
-    const trabalho = await api(`/api/social/reels/trabalho${DATA ? `?data=${encodeURIComponent(DATA)}` : ''}`);
+    const q = new URLSearchParams();
+    if (DATA) q.set('data', DATA);
+    if (PREVIA) q.set('previa', '1');
+    let trabalho = await api(`/api/social/reels/trabalho${q.size ? `?${q}` : ''}`);
     if (trabalho.pular) { log(`nada a fazer: ${trabalho.pular}`); return; }
-    log(`Reels de ${trabalho.data}`);
+    if (trabalho.aviso) log(`aviso: ${trabalho.aviso}`);
+    log(`Reels de ${trabalho.data}${trabalho.narrado ? ` (narrado, ${trabalho.duracao.toFixed(1)}s)` : ' (card de 9s)'}${trabalho.previa ? ' · PRÉVIA, não publica' : ''}`);
 
-    await capturar(trabalho.pagina, pasta);
     let trilha = null;
     if (trabalho.trilha) {
       trilha = join(pasta, 'trilha.mp3');
@@ -137,11 +162,34 @@ async function principal() {
     } else {
       trilha = await trilhaDoRepositorio(trabalho.data);
     }
-    log(`trilha: ${trilha ? trilha.split('/').pop() : 'nenhuma (vídeo mudo)'}`);
+    log(`trilha: ${trilha ? trilha.split('/').pop() : 'nenhuma'}`);
     const saida = join(pasta, 'reels.mp4');
-    await montar({ pasta, trilha, saida });
+
+    let narrado = false;
+    if (trabalho.narrado) {
+      try {
+        const voz = join(pasta, 'narracao.mp3');
+        await baixar(trabalho.narracao.audio, voz);
+        await capturar(trabalho.pagina, pasta, { narracao: { palavras: trabalho.narracao.palavras, duracao: trabalho.narracao.duracao }, duracao: trabalho.duracao });
+        await montar({ pasta, trilha, saida, narracao: voz, duracao: trabalho.duracao });
+        narrado = true;
+      } catch (err) {
+        if (trabalho.previa) throw err;
+        // nunca fica sem post: refaz no card de 9s
+        log(`⚠️ narrado falhou aqui (${err.message}); fazendo o card de 9s`);
+        for (const f of await readdir(pasta)) if (/^q\d+\.jpg$/.test(f)) await rm(join(pasta, f), { force: true });
+        const tCard = await api(`/api/social/reels/trabalho?${new URLSearchParams({ data: trabalho.data, card: '1' })}`);
+        if (tCard.pular) { log(`nada a fazer: ${tCard.pular}`); return; }
+        trabalho = tCard;
+      }
+    }
+    if (!narrado) {
+      await capturar(trabalho.pagina, pasta);
+      await montar({ pasta, trilha, saida });
+    }
     await subir(trabalho.upload, saida);
-    const r = await api('/api/social/reels/publicar', { method: 'POST', body: { data: trabalho.data, caminho: trabalho.upload.caminho } });
+    if (trabalho.previa) { log(`prévia pronta: ${trabalho.upload.caminho} (não vai pro Instagram)`); return; }
+    const r = await api('/api/social/reels/publicar', { method: 'POST', body: { data: trabalho.data, caminho: trabalho.upload.caminho, narrado } });
     log(r.pulado ? `não publicado: ${r.pulado}` : `enviado pro Instagram (container ${r.container}); o site termina a publicação`);
   } finally {
     await rm(pasta, { recursive: true, force: true });

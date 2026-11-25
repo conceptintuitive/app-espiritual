@@ -13,7 +13,7 @@ import { precisaRenovar, tokenInstagram, hashToken, modoInstagram, conferirConta
 import { dadosDoDia } from '../lib/social.js';
 
 // ── Supabase falso (só o que a automação usa) ──────────────────────────────
-const CHAVES = { social_posts: ['data', 'rede', 'tipo'], social_series: ['serie'], social_tokens: ['rede'], social_conteudos: ['data'], social_respostas: ['comentario_id'], social_alertas: ['chave'] };
+const CHAVES = { social_posts: ['data', 'rede', 'tipo'], social_series: ['serie'], social_tokens: ['rede'], social_conteudos: ['data'], social_respostas: ['comentario_id'], social_alertas: ['chave'], social_reels_narrados: ['data'], social_narracao_uso: [] };
 class Q {
   constructor(db, t) { Object.assign(this, { db, t, f: [], op: 'select', unico: false }); }
   select() { return this; }
@@ -39,7 +39,7 @@ class Q {
     const tab = this.db[this.t];
     if (!tab) return { data: null, error: { message: `relation "${this.t}" does not exist`, code: '42P01' } };
     const k = CHAVES[this.t];
-    const mesma = (a, b) => k.every((c) => a[c] === b[c]);
+    const mesma = (a, b) => k.length > 0 && k.every((c) => a[c] === b[c]);
     if (this.op === 'insert') {
       if (tab.some((r) => mesma(r, this.row))) return { data: null, error: { code: '23505', message: 'duplicate key' } };
       tab.push({ tentativas: 1, created_at: new Date().toISOString(), ...this.row });
@@ -68,6 +68,13 @@ const fakeStorage = (db) => ({
     getPublicUrl: (p) => ({ data: { publicUrl: `${SB}/object/public/${b}/${p}` } }),
     list: async () => ({ data: [...(db.storage?.[b] || [])].map((name) => ({ name })), error: null }),
     remove: async (ps) => { for (const x of ps) db.storage[b].delete(x); return { data: ps, error: null }; },
+    upload: async (p, corpo, o = {}) => {
+      if (!db.storage?.[b]) return { data: null, error: { message: 'Bucket not found' } };
+      if (db.mimesPermitidos && !db.mimesPermitidos.includes(o.contentType)) return { data: null, error: { message: `mime type ${o.contentType} is not supported` } };
+      db.storage[b].add(p);
+      db.uploadsFeitos = [...(db.uploadsFeitos || []), { b, p, tipo: o.contentType, bytes: corpo?.length }];
+      return { data: { path: p }, error: null };
+    },
   }),
 });
 const fakeSupabase = (db) => ({ from: (t) => new Q(db, t), storage: fakeStorage(db) });
@@ -79,11 +86,22 @@ let chamadas;
 let falharPublish = 0;
 let comentarios = [];
 let renderStatus = 'rendering';
+let elevenFalha = false;
 const BASE = 'https://site.teste';
 global.fetch = async (url, opts = {}) => {
   const u = String(url);
   const json = (obj, status = 200) => new Response(JSON.stringify(obj), { status, headers: { 'Content-Type': 'application/json' } });
   if (u.startsWith(`${BASE}/api/social/imagem/`)) { chamadas.imagens.push(u); return new Response(new Uint8Array([0xff, 0xd8]), { headers: { 'Content-Type': u.includes('.png') ? 'image/png' : 'image/jpeg' } }); }
+  if (u.startsWith('https://api.elevenlabs.io/v1/text-to-speech/')) {
+    const corpo = JSON.parse(opts.body);
+    chamadas.eleven.push({ url: u, corpo, chave: opts.headers['xi-api-key'] });
+    if (elevenFalha) return json({ detail: { status: 'invalid_api_key', message: 'Invalid API key' } }, 401);
+    const chars = [...corpo.text];
+    return json({
+      audio_base64: Buffer.from('MP3-FALSO').toString('base64'),
+      alignment: { characters: chars, character_start_times_seconds: chars.map((_, i) => i * 0.06), character_end_times_seconds: chars.map((_, i) => (i + 1) * 0.06) },
+    });
+  }
   if (u.startsWith('https://api.creatomate.com/v1/renders')) {
     if (opts.method === 'POST') { chamadas.renders.push(JSON.parse(opts.body)); return json([{ id: 'render-1', status: 'planned' }], 202); }
     return json({ id: 'render-1', status: renderStatus, url: renderStatus === 'succeeded' ? 'https://cdn.creatomate.com/render-1.mp4' : null });
@@ -132,7 +150,7 @@ const novoDb = () => ({
 });
 const rodar = (db, data, redes = ['instagram'], extra = {}) => postarDia({ supabase: fakeSupabase(db), data, redes, baseUrl: BASE, segredo: 'segredo', esperarReelsMs: 0, ...extra });
 
-beforeEach(() => { chamadas = { imagens: [], containers: [], publicados: [], refresh: 0, conferencias: [], renders: [], respostas: [] }; falharPublish = 0; comentarios = []; renderStatus = 'rendering'; });
+beforeEach(() => { chamadas = { imagens: [], containers: [], publicados: [], refresh: 0, conferencias: [], renders: [], respostas: [], eleven: [] }; falharPublish = 0; comentarios = []; renderStatus = 'rendering'; elevenFalha = false; });
 
 test('segunda: story + carrossel de 6 telas; rodar 2x não posta de novo e a série anda 1 vez', async () => {
   const db = novoDb();
@@ -567,4 +585,197 @@ test('GitHub: o cron da hora avisa se o Reels não chegou até o meio-dia', asyn
   } finally {
     delete process.env.SOCIAL_REELS;
   }
+});
+
+// ── Reels NARRADO (SOCIAL_REELS_NARRADO=on) ────────────────────────────────
+import { TABELA_NARRADOS, caminhoDaPrevia } from '../lib/socialServidor.js';
+import { textoNarrado, duracaoDoVideo } from '../lib/reelsRoteiro.js';
+
+// Roteiro falso que passa nas regras de QUALQUER dia: lê o dia universal e a
+// Lua do próprio pedido (os dados reais que o site mandou pra IA).
+function roteiroDoPedido(usuario) {
+  const n = /"dia_universal": (\d+)/.exec(usuario)?.[1] || '1';
+  const lua = /"lua": "([^"]+)"/.exec(usuario)?.[1] || 'Lua Nova';
+  return {
+    ganchos: [
+      'Hoje alguém vai te pedir algo e você vai dizer sim antes de pensar.',
+      'Hoje você vai sentir vontade de agradar alguém que nem pediu nada.',
+      'Hoje uma conversa simples vai mexer mais com você do que deveria.',
+    ],
+    porque: `Isso tem nome na psicologia: a mente prefere evitar o desconforto do não, e responde rápido pra encerrar a tensão. Simbolicamente, o dia universal ${n} pede atenção ao outro, e a ${lua} aumenta a vontade de cuidar.`,
+    virada: 'Dizer sim rápido não é gentileza: é pressa de se livrar do incômodo.',
+    pratica: 'Quando alguém te pedir algo hoje, respire uma vez e diga: me deixa ver e te respondo.',
+    legenda: { gancho: 'Hoje alguém vai te pedir algo e você vai dizer sim antes de pensar.', texto: ['Dizer sim rápido é pressa de encerrar o desconforto.', 'Hoje, antes de responder, respire e diga: me deixa ver.'] },
+  };
+}
+// IA falsa: post → null (sai a reserva); roteiro → o roteiro acima; revisão → aprova com o gancho 2.
+const iaNarrado = (contador = { roteiro: 0 }) => async (sistema, usuario) => {
+  if (!sistema.includes('ESTE TEXTO É FALADO')) return null;
+  contador.roteiro += 1;
+  if (sistema.includes('editora-chefe')) return { aprovado: true, problemas: [], gancho_escolhido: 2, conteudo: roteiroDoPedido(usuario) };
+  return roteiroDoPedido(usuario);
+};
+const ENV_NARRADO = { SOCIAL_REELS: 'on', SOCIAL_AUTOMACAO: 'instagram', SOCIAL_REELS_NARRADO: 'on', ELEVENLABS_API_KEY: 'chave-eleven', ELEVENLABS_VOICE_ID: 'voz-1', NEXT_PUBLIC_SUPABASE_ANON_KEY: 'anon' };
+async function comEnv(env, fn) {
+  const antes = {};
+  for (const [k, v] of Object.entries(env)) { antes[k] = process.env[k]; if (v == null) delete process.env[k]; else process.env[k] = v; }
+  try { return await fn(); } finally {
+    for (const [k, v] of Object.entries(antes)) { if (v === undefined) delete process.env[k]; else process.env[k] = v; }
+  }
+}
+const dbNarrado = () => ({ ...novoDb(), social_reels_narrados: [], social_narracao_uso: [], storage: { reels: new Set() } });
+
+test('narrado: trabalho gera roteiro + narração (1 vez), página narrada assinada, legenda do roteiro no Reels', async () => {
+  await comEnv(ENV_NARRADO, async () => {
+    const db = dbNarrado();
+    bancoAtual = db;
+    const sb = fakeSupabase(db);
+    const ia = { roteiro: 0 };
+    const t = await trabalhoDoReels({ supabase: sb, data: '2026-11-26', baseUrl: BASE, segredo: 'segredo', chamar: iaNarrado(ia) });
+    assert.equal(t.narrado, true, t.aviso);
+    const linha = db[TABELA_NARRADOS][0];
+    assert.equal(linha.roteiro.gancho, linha.roteiro.ganchos[2], 'o gancho escolhido pela revisão');
+    assert.equal(linha.texto, textoNarrado(linha.roteiro));
+    // ElevenLabs: endpoint com timestamps, modelo multilíngue v2, a voz e a chave das variáveis
+    assert.equal(chamadas.eleven.length, 1);
+    assert.match(chamadas.eleven[0].url, /\/text-to-speech\/voz-1\/with-timestamps\?output_format=mp3_44100_128$/);
+    assert.equal(chamadas.eleven[0].corpo.model_id, 'eleven_multilingual_v2');
+    assert.equal(chamadas.eleven[0].corpo.text, linha.texto);
+    assert.equal(chamadas.eleven[0].chave, 'chave-eleven');
+    // MP3 no bucket, conta de caracteres do mês, tempo das palavras
+    const mp3 = db.uploadsFeitos.find((u) => u.p.endsWith('.mp3'));
+    assert.equal(mp3.tipo, 'audio/mpeg');
+    assert.match(mp3.p, /^2026-11-26-narracao-[0-9a-f]{10}\.mp3$/);
+    assert.equal(db.social_narracao_uso.length, 1);
+    assert.equal(db.social_narracao_uso[0].caracteres, linha.texto.length);
+    assert.equal(t.narracao.audio, `${SB}/object/public/reels/${mp3.p}`);
+    assert.equal(t.narracao.palavras.length, linha.texto.split(/\s+/).length);
+    assert.equal(t.duracao, duracaoDoVideo(t.narracao.palavras));
+    assert.ok(t.duracao > 30 && t.duracao < 60, `${t.duracao}s`);
+    const pag = new URL(t.pagina);
+    assert.equal(pag.searchParams.get('n'), '1');
+    assert.ok(conferirAssinatura({ data: '2026-11-26', formato: 'reels-narrado', indice: 0, v: db.social_conteudos[0].versao, t: pag.searchParams.get('t') }, 'segredo'));
+    assert.ok(!conferirAssinatura({ data: '2026-11-26', formato: 'reels', indice: 0, v: db.social_conteudos[0].versao, t: pag.searchParams.get('t') }, 'segredo'), 'a assinatura do narrado não abre o card');
+
+    // repescagem: não chama a IA nem o ElevenLabs de novo
+    const ia2 = ia.roteiro;
+    const t2 = await trabalhoDoReels({ supabase: sb, data: '2026-11-26', baseUrl: BASE, segredo: 'segredo', chamar: iaNarrado(ia) });
+    assert.equal(t2.narrado, true);
+    assert.equal(ia.roteiro, ia2);
+    assert.equal(chamadas.eleven.length, 1);
+
+    // publicado com a legenda do roteiro (+ chamada e hashtags)
+    db.storage.reels.add(t.upload.caminho);
+    const r = await publicarReelsDoArquivo({ supabase: sb, data: '2026-11-26', caminho: t.upload.caminho, narrado: true });
+    assert.ok(r.ok);
+    const c = chamadas.containers.find((x) => x.tipo === 'REELS');
+    assert.ok(c.legenda.startsWith(linha.roteiro.legenda.gancho));
+    assert.match(c.legenda, /Faz o seu mapa grátis: link na bio/);
+    assert.match(c.legenda, /#numerologia/);
+  });
+  bancoAtual = null;
+});
+
+test('narrado: qualquer falha cai no card de 9s (ElevenLabs fora, limite do mês, sem migração, IA reprovada, chave desligada, card=1)', async () => {
+  await comEnv(ENV_NARRADO, async () => {
+    const card = (t) => { assert.equal(t.narrado, false); assert.ok(!new URL(t.pagina).searchParams.get('n')); assert.equal(t.duracao, 9); };
+    // ElevenLabs recusando
+    elevenFalha = true;
+    let db = dbNarrado();
+    let t = await trabalhoDoReels({ supabase: fakeSupabase(db), data: '2026-11-26', baseUrl: BASE, segredo: 's', chamar: iaNarrado() });
+    card(t);
+    assert.match(t.aviso, /ElevenLabs: Invalid API key/);
+    assert.equal(db.social_narracao_uso.length, 0, 'nada cobrado, nada contado');
+    elevenFalha = false;
+
+    // limite do mês: nem chama o ElevenLabs
+    chamadas.eleven = [];
+    await comEnv({ ELEVENLABS_LIMITE_MES: '200' }, async () => {
+      db = dbNarrado();
+      t = await trabalhoDoReels({ supabase: fakeSupabase(db), data: '2026-11-26', baseUrl: BASE, segredo: 's', chamar: iaNarrado() });
+      card(t);
+      assert.match(t.aviso, /limite do ElevenLabs do mês atingido \(0 de 200/);
+      assert.equal(chamadas.eleven.length, 0);
+    });
+    // limite somado no mês: o uso guardado conta
+    db = dbNarrado();
+    const { mesBrasilia } = await import('../lib/elevenlabs.js');
+    db.social_narracao_uso.push({ mes: mesBrasilia(), caracteres: 24900 });
+    t = await trabalhoDoReels({ supabase: fakeSupabase(db), data: '2026-11-26', baseUrl: BASE, segredo: 's', chamar: iaNarrado() });
+    card(t);
+    assert.match(t.aviso, /24900 de 25000/);
+
+    // sem a migração 0028
+    db = { ...novoDb(), storage: { reels: new Set() } };
+    t = await trabalhoDoReels({ supabase: fakeSupabase(db), data: '2026-11-26', baseUrl: BASE, segredo: 's', chamar: iaNarrado() });
+    card(t);
+    assert.match(t.aviso, /0028/);
+
+    // bucket ainda sem audio/mpeg (0028 não rodou inteira)
+    db = { ...dbNarrado(), mimesPermitidos: ['video/mp4'] };
+    t = await trabalhoDoReels({ supabase: fakeSupabase(db), data: '2026-11-26', baseUrl: BASE, segredo: 's', chamar: iaNarrado() });
+    card(t);
+    assert.match(t.aviso, /audio\/mpeg/);
+
+    // IA reprovando o roteiro (sem gatilho na prática, sempre)
+    db = dbNarrado();
+    const iaRuim = async (s, u) => {
+      if (!s.includes('ESTE TEXTO É FALADO')) return null;
+      const r = roteiroDoPedido(u);
+      r.pratica = 'Respire fundo e diga que vai pensar com calma antes.';
+      return s.includes('editora-chefe') ? { aprovado: false, problemas: ['prática'], gancho_escolhido: 0, conteudo: r } : r;
+    };
+    t = await trabalhoDoReels({ supabase: fakeSupabase(db), data: '2026-11-26', baseUrl: BASE, segredo: 's', chamar: iaRuim });
+    card(t);
+    assert.match(t.aviso, /roteiro narrado reprovado/);
+
+    // card=1 (o workflow pede quando o vídeo narrado falha lá)
+    db = dbNarrado();
+    t = await trabalhoDoReels({ supabase: fakeSupabase(db), data: '2026-11-26', baseUrl: BASE, segredo: 's', chamar: iaNarrado(), card: true });
+    card(t);
+    assert.equal(t.aviso, undefined);
+    assert.equal(db[TABELA_NARRADOS].length, 0);
+  });
+  // chave desligada: card, sem IA de roteiro e sem aviso
+  await comEnv({ ...ENV_NARRADO, SOCIAL_REELS_NARRADO: null }, async () => {
+    const ia = { roteiro: 0 };
+    const t = await trabalhoDoReels({ supabase: fakeSupabase(dbNarrado()), data: '2026-11-26', baseUrl: BASE, segredo: 's', chamar: iaNarrado(ia) });
+    assert.equal(t.narrado, false);
+    assert.equal(t.aviso, undefined);
+    assert.equal(ia.roteiro, 0);
+  });
+});
+
+test('narrado: prévia ignora as travas de publicação, salva -previa.mp4 e nunca publica', async () => {
+  await comEnv({ ...ENV_NARRADO, SOCIAL_REELS_NARRADO: null }, async () => {
+    const db = dbNarrado();
+    bancoAtual = db;
+    db.social_posts.push({ data: '2026-11-26', rede: 'instagram', tipo: 'reels', status: 'ok' });
+    const sb = fakeSupabase(db);
+    const t = await trabalhoDoReels({ supabase: sb, data: '2026-11-26', baseUrl: BASE, segredo: 's', chamar: iaNarrado(), previa: true });
+    assert.equal(t.narrado, true, 'prévia é sempre narrada, mesmo com a chave desligada');
+    assert.equal(t.previa, true);
+    assert.equal(t.upload.caminho, caminhoDaPrevia('2026-11-26'));
+    db.storage.reels.add(t.upload.caminho);
+    await assert.rejects(publicarReelsDoArquivo({ supabase: sb, data: '2026-11-26', caminho: t.upload.caminho }), /prévia/);
+    // falha na prévia aparece como erro (não vira card)
+    elevenFalha = true;
+    const db2 = dbNarrado();
+    await assert.rejects(trabalhoDoReels({ supabase: fakeSupabase(db2), data: '2026-11-26', baseUrl: BASE, segredo: 's', chamar: iaNarrado(), previa: true }), /ElevenLabs/);
+  });
+  bancoAtual = null;
+});
+
+test('narrado: a geração de domingo escreve os roteiros falados da semana (narração fica pro dia)', async () => {
+  await comEnv(ENV_NARRADO, async () => {
+    const db = dbNarrado();
+    const r = await gerarSemana({ supabase: fakeSupabase(db), inicio: '2026-11-30', chamar: iaNarrado() });
+    assert.equal(r.narrados.length, 7);
+    assert.ok(r.narrados.every((n) => n.fonte && !n.erro), JSON.stringify(r.narrados));
+    assert.equal(db[TABELA_NARRADOS].length, 7);
+    assert.ok(db[TABELA_NARRADOS].every((l) => l.audio_caminho === null), 'sem gastar ElevenLabs no domingo');
+    assert.equal(chamadas.eleven.length, 0);
+    // fechamento alterna (sem resposta automática: salva / manda)
+    assert.deepEqual(new Set(db[TABELA_NARRADOS].map((l) => l.roteiro.fechamentoTipo)), new Set(['salva', 'manda']));
+  });
 });

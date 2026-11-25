@@ -2,6 +2,11 @@
 // próximos dias, mais exemplos da resposta automática a comentários. Não
 // posta nada.
 //   GET /api/social/previa?secret=CRON_SECRET[&inicio=AAAA-MM-DD][&dias=8]
+// Reels narrado (migração 0028): cada dia mostra o roteiro (os 3 ganchos, o
+// escolhido em destaque), o áudio do ElevenLabs, o link pra assistir com som e
+// o MP4 de prévia (se o workflow rodou com previa=sim). Pra gerar o roteiro e a
+// narração de UM dia antes de ligar SOCIAL_REELS_NARRADO (gasta IA + caracteres):
+//   &narrado=AAAA-MM-DD&gerar=1[&refazer=1]
 // Mostra o conteúdo já gerado (social_conteudos, da IA); dia ainda não gerado
 // aparece com o texto de reserva, andando as séries a partir do banco. As
 // imagens usam as mesmas URLs assinadas que as redes vão baixar.
@@ -10,7 +15,12 @@ import { createClient } from '@supabase/supabase-js';
 import {
   hojeBrasilia, dataValida, energiaDoDia, montarLegenda, caminhoImagem, assinarImagem, redesLigadas, chaveLigada, diaDaSemana, dataCurta, TEMAS,
 } from '@/lib/social';
-import { planoDaPrevia, limiteRespostasPorHora, motorReels } from '@/lib/socialServidor';
+import {
+  planoDaPrevia, limiteRespostasPorHora, motorReels, narradoLigado, TABELA_NARRADOS, garantirRoteiroNarrado, garantirNarracao,
+  usoDoMes, bucketReels, caminhoDaPrevia,
+} from '@/lib/socialServidor';
+import { narracaoConfigurada, limiteMensal, mesBrasilia } from '@/lib/elevenlabs';
+import { contarPalavras, duracaoDoVideo } from '@/lib/reelsRoteiro';
 import { modoInstagram } from '@/lib/instagram';
 import { decidirResposta } from '@/lib/socialComentarios';
 import { trilhaDoDia } from '@/lib/socialReels';
@@ -67,7 +77,37 @@ export async function GET(request) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const supabase = url && key ? createClient(url, key, { auth: { persistSession: false } }) : null;
+  // Gerar o narrado de um dia, sob pedido (antes de ligar a chave).
+  const avisos = [];
+  const diaNarrado = dataValida(searchParams.get('narrado')) ? searchParams.get('narrado') : null;
+  if (diaNarrado && searchParams.get('gerar') === '1' && supabase) {
+    try {
+      const linha = await garantirRoteiroNarrado({ supabase, data: diaNarrado, refazer: searchParams.get('refazer') === '1' });
+      await garantirNarracao({ supabase, linha });
+      avisos.push(`Reels narrado de ${dataCurta(diaNarrado)} gerado.`);
+    } catch (err) {
+      avisos.push(`Reels narrado de ${dataCurta(diaNarrado)}: ${err.message}`);
+    }
+  }
+
   const { dias, aviso } = await planoDaPrevia(supabase, inicio, n);
+  if (aviso) avisos.push(aviso);
+
+  // Narrados guardados + uso do mês (sem a migração 0028: avisa e segue).
+  let narrados = new Map();
+  let uso = null;
+  if (supabase) {
+    const { data: rows, error } = await supabase.from(TABELA_NARRADOS).select('*').in('data', dias.map((d) => d.data));
+    if (error) avisos.push(`Reels narrado: ${error.message} (rode a migração 0028)`);
+    narrados = new Map((rows || []).map((r) => [r.data, r]));
+    try { uso = await usoDoMes(supabase, mesBrasilia()); } catch { uso = null; }
+  }
+  const publico = (caminho) => (supabase ? supabase.storage.from(bucketReels()).getPublicUrl(caminho).data?.publicUrl : null);
+  const previasMp4 = new Map(await Promise.all(dias.map(async (d) => {
+    const u = publico(caminhoDaPrevia(d.data));
+    const ok = u ? await fetch(u, { method: 'HEAD' }).then((r) => r.ok).catch(() => false) : false;
+    return [d.data, ok ? u : null];
+  })));
 
   const redes = redesLigadas(process.env.SOCIAL_AUTOMACAO);
   const motor = motorReels();
@@ -81,6 +121,52 @@ export async function GET(request) {
     return esc(`/social/reels/${d.data}?${q.toString()}`);
   };
   const img = (d, formato) => esc(caminhoImagem({ data: d.data, formato, indice: d.indice, v: d.versao }, segredo));
+  const animacaoNarrada = (d) => {
+    const q = new URLSearchParams();
+    if (d.indice != null) q.set('i', String(d.indice));
+    if (d.versao) q.set('v', d.versao);
+    q.set('n', '1');
+    q.set('t', assinarImagem({ data: d.data, formato: 'reels-narrado', indice: d.indice, v: d.versao || '' }, segredo));
+    return esc(`/social/reels/${d.data}?${q.toString()}`);
+  };
+  const linkGerar = (data, refazer = false) => {
+    const q = new URLSearchParams(searchParams);
+    q.set('narrado', data);
+    q.set('gerar', '1');
+    if (refazer) q.set('refazer', '1'); else q.delete('refazer');
+    return esc(`?${q.toString()}#d-${data}`);
+  };
+  const blocoNarrado = (d) => {
+    const r = narrados.get(d.data);
+    if (!r) {
+      return `<div class="narrado"><h3>Reels narrado</h3><p class="meta">Ainda sem roteiro pra este dia. <a href="${linkGerar(d.data)}">Gerar roteiro e narração deste dia</a> (gasta IA e uns 550 caracteres do ElevenLabs).</p></div>`;
+    }
+    const rt = r.roteiro || {};
+    const ganchos = (rt.ganchos || []).map((g, k) => `<li${k === rt.escolhido ? ' class="escolhido"' : ''}>${esc(g)}${k === rt.escolhido ? ' <small>← escolhido</small>' : ''}</li>`).join('');
+    const audio = r.audio_caminho ? publico(r.audio_caminho) : null;
+    const duracaoVideo = Array.isArray(r.palavras) && r.palavras.length ? duracaoDoVideo(r.palavras) : null;
+    const mp4 = previasMp4.get(d.data);
+    return `<div class="narrado">
+      <h3>Reels narrado · ${contarPalavras(r.texto)} palavras · roteiro: ${esc(r.fonte)}${duracaoVideo ? ` · vídeo de ${duracaoVideo.toFixed(1)}s` : ''}</h3>
+      <div class="artes">
+        <div class="textos">
+          <p class="rot">3 ganchos</p><ol class="ganchos">${ganchos}</ol>
+          <p class="rot">O porquê</p><p>${esc(rt.porque)}</p>
+          <p class="rot">A virada</p><p>${esc(rt.virada)}</p>
+          <p class="rot">A prática</p><p>${esc(rt.pratica)}</p>
+          <p class="rot">Fechamento (${esc(rt.fechamentoTipo)})</p><p>${esc(rt.fechamento)}</p>
+          <p class="rot">Legenda do Reels narrado</p><pre>${esc(montarLegenda({ gancho: rt.legenda?.gancho || '', texto: rt.legenda?.texto || [], hashtags: d.conteudo.legenda?.hashtags || [] }))}</pre>
+        </div>
+        <div class="textos">
+          ${audio ? `<p class="rot">Narração (ElevenLabs)</p><audio controls preload="none" src="${esc(audio)}"></audio>
+          <p><a href="${animacaoNarrada(d)}" target="_blank" rel="noreferrer">Assistir o vídeo com som</a> (a mesma página que o GitHub filma)</p>`
+          : `<p class="meta">Sem narração ainda. <a href="${linkGerar(d.data)}">Narrar este dia</a></p>`}
+          ${mp4 ? `<p class="rot">MP4 de prévia (workflow com previa=sim)</p><video controls preload="none" width="270" src="${esc(mp4)}"></video>` : '<p class="meta">MP4 de prévia: Actions → Reels diário → Run workflow com esta data e previa = sim.</p>'}
+          <p class="meta"><a href="${linkGerar(d.data, true)}">Refazer o roteiro e a narração</a></p>
+        </div>
+      </div>
+    </div>`;
+  };
 
   const blocos = dias.map((d) => {
     const e = energiaDoDia(d.data, d.conteudo.story);
@@ -100,12 +186,13 @@ export async function GET(request) {
         <figure><img src="${img(d, 'story')}" width="270" height="480" alt="Story" loading="lazy"><figcaption>Story · Instagram</figcaption></figure>
         <figure><div class="fila reels">${quadros}</div><figcaption><a href="${animacao(d)}" target="_blank" rel="noreferrer">Ver a animação</a> · Reels (9s) ${reelsLigado ? `via ${NOME_MOTOR[motor]}` : '· desligado (SOCIAL_REELS)'}: céu com zoom lento; gancho 0–4s, virada 4,6–7s, chamada 7,3–9s · trilha: ${trilha ? esc(trilha) : 'nenhuma (SOCIAL_TRILHAS)'}</figcaption></figure>
         <div class="textos">
-          <h3>Legenda (carrossel e Reels)</h3>
+          <h3>Legenda (carrossel e Reels de 9s)</h3>
           <pre>${esc(montarLegenda(c.legenda))}</pre>
           <h3>Story</h3>
           <pre>${esc([e.titulo, e.frase, ...e.linhas.map((l) => `${l.rotulo}: ${l.valor} — ${l.nota}`)].join('\n'))}</pre>
         </div>
       </div>
+      ${blocoNarrado(d)}
     </section>`;
   }).join('');
 
@@ -136,11 +223,21 @@ export async function GET(request) {
   table { border-collapse: collapse; width: 100%; font-size: 14px; }
   td, th { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid rgba(242,199,123,.15); }
   th { color: #f2c77b; font-weight: 500; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; }
+  .narrado { margin-top: 18px; padding-top: 16px; border-top: 1px dashed rgba(242,199,123,.25); }
+  .narrado p { margin: 0 0 10px; }
+  .narrado .rot { margin: 12px 0 4px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: #b9a9c9; }
+  .narrado a { color: #f2c77b; }
+  .ganchos { margin: 0 0 10px; padding-left: 20px; }
+  .ganchos li { margin: 2px 0; color: #b9a9c9; }
+  .ganchos li.escolhido { color: #f3e9da; }
+  .ganchos small { color: #f2c77b; }
+  audio { width: 100%; max-width: 420px; margin-bottom: 8px; }
 </style></head><body><main>
 <h1>Prévia dos posts automáticos</h1>
 <p class="meta">${dataCurta(dias[0].data)} a ${dataCurta(dias[dias.length - 1].data)} · nada aqui é postado.</p>
 <p class="meta">Automação: ${redes.length ? `ligada (${redes.join(' + ')})` : 'desligada (SOCIAL_AUTOMACAO)'} · Reels: ${reelsLigado ? `ligado (${NOME_MOTOR[motor]})` : 'desligado'} · Instagram: ${process.env.INSTAGRAM_ACCESS_TOKEN && process.env.INSTAGRAM_USER_ID ? `configurado (${modoInstagram() === 'facebook' ? 'graph.facebook.com' : 'graph.instagram.com'})` : 'falta token/ID'} · TikTok: ${chaveLigada(process.env.TIKTOK_DIRECT_POST) ? 'Direct Post nos dias aprovados, rascunho nos outros' : 'rascunhos'}</p>
-${aviso ? `<p class="aviso">${esc(aviso)}</p>` : ''}
+<p class="meta">Reels narrado: ${narradoLigado() ? 'ligado (SOCIAL_REELS_NARRADO=on)' : 'desligado (SOCIAL_REELS_NARRADO); o Reels sai no card de 9s'} · ElevenLabs: ${narracaoConfigurada() ? 'configurado' : 'falta ELEVENLABS_API_KEY/ELEVENLABS_VOICE_ID'} · uso do mês: ${uso == null ? '? (migração 0028)' : `${uso.toLocaleString('pt-BR')} de ${limiteMensal().toLocaleString('pt-BR')} caracteres`}</p>
+${avisos.map((a) => `<p class="aviso">${esc(a)}</p>`).join('')}
 ${blocoComentarios()}
 ${blocos}
 </main></body></html>`;
