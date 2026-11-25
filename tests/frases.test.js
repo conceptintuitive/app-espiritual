@@ -31,7 +31,7 @@ test('tabela: campos, ids únicos, crédito "— Autor, Livro", nada fora das re
 
 test('verificadas: passam no teste das regras da marca (frase, "Hoje" e crédito); fora quem a revisão tirou', () => {
   const ok = frasesNoRodizio();
-  assert.equal(ok.length, 31);
+  assert.equal(ok.length, 50);
   for (const f of ok) {
     assert.deepEqual(problemasDoTexto(f.frase), [], `${f.id}: ${f.frase}`);
     assert.deepEqual(problemasDoTexto(f.hoje), [], `${f.id}: ${f.hoje}`);
@@ -41,7 +41,12 @@ test('verificadas: passam no teste das regras da marca (frase, "Hoje" e crédito
   for (const fora of ['Rumi', 'Louise Hay', 'Napoleon Hill', 'Neville Goddard', 'Bob Proctor']) assert.ok(!autores.has(fora), `${fora} saiu na revisão`);
   // conferir e 2º lote ficam fora do rodízio até a revisão
   assert.equal(FRASES.find((f) => f.id === 'shinn-22').frase, 'O medo é só fé invertida.');
-  for (const id of ['jung-32', 'jung-35', 'dispenza-44', 'dyer-55', 'epicteto-61', 'william-james-80']) {
+  // revisão do lote 2: 61–79 aprovadas (66 e 71 corrigidas), 80 fora
+  for (let n = 61; n <= 79; n++) assert.equal(FRASES.find((f) => f.id.endsWith(`-${n}`)).verificada, true, `frase ${n}`);
+  assert.equal(FRASES.find((f) => f.id === 'gibran-66').frase, 'Que haja espaços na união de vocês.');
+  assert.equal(FRASES.find((f) => f.id === 'emerson-71').frase, 'Uma coerência tola é a assombração das mentes pequenas.');
+  assert.ok(!FRASES.some((f) => f.id === 'william-james-80'), 'a 80 saiu (ensaio sobre suicídio)');
+  for (const id of ['jung-32', 'jung-35', 'dispenza-44', 'dispenza-45', 'dispenza-46', 'dispenza-47', 'dyer-55', 'dyer-56']) {
     assert.equal(FRASES.find((f) => f.id === id).verificada, false, id);
   }
 });
@@ -93,4 +98,33 @@ test('Reel da frase: sexta', () => {
   assert.equal(ehDiaDoReelFrase('2026-12-04'), true); // sexta
   assert.equal(ehDiaDoReelFrase('2026-12-03'), false);
   assert.equal(ehDiaDoReelFrase('2026-12-06'), false);
+});
+
+test('evitarDias: a 73 (Thoreau) nunca cai no domingo; a troca com o dia seguinte não repete autor nem tira frase da volta', () => {
+  const f73 = FRASES.find((f) => f.id === 'thoreau-73');
+  assert.deepEqual(f73.evitarDias, [0]);
+  const total = frasesNoRodizio().length;
+  const vistas = new Set();
+  let anterior = null;
+  let vezes73 = 0;
+  for (let k = 0; k < 365 * 6; k++) {
+    const data = somarDias('2026-01-01', k);
+    const f = fraseDoDia(data);
+    const semana = new Date(`${data}T12:00:00Z`).getUTCDay();
+    if (f.id === 'thoreau-73') { vezes73++; assert.notEqual(semana, 0, `73 caiu no domingo ${data}`); }
+    for (const d of f.evitarDias || []) assert.notEqual(semana, d, `${f.id} caiu num dia proibido (${data})`);
+    if (anterior) assert.notEqual(f.autor, anterior.autor, `mesmo autor em dias seguidos: ${anterior.id} → ${f.id} (${data})`);
+    vistas.add(f.id);
+    anterior = f;
+  }
+  assert.equal(vistas.size, total, 'todas as verificadas aparecem');
+  assert.ok(vezes73 >= 40, `a 73 continua no rodízio (${vezes73} vezes em 6 anos)`);
+  // sem a regra ela cairia em algum domingo: a regra faz diferença
+  const semRegra = FRASES.map((f) => ({ ...f, evitarDias: undefined }));
+  let domingos = 0;
+  for (let k = 0; k < 365 * 6; k++) {
+    const data = somarDias('2026-01-01', k);
+    if (fraseDoDia(data, semRegra).id === 'thoreau-73' && new Date(`${data}T12:00:00Z`).getUTCDay() === 0) domingos++;
+  }
+  assert.ok(domingos > 0);
 });
