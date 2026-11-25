@@ -22,7 +22,7 @@ test('utmDoPost: cada formato vira source/medium/campaign/content', () => {
 test('links: UTM somada sem apagar o resto; bio curta em /ig e /tt', () => {
   assert.equal(comUtm('/?quiz=1', { utm_source: 'instagram', utm_medium: 'bio', utm_campaign: null }), '/?quiz=1&utm_source=instagram&utm_medium=bio');
   assert.equal(comUtm('https://intuitiveconcept.com.br/x#a', { utm_source: 'tiktok' }), 'https://intuitiveconcept.com.br/x?utm_source=tiktok#a');
-  assert.equal(destinoDaBio('instagram'), '/?utm_source=instagram&utm_medium=bio');
+  assert.equal(destinoDaBio('instagram'), '/comecar?utm_source=instagram&utm_medium=bio');
   assert.deepEqual(CAMINHO_DA_BIO, { instagram: '/ig', tiktok: '/tt' });
 });
 
