@@ -166,12 +166,13 @@ export async function POST(request) {
         [incluiProjecao && "Previsão do Ano", incluiHumanDesign && "Human Design"].filter(Boolean).join(" + ");
 
       after(async () => {
+        const atribuicao = await buscarAtribuicao(supabase, analiseId);
         await sendGA4Purchase({
           transactionId: paymentId.toString(),
           value: payment.transaction_amount ?? 0,
           currency: (payment.currency_id || "BRL").toUpperCase(),
           clientId: `server.${paymentId}`,
-          atribuicao: await buscarAtribuicao(supabase, analiseId),
+          atribuicao,
           item: produtosUpsellLabel,
         });
 
@@ -190,6 +191,7 @@ export async function POST(request) {
           email: upsellAnaliseData?.email,
           phone: payerPhone,
           analiseId,
+          atribuicao, // fbc/fbp do checkout, só com aceite de cookies
           contentName: produtosUpsellLabel,
         });
 
@@ -237,12 +239,13 @@ export async function POST(request) {
       }
 
       after(async () => {
+        const atribuicao = await buscarAtribuicao(supabase, analiseId);
         await sendGA4Purchase({
           transactionId: paymentId.toString(),
           value: payment.transaction_amount ?? 0,
           currency: (payment.currency_id || "BRL").toUpperCase(),
           clientId: `server.${paymentId}`,
-          atribuicao: await buscarAtribuicao(supabase, analiseId),
+          atribuicao,
           item: "Compatibilidade Completa",
         });
 
@@ -260,6 +263,7 @@ export async function POST(request) {
           email: compatAnaliseData?.email,
           phone: payerPhone,
           analiseId,
+          atribuicao, // fbc/fbp do checkout, só com aceite de cookies
           contentName: "Compatibilidade Completa",
         });
 

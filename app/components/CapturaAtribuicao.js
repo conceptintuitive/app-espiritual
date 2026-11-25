@@ -13,10 +13,13 @@
 //    POST /api/social/visita (anônimo; lib/utmSocial.js).
 //  - utmGuardada(): só as UTMs guardadas, pro perfil do Seu Dia.
 //  - declararFormato(utm): /comecar, a pessoa tocou num post (formato declarado).
+//  - Meta: com aceite, fbc (cookie _fbc do Pixel ou o fbclid guardado na
+//    entrada) e fbp (cookie _fbp) vão junto, pra Conversions API (lib/meta.js).
+//    coletarMeta() = só esses dois (cadastro da Minha Área, StartTrial).
 
 import { useEffect } from 'react';
 import {
-  GA4_WEB_ID, CHAVE_ATRIB, cliquesDaUrl, mesclarCliques, clientIdDoCookie, sessionIdDoCookie,
+  GA4_WEB_ID, CHAVE_ATRIB, cliquesDaUrl, mesclarCliques, clientIdDoCookie, sessionIdDoCookie, fbcDoClique,
 } from '@/lib/atribuicao';
 import { visitaDasRedes } from '@/lib/utmSocial';
 
@@ -126,6 +129,21 @@ function gtagGet(campo, ms = 900) {
   });
 }
 
+// fbc: o cookie do Pixel manda; sem ele, o fbclid guardado na entrada. fbp: cookie do Pixel.
+function metaDoNavegador(cliques) {
+  const fbc = cookie('_fbc') || fbcDoClique(cliques?.fbclid, cliques?.ts);
+  const fbp = cookie('_fbp');
+  return { ...(fbc ? { fbc } : {}), ...(fbp ? { fbp } : {}) };
+}
+
+/** Só fbc/fbp, com aceite de cookies (sem aceite: { consent: false }). */
+export function coletarMeta() {
+  let consent = false;
+  try { consent = window.localStorage.getItem('ic_consent') === 'sim'; } catch {}
+  if (!consent) return { consent: false };
+  return { consent: true, ...metaDoNavegador(lerJson(CHAVE_ATRIB)) };
+}
+
 /** @returns {Promise<object>} o que vai no body dos checkouts e do gerar-analise como `atribuicao` */
 export async function coletarAtribuicao() {
   let consent = false;
@@ -136,6 +154,7 @@ export async function coletarAtribuicao() {
   const cliques = lerJson(CHAVE_ATRIB) || {};
   return {
     consent: true,
+    ...metaDoNavegador(cliques),
     client_id: cid || clientIdDoCookie(cookie('_ga')),
     session_id: sid || sessionIdDoCookie(cookie(`_ga_${container}`)),
     gclid: cliques.gclid, gbraid: cliques.gbraid, wbraid: cliques.wbraid,

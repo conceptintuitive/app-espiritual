@@ -155,7 +155,6 @@ function QuizOverlay({ onClose }) {
 
     try {
       try { window?.gtag?.('event', 'lead_submit', { event_category: 'lead', event_label: 'quiz_overlay', seu_dia: querSeuDia }); } catch {}
-      try { window?.fbq?.('track', 'Lead'); } catch {}
 
       const res = await fetch('/api/gerar-analise', {
         method: 'POST',
@@ -174,6 +173,9 @@ function QuizOverlay({ onClose }) {
         throw new Error(msg);
       }
       if (data?.id) {
+        // Lead do Pixel só com a análise criada e com o mesmo id do Lead da
+        // Conversions API (lib/meta.js: "lead-<id>"): a Meta junta os dois.
+        try { window?.fbq?.('track', 'Lead', {}, { eventID: `lead-${data.id}` }); } catch {}
         // O /resultado troca "Receber meu dia às 7h" por "já está chegando".
         if (querSeuDia) { try { window.localStorage.setItem(`ic_sd_quiz_${data.id}`, '1'); } catch {} }
         limparCeuDados();

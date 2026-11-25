@@ -163,12 +163,13 @@ async function handlePaymentSuccess(session, supabase) {
     }
 
     // GA4 purchase ─────────────────────────────────────────────────────────────
+    const atribuicao = await buscarAtribuicao(supabase, analiseId);
     await sendGA4Purchase({
       transactionId: session.id,
       value: (session.amount_total ?? 0) / 100,
       currency: (session.currency || "brl").toUpperCase(),
       clientId: `server.${session.id}`,
-      atribuicao: await buscarAtribuicao(supabase, analiseId),
+      atribuicao,
       item: "Manual do seu Mapa",
     });
 
@@ -191,6 +192,7 @@ async function handlePaymentSuccess(session, supabase) {
       analiseId,
       clientIp: checkoutIp,
       userAgent: checkoutUserAgent,
+      atribuicao, // fbc/fbp do checkout, só com aceite de cookies
     });
 
     // Email de acesso ──────────────────────────────────────────────────────────

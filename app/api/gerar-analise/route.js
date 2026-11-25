@@ -4,7 +4,7 @@ import { calcularPlanetas, calcularAscendente, calcularAnoPessoal, calcularNumer
 import { gerarPreviewIA, gerarDiagnosticoIA, gerarAmorIA, gerarArquetiposIA, gerarPlano7IA, gerarInterpretacaoTarotIA } from '@/lib/ia';
 import { buildDiagnosticoCtx, buildAmorCtx, buildArquetiposCtx, buildPlano7Ctx } from '@/lib/manualgenerator';
 import { sortearCarta, TAROT_PROMPTS_EN } from '@/lib/tarot';
-import { sendMetaLead } from '@/lib/meta';
+import { sendMetaLead, sendMetaStartTrial } from '@/lib/meta';
 import { salvarAtribuicao } from '@/lib/ga4';
 import { emailValido } from '@/lib/emailValidacao';
 import { FUSOS_BR } from '@/lib/fusoBR';
@@ -241,6 +241,17 @@ export async function POST(request) {
             const u = await gravarUtmNoPerfil(adminSeuDia(), email.trim().toLowerCase(), body.atribuicao);
             if (!u.ok && u.motivo !== 'sem utm') console.error('⚠️ UTM no perfil do Seu Dia:', u.motivo);
           }
+          // O teste de 7 dias começou agora: StartTrial pra Meta (Conversions API, 1x por pessoa).
+          if (r.ok && r.comecouTeste) {
+            await sendMetaStartTrial({
+              email: email.trim().toLowerCase(),
+              phone: telefone?.trim() || null,
+              clientIp,
+              userAgent,
+              atribuicao: body?.atribuicao ?? null,
+              origem: 'quiz',
+            });
+          }
         } catch (e) {
           console.error('⚠️ Seu Dia do quiz não criado:', e?.message);
         }
@@ -303,6 +314,8 @@ export async function POST(request) {
         analiseId,
         clientIp,
         userAgent,
+        // fbc/fbp (clique do anúncio e cookie do Pixel), só com aceite de cookies
+        atribuicao: body?.atribuicao ?? null,
       });
 
       try {

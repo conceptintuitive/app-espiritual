@@ -31,7 +31,7 @@ import { textoTeste } from '@/lib/testeSeuDia';
 import TelaConfirmar from './TelaConfirmar';
 import { precisaConfirmar, marcaConfirmacao } from '@/lib/minhaArea';
 import { consumirEmailSeuDia } from '@/lib/seuDiaRepasse';
-import { utmGuardada } from '@/app/components/CapturaAtribuicao';
+import { utmGuardada, coletarMeta } from '@/app/components/CapturaAtribuicao';
 import { CHAVE_JORNADA, lerJornada, diaDaJornada, hojeBrasilia } from '@/lib/manualLeitura';
 import ma from './minhaArea.module.css';
 
@@ -321,6 +321,7 @@ function TelaDados({ perfil, onSalvo, onCancelar }) {
         cidade: cidade ? { ibge: cidade.ibge, nome: cidade.nome, uf: cidade.uf, lat: cidade.lat, lon: cidade.lon, tz: cidade.tz } : null,
         emailDiario,
         utm: utmGuardada(),
+        meta: coletarMeta(), // fbc/fbp pro StartTrial, só com aceite de cookies
       },
     });
     setSalvando(false);

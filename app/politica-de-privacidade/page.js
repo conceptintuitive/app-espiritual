@@ -89,10 +89,12 @@ export default function PoliticaDePrivacidadePage() {
         </p>
         <p style={styles.p}>
           Quando você chega por um anúncio, o identificador do clique (como o <code>gclid</code> do
-          Google) e a origem da campanha ficam guardados só no seu aparelho. Se você aceitar os
-          cookies, ao fazer o mapa ou uma compra guardamos esse identificador e o identificador do
-          Google Analytics junto com a sua análise, para que a compra seja atribuída ao anúncio
-          certo. Sem o aceite, nada disso sai do seu aparelho.
+          Google ou o <code>fbclid</code> da Meta) e a origem da campanha ficam guardados só no seu
+          aparelho. Se você aceitar os cookies, ao fazer o mapa, começar o teste grátis do Seu Dia ou
+          fazer uma compra, guardamos esse identificador e os identificadores do Google Analytics e do
+          Pixel da Meta junto com a sua análise, e os enviamos à ferramenta de anúncio correspondente,
+          para que o cadastro ou a compra sejam atribuídos ao anúncio certo. Sem o aceite, nada disso
+          sai do seu aparelho.
         </p>
         <p style={styles.p}>
           Também registramos de qual campanha ou rede você veio (por exemplo, &ldquo;Instagram, link da
