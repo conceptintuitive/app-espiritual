@@ -277,7 +277,9 @@ with esperado(migracao, tipo, tabela, item) as (
   ('0029_reels_interativo', 'coluna', 'social_reels_interativos', 'gerado_em'),
   ('0029_reels_interativo', 'coluna', 'social_reels_interativos', 'narrado_em'),
   ('0029_reels_interativo', 'coluna', 'social_reels_interativos', 'publicado_em'),
-  ('0029_reels_interativo', 'rls', 'social_reels_interativos', null)
+  ('0029_reels_interativo', 'rls', 'social_reels_interativos', null),
+  -- 0030
+  ('0030_frase_do_dia', 'coluna', 'social_posts', 'formato')
 ),
 conferido as (
   select e.*,

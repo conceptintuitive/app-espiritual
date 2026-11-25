@@ -1,7 +1,8 @@
 // GET /api/social/imagem/<AAAA-MM-DD>/<arquivo>?i=<índice>&v=<versão>&t=<assinatura>
 // Artes do dia, públicas pra o Instagram, o TikTok e o Creatomate baixarem (e
 // pra prévia). arquivo: story.jpg, c1.jpg…c7.jpg (carrossel; feed.jpg = c1),
-// ceu.jpg (fundo do Reels), r1.png…r3.png (textos do Reels).
+// ceu.jpg (fundo do Reels), r1.png…r3.png (textos do Reels), frase.jpg (Story da
+// frase do dia; `i` = a frase na tabela de lib/frases.js).
 // A URL é assinada com HMAC (lib/social.js, segredo = CRON_SECRET): sem a
 // assinatura certa, 404. O texto vem de social_conteudos (ou da reserva, pelo
 // índice da URL). `v` muda quando o texto muda, então o cache longo é seguro.
@@ -36,8 +37,8 @@ export async function GET(request, { params }) {
   }
 
   try {
-    const { dados, conteudo } = await conteudoParaArte(supabaseServidor(), data, indice);
-    const arte = await gerarArte({ data, formato, dados, conteudo });
+    const { dados, conteudo } = formato === 'frase' ? {} : await conteudoParaArte(supabaseServidor(), data, indice);
+    const arte = await gerarArte({ data, formato, dados, conteudo, indice });
     if (!arte) return new Response('Essa tela não existe', { status: 404 });
     return new Response(arte.buffer, {
       headers: {
