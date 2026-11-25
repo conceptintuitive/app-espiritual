@@ -100,3 +100,18 @@ test('chamada das respostas: "Seu mapa é grátis", dentro do vocabulário da ma
   // a resposta inteira (número + chamada) também passa, nos 4 modelos
   for (const m of [0, 1, 2, 3]) assert.deepEqual(problemasDoTexto(respostaParaData('1990-07-14', m).texto), [], `modelo ${m}`);
 });
+
+test('tabela dos números (a do bot, do Manual e das páginas): nenhum campo fora das regras da marca', async () => {
+  const { problemasDoTexto } = await import('../lib/socialEditorial.js');
+  const { NUMERO_PROFUNDO } = await import('../lib/manualgenerator.js');
+  for (const [n, campos] of Object.entries(NUMERO_PROFUNDO)) {
+    for (const [campo, texto] of Object.entries(campos)) assert.deepEqual(problemasDoTexto(texto), [], `${n}.${campo}: ${texto}`);
+  }
+  // revisão de nov/2026: sem "cura" na essência do 33 e sem "ansiedade" na sombra do 11
+  assert.equal(NUMERO_PROFUNDO[33].essencia, 'amor elevado, cuidado que transforma e presença que ajuda o outro a se reerguer');
+  assert.equal(NUMERO_PROFUNDO[11].sombra, 'mente acelerada, sobrecarga e excesso de estímulo interno');
+  // datas que dão 33 e 11: as 4 respostas do bot passam
+  for (const data of ['1990-07-16', '1990-07-12']) {
+    for (const m of [0, 1, 2, 3]) assert.deepEqual(problemasDoTexto(respostaParaData(data, m).texto), [], `${data} modelo ${m}`);
+  }
+});
