@@ -4,6 +4,7 @@ import { ANJOS } from '@/lib/anjos';
 import { SELOS } from '@/lib/kin';
 import { RAMOS } from '@/lib/bazi';
 import { DEUSES } from '@/lib/seoChines';
+import { ARCANOS_SEO } from '@/lib/seoTarot';
 
 const BASE_URL = 'https://intuitiveconcept.com.br';
 
@@ -15,6 +16,7 @@ export default function sitemap() {
     { url: `${BASE_URL}/blog`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
     { url: `${BASE_URL}/signos`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6 },
     { url: `${BASE_URL}/numerologia`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${BASE_URL}/tarot`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6 },
     { url: `${BASE_URL}/assinar`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
     { url: `${BASE_URL}/seu-dia`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
     { url: `${BASE_URL}/ceu`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
@@ -26,6 +28,7 @@ export default function sitemap() {
     ...RAMOS.map((x) => ({ url: `${BASE_URL}/astrologia-chinesa/animal/${x.slug}`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.6 })),
     ...DEUSES.map((x) => ({ url: `${BASE_URL}/astrologia-chinesa/dez-deuses/${x.slug}`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.5 })),
     ...ANJOS.map((a) => ({ url: `${BASE_URL}/anjo-da-guarda/${a.slug}`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.5 })),
+    ...ARCANOS_SEO.map((a) => ({ url: `${BASE_URL}/tarot/${a.slug}`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.5 })),
   ];
 
   const posts = BLOG_POSTS.map((post) => ({

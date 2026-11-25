@@ -1,0 +1,54 @@
+/* Páginas públicas de SEO no visual da Minha Área (nov/2026): /tarot,
+   /tarot/[slug] e /numerologia/numero-N. A base (tokens, fontes, coluna,
+   título, corpo, botão) vem de app/blog/blog.module.css; aqui só o que é
+   delas. */
+
+.migalhas { display: flex; flex-wrap: wrap; gap: 6px 10px; font-family: var(--mono); font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--apagado); }
+.migalhas a { color: var(--apagado); text-decoration: none; }
+.migalhas a:hover { color: var(--texto); }
+
+.numeroGrande { font-family: var(--serif); font-size: 96px; line-height: .85; color: var(--ouro); }
+.palavras { display: flex; flex-wrap: wrap; gap: 8px; }
+.palavra { min-height: 30px; display: inline-flex; align-items: center; padding: 0 12px; border-radius: 999px; border: 1px solid rgba(242,199,123,.35);
+  font-family: var(--mono); font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--ouro); }
+
+.pratica { font-family: var(--serif); font-size: 28px; line-height: 1.2; color: var(--texto); padding: 22px 0; border-top: 1px solid var(--linha); border-bottom: 1px solid var(--linha); margin: 0 0 22px; }
+
+/* ol.perguntas li ganha do ".corpo li" do blog (mais específico) */
+ol.perguntas { list-style: none; margin: 0 0 24px; padding: 0; counter-reset: p; }
+ol.perguntas li { position: relative; padding: 12px 0 12px 40px; border-top: 1px solid var(--linha); line-height: 1.6; }
+ol.perguntas li:last-child { border-bottom: 1px solid var(--linha); }
+ol.perguntas li::before { counter-increment: p; content: counter(p); position: absolute; top: 9px; left: 4px; width: auto; height: auto; background: none;
+  font-family: var(--serif); font-size: 24px; line-height: 1.4; color: var(--ouro); }
+
+.conta { font-family: var(--mono); font-size: 14px; letter-spacing: .04em; color: var(--ouro-2); }
+
+.vizinhos { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 36px 0 0; }
+.vizinho { display: flex; flex-direction: column; gap: 6px; padding: 16px 0; border-top: 1px solid var(--linha); text-decoration: none; }
+.vizinho:last-child { text-align: right; }
+.vizinho span { font-family: var(--mono); font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--apagado); }
+.vizinho b { font-family: var(--serif); font-weight: 400; font-size: 22px; color: var(--texto); }
+.vizinho:hover b { color: var(--ouro-2); }
+
+.grade { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr; border-bottom: 1px solid var(--linha); }
+.cartao { display: grid; grid-template-columns: 56px 1fr; gap: 14px; align-items: baseline; padding: 18px 0; border-top: 1px solid var(--linha); text-decoration: none; }
+.cartaoNum { font-family: var(--serif); font-size: 34px; line-height: 1; color: var(--ouro); }
+.cartaoNome { font-family: var(--serif); font-weight: 400; font-size: 24px; line-height: 1.1; margin: 0; color: var(--texto); }
+.cartao:hover .cartaoNome { color: var(--ouro-2); }
+.cartaoPalavras { font-family: var(--mono); font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--apagado); margin-top: 6px; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { min-height: 36px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 999px; border: 1px solid rgba(243,233,218,.2);
+  font-family: var(--mono); font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--areia); text-decoration: none; }
+.chip:hover { border-color: var(--ouro); color: var(--ouro); }
+
+@media (min-width: 700px) {
+  .numeroGrande { font-size: 128px; }
+  .pratica { font-size: 34px; }
+  .grade { grid-template-columns: 1fr 1fr; column-gap: 40px; }
+  .cartaoNome { font-size: 28px; }
+}
+
+/* link dentro do texto (o .blog a herda a cor; aqui precisa aparecer) */
+a.link:any-link { color: var(--ouro-2); text-decoration: underline; text-decoration-color: rgba(255,220,160,.45); text-underline-offset: 4px; }
+a.link:any-link:hover { color: var(--ouro); text-decoration-color: var(--ouro); }
