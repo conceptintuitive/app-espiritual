@@ -88,6 +88,7 @@ let falharPublish = 0;
 let comentarios = [];
 let renderStatus = 'rendering';
 let elevenFalha = false;
+let insightsFalha = false; // true = token sem permissão de insights
 const BASE = 'https://site.teste';
 global.fetch = async (url, opts = {}) => {
   const u = String(url);
@@ -130,6 +131,12 @@ global.fetch = async (url, opts = {}) => {
     return new Response(null, { status: bancoAtual?.storage?.[bucket]?.has(resto.join('/')) ? 200 : 404 });
   }
   if (u.includes('fields=status_code')) return json({ status_code: 'FINISHED' });
+  if (/\/insights\?/.test(u)) {
+    chamadas.insights.push(u.split('/insights')[0].split('/').pop());
+    if (insightsFalha) return json({ error: { message: '(#10) Application does not have permission for this action', code: 10 } }, 403);
+    const n = Number(/midia-(\d+)/.exec(u)?.[1] || 1);
+    return json({ data: ['reach', 'views', 'saved', 'shares', 'likes', 'comments'].map((name, k) => ({ name, values: [{ value: n * 100 + k }] })) });
+  }
   if (u.includes('fields=username')) {
     chamadas.conferencias.push(u);
     if (u.includes('access_token=token-invalido')) return json({ error: { message: 'Invalid OAuth access token', code: 190 } }, 400);
@@ -152,7 +159,7 @@ const novoDb = () => ({
 });
 const rodar = (db, data, redes = ['instagram'], extra = {}) => postarDia({ supabase: fakeSupabase(db), data, redes, baseUrl: BASE, segredo: 'segredo', esperarReelsMs: 0, ...extra });
 
-beforeEach(() => { chamadas = { imagens: [], containers: [], publicados: [], refresh: 0, conferencias: [], renders: [], respostas: [], eleven: [] }; falharPublish = 0; comentarios = []; renderStatus = 'rendering'; elevenFalha = false; });
+beforeEach(() => { chamadas = { imagens: [], containers: [], publicados: [], refresh: 0, conferencias: [], renders: [], respostas: [], eleven: [], insights: [] }; falharPublish = 0; insightsFalha = false; comentarios = []; renderStatus = 'rendering'; elevenFalha = false; });
 
 test('segunda: story + carrossel de 6 telas; rodar 2x não posta de novo e a série anda 1 vez', async () => {
   const db = novoDb();
@@ -983,4 +990,142 @@ test('bot: no Reels interativo de carta publicado, "2" ganha o recado da carta 2
   const r3 = await responderComentarios({ supabase: fakeSupabase(db3), pausaMs: 0 });
   assert.deepEqual(chamadas.respostas.map((x) => x.comentario), ['y2']);
   assert.equal(r3.erros.length, 0);
+});
+
+// ── Frase do dia (SOCIAL_FRASE_DO_DIA=on, migração 0030) ───────────────────
+const ENV_FRASE = { SOCIAL_FRASE_DO_DIA: 'on', SOCIAL_REELS_NARRADO: null, SOCIAL_REELS_INTERATIVO: null, SOCIAL_RESPOSTAS: null };
+// 21h10 de 03/12 em Brasília = 00h10 de 04/12 em UTC
+const AS_21H = new Date('2026-12-04T00:10:00Z');
+
+test('frase do dia: Story às 21h pelo cron da hora, 1 por dia, com a frase da tabela; antes das 21h ou desligada, nada', async () => {
+  const { fraseDoDia, FRASES } = await import('../lib/frases.js');
+  await comEnv(ENV_FRASE, async () => {
+    const db = novoDb();
+    const sb = fakeSupabase(db);
+    // 20h10: ainda não
+    let r = await tarefasDaHora({ supabase: sb, data: '2026-12-03', agora: new Date('2026-12-03T23:10:00Z'), baseUrl: BASE, segredo: 'segredo' });
+    assert.equal(r.frase, null);
+    assert.equal(chamadas.containers.length, 0);
+    // 21h10: posta
+    r = await tarefasDaHora({ supabase: sb, data: '2026-12-03', agora: AS_21H, baseUrl: BASE, segredo: 'segredo' });
+    const f = fraseDoDia('2026-12-03');
+    assert.equal(r.frase.ok, true, JSON.stringify(r.frase));
+    assert.equal(r.frase.frase, f.id);
+    assert.equal(chamadas.containers.length, 1);
+    assert.equal(chamadas.containers[0].tipo, 'STORIES');
+    assert.match(chamadas.containers[0].imagem, new RegExp(`/api/social/imagem/2026-12-03/frase\\.jpg\\?i=${FRASES.indexOf(f)}&v=[0-9a-f]+&t=`));
+    const linha = db.social_posts.find((p) => p.tipo === 'story_frase');
+    assert.equal(linha.status, 'ok');
+    assert.equal(linha.item, f.id);
+    // 22h10: já saiu, não posta de novo
+    r = await tarefasDaHora({ supabase: sb, data: '2026-12-03', agora: new Date('2026-12-04T01:10:00Z'), baseUrl: BASE, segredo: 'segredo' });
+    assert.ok(r.frase.pulado);
+    assert.equal(chamadas.containers.length, 1);
+    // o Story da manhã (energia) não é afetado: trava separada
+    assert.ok(!db.social_posts.some((p) => p.tipo === 'story'));
+  });
+  await comEnv({ ...ENV_FRASE, SOCIAL_FRASE_DO_DIA: null }, async () => {
+    const r = await tarefasDaHora({ supabase: fakeSupabase(novoDb()), data: '2026-12-03', agora: AS_21H, baseUrl: BASE, segredo: 'segredo' });
+    assert.equal(r.frase, null, 'desligada de fábrica');
+  });
+});
+
+test('frase do dia: erro no Instagram vira erro na trava (até 3 tentativas) e 1 e-mail no dia', async () => {
+  await comEnv(ENV_FRASE, async () => {
+    const db = novoDb();
+    const sb = fakeSupabase(db);
+    falharPublish = 1;
+    const r = await tarefasDaHora({ supabase: sb, data: '2026-12-03', agora: AS_21H, baseUrl: BASE, segredo: 'segredo' });
+    assert.match(r.frase.erro, /Falha de teste/);
+    assert.equal(db.social_posts.find((p) => p.tipo === 'story_frase').status, 'erro');
+    assert.ok(db.social_alertas.some((a) => a.chave.includes('frase')));
+    const r2 = await tarefasDaHora({ supabase: sb, data: '2026-12-03', agora: new Date('2026-12-04T01:10:00Z'), baseUrl: BASE, segredo: 'segredo' });
+    assert.equal(r2.frase.ok, true, 'a próxima hora tenta de novo');
+    assert.equal(db.social_posts.find((p) => p.tipo === 'story_frase').tentativas, 2);
+  });
+});
+
+test('frase do dia: na sexta o Reel é a frase (voz: frase + crédito, depois "Hoje" + chamada); legenda com crédito; outros dias como antes', async () => {
+  const { fraseDoDia, creditoDaFrase, creditoFalado } = await import('../lib/frases.js');
+  await comEnv({ ...ENV_NARRADO, ...ENV_FRASE, SOCIAL_REELS_NARRADO: 'on' }, async () => {
+    const db = dbInterativo();
+    bancoAtual = db;
+    const sb = fakeSupabase(db);
+    const SEXTA = '2026-12-04';
+    const f = fraseDoDia(SEXTA);
+    const t = await trabalhoDoReels({ supabase: sb, data: SEXTA, baseUrl: BASE, segredo: 'segredo', chamar: iaNarrado() });
+    assert.equal(t.interativo, 'frase', t.aviso);
+    assert.deepEqual(chamadas.eleven.map((c) => c.corpo.text), [`${f.frase} ${creditoFalado(f)}`, `${f.hoje} Faz o seu mapa grátis: link na bio.`]);
+    assert.equal(t.narracao.cena.frase, f.frase);
+    assert.equal(t.narracao.cena.credito, creditoDaFrase(f));
+    assert.ok(t.narracao.eventos.credito > 0.5 && t.narracao.eventos.hoje > t.narracao.eventos.credito);
+    db.storage.reels.add(t.upload.caminho);
+    const pub = await publicarReelsDoArquivo({ supabase: sb, data: SEXTA, caminho: t.upload.caminho, narrado: true, interativo: 'frase' });
+    assert.ok(pub.ok);
+    const c = chamadas.containers.find((x) => x.tipo === 'REELS');
+    assert.ok(c.legenda.startsWith(`“${f.frase}”`));
+    assert.ok(c.legenda.includes(creditoDaFrase(f)));
+    assert.ok(c.legenda.includes(f.hoje));
+    assert.match(c.legenda, /#frasedodia/);
+    assert.equal(db.social_posts.find((p) => p.tipo === 'reels').formato, 'frase', 'formato gravado pros insights');
+    // quinta continua narrado (chave do narrado ligada)
+    const q = await trabalhoDoReels({ supabase: fakeSupabase(dbInterativo()), data: '2026-12-03', baseUrl: BASE, segredo: 's', chamar: iaNarrado() });
+    assert.equal(q.interativo, undefined);
+    assert.equal(q.narrado, true);
+  });
+  bancoAtual = null;
+  // desligada: a sexta é o narrado de antes
+  await comEnv(ENV_NARRADO, async () => {
+    const t = await trabalhoDoReels({ supabase: fakeSupabase(dbInterativo()), data: '2026-12-04', baseUrl: BASE, segredo: 's', chamar: iaNarrado() });
+    assert.equal(t.interativo, undefined);
+    assert.equal(t.narrado, true);
+  });
+});
+
+test('frase do dia: falhou na sexta = narrado (se ligado) ou card de 9s, com aviso', async () => {
+  // só a frase ligada (sem narrado): ElevenLabs fora → card
+  await comEnv({ ...ENV_NARRADO, ...ENV_FRASE, SOCIAL_REELS_NARRADO: null }, async () => {
+    elevenFalha = true;
+    const t = await trabalhoDoReels({ supabase: fakeSupabase(dbInterativo()), data: '2026-12-04', baseUrl: BASE, segredo: 's', chamar: iaNarrado() });
+    assert.equal(t.narrado, false);
+    assert.match(t.aviso, /frase do dia falhou, foi pro card de 9s/);
+    elevenFalha = false;
+  });
+  // frase + narrado ligados, sem a migração 0029/0030 → narrado
+  await comEnv({ ...ENV_NARRADO, ...ENV_FRASE, SOCIAL_REELS_NARRADO: 'on' }, async () => {
+    const t = await trabalhoDoReels({ supabase: fakeSupabase(dbNarrado()), data: '2026-12-04', baseUrl: BASE, segredo: 's', chamar: iaNarrado() });
+    assert.equal(t.narrado, true);
+    assert.equal(t.interativo, undefined);
+    assert.match(t.aviso, /frase do dia falhou, foi pro narrado/);
+  });
+});
+
+test('desempenho dos Reels: média por dia da semana (segunda primeiro) e formato; sem permissão de insights, avisa', async () => {
+  const { desempenhoDosReels } = await import('../lib/socialServidor.js');
+  const db = novoDb();
+  // segundas 30/11 (2 Reels) e sexta 04/12; post sem post_id fica de fora
+  db.social_posts.push(
+    { data: '2026-11-30', rede: 'instagram', tipo: 'reels', status: 'ok', post_id: 'midia-1', formato: 'numero' },
+    { data: '2026-11-23', rede: 'instagram', tipo: 'reels', status: 'ok', post_id: 'midia-3', formato: 'card' },
+    { data: '2026-12-04', rede: 'instagram', tipo: 'reels', status: 'ok', post_id: 'midia-5', formato: 'frase' },
+    { data: '2026-12-02', rede: 'instagram', tipo: 'reels', status: 'erro', post_id: null },
+    { data: '2026-12-04', rede: 'instagram', tipo: 'story', status: 'ok', post_id: 'midia-9' },
+  );
+  const r = await desempenhoDosReels({ supabase: fakeSupabase(db), hoje: '2026-12-05' });
+  assert.equal(r.reels, 3);
+  assert.deepEqual(r.linhas.map((l) => l.nome), ['Segunda', 'Sexta']);
+  const seg = r.linhas[0];
+  assert.equal(seg.reels, 2);
+  assert.equal(seg.media.reach, 200, 'média de 100 e 300');
+  assert.equal(seg.media.shares, 203);
+  assert.match(seg.formatos, /numero/);
+  assert.match(seg.formatos, /card/);
+  assert.equal(r.linhas[1].media.reach, 500);
+  assert.deepEqual(chamadas.insights.sort(), ['midia-1', 'midia-3', 'midia-5']);
+  insightsFalha = true;
+  chamadas.insights = [];
+  const r2 = await desempenhoDosReels({ supabase: fakeSupabase(db), hoje: '2026-12-05' });
+  assert.equal(r2.reels, 0);
+  assert.match(r2.erro, /permission/);
+  assert.ok(chamadas.insights.length <= 5, 'sem permissão, para no 1º lote');
 });

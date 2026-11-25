@@ -12,7 +12,11 @@
 // ou os números, a legenda, as respostas do bot e, depois de narrado, o áudio
 // de cada trecho e o link pra assistir. Pra narrar UM dia antes de ligar
 // SOCIAL_REELS_INTERATIVO (gasta caracteres do ElevenLabs, sem IA):
-//   &interativo=AAAA-MM-DD&gerar=1[&formato=carta|pausa|numero]
+//   &interativo=AAAA-MM-DD&gerar=1[&formato=carta|pausa|numero|frase]
+// Frase do dia (SOCIAL_FRASE_DO_DIA, migração 0030): por dia, a frase da tabela
+// fixa (lib/frases.js), o card do Story das 21h e, na sexta, o Reel da frase.
+// Desempenho dos Reels por dia da semana (insights do Instagram dos últimos 56
+// dias, precisa da permissão de insights no token); &insights=0 pula.
 // Mostra o conteúdo já gerado (social_conteudos, da IA); dia ainda não gerado
 // aparece com o texto de reserva, andando as séries a partir do banco. As
 // imagens usam as mesmas URLs assinadas que as redes vão baixar.
@@ -24,9 +28,12 @@ import {
 import {
   planoDaPrevia, limiteRespostasPorHora, motorReels, narradoLigado, TABELA_NARRADOS, garantirRoteiroNarrado, garantirNarracao,
   usoDoMes, bucketReels, caminhoDaPrevia, interativoLigado, TABELA_INTERATIVOS, garantirInterativo, FONTES_INTERATIVO,
+  fraseLigada, urlStoryFrase, HORA_STORY_FRASE, desempenhoDosReels,
 } from '@/lib/socialServidor';
+import { fraseDoDia, creditoDaFrase, frasesNoRodizio, FRASES, ehDominioPublico } from '@/lib/frases';
+import { METRICAS_REELS } from '@/lib/instagram';
 import {
-  FORMATO_POR_DIA, FORMATOS_INTERATIVOS, NOME_FORMATO, formatoDoDia, roteiroInterativo, textoDoSegmento, textoDoRoteiro, legendaInterativa,
+  FORMATO_POR_DIA, FORMATOS_INTERATIVOS, NOME_FORMATO, formatoDoDia, formatoDoReel, DIA_FRASE, roteiroInterativo, textoDoSegmento, textoDoRoteiro, legendaInterativa,
 } from '@/lib/reelsInterativo';
 import { narracaoConfigurada, limiteMensal, mesBrasilia } from '@/lib/elevenlabs';
 import { contarPalavras, duracaoDoVideo } from '@/lib/reelsRoteiro';
@@ -215,13 +222,14 @@ export async function GET(request) {
   const respostasBot = chaveLigada(process.env.SOCIAL_RESPOSTAS);
   const blocoInterativo = (d) => {
     const guardado = interativos.get(d.data);
-    const formato = guardado?.formato || formatoDoDia(d.data);
+    // a prévia mostra o formato de cada dia como sai com as chaves ligadas
+    const formato = guardado?.formato || formatoDoReel(d.data, { frase: true });
     if (!FORMATOS_INTERATIVOS.includes(formato)) return '';
     const r = roteiroInterativo(d.data, formato, FONTES_INTERATIVO);
     const pronto = guardado?.formato === formato && guardado.linha?.palavras?.length;
     const trechos = r.segmentos.map((seg, k) => {
       const narr = pronto ? guardado.segmentos.find((x) => x.id === seg.id) : null;
-      const pausa = seg.pausaDepois ? ` <small>· depois, ${seg.pausaDepois.toFixed(1)}s sem voz (${formato === 'carta' ? 'contador 3-2-1' : 'rajada de frases'})</small>` : '';
+      const pausa = seg.pausaDepois ? ` <small>· depois, ${seg.pausaDepois.toFixed(1)}s sem voz (${{ carta: 'contador 3-2-1', pausa: 'rajada de frases', frase: 'respiro antes do "Pra hoje"' }[formato] || 'pausa'})</small>` : '';
       return `<p class="rot">Trecho ${k + 1}${narr ? ` · entra aos ${guardado.linha.vozes[k].inicio.toFixed(1)}s` : ''}</p><p>${esc(textoDoSegmento(seg))}${pausa}</p>${narr ? `<audio controls preload="none" src="${esc(publico(narr.audio_caminho))}"></audio>` : ''}`;
     }).join('');
     let cena = '';
@@ -229,19 +237,21 @@ export async function GET(request) {
       cena = `<p class="rot">As 3 cartas do dia (sorteio fixo pela data)</p><ol>${r.cartas.map((c) => `<li><strong>${esc(c.nome)}</strong> (${esc(c.romano)}): ${esc(c.frase)}</li>`).join('')}</ol>`;
     } else if (formato === 'pausa') {
       cena = `<p class="rot">As ${r.cena.mensagens.length} práticas (0,4s cada, do "Faça" do Seu Dia)</p><ol>${r.cena.mensagens.map((m) => `<li>${esc(m)}</li>`).join('')}</ol>`;
+    } else if (formato === 'frase') {
+      cena = `<p class="rot">Na tela</p><p>“${esc(r.cena.frase)}”<br><small>${esc(r.cena.credito)}</small></p><p class="rot">Pra hoje (texto nosso)</p><p>${esc(r.cena.hoje)}</p>`;
     } else {
       const { dia, numero, passos } = r.cena.exemplo;
       cena = `<p class="rot">Exemplo na tela</p><p>dia ${dia}: ${passos.map(([de, so]) => `${String(de).split('').join(' + ')} = ${so}`).join(' → ')} → ${numero}</p>
         <p class="rot">Os 9 números (essência do Manual)</p><ol>${r.cena.numeros.map((x) => `<li>${esc(x.curta)}</li>`).join('')}</ol>`;
     }
-    const exemplos = formato === 'carta' ? ['2', 'carta 3', 'escolhi a um!', 'amei', '14/07/1990'] : formato === 'numero' ? ['7', 'sou o 4', 'nasci dia 28', '1 ou 2?', '14/07/1990'] : ['peguei a terceira', '3'];
+    const exemplos = formato === 'carta' ? ['2', 'carta 3', 'escolhi a um!', 'amei', '14/07/1990'] : formato === 'numero' ? ['7', 'sou o 4', 'nasci dia 28', '1 ou 2?', '14/07/1990'] : formato === 'frase' ? [] : ['peguei a terceira', '3'];
     const bot = exemplos.map((texto, k) => {
       const dec = decidirResposta({ id: `previa-${d.data}-${k}`, texto, interativo: { formato, data: d.data } });
       return `<tr><td>${esc(texto)}</td><td>${dec.responder ? esc(dec.texto) : `Não responde: ${esc(dec.motivo)}`}</td></tr>`;
     }).join('');
     const mp4 = previasMp4.get(d.data);
     return `<div class="narrado interativo">
-      <h3>Reels interativo · ${esc(NOME_FORMATO[formato])} · ${contarPalavras(textoDoRoteiro(r))} palavras · sem IA (tabelas do site)${pronto ? ` · vídeo de ${Number(guardado.linha.duracao).toFixed(1)}s` : ''}</h3>
+      <h3>${formato === 'frase' ? `Reels da frase do dia ${fraseLigada() ? '(ligado)' : '(desligado: SOCIAL_FRASE_DO_DIA)'}` : 'Reels interativo'} · ${esc(NOME_FORMATO[formato])} · ${contarPalavras(textoDoRoteiro(r))} palavras · sem IA (tabelas do site)${pronto ? ` · vídeo de ${Number(guardado.linha.duracao).toFixed(1)}s` : ''}</h3>
       <div class="artes">
         <div class="textos">${trechos}${cena}
           <p class="rot">Legenda do Reels interativo</p><pre>${esc(montarLegenda(legendaInterativa(r, { respostas: respostasBot })))}</pre>
@@ -249,20 +259,52 @@ export async function GET(request) {
         <div class="textos">
           ${pronto ? `<p><a href="${animacaoInterativa(d)}" target="_blank" rel="noreferrer">Assistir o vídeo com som</a> (a mesma página que o GitHub filma)</p>` : `<p class="meta">Sem narração ainda. <a href="${linkInterativo(d.data, formato)}">Narrar este dia</a> (uns ${textoDoRoteiro(r).length} caracteres do ElevenLabs, sem IA).</p>`}
           ${mp4 ? `<p class="rot">MP4 de prévia</p><video controls preload="none" width="270" src="${esc(mp4)}"></video>` : '<p class="meta">MP4 de prévia: Actions → Reels diário → Run workflow com esta data, previa = sim (e o formato, se quiser outro).</p>'}
-          <p class="rot">Bot nos comentários deste Reels ${respostasBot ? '(ligado)' : '(desligado: SOCIAL_RESPOSTAS)'}</p>
-          <table><tbody>${bot}</tbody></table>
+          ${exemplos.length ? `<p class="rot">Bot nos comentários deste Reels ${respostasBot ? '(ligado)' : '(desligado: SOCIAL_RESPOSTAS)'}</p>
+          <table><tbody>${bot}</tbody></table>` : ''}
         </div>
       </div>
     </div>`;
   };
   const formatoDoReels = (d) => {
-    const f = formatoDoDia(d.data);
+    const f = formatoDoReel(d.data, { frase: fraseLigada() });
+    if (f === 'frase') return 'Frase do dia';
     if (interativoLigado() && FORMATOS_INTERATIVOS.includes(f)) return `interativo, ${NOME_FORMATO[f]}`;
     if (narradoLigado() || interativoLigado()) return 'narrado';
     return motor ? 'card de 9s' : `sem Reels (SOCIAL_REELS) · no rodízio: ${NOME_FORMATO[f]}`;
   };
   const rodizio = `<section class="dia"><h2>Reels da semana <small>${interativoLigado() ? 'interativo ligado (SOCIAL_REELS_INTERATIVO=on): carta, pausa e número nos dias abaixo, narrado nos outros; falhou = narrado, depois card' : 'interativo desligado (SOCIAL_REELS_INTERATIVO): o rodízio abaixo é o que sai quando ligar'}</small></h2>
-  <table><thead><tr><th>Dia</th><th>Formato</th></tr></thead><tbody>${FORMATO_POR_DIA.map((f, k) => `<tr><td>${DIAS[k]}</td><td>${esc(NOME_FORMATO[f])}${f === 'narrado' ? ' (roteiro da IA, #158)' : ''}</td></tr>`).join('')}</tbody></table></section>`;
+  <table><thead><tr><th>Dia</th><th>Formato</th></tr></thead><tbody>${FORMATO_POR_DIA.map((f, k) => `<tr><td>${DIAS[k]}</td><td>${k === DIA_FRASE ? `Frase do dia ${fraseLigada() ? '(ligada)' : '(com SOCIAL_FRASE_DO_DIA=on; desligada, sai o narrado)'}` : `${esc(NOME_FORMATO[f])}${f === 'narrado' ? ' (roteiro da IA, #158)' : ''}`}</td></tr>`).join('')}</tbody></table></section>`;
+
+  // Frase do dia: o Story das 21h de cada dia (mesma frase do Reel da sexta)
+  const verificadas = frasesNoRodizio();
+  const blocoFrase = (d) => {
+    const f = fraseDoDia(d.data);
+    if (!f) return `<div class="narrado"><h3>Frase do dia</h3><p class="meta">Nenhuma frase verificada em lib/frases.js.</p></div>`;
+    const url = esc(urlStoryFrase('', segredo, d.data, f));
+    return `<div class="narrado">
+      <h3>Frase do dia · Story às ${HORA_STORY_FRASE}h ${fraseLigada() ? '(ligado)' : '(desligado: SOCIAL_FRASE_DO_DIA)'} · ${ehDominioPublico(f) ? 'domínio público' : 'autor com direitos'} · ${esc(f.id)}</h3>
+      <div class="artes">
+        <figure><img src="${url}" width="202" height="360" alt="Story da frase" loading="lazy"><figcaption>Story da frase</figcaption></figure>
+        <div class="textos"><p>“${esc(f.frase)}”</p><p class="meta">${esc(creditoDaFrase(f))} (${esc(f.ano)}) · fonte: ${esc(f.fonte)}</p><p class="rot">Pra hoje (só no Reel da sexta)</p><p>${esc(f.hoje)}</p></div>
+      </div>
+    </div>`;
+  };
+
+  // Desempenho dos Reels por dia da semana (insights do Instagram)
+  let desempenho = '';
+  if (supabase && searchParams.get('insights') !== '0') {
+    try {
+      const r = await desempenhoDosReels({ supabase });
+      const nomes = { reach: 'alcance', views: 'visualizações', saved: 'salvamentos', shares: 'compartilhamentos', likes: 'curtidas', comments: 'comentários' };
+      const corpo = r.linhas.length
+        ? `<table><thead><tr><th>Dia</th><th>Reels</th><th>Formato</th>${METRICAS_REELS.map((m) => `<th>${nomes[m]} (média)</th>`).join('')}</tr></thead><tbody>${r.linhas.map((l) => `<tr><td>${l.nome}</td><td>${l.reels}</td><td>${esc(l.formatos)}</td>${METRICAS_REELS.map((m) => `<td>${l.media[m].toLocaleString('pt-BR')}</td>`).join('')}</tr>`).join('')}</tbody></table>`
+        : '<p class="meta">Ainda sem Reels publicados com post_id nos últimos 56 dias.</p>';
+      desempenho = `<section class="dia"><h2>Desempenho dos Reels por dia da semana <small>últimos 56 dias · ${r.reels} Reels medidos · formato gravado a partir da migração 0030 · com menos de ~4 Reels por dia, é cedo pra decidir</small></h2>
+      ${r.erro ? `<p class="aviso">Insights: ${esc(r.erro)}. O token precisa da permissão de insights (instagram_manage_insights).</p>` : ''}${corpo}</section>`;
+    } catch (err) {
+      desempenho = `<section class="dia"><h2>Desempenho dos Reels por dia da semana</h2><p class="aviso">${esc(err.message)}</p></section>`;
+    }
+  }
 
   const blocos = dias.map((d) => {
     const e = energiaDoDia(d.data, d.conteudo.story);
@@ -288,6 +330,7 @@ export async function GET(request) {
           <pre>${esc([e.titulo, e.frase, ...e.linhas.map((l) => `${l.rotulo}: ${l.valor} — ${l.nota}`)].join('\n'))}</pre>
         </div>
       </div>
+      ${blocoFrase(d)}
       ${blocoInterativo(d)}
       ${blocoNarrado(d)}
     </section>`;
@@ -335,9 +378,11 @@ export async function GET(request) {
 <h1>Prévia dos posts automáticos</h1>
 <p class="meta">${dataCurta(dias[0].data)} a ${dataCurta(dias[dias.length - 1].data)} · nada aqui é postado.</p>
 <p class="meta">Automação: ${redes.length ? `ligada (${redes.join(' + ')})` : 'desligada (SOCIAL_AUTOMACAO)'} · Reels: ${reelsLigado ? `ligado (${NOME_MOTOR[motor]})` : 'desligado'} · Instagram: ${process.env.INSTAGRAM_ACCESS_TOKEN && process.env.INSTAGRAM_USER_ID ? `configurado (${modoInstagram() === 'facebook' ? 'graph.facebook.com' : 'graph.instagram.com'})` : 'falta token/ID'} · TikTok: ${chaveLigada(process.env.TIKTOK_DIRECT_POST) ? 'Direct Post nos dias aprovados, rascunho nos outros' : 'rascunhos'}</p>
+<p class="meta">Frase do dia: ${fraseLigada() ? `ligada (SOCIAL_FRASE_DO_DIA=on): Story às ${HORA_STORY_FRASE}h todo dia e o Reel da sexta` : 'desligada (SOCIAL_FRASE_DO_DIA)'} · ${verificadas.length} de ${FRASES.length} frases verificadas (${verificadas.filter(ehDominioPublico).length} em domínio público)</p>
 <p class="meta">Reels narrado: ${narradoLigado() ? 'ligado (SOCIAL_REELS_NARRADO=on)' : 'desligado (SOCIAL_REELS_NARRADO); o Reels sai no card de 9s'} · ElevenLabs: ${narracaoConfigurada() ? 'configurado' : 'falta ELEVENLABS_API_KEY/ELEVENLABS_VOICE_ID'} · uso do mês: ${uso == null ? '? (migração 0028)' : `${uso.toLocaleString('pt-BR')} de ${limiteMensal().toLocaleString('pt-BR')} caracteres`}</p>
 ${avisos.map((a) => `<p class="aviso">${esc(a)}</p>`).join('')}
 ${rodizio}
+${desempenho}
 ${blocoComentarios()}
 ${blocos}
 </main></body></html>`;

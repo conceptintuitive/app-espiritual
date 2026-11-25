@@ -9,6 +9,10 @@
 //           marcas de progresso; depois as 8, pequenas, pra quem voltou.
 //   numero  o exemplo (dia 28 → 2 + 8 = 10 → 1 + 0 = 1) montado conforme a voz
 //           fala, depois a grade 1–9 com o número falado aceso em dourado.
+//   frase   a frase do dia grande, acendendo palavra por palavra com a voz (ela
+//           mesma é a legenda); o crédito "— Autor, Livro" entra quando a voz
+//           diz o autor; depois a frase sobe e encolhe e entra "PRA HOJE" com o
+//           "Hoje, …" (texto nosso, separado da citação) e a chamada.
 // Tudo é função do tempo t (window.__quadro(t) na captura), nada de relógio:
 // o mesmo t dá sempre o mesmo quadro.
 //   captura: o robô chama window.__carregar({ formato, cena, eventos,
@@ -20,7 +24,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { REELS, escalaCeuNarrado } from '@/lib/reelsAnimacao';
 import { blocosDaLegenda, legendaNoTempo } from '@/lib/reelsRoteiro';
-import { cenaCarta, cenaPausa, cenaNumero, NOME_FORMATO } from '@/lib/reelsInterativo';
+import { cenaCarta, cenaPausa, cenaNumero, cenaFrase, NOME_FORMATO } from '@/lib/reelsInterativo';
 
 const OURO = '#f2c77b';
 const TEXTO = '#f3e9da';
@@ -276,6 +280,57 @@ function CenaNumero({ cena, eventos, t }) {
   );
 }
 
+// ── Frase do dia ───────────────────────────────────────────────────────────
+
+/** Palavras faladas de um trecho, acendendo como na legenda. */
+function Falado({ palavras, de, ate, t, tamanho, cor = TEXTO, italico = false }) {
+  let atual = -1;
+  for (let i = de; i < ate; i++) if (t >= palavras[i].ini) atual = i;
+  // o dourado é só da palavra sendo dita: terminou o trecho, volta ao branco
+  const falando = atual >= 0 && t <= palavras[atual].fim + 0.25 ? atual : -1;
+  return (
+    <p style={{ margin: 0, fontFamily: SERIF, fontSize: tamanho, lineHeight: 1.12, letterSpacing: '-0.01em', fontStyle: italico ? 'italic' : 'normal', textShadow: '0 4px 28px rgba(7,4,13,.85)' }}>
+      {palavras.slice(de, ate).map((p, k) => {
+        const i = de + k;
+        return (
+          <span key={i} style={{ color: i === falando ? OURO : cor, opacity: i <= atual ? 1 : 0.38 }}>
+            {p.texto}{i < ate - 1 ? ' ' : ''}
+          </span>
+        );
+      })}
+    </p>
+  );
+}
+
+function CenaFrase({ cena, eventos, palavras, t }) {
+  const { credito, hoje, fecho } = cenaFrase(eventos, t);
+  const nFrase = eventos.palavrasFrase;
+  // palavras: a frase, o crédito falado, o "Hoje, …" e a chamada (nessa ordem)
+  const iHoje = palavras.findIndex((p) => p.ini >= eventos.hoje - 0.001);
+  const iFecho = palavras.findIndex((p) => p.ini >= eventos.fecho - 0.001);
+  const tamanho = cena.frase.length <= 80 ? 92 : cena.frase.length <= 140 ? 80 : 68;
+  const s = suave(hoje);
+  return (
+    <>
+      {/* a citação: grande no meio; quando entra o "Pra hoje", sobe, encolhe e apaga um pouco */}
+      <div style={{ position: 'absolute', left: 96, right: 120, top: 560 - s * 260, display: 'flex', flexDirection: 'column', transformOrigin: 'left top', transform: `scale(${(1 - 0.34 * s).toFixed(4)})`, opacity: 1 - 0.45 * s }}>
+        <div style={{ fontFamily: SERIF, fontSize: 220, lineHeight: 0.6, height: 120, color: OURO }}>“</div>
+        <Falado palavras={palavras} de={0} ate={nFrase} t={t} tamanho={tamanho} />
+        <div style={{ width: `${Math.round(120 * credito)}px`, height: 2, background: OURO, marginTop: 52, marginBottom: 26 }} />
+        <div style={{ fontFamily: MONO, fontSize: 32, letterSpacing: '0.06em', color: OURO, opacity: credito, transform: `translateY(${(1 - credito) * 14}px)` }}>{cena.credito}</div>
+      </div>
+      {/* pra hoje: texto nosso, com rótulo próprio, separado da citação */}
+      {hoje > 0 && iHoje >= 0 && (
+        <div style={{ position: 'absolute', left: 96, right: 120, top: 1010 - 40 * s, display: 'flex', flexDirection: 'column', opacity: s }}>
+          <div style={{ fontFamily: MONO, fontSize: 26, letterSpacing: '0.3em', color: OURO, marginBottom: 22 }}>PRA HOJE</div>
+          <Falado palavras={palavras} de={iHoje} ate={iFecho >= 0 ? iFecho : palavras.length} t={t} tamanho={70} />
+          <div style={{ fontFamily: MONO, fontSize: 26, letterSpacing: '0.14em', color: OURO, marginTop: 40, opacity: fecho, textTransform: 'uppercase' }}>Faz o seu mapa grátis · link na bio</div>
+        </div>
+      )}
+    </>
+  );
+}
+
 // ── Página ─────────────────────────────────────────────────────────────────
 
 export default function ReelsInterativo({ ceu, dados: inicial, captura, dataRotulo }) {
@@ -370,7 +425,9 @@ export default function ReelsInterativo({ ceu, dados: inicial, captura, dataRotu
         {formato === 'carta' && <CenaCarta cena={dados.cena} eventos={dados.eventos} t={t} />}
         {formato === 'pausa' && <CenaPausa cena={dados.cena} eventos={dados.eventos} t={t} />}
         {formato === 'numero' && <CenaNumero cena={dados.cena} eventos={dados.eventos} t={t} />}
-        {palavras.length > 0 && <Legenda palavras={palavras} blocos={blocos} t={t} />}
+        {formato === 'frase' && palavras.length > 0 && <CenaFrase cena={dados.cena} eventos={dados.eventos} palavras={palavras} t={t} />}
+        {/* na frase do dia o próprio texto acende com a voz: sem legenda embaixo */}
+        {palavras.length > 0 && formato !== 'frase' && <Legenda palavras={palavras} blocos={blocos} t={t} />}
       </div>
       {!captura && dados?.vozes?.length > 0 && (
         <>

@@ -2,7 +2,7 @@
 // card=1: força o card de 9s (o workflow pede quando o vídeo narrado falha).
 // narrado=1: pula o interativo (o workflow pede quando o vídeo interativo falha).
 // previa=1: Reels de prévia (workflow com previa=sim), nunca publicado; o
-// formato é o do rodízio do dia, ou `formato` (carta, pausa, numero, narrado).
+// formato é o do rodízio do dia, ou `formato` (carta, pausa, numero, frase, narrado).
 // Com SOCIAL_REELS_NARRADO=on ou SOCIAL_REELS_INTERATIVO=on, gera o roteiro e
 // a narração aqui se faltarem (IA + ElevenLabs, por isso maxDuration 300).
 // Chamado pelo workflow do GitHub (scripts/reels/gerar.mjs): devolve a página
@@ -35,7 +35,7 @@ export async function GET(request) {
     const card = searchParams.get('card') === '1';
     const semInterativo = searchParams.get('narrado') === '1';
     const previa = searchParams.get('previa') === '1';
-    const formato = ['carta', 'pausa', 'numero', 'narrado'].includes(searchParams.get('formato')) ? searchParams.get('formato') : null;
+    const formato = ['carta', 'pausa', 'numero', 'frase', 'narrado'].includes(searchParams.get('formato')) ? searchParams.get('formato') : null;
     return NextResponse.json(await trabalhoDoReels({ supabase, data, baseUrl: getBaseUrl(), segredo, card, semInterativo, previa, formato }), { headers: { 'Cache-Control': 'no-store' } });
   } catch (err) {
     console.error('❌ reels/trabalho:', err.message);

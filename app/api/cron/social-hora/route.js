@@ -1,5 +1,6 @@
-// De hora em hora: termina os Reels que ficaram renderizando/processando e
-// responde comentários com data de nascimento (SOCIAL_RESPOSTAS=on).
+// De hora em hora: termina os Reels que ficaram renderizando/processando,
+// responde comentários com data de nascimento (SOCIAL_RESPOSTAS=on) e, a partir
+// do disparo das 21h, posta o Story da frase do dia (SOCIAL_FRASE_DO_DIA=on).
 //   GET /api/cron/social-hora?secret=CRON_SECRET
 // Chamado pelo cron-job.org a cada hora (ex.: no minuto 10). Responde na hora
 // e trabalha em segundo plano (after). Limite de respostas por disparo:
@@ -35,7 +36,7 @@ async function rodar(request) {
     try {
       const r = await tarefasDaHora({ supabase, data });
       // Só números no log: nada de texto, data ou usuário dos comentários.
-      console.log(`⏱️ social hora ${data}: reels ${r.reels.resultado.filter((x) => x.ok).length} ok/${r.reels.erros.length} erro(s); comentários ${r.comentarios ? `${r.comentarios.respondidas} respondido(s), ${r.comentarios.erros.length} erro(s)` : 'desligado'}`);
+      console.log(`⏱️ social hora ${data}: reels ${r.reels.resultado.filter((x) => x.ok).length} ok/${r.reels.erros.length} erro(s); comentários ${r.comentarios ? `${r.comentarios.respondidas} respondido(s), ${r.comentarios.erros.length} erro(s)` : 'desligado'}; frase ${r.frase ? (r.frase.ok ? 'postada' : r.frase.pulado || 'erro') : '-'}`);
       return r;
     } catch (err) {
       console.error('❌ social hora:', err?.message || err);

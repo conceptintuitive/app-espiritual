@@ -13,7 +13,8 @@
 # Com SOCIAL_REELS_INTERATIVO=on, nos dias de carta (ter, sáb), pausa (qua) e
 # número (seg) o Reels é o INTERATIVO; nos outros, o narrado. Falha no
 # interativo = narrado; falha no narrado = card. Na prévia, `formato` escolhe
-# qual filmar (vazio = o do dia).
+# qual filmar (vazio = o do dia). Com SOCIAL_FRASE_DO_DIA=on, a sexta é a
+# "Frase do dia" (a voz lê a frase da tabela fixa, o "Hoje, …" e a chamada).
 name: Reels diário
 
 on:
@@ -38,7 +39,7 @@ on:
         required: false
         default: ''
         type: choice
-        options: ['', 'carta', 'pausa', 'numero', 'narrado']
+        options: ['', 'carta', 'pausa', 'numero', 'frase', 'narrado']
 
 concurrency:
   group: reels-diario
