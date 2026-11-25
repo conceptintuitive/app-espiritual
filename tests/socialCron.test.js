@@ -88,6 +88,7 @@ let falharPublish = 0;
 let comentarios = [];
 let renderStatus = 'rendering';
 let elevenFalha = false;
+let debugFalha = false; // true = a Meta recusa o debug_token
 let insightsFalha = false; // true = token sem permissão de insights
 const BASE = 'https://site.teste';
 global.fetch = async (url, opts = {}) => {
@@ -130,6 +131,16 @@ global.fetch = async (url, opts = {}) => {
     const [, bucket, ...resto] = u.slice(`${SB}/object/public/`.length - 1).split('/');
     return new Response(null, { status: bancoAtual?.storage?.[bucket]?.has(resto.join('/')) ? 200 : 404 });
   }
+  if (u.includes('/debug_token?')) {
+    if (debugFalha) return json({ error: { message: '(#100) You must provide an app access token', code: 100 } }, 400);
+    return json({ data: {
+      app_id: '123456', application: 'Intuitive Social', type: 'SYSTEM_USER', is_valid: true, expires_at: 0, data_access_expires_at: 0, issued_at: 1764000000, user_id: '999',
+      scopes: ['instagram_basic', 'instagram_content_publish', 'instagram_manage_comments', 'pages_show_list', 'pages_read_engagement', 'business_management'],
+      granular_scopes: [{ scope: 'instagram_basic', target_ids: [IG_ID] }, { scope: 'instagram_content_publish', target_ids: [IG_ID] }, { scope: 'pages_show_list' }],
+    } });
+  }
+  if (/\/me\/permissions\?/.test(u)) return json({ data: [{ permission: 'instagram_basic', status: 'granted' }, { permission: 'instagram_manage_insights', status: 'declined' }] });
+  if (/\/me\?/.test(u)) return json({ id: '999', name: 'Automação Social', username: 'conta_teste' });
   if (u.includes('fields=status_code')) return json({ status_code: 'FINISHED' });
   if (/\/insights\?/.test(u)) {
     chamadas.insights.push(u.split('/insights')[0].split('/').pop());
@@ -159,7 +170,7 @@ const novoDb = () => ({
 });
 const rodar = (db, data, redes = ['instagram'], extra = {}) => postarDia({ supabase: fakeSupabase(db), data, redes, baseUrl: BASE, segredo: 'segredo', esperarReelsMs: 0, ...extra });
 
-beforeEach(() => { chamadas = { imagens: [], containers: [], publicados: [], refresh: 0, conferencias: [], renders: [], respostas: [], eleven: [], insights: [] }; falharPublish = 0; insightsFalha = false; comentarios = []; renderStatus = 'rendering'; elevenFalha = false; });
+beforeEach(() => { chamadas = { imagens: [], containers: [], publicados: [], refresh: 0, conferencias: [], renders: [], respostas: [], eleven: [], insights: [] }; falharPublish = 0; insightsFalha = false; debugFalha = false; comentarios = []; renderStatus = 'rendering'; elevenFalha = false; });
 
 test('segunda: story + carrossel de 6 telas; rodar 2x não posta de novo e a série anda 1 vez', async () => {
   const db = novoDb();
@@ -496,6 +507,35 @@ test('modo do Instagram e token de usuário do sistema (graph.facebook.com, sem 
   }
   await publicarNoInstagram({ token: 'IGAAantigo', tipo: 'story', imageUrl: `${BASE}/x.jpg` });
   assert.ok(chamadas.containers.at(-1).url.startsWith(`https://graph.instagram.com/v24.0/${IG_ID}/media`));
+});
+
+test('debug do token: app que gerou, tipo, permissões, o que falta e validade, sem devolver o token', async () => {
+  const { inspecionarToken } = await import('../lib/instagram.js');
+  const r = await inspecionarToken({ token: 'EAAsegredo123', igId: IG_ID });
+  assert.equal(r.ok, true);
+  assert.equal(r.app_id, '123456');
+  assert.equal(r.app, 'Intuitive Social');
+  assert.equal(r.tipo, 'token de usuário do sistema');
+  assert.equal(r.expira, 'nunca');
+  assert.equal(r.acesso_aos_dados_expira, 'nunca');
+  assert.equal(r.criado_em, new Date(1764000000 * 1000).toISOString());
+  assert.deepEqual(r.faltando, ['instagram_manage_insights (desempenho dos Reels na prévia)']);
+  assert.equal(r.conta_instagram_coberta, true);
+  assert.ok(!JSON.stringify(r).includes('EAAsegredo123'), 'nunca devolve o token');
+  // a Meta recusou o debug_token: ao menos quem é e as permissões
+  debugFalha = true;
+  const r2 = await inspecionarToken({ token: 'EAAsegredo123', igId: IG_ID });
+  assert.equal(r2.usuario, 'Automação Social');
+  assert.deepEqual(r2.permissoes, ['instagram_basic']);
+  assert.equal(r2.faltando.length, 5);
+  assert.match(r2.aviso, /debug_token recusado/);
+  assert.ok(!JSON.stringify(r2).includes('EAAsegredo123'));
+  // token do login do Instagram: não tem debug_token
+  const r3 = await inspecionarToken({ token: 'IGAAsegredo', igId: IG_ID });
+  assert.equal(r3.modo, 'instagram');
+  assert.equal(r3.conta, 'conta_teste');
+  assert.ok(!JSON.stringify(r3).includes('IGAAsegredo'));
+  assert.equal((await inspecionarToken({ token: '' })).ok, false);
 });
 
 // ── Reels pelo GitHub Actions (motor padrão) ───────────────────────────────
