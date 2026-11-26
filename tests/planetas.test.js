@@ -75,3 +75,22 @@ test('signo solar pelo Sol real acerta o dia da troca (a tabela fixa erra)', asy
   assert.equal(calcularSignoSolar('1994-12-21', '07:25', -2), 'Sagitário');
   assert.equal(calcularSignoSolar('1994-12-21'), 'Sagitário'); // sem hora: meio-dia de Brasília
 });
+
+test('Human Design: Tipo e Autoridade pelas regras do sistema', async () => {
+  const hd = await import('../lib/humanDesign.js');
+  const mapa = (portoes) => {
+    const { canaisDefinidos, centrosDefinidos } = hd.calcularDefinicoes(portoes);
+    const grafo = hd.construirGrafoCentros(canaisDefinidos);
+    return { tipo: hd.calcularTipo(centrosDefinidos, grafo), autoridade: hd.calcularAutoridade(centrosDefinidos, grafo) };
+  };
+  // Sacral (5-15) + Coração–Garganta (21-45): motor na garganta = Gerador Manifestador
+  // (antes saía Gerador, porque só olhava o Sacral ligado à Garganta).
+  assert.equal(mapa([5, 15, 21, 45]).tipo, 'Manifesting Generator');
+  assert.equal(mapa([5, 15]).tipo, 'Generator');
+  assert.equal(mapa([34, 20]).tipo, 'Manifesting Generator'); // Sacral direto na Garganta
+  assert.equal(mapa([21, 45]).tipo, 'Manifestor');
+  assert.deepEqual(mapa([25, 51]), { tipo: 'Projector', autoridade: 'Ego Projetado' });
+  assert.deepEqual(mapa([7, 31]), { tipo: 'Projector', autoridade: 'Autoprojetada (G-Center)' });
+  assert.deepEqual(mapa([64, 47]), { tipo: 'Projector', autoridade: 'Mental / Ambiente (sem autoridade interna definida)' });
+  assert.deepEqual(mapa([]), { tipo: 'Reflector', autoridade: 'Lunar (Reflector)' });
+});
