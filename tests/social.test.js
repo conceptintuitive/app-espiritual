@@ -61,6 +61,13 @@ test('fase da Lua e números universais', () => {
   assert.equal(nomeDaFase(300), 'Lua Minguante');
   assert.equal(luaDoDia('2026-11-24').fase, 'Lua Cheia');
   assert.equal(luaDoDia('2026-11-23').fase, 'Lua Crescente');
+  // Fase + signo só no dia da fase; o signo é o do momento exato.
+  assert.equal(luaDoDia('2026-11-24').rotulo, 'Lua Cheia em Gêmeos');
+  assert.equal(luaDoDia('2026-11-26').rotulo, 'Lua em Câncer'); // não "Lua Cheia em Câncer"
+  assert.deepEqual(luaDoDia('2026-11-26').desde, { data: '2026-11-24', signo: 'Gêmeos' });
+  assert.equal(luaDoDia('2026-12-23').rotulo, 'Lua Cheia em Câncer'); // Cheia às 22h, ao meio-dia ainda em Gêmeos
+  assert.equal(energiaDoDia('2026-11-26').linhas[0].valor, 'Lua em Câncer');
+  assert.match(energiaDoDia('2026-11-26').fatos.fase_da_lua, /desde 24\/11, em Gêmeos/);
   assert.deepEqual(universais('2026-11-30'), { ano: 1, mes: 3, dia: 6 });
   assert.equal(universais('2029-02-09').ano, 4); // 2+0+2+9 = 13 → 4
   assert.equal(universais('2027-03-01').ano, 11); // 2+0+2+7 = 11, mestre
