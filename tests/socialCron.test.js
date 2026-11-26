@@ -651,7 +651,7 @@ function roteiroDoPedido(usuario) {
       'Hoje você vai sentir vontade de agradar alguém que nem pediu nada.',
       'Hoje uma conversa simples vai mexer mais com você do que deveria.',
     ],
-    porque: `Isso tem nome na psicologia: a mente prefere evitar o desconforto do não, e responde rápido pra encerrar a tensão. Simbolicamente, o dia universal ${n} pede atenção ao outro, e a ${lua} aumenta a vontade de cuidar.`,
+    porque: `Isso tem nome na psicologia: a mente prefere evitar o desconforto do não, e responde rápido pra encerrar a tensão. Simbolicamente, o dia universal ${n} pede atenção ao outro, e a ${lua} aumenta bastante a vontade de cuidar.`,
     virada: 'Dizer sim rápido não é gentileza: é pressa de se livrar do incômodo.',
     pratica: 'Quando alguém te pedir algo hoje, respire uma vez e diga: me deixa ver e te respondo.',
     legenda: { gancho: 'Hoje alguém vai te pedir algo e você vai dizer sim antes de pensar.', texto: ['Dizer sim rápido é pressa de encerrar o desconforto.', 'Hoje, antes de responder, respire e diga: me deixa ver.'] },
