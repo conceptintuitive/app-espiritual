@@ -45,3 +45,33 @@ test('offsetSalvo valida o que vem do banco', () => {
   assert.equal(offsetSalvo({ utc_offset_nascimento: 5 }), null); // fora do Brasil/absurdo
   assert.equal(offsetSalvo({ utc_offset_nascimento: 'abc' }), null);
 });
+
+// Referência: PyEphem (VSOP87/ELP), longitude eclíptica da data, hora de Brasília (UTC−3).
+test('Vênus, Marte e Plutão batem com a efeméride (antes: Vênus até 50° fora)', async () => {
+  const { calcularCorposCelestesParaHumanDesign, calcularPlanetas } = await import('../lib/calculos.js');
+  const casos = [
+    ['1942-01-19', '22:48', { venus: 320.16, marte: 34.11, plutao: 124.75 }, ['Aquário', 'Touro']],
+    ['1962-11-17', '08:43', { venus: 227.20, marte: 136.78, plutao: 161.97 }, ['Escorpião', 'Leão']],
+    ['1957-06-12', '18:30', { venus: 97.34, marte: 114.60, plutao: 148.20 }, ['Câncer', 'Câncer']],
+    ['1967-02-19', '07:08', { venus: 354.42, marte: 211.50, plutao: 169.83 }, ['Peixes', 'Escorpião']],
+  ];
+  for (const [data, hora, ref, [venus, marte]] of casos) {
+    const p = calcularCorposCelestesParaHumanDesign(data, hora, -3).personalidade;
+    for (const [k, v] of Object.entries(ref)) {
+      const erro = Math.abs(((p[k] - v + 540) % 360) - 180);
+      assert.ok(erro < 0.1, `${k} em ${data}: ${p[k].toFixed(2)} x ${v} (erro ${erro.toFixed(2)}°)`);
+    }
+    const s = calcularPlanetas(data, hora, -3);
+    assert.equal(s.signoVenus, venus, `Vênus ${data}`);
+    assert.equal(s.signoMarte, marte, `Marte ${data}`);
+  }
+});
+
+test('signo solar pelo Sol real acerta o dia da troca (a tabela fixa erra)', async () => {
+  const { calcularSignoSolar, calcularSigno } = await import('../lib/calculos.js');
+  assert.equal(calcularSignoSolar('2013-03-20', '23:57', -3), 'Áries'); // tabela: Peixes
+  assert.equal(calcularSigno(20, 3), 'Peixes');
+  assert.equal(calcularSignoSolar('1971-04-20', '13:17', -3), 'Áries'); // tabela: Touro
+  assert.equal(calcularSignoSolar('1994-12-21', '07:25', -2), 'Sagitário');
+  assert.equal(calcularSignoSolar('1994-12-21'), 'Sagitário'); // sem hora: meio-dia de Brasília
+});

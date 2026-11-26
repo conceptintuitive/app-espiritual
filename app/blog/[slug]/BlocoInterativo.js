@@ -45,11 +45,12 @@ async function calcular(tipo, pessoa, { numeroPost, signoPost, postsNumeros }) {
     return { numero, ...resultadoNumero({ numero, numeroPost, nome, postDoNumero: postsNumeros?.[numero] || null }) };
   }
   if (tipo === 'signo') {
-    const [{ calcularSigno, calcularAscendente }, { utcOffsetHoras }] = await Promise.all([import('@/lib/calculos'), import('@/lib/sky')]);
+    const [{ calcularSigno, calcularSignoSolar, calcularAscendente }, { utcOffsetHoras }] = await Promise.all([import('@/lib/calculos'), import('@/lib/sky')]);
     const [, m, d] = pessoa.dataNascimento.split('-').map(Number);
-    const sol = calcularSigno(d, m);
-    let ascendente = null;
     const c = pessoa.cidade;
+    const offsetSol = pessoa.hora ? utcOffsetHoras({ data: pessoa.dataNascimento, hora: pessoa.hora, tz: c?.tz || 'America/Sao_Paulo' }) : null;
+    const sol = calcularSignoSolar(pessoa.dataNascimento, pessoa.hora || null, offsetSol) || calcularSigno(d, m); // Sol real
+    let ascendente = null;
     if (pessoa.hora && c && typeof c.lat === 'number' && typeof c.lon === 'number') {
       const offset = utcOffsetHoras({ data: pessoa.dataNascimento, hora: pessoa.hora, tz: c.tz || 'America/Sao_Paulo' });
       ascendente = calcularAscendente(pessoa.dataNascimento, pessoa.hora, c.lat, c.lon, offset);

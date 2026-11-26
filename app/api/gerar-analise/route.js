@@ -1,6 +1,6 @@
 import { NextResponse, after } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { calcularPlanetas, calcularAscendente, calcularAnoPessoal, calcularNumeroAlma, calcularNumeroExpressao, calcularNumeroVida } from '@/lib/calculos';
+import { calcularPlanetas, calcularAscendente, calcularSignoSolar, calcularAnoPessoal, calcularNumeroAlma, calcularNumeroExpressao, calcularNumeroVida } from '@/lib/calculos';
 import { gerarPreviewIA, gerarDiagnosticoIA, gerarAmorIA, gerarArquetiposIA, gerarPlano7IA, gerarInterpretacaoTarotIA } from '@/lib/ia';
 import { buildDiagnosticoCtx, buildAmorCtx, buildArquetiposCtx, buildPlano7Ctx } from '@/lib/manualgenerator';
 import { sortearCarta, TAROT_PROMPTS_EN } from '@/lib/tarot';
@@ -131,7 +131,7 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Data inválida' }, { status: 400 });
     }
 
-    const signo      = calcularSigno(data_nascimento);
+    let signo        = calcularSigno(data_nascimento); // reserva; o Sol real entra abaixo
     const numeroVida = calcularNumeroVida(data_nascimento);
     const anoPessoal      = calcularAnoPessoal(data_nascimento);
     const numeroAlma      = calcularNumeroAlma(nome);
@@ -160,6 +160,12 @@ export async function POST(request) {
         utcOffset = utcOffsetHoras({ data: data_nascimento, hora: hora_nascimento, tz });
       } catch (_) {}
     }
+
+    // Signo solar pela posição real do Sol (a tabela fixa erra quem nasceu no
+    // dia da troca de signo). Só análises novas: o signo já gravado não muda.
+    try {
+      signo = calcularSignoSolar(data_nascimento, temHora ? hora_nascimento : null, utcOffset) || signo;
+    } catch (_) {}
 
     let planetas = null;
     try {
