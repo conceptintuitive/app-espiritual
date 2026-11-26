@@ -279,3 +279,24 @@ test('hashtags: sexta leva a do autor, nunca #leidaatracao; a IA não decide', (
     assert.ok(!montarLegenda(c.legenda).includes('#leidaatracao'));
   }
 });
+
+// ── Reels narrado com assunto próprio (nov/2026) ───────────────────────────
+import { temaDoNarrado, indiceDoNarrado, SERIES as SERIES_NARRADO, temaDoDia as temaDoDiaNarrado, dadosDoDia as dadosDoDiaNarrado } from '../lib/social.js';
+
+test('narrado: o tema nunca é o do carrossel do dia, e sempre tem série', () => {
+  for (let k = 0; k < 7; k++) {
+    const data = `2026-11-${String(23 + k).padStart(2, '0')}`; // seg 23 … dom 29
+    assert.notEqual(temaDoNarrado(data), temaDoDiaNarrado(data), data);
+    assert.ok(SERIES_NARRADO[temaDoNarrado(data)], `${data}: tema do narrado sem série`);
+  }
+  assert.equal(temaDoNarrado('2026-11-26'), 'ponto_cego', 'quinta (relações) → sombra');
+});
+
+test('narrado: o item fica longe do carrossel e muda entre dias de mesmo tema', () => {
+  // ponto_cego tem 12 signos: com o carrossel no 3, o narrado de quinta vai pra 3 + 6 + 4
+  assert.equal(indiceDoNarrado('2026-11-26', 'ponto_cego', 3), 13);
+  const seg = dadosDoDiaNarrado('2026-11-23', indiceDoNarrado('2026-11-23', 'mente', 0), 'mente');
+  const ter = dadosDoDiaNarrado('2026-11-24', indiceDoNarrado('2026-11-24', 'mente', 0), 'mente');
+  assert.equal(seg.tema, 'mente');
+  assert.notEqual(seg.item, ter.item);
+});
