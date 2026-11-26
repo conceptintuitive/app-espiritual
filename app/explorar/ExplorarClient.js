@@ -103,11 +103,12 @@ export default function ExplorarClient() {
       : 'O seu Manual, com tudo que já revelamos sobre seu Sol, Lua, Ascendente e os pontos que mais importam agora.';
 
   // Previsão do Ano e Human Design não são mais avulsos — só liberam junto
-  // com o Manual (R$17 cada, complemento). Cada um tem sua própria página
-  // de prévia + desbloqueio. Se já existe uma análise, manda direto pra lá;
-  // senão, começa pelo formulário, igual o Meu Mapa.
+  // com o Manual (R$17 cada, complemento). Previsão: com análise, direto pra
+  // prévia; sem, começa pelo formulário. Human Design: sempre pelo guia
+  // /human-design (pouca gente conhece), que tem o "Descobrir meu Human
+  // Design" levando pro resultado de quem já tem mapa.
   const previsaoHref = ultimaAnaliseId ? `/previsao-do-ano/${ultimaAnaliseId}` : '/';
-  const humanDesignHref = ultimaAnaliseId ? `/human-design/${ultimaAnaliseId}` : '/human-design';
+  const humanDesignHref = '/human-design';
   const compatCompletaHref = ultimaAnaliseId ? `/compatibilidade-completa/${ultimaAnaliseId}` : '/';
 
   // Mesma tag pros dois cards de bônus (Previsão e HD): precisa saber se o

@@ -4,7 +4,7 @@
 
 import Link from 'next/link';
 import SiteNav from '@/app/components/SiteNav';
-import CtaMapa from '@/app/components/CtaMapa';
+import BotaoMeuHD, { LinhaMeuHD } from './BotaoMeuHD';
 import { TIPO_DESCRICAO } from '@/lib/humanDesignTextos';
 import { BASE_URL, jsonSeguro } from '@/lib/seoTarot';
 import b from '@/app/blog/blog.module.css';
@@ -101,6 +101,10 @@ export default function HumanDesignPage() {
             <p className={b.postResumo}>
               Um mapa de como a sua energia funciona e de como você toma decisões melhores, calculado a partir da data, hora e local de nascimento.
             </p>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 10, marginTop: 6 }}>
+              <BotaoMeuHD className={b.btn} origem="human-design-topo" />
+              <LinhaMeuHD className={b.rotulo} />
+            </div>
           </header>
         </div>
 
@@ -153,7 +157,7 @@ export default function HumanDesignPage() {
             Calculadoras de Human Design mostram o bodygraph e param aí. Aqui a gente já conhece seu Sol, seu Número de Vida e o que você quer destravar agora, então a leitura cruza as três coisas e termina num plano de ação pro seu objetivo.
           </p>
           <p>
-            Comece pelo seu Mapa grátis. O Human Design completo (Tipo, Autoridade, Perfil e centros) é liberado junto com o Manual do seu Mapa.
+            Seu Tipo aparece grátis. O Human Design completo (Autoridade, Perfil, centros e o cruzamento com o seu mapa) é liberado junto com o Manual do seu Mapa.
           </p>
 
           <h2>Perguntas frequentes</h2>
@@ -170,8 +174,9 @@ export default function HumanDesignPage() {
           </p>
 
           <div className={b.ctaFim}>
-            <p className={b.ctaFimTexto}>Descubra seu Tipo começando pelo seu Mapa.</p>
-            <CtaMapa className={b.btn} origem="human-design" />
+            <p className={b.ctaFimTexto}>Descubra o seu Tipo, a sua Autoridade e o seu Perfil.</p>
+            <BotaoMeuHD className={b.btn} origem="human-design-fim" />
+            <LinhaMeuHD className={b.rotulo} />
           </div>
         </div>
       </article>
