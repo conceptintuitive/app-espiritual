@@ -66,6 +66,12 @@ test('fase da Lua e números universais', () => {
   assert.equal(luaDoDia('2026-11-26').rotulo, 'Lua em Câncer'); // não "Lua Cheia em Câncer"
   assert.deepEqual(luaDoDia('2026-11-26').desde, { data: '2026-11-24', signo: 'Gêmeos' });
   assert.equal(luaDoDia('2026-12-23').rotulo, 'Lua Cheia em Câncer'); // Cheia às 22h, ao meio-dia ainda em Gêmeos
+  // Fases perto da meia-noite (a conta da capa, de ~0,2°, errava o dia):
+  // Crescente 23/04/2026 23h31 e Nova 14/06/2026 23h54 de Brasília.
+  assert.equal(luaDoDia('2026-04-23').rotulo, 'Lua Crescente em Leão');
+  assert.equal(luaDoDia('2026-04-24').rotulo, 'Lua em Leão');
+  assert.equal(luaDoDia('2026-06-14').rotulo, 'Lua Nova em Gêmeos');
+  assert.equal(luaDoDia('2026-06-15').rotulo, 'Lua em Câncer');
   assert.equal(energiaDoDia('2026-11-26').linhas[0].valor, 'Lua em Câncer');
   assert.match(energiaDoDia('2026-11-26').fatos.fase_da_lua, /desde 24\/11, em Gêmeos/);
   assert.deepEqual(universais('2026-11-30'), { ano: 1, mes: 3, dia: 6 });

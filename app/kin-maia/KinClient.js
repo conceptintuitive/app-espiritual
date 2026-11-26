@@ -181,7 +181,7 @@ function Resultado({ k, entrada, onCta }) {
       </div>
       {k.bissexto && (
         <p className="an-nota">
-          Você nasceu num 29 de fevereiro, o dia "fora do tempo" do Sincronário. {entrada.hora
+          Você nasceu num 29 de fevereiro, o dia 0.0 Hunab Ku do Sincronário, que não tem Kin próprio. {entrada.hora
             ? `Pela hora (${entrada.hora}), seu Kin é o do dia ${Number(entrada.hora.split(':')[0]) >= 12 ? '1º de março' : '28 de fevereiro'}.`
             : 'Sem a hora, usamos o do dia 28 de fevereiro (antes do meio-dia). Se nasceu à tarde, o seu é o do dia 1º de março.'}
         </p>
