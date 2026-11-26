@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import SiteNav from '@/app/components/SiteNav';
 import { hexagramaDoDia } from '@/lib/iching';
+import Link from 'next/link';
 import CtaMapa from '@/app/components/CtaMapa';
 
 export default function HexagramaClient() {
@@ -108,6 +109,38 @@ export default function HexagramaClient() {
           <div className="carregando">Consultando o hexagrama de hoje…</div>
         )}
 
+        <section className="sobre">
+          <h2>O que é o I Ching</h2>
+          <p>
+            O I Ching, o &quot;Livro das Mutações&quot;, é um dos textos clássicos mais antigos da China, consultado há mais
+            de dois mil e quinhentos anos. A ideia central é que nada fica parado: toda situação já está virando outra, e
+            vale mais entender pra onde ela está indo do que tentar segurá-la.
+          </p>
+          <h3>Linhas, trigramas e hexagramas</h3>
+          <p>
+            Tudo parte de dois tipos de linha: a inteira (yang, o que avança) e a partida (yin, o que recebe). Três linhas
+            formam um trigrama, e existem 8 deles, cada um com uma força da natureza: Céu, Terra, Fogo, Água, Trovão,
+            Vento, Montanha e Lago. Dois trigramas empilhados formam um hexagrama de seis linhas. São 64 combinações
+            possíveis.
+          </p>
+          <h3>Como ele é consultado</h3>
+          <p>
+            Na consulta tradicional, a pessoa faz uma pergunta e monta o próprio hexagrama jogando três moedas, ou separando
+            varetas, seis vezes. Aqui é diferente: o hexagrama é do dia, igual pra todo mundo até a meia-noite de Brasília,
+            e a leitura parte do sentido dos dois trigramas que o formam, não do texto clássico de cada hexagrama. Serve
+            como um ângulo pra olhar o seu dia, não como oráculo pra uma pergunta.
+          </p>
+          <h3>A linha em movimento</h3>
+          <p>
+            Em alguns dias, uma das seis linhas aparece destacada. No I Ching, é a linha que está mudando: o ponto onde a
+            situação já começou a virar outra coisa, mesmo que por fora pareça igual.
+          </p>
+          <p>
+            As 64 portas do Human Design vêm desses mesmos 64 hexagramas.{' '}
+            <Link href="/human-design" className="sobre-link">Entenda o Human Design</Link>.
+          </p>
+        </section>
+
         <CtaMapa className="cta" origem="hexagrama" />
       </div>
 
@@ -169,6 +202,11 @@ export default function HexagramaClient() {
 
         .mutante-nota { font-size: 14.5px; font-style: italic; color: var(--muted); margin: 18px 0 0; }
 
+        .sobre { text-align: left; margin: 8px 0 44px; padding-top: 28px; border-top: 1px solid var(--border); }
+        .sobre h2 { font-family: 'Cinzel', serif; font-size: clamp(20px, 4vw, 26px); margin: 0 0 12px; }
+        .sobre h3 { font-family: 'Cinzel', serif; font-size: 15px; letter-spacing: 0.04em; color: var(--warning); margin: 24px 0 8px; }
+        .sobre p { font-size: 17px; line-height: 1.7; color: var(--muted); margin: 0 0 12px; }
+        .sobre-link { color: var(--warning); }
         .cta {
           display: inline-block; font-family: 'Cinzel', serif; font-size: 14px; letter-spacing: 0.06em;
           color: #fff; background: linear-gradient(135deg, var(--primary), #be185d);

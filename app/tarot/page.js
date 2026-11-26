@@ -46,7 +46,7 @@ export default function TarotPage() {
   return (
     <div className={b.blog}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonSeguro(jsonLd) }} />
-      <SiteNav />
+      <SiteNav active="tarot" />
 
       <main className={b.ctr}>
         <header className={b.topo}>

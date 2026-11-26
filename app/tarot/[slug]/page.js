@@ -55,7 +55,7 @@ export default async function ArcanoPage({ params }) {
   return (
     <div className={b.blog}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonSeguro(jsonLd) }} />
-      <SiteNav />
+      <SiteNav active="tarot" />
 
       <article className={`${b.ctr} ${b.post}`}>
         <div className={b.coluna}>
