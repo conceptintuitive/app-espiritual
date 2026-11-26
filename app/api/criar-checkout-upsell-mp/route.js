@@ -4,6 +4,10 @@ import { createClient } from "@supabase/supabase-js";
 import { PRECO_BONUS_AVULSO, PRECO_BONUS_COMBO } from "@/lib/preco";
 import { salvarAtribuicao } from "@/lib/ga4";
 
+// SEM USO NO FRONT desde nov/2026: Previsão do Ano e Human Design não são mais
+// vendidos avulsos (vêm com o Intuitive Completo; ver lib/planos.js). A rota
+// fica pra não quebrar link antigo; o webhook continua liberando o que já foi pago.
+
 export const runtime = "nodejs";
 
 // Nomes que aparecem no checkout do MP — alinhados com o que a pessoa já viu

@@ -1,0 +1,62 @@
+/* /planos — comparação Grátis · Manual · Intuitive Completo (nov/2026).
+   Base (tokens, fontes, .btn) vem de app/blog/blog.module.css. */
+
+.topo { padding: 40px 0 28px; display: flex; flex-direction: column; gap: 14px; max-width: 720px; }
+.titulo { font-family: var(--serif); font-weight: 400; font-size: 46px; line-height: 1; letter-spacing: -.015em; margin: 0; }
+.titulo em { font-style: italic; color: var(--ouro); }
+.resumo { font-family: var(--serif); font-style: italic; font-size: 21px; line-height: 1.3; color: var(--areia); }
+
+.planos { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr; gap: 16px; }
+.plano { position: relative; display: flex; flex-direction: column; gap: 14px; padding: 26px 22px 24px; border-radius: 18px;
+  border: 1px solid rgba(243,233,218,.14); background: rgba(243,233,218,.02); box-sizing: border-box; }
+.planoDestaque { border-color: rgba(242,199,123,.7); background: rgba(242,199,123,.05); }
+.selo { position: absolute; top: -11px; left: 22px; padding: 4px 12px; border-radius: 999px; background: var(--ouro); color: #1a1020;
+  font-family: var(--mono); font-size: 10px; letter-spacing: .18em; text-transform: uppercase; }
+.planoNome { font-family: var(--serif); font-weight: 400; font-size: 30px; line-height: 1.05; margin: 0; }
+.praQuem { font-family: var(--serif); font-style: italic; font-size: 19px; line-height: 1.25; color: var(--areia); }
+.preco { display: flex; flex-direction: column; gap: 4px; padding: 14px 0; border-top: 1px solid var(--linha); border-bottom: 1px solid var(--linha); }
+.precoValor { font-family: var(--serif); font-size: 40px; line-height: 1; color: var(--ouro); }
+.precoDetalhe { font-family: var(--mono); font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--apagado); line-height: 1.6; }
+.inclui { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+.inclui li { position: relative; padding-left: 22px; font-size: 15px; line-height: 1.5; color: var(--texto); }
+.inclui li::before { content: ''; position: absolute; left: 2px; top: 11px; width: 10px; height: 1px; background: var(--ouro); }
+.acoes { display: flex; flex-direction: column; align-items: stretch; gap: 10px; margin-top: 6px; }
+.acoes a { text-align: center; }
+.linkMono { font-family: var(--mono); font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--apagado); text-align: center; text-decoration: underline; text-underline-offset: 3px; }
+.blogLink { color: var(--apagado); }
+.nota { font-size: 13px; line-height: 1.5; color: var(--apagado); text-align: center; }
+
+.secao { padding: 52px 0 0; }
+.secaoTitulo { font-family: var(--serif); font-weight: 400; font-size: 32px; line-height: 1.1; margin: 0 0 18px; }
+
+.tabelaWrap { overflow-x: auto; margin: 0 -24px; padding: 0 24px; }
+.tabela { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+.tabela col.colItem { width: 40%; }
+.tabela th, .tabela td { padding: 12px 4px; border-top: 1px solid var(--linha); text-align: center; vertical-align: middle; line-height: 1.35; }
+.tabela thead th { border-top: 0; font-family: var(--mono); font-weight: 400; font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--apagado); }
+.tabela tbody th { text-align: left; font-weight: 300; color: var(--texto); padding-left: 0; }
+.tabela tbody tr:last-child th, .tabela tbody tr:last-child td { border-bottom: 1px solid var(--linha); }
+.colDestaque { background: rgba(242,199,123,.05); }
+.sim { color: var(--ouro); font-size: 16px; }
+.nao { color: rgba(185,169,201,.45); }
+.cond { font-family: var(--mono); font-size: 9px; letter-spacing: .06em; text-transform: uppercase; color: var(--areia); }
+
+.faq details { border-top: 1px solid var(--linha); padding: 14px 0; }
+.faq details:last-child { border-bottom: 1px solid var(--linha); }
+.faq summary { cursor: pointer; font-family: var(--serif); font-size: 22px; line-height: 1.2; }
+.faq p { margin: 10px 0 0; color: var(--areia); font-size: 16px; line-height: 1.6; }
+
+.fim { padding: 52px 0 80px; }
+
+@media (min-width: 700px) {
+  .titulo { font-size: 64px; }
+  .topo { padding-top: 64px; }
+  .secaoTitulo { font-size: 38px; }
+  .tabelaWrap { margin: 0; padding: 0; }
+  .tabela { font-size: 14px; }
+  .tabela th, .tabela td { padding: 13px 10px; }
+  .cond { font-size: 10px; letter-spacing: .1em; }
+}
+@media (min-width: 960px) {
+  .planos { grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: stretch; }
+}

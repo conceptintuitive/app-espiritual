@@ -38,7 +38,7 @@ export default function TermosDeUsoPage() {
       <div style={styles.container}>
         <Link href="/" style={styles.back}>← Voltar para o início</Link>
         <h1 style={styles.h1}>Termos de Uso</h1>
-        <p style={styles.updated}>Última atualização: 24 de novembro de 2026</p>
+        <p style={styles.updated}>Última atualização: 26 de novembro de 2026</p>
 
         <p style={styles.p}>
           Estes Termos de Uso regem o acesso e uso do site <strong>Intuitive Concept</strong>
@@ -127,7 +127,11 @@ export default function TermosDeUsoPage() {
         </p>
         <p style={styles.p}>
           <strong>Cortesia para quem comprou o Manual:</strong> quem compra o Manual do seu Mapa ganha 30 dias
-          de acesso aos recursos da assinatura, sem cobrança e sem renovação automática.
+          de acesso aos recursos da assinatura, sem cobrança e sem renovação automática. Avisamos por e-mail 5 dias
+          antes e no dia em que a cortesia termina, com um link para assinar se você quiser. Quando ela termina, o
+          Manual, a Compatibilidade Completa e o Oráculo continuam liberados; o Seu Dia completo, a Previsão do Ano e
+          o Human Design completo ficam com a assinatura. A Previsão do Ano e o Human Design comprados avulsos,
+          quando ainda eram vendidos assim, continuam liberados.
         </p>
         <p style={styles.p}>
           <strong>Teste grátis de 7 dias do Seu Dia Completo:</strong> quem cria a Minha Área ganha 7 dias do

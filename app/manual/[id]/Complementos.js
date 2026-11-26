@@ -1,65 +1,58 @@
 'use client';
 
 // Complementos do Manual: Projeção dos Próximos 12 Meses e Mapa de Human
-// Design (compra via /api/criar-checkout-upsell-mp; PRECO_BONUS_AVULSO cada,
-// PRECO_BONUS_COMBO os dois). Lógica, preços e checkout iguais aos de antes;
-// só saiu do page.js pra lib/transitos12meses.js e lib/humanDesign*.js
-// carregarem depois (next/dynamic) em vez de no JS inicial do Manual.
+// Design. Desde nov/2026 não são vendidos avulsos: abrem pra quem comprou
+// antes (tier2/hd_payment_status) ou tem acesso do Intuitive Completo (os 30
+// dias de cortesia do Manual ou a assinatura, vindo de useAssinatura no
+// page.js). Fora disso, o botão leva pro /assinar. Fica num arquivo próprio
+// pra lib/transitos12meses.js e lib/humanDesign*.js carregarem depois
+// (next/dynamic), não no JS inicial do Manual.
 
-import { useState } from 'react';
 import { gerarProjecao12Meses } from '@/lib/transitos12meses';
 import { calcularHumanDesign, CENTRO_NOME_AMIGAVEL } from '@/lib/humanDesign';
 import { TIPO_DESCRICAO, AUTORIDADE_DESCRICAO, narracaoHumanDesign, gerarIntegracaoHumanDesign } from '@/lib/humanDesignTextos';
-import { PRECO_BONUS_AVULSO, PRECO_BONUS_COMBO } from '@/lib/preco';
+import { PRECO_ASSINATURA_MENSAL } from '@/lib/preco';
 import { offsetSalvo } from '@/lib/sky';
 import { CheckItem, ListenButton, buildProjecaoMesNarration } from './pecas';
-import { coletarAtribuicao } from '@/app/components/CapturaAtribuicao';
 import m from './manual.module.css';
 
-// TOGGLE DE COMBO — oferece incluir o outro upsell junto, por
-// PRECO_BONUS_COMBO no total em vez de PRECO_BONUS_AVULSO cada. Só aparece
-// se o outro produto ainda não tiver sido comprado.
-function ComboUpsellToggle({ label, checked, onChange }) {
+const brl = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const dataCurta = (iso) => { try { return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'America/Sao_Paulo' }); } catch { return ''; } };
+
+// Selo do topo da seção: comprado antes, ou incluso no Intuitive Completo.
+function Selo({ comprado, acesso }) {
+  if (comprado) return <span className={m.selo}>Complemento liberado</span>;
+  if (!acesso?.ativa) return null;
+  const ate = acesso.origem === 'manual' && acesso.acessoAte ? ` até ${dataCurta(acesso.acessoAte)}` : '';
+  return <span className={m.selo}>Incluso no Intuitive Completo{ate}</span>;
+}
+
+// Sem acesso: a cortesia do Manual acabou (quem chega ao Manual pagou).
+function Continuar({ id, origem }) {
   return (
-    <label className={`${m.combo} ${checked ? m.comboOn : ''}`}>
-      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
-      <span>
-        Incluir também {label}: os dois por <strong>R$ {PRECO_BONUS_COMBO}</strong> (economize R$ {(PRECO_BONUS_AVULSO * 2 - PRECO_BONUS_COMBO).toFixed(0)})
-      </span>
-    </label>
+    <>
+      <a
+        className={m.btn}
+        href={`/assinar?a=${encodeURIComponent(id)}&plano=mensal`}
+        onClick={() => { try { window.gtag?.('event', 'assinar_click', { event_category: 'assinatura', origem, plano: 'mensal' }); } catch {} }}
+      >
+        Continuar com o Intuitive Completo · {brl(PRECO_ASSINATURA_MENSAL)}/mês
+      </a>
+      <p className={m.nota}>
+        Os 30 dias do Intuitive Completo que vieram com o seu Manual terminaram. O Manual continua seu pra sempre.{' '}
+        <a className={m.linkMono} href="/planos">Compare as opções</a>
+      </p>
+    </>
   );
 }
 
-/** @param {{ row: object, id: string, checks: Record<string, boolean>, toggleCheck: (k: string) => void }} props */
-export default function Complementos({ row, id, checks, toggleCheck }) {
-  // HANDLER: CHECKOUT DOS UPSELLS (Projeção de 12 Meses e/ou Human Design —
-  // PRECO_BONUS_AVULSO cada, PRECO_BONUS_COMBO os dois juntos, via MP)
-  const [processandoUpsell, setProcessandoUpsell] = useState(false);
-  const [comboProjecao, setComboProjecao] = useState(false);
-  const [comboHumanDesign, setComboHumanDesign] = useState(false);
-
-  async function handleComprarUpsell(produtoPrincipal, incluirCombo) {
-    const produtos = incluirCombo
-      ? ['projecao12m', 'humandesign']
-      : [produtoPrincipal];
-    setProcessandoUpsell(true);
-    try {
-      const response = await fetch('/api/criar-checkout-upsell-mp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ analiseId: id, produtos, atribuicao: await coletarAtribuicao() }),
-      });
-      const data = await response.json().catch(() => ({}));
-      const checkoutUrl = data?.url || data?.sandbox_url;
-      if (checkoutUrl) { window.location.href = checkoutUrl; return; }
-      throw new Error(data?.error || 'Erro ao criar checkout');
-    } catch (e) {
-      console.error('Erro ao abrir checkout do upsell:', e);
-      alert(e?.message || 'Erro ao processar pagamento. Tente novamente.');
-    } finally {
-      setProcessandoUpsell(false);
-    }
-  }
+/** @param {{ row: object, id: string, checks: Record<string, boolean>, toggleCheck: (k: string) => void, acesso?: object|null }} props */
+export default function Complementos({ row, id, checks, toggleCheck, acesso = null }) {
+  const projecaoComprada = row.tier2_payment_status === 'paid';
+  const hdComprado = row.hd_payment_status === 'paid';
+  const projecaoAberta = projecaoComprada || !!acesso?.ativa;
+  const hdAberto = hdComprado || !!acesso?.ativa;
+  const carregando = acesso === null; // enquanto o status não volta, não mostra o paywall
 
   const hd = calcularHumanDesign(row.data_nascimento, row.hora_nascimento, offsetSalvo(row) ?? -3);
   const tipoInfo = hd ? TIPO_DESCRICAO[hd.tipo] : null;
@@ -75,11 +68,11 @@ export default function Complementos({ row, id, checks, toggleCheck }) {
     <>
       {/* ========== PROJEÇÃO DE 12 MESES ========== */}
       <section className={m.secao} id="projecao-12-meses">
-        {row.tier2_payment_status === 'paid' && <span className={m.selo}>Complemento liberado</span>}
+        <Selo comprado={projecaoComprada} acesso={acesso} />
         <span className={m.rotulo}>Complemento</span>
         <h2 className={m.h2}>Projeção dos próximos 12 meses</h2>
 
-        {row.tier2_payment_status === 'paid' ? (
+        {projecaoAberta ? (
           <>
             <p className={m.p}>
               Seu Ano Pessoal e Mês Pessoal, mês a mês, a partir de agora — com o que cada
@@ -126,16 +119,7 @@ export default function Complementos({ row, id, checks, toggleCheck }) {
               <li>Vira o ano com você — sem &quot;esquecer&quot; de recalcular</li>
               <li>Tema prático de cada mês (o que favorece, o que evitar)</li>
             </ul>
-            {row.hd_payment_status !== 'paid' && (
-              <ComboUpsellToggle label="o Mapa de Human Design" checked={comboProjecao} onChange={setComboProjecao} />
-            )}
-            <button className={m.btn} onClick={() => handleComprarUpsell('projecao12m', comboProjecao)} disabled={processandoUpsell}>
-              {processandoUpsell
-                ? 'Abrindo…'
-                : comboProjecao
-                ? `Desbloquear os dois — R$ ${PRECO_BONUS_COMBO}`
-                : `Desbloquear a Projeção de 12 meses — R$ ${PRECO_BONUS_AVULSO}`}
-            </button>
+            {!carregando && <Continuar id={id} origem="manual_projecao" />}
           </div>
         )}
       </section>
@@ -143,11 +127,11 @@ export default function Complementos({ row, id, checks, toggleCheck }) {
       {/* ========== MAPA DE HUMAN DESIGN ========== */}
       {hd && (
         <section className={m.secao} id="human-design">
-          {row.hd_payment_status === 'paid' && <span className={m.selo}>Complemento liberado</span>}
+          <Selo comprado={hdComprado} acesso={acesso} />
           <span className={m.rotulo}>Complemento</span>
           <h2 className={m.h2}>Mapa de Human Design</h2>
 
-          {row.hd_payment_status === 'paid' ? (
+          {hdAberto ? (
             <div className={m.bloco}>
               <div className={m.blocoTopo}>
                 <div>
@@ -216,16 +200,7 @@ export default function Complementos({ row, id, checks, toggleCheck }) {
                 <li>Sua Autoridade — a forma mais confiável de decidir</li>
                 <li>Seu Perfil e os centros definidos do seu mapa</li>
               </ul>
-              {row.tier2_payment_status !== 'paid' && (
-                <ComboUpsellToggle label="a Projeção de 12 Meses" checked={comboHumanDesign} onChange={setComboHumanDesign} />
-              )}
-              <button className={m.btn} onClick={() => handleComprarUpsell('humandesign', comboHumanDesign)} disabled={processandoUpsell}>
-                {processandoUpsell
-                  ? 'Abrindo…'
-                  : comboHumanDesign
-                  ? `Desbloquear os dois — R$ ${PRECO_BONUS_COMBO}`
-                  : `Desbloquear o Human Design — R$ ${PRECO_BONUS_AVULSO}`}
-              </button>
+              {!carregando && <Continuar id={id} origem="manual_hd" />}
             </div>
           )}
         </section>

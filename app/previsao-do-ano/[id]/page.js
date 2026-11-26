@@ -5,10 +5,8 @@ import { useParams } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
 import { gerarProjecao12Meses } from '@/lib/transitos12meses';
-import { PRECO_BONUS_AVULSO, PRECO_BONUS_COMBO } from '@/lib/preco';
 import SiteNav from '@/app/components/SiteNav';
-import { useAssinatura, CtaAssinatura } from '@/app/components/assinatura';
-import { coletarAtribuicao } from '@/app/components/CapturaAtribuicao';
+import { useAssinatura, OfertaComplemento } from '@/app/components/assinatura';
 
 function getSupabaseClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -62,8 +60,6 @@ export default function PrevisaoDoAnoPage() {
   const [row, setRow] = useState(null);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState(false);
-  const [processando, setProcessando] = useState(false);
-  const [combo, setCombo] = useState(false);
   const assinatura = useAssinatura(id);
 
   useEffect(() => {
@@ -79,40 +75,6 @@ export default function PrevisaoDoAnoPage() {
         setLoading(false);
       });
   }, [id]);
-
-  async function handleComprar() {
-    const produtos = combo && row?.hd_payment_status !== 'paid'
-      ? ['projecao12m', 'humandesign']
-      : ['projecao12m'];
-    setProcessando(true);
-    try {
-      const response = await fetch('/api/criar-checkout-upsell-mp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ analiseId: id, produtos, redirectTo: 'previsao', atribuicao: await coletarAtribuicao() }),
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        // Esse bônus só pode ser comprado junto com o Manual (ver
-        // app/api/criar-checkout-upsell-mp/route.js) — não deveria acontecer
-        // já que o botão só aparece pra quem tem o Manual, mas se acontecer
-        // (ex: pagamento expirou entre carregar a página e clicar), manda
-        // pra oferta do Manual em vez de só mostrar um alerta sem saída.
-        if (data?.error === 'manual_nao_pago') {
-          window.location.href = `/resultado/${id}`;
-          return;
-        }
-        throw new Error(data?.error || 'Erro ao criar checkout');
-      }
-      const checkoutUrl = data?.url || data?.sandbox_url;
-      if (checkoutUrl) { window.location.href = checkoutUrl; return; }
-      throw new Error('Erro ao criar checkout');
-    } catch (e) {
-      alert(e?.message || 'Erro ao processar pagamento. Tente novamente.');
-    } finally {
-      setProcessando(false);
-    }
-  }
 
   return (
     <div className="wrap">
@@ -170,29 +132,7 @@ export default function PrevisaoDoAnoPage() {
                       {pickFirstName(row.nome)}, esse foi o seu mês atual. Desbloqueie pra ver o texto completo,
                       o que favorece e o que pede cuidado em cada um dos próximos 12 meses.
                     </p>
-                    {row.payment_status !== 'paid' ? (
-                      <>
-                        <p className="p" style={{ fontSize: 14 }}>
-                          A Previsão do Ano é liberada junto com o <strong>Manual do seu Mapa</strong>.
-                        </p>
-                        <Link href={`/resultado/${id}`} className="btn btn-cta">
-                          Desbloquear com o Manual do seu Mapa
-                        </Link>
-                      </>
-                    ) : (
-                      <>
-                        {row.hd_payment_status !== 'paid' && (
-                          <label className={`combo${combo ? ' is-checked' : ''}`}>
-                            <input type="checkbox" checked={combo} onChange={(e) => setCombo(e.target.checked)} />
-                            <span>Incluir também o <strong>Mapa de Human Design</strong> — os dois por <strong>R$ {PRECO_BONUS_COMBO}</strong></span>
-                          </label>
-                        )}
-                        <button className="btn btn-cta" onClick={handleComprar} disabled={processando}>
-                          {processando ? 'Abrindo…' : combo ? `Desbloquear os dois — R$ ${PRECO_BONUS_COMBO}` : `Desbloquear a Previsão do Ano — R$ ${PRECO_BONUS_AVULSO}`}
-                        </button>
-                      </>
-                    )}
-                    <CtaAssinatura analiseId={id} origem="previsao" />
+                    <OfertaComplemento analiseId={id} manualPago={row.payment_status === 'paid'} produto="A Previsão do Ano" origem="previsao" />
                   </div>
                 </>
               )}
@@ -252,9 +192,6 @@ const globalCss = `
   .subcard.danger { border-color: rgba(236,72,153,0.3); background: rgba(236,72,153,0.05); }
   .subttl { font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 0.04em; margin-bottom: 8px; }
   .list-check { list-style: none; padding: 0; margin: 0; font-size: 14.5px; line-height: 1.7; color: var(--muted); }
-  .combo { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 16px auto 0; padding: 12px 18px; max-width: 420px; border-radius: 999px; border: 1.5px solid rgba(139,92,246,0.5); background: rgba(139,92,246,0.1); font-size: 14px; cursor: pointer; }
-  .combo.is-checked { border-color: rgba(16,185,129,0.6); background: rgba(16,185,129,0.1); }
-  .combo input { accent-color: var(--secondary); width: 16px; height: 16px; }
   .footer-links { text-align: center; margin-top: 40px; }
   .footer-links a { color: var(--muted); text-decoration: none; font-size: 14px; }
 `;

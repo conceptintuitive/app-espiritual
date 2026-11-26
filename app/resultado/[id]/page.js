@@ -32,7 +32,8 @@ import { getTopMatches } from '@/lib/compatibilidade';
 import { TESTIMONIALS } from '@/lib/testimonials';
 import { getArquetipoPrincipal } from '@/lib/arquetipoCard';
 import BotaoCompartilharStory from '@/app/components/BotaoCompartilharStory';
-import { PRECO_MANUAL_JANELA, PRECO_MANUAL_PADRAO, PRECO_BONUS_COMBO } from '@/lib/preco';
+import { PRECO_MANUAL_JANELA, PRECO_MANUAL_PADRAO, PRECO_ASSINATURA_ANUAL } from '@/lib/preco';
+import { BONUS_MANUAL, brl } from '@/lib/planos';
 import { emailValido } from '@/lib/emailValidacao';
 import SiteNav from '@/app/components/SiteNav';
 import { salvarSeForMeu } from '@/lib/perfilLocal';
@@ -148,18 +149,6 @@ function parseJson(txt, montar) {
   try { return montar(JSON.parse(txt)); } catch { return null; }
 }
 
-// Add-on do combo (Projeção de 12 Meses + Human Design) junto com o Manual.
-function ComboToggle({ checked, onChange, precoTotal }) {
-  return (
-    <label className={`${r.combo} ${checked ? r.comboOn : ''}`}>
-      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
-      <span>
-        Incluir também a <strong>Projeção de 12 Meses + Mapa de Human Design</strong> (+R$ {PRECO_BONUS_COMBO}, R$ {precoTotal} no total)
-      </span>
-    </label>
-  );
-}
-
 function Pagina({ children }) {
   return (
     <div className={r.pagina}>
@@ -189,7 +178,6 @@ export default function ResultadoPage() {
   const [secondsLeft, setSecondsLeft] = useState(null);
   const [statsCount, setStatsCount] = useState(null);
   const [ofertaExpirada, setOfertaExpirada] = useState(false);
-  const [incluirTier2, setIncluirTier2] = useState(false);
   const [presenteAberto, setPresenteAberto] = useState(false);
   const [ehPresente, setEhPresente] = useState(false);
   const [presenteEmail, setPresenteEmail] = useState('');
@@ -478,7 +466,7 @@ export default function ResultadoPage() {
     setProcessando(true);
     // Antes era hardcoded (47/97) — divergia do preço real fora da janela.
     // precoAtual já é a fonte de verdade (lib/preco.js) usada no botão/CTA.
-    const valorTotal = incluirTier2 ? precoAtual + PRECO_BONUS_COMBO : precoAtual;
+    const valorTotal = precoAtual;
     try {
       try { window?.gtag?.('event', 'clique_comprar', { event_category: 'conversion', metodo: 'cartao', value: valorTotal, currency: 'BRL' }); } catch {}
       try { window?.fbq?.('track', 'InitiateCheckout', { value: valorTotal, currency: 'BRL' }); } catch {}
@@ -487,7 +475,6 @@ export default function ResultadoPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           analiseId: id,
-          incluirTier2,
           ...(ehPresente && { presenteEmail: presenteEmail.trim(), presenteDe: presenteDe.trim() }),
           ...(emailCorrigido && { emailCorrigido }),
           // client_id + session_id desta sessão e gclid (só com aceite de cookies)
@@ -556,9 +543,9 @@ export default function ResultadoPage() {
     salvarEmailSeuDia(analise?.email || '');
   };
 
-  // Previsão do Ano e Human Design não têm mais compra avulsa — só liberam
-  // junto com o Manual (combo acima e app/api/criar-checkout-upsell-mp/route.js,
-  // que exige o Manual pago).
+  // Previsão do Ano e Human Design não têm mais compra nenhuma (nov/2026): vêm
+  // nos 30 dias do Intuitive Completo que acompanham o Manual, e depois com a
+  // assinatura (lib/planos.js). Quem comprou antes continua com acesso.
 
   // loading / erro
   if (loading) {
@@ -623,10 +610,8 @@ export default function ResultadoPage() {
   // regra, usada aqui e nos dois checkouts (MP e Stripe), então nunca fica
   // um valor exibido diferente do que é cobrado.
   const precoAtual = ofertaExpirada ? PRECO_MANUAL_PADRAO : PRECO_MANUAL_JANELA;
-  const precoTotal = incluirTier2 ? precoAtual + PRECO_BONUS_COMBO : precoAtual;
-  const rotuloComprar = incluirTier2
-    ? `Desbloquear o Manual + Projeção e Human Design · R$ ${precoTotal}`
-    : `Desbloquear o Manual do seu Mapa · R$ ${precoAtual}`;
+  const precoTotal = precoAtual;
+  const rotuloComprar = `Desbloquear o Manual do seu Mapa · R$ ${precoAtual}`;
   const arquetipo = signoFinal && numeroVidaFinal
     ? getArquetipoPrincipal({ signo: signoFinal, numeroVida: numeroVidaFinal, objetivoPrincipal: analise.objetivo_principal })
     : null;
@@ -819,7 +804,7 @@ export default function ResultadoPage() {
               <span className={r.liberado}>Pago · acesso liberado</span>
               <p className={r.texto}>As 14 seções estão prontas pra você ler, quantas vezes quiser.</p>
               <Link className={`${r.btn} ${r.btnLargo}`} href={`/manual/${id}`}>Abrir meu Manual</Link>
-              {cortesiaAtiva && <p className={r.nota}>Com ele vêm 30 dias do Seu Dia Completo, sem cobrança e sem renovação automática.</p>}
+              {cortesiaAtiva && <p className={r.nota}>Com ele vêm {BONUS_MANUAL}, sem cobrança e sem renovação automática.</p>}
             </div>
           ) : (
             <div className={r.oferta}>
@@ -835,19 +820,19 @@ export default function ResultadoPage() {
               <ul className={r.inclui}>
                 <li>14 seções, 30+ páginas, só sobre você</li>
                 <li>3 rituais com áudio guiado</li>
-                <li>De bônus: a Compatibilidade Completa com uma pessoa (vendida por R$ 29,90)</li>
-                <li>30 dias do Seu Dia Completo, sem cobrança</li>
+                <li>A Compatibilidade Completa com uma pessoa</li>
+                <li>O Oráculo sem limite de perguntas</li>
+                <li>De bônus: {BONUS_MANUAL}, sem cobrança e sem renovação automática</li>
                 {/* Só o que o Manual entrega de verdade. O antigo "Ritual de
                     Ativação Personalizado" (bônus das 24h) não existia em lugar
                     nenhum — os 3 rituais são os mesmos a R$ 27 ou R$ 47. */}
               </ul>
-              <ComboToggle checked={incluirTier2} onChange={setIncluirTier2} precoTotal={precoAtual + PRECO_BONUS_COMBO} />
               {prova.texto && <p className={r.provaReal}>{prova.texto}</p>}
               {/* Pix aqui mesmo (QR + copia-e-cola); cartão pelo checkout de sempre. */}
               <PixManual
                 analiseId={id}
                 valor={precoTotal}
-                incluirTier2={incluirTier2}
+                incluirTier2={false}
                 presente={ehPresente && presenteEmail ? { email: presenteEmail, de: presenteDe } : null}
                 onEmailInvalido={pixEmailInvalido}
               />
@@ -860,6 +845,26 @@ export default function ResultadoPage() {
                 <p className={r.nota}>Se o Manual não trouxer clareza real sobre o seu padrão, devolvemos 100%. Sem perguntas.</p>
               </div>
               {roundedStatsCount && <p className={r.prova}>Mais de {roundedStatsCount} mapas feitos por aqui</p>}
+              {/* Assinatura como caminho secundário (o botão principal é o Manual):
+                  o anual inclui o Manual. GA4 assinar_click / planos via link. */}
+              <p className={r.nota}>
+                Quer o seu mapa todo dia?{' '}
+                <a
+                  className={r.link}
+                  href={`/assinar?a=${encodeURIComponent(id)}&plano=anual`}
+                  onClick={() => { try { window.gtag?.('event', 'assinar_click', { event_category: 'assinatura', origem: 'resultado', plano: 'anual' }); } catch {} }}
+                >
+                  O Intuitive Completo anual já inclui o Manual · {brl(PRECO_ASSINATURA_ANUAL / 12)}/mês
+                </a>
+                {' '}·{' '}
+                <a
+                  className={r.link}
+                  href="/planos"
+                  onClick={() => { try { window.gtag?.('event', 'assinar_click', { event_category: 'assinatura', origem: 'resultado', plano: 'planos' }); } catch {} }}
+                >
+                  Compare as opções
+                </a>
+              </p>
             </div>
           )}
 
