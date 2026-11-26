@@ -268,6 +268,10 @@ export default function AssinarClient() {
               <p>Em qualquer um: o acesso é pelo seu e-mail.</p>
             </div>
             <div className={a.duvida}>
+              <h3>Manual ou assinatura?</h3>
+              <p>O Manual é a leitura que você compra uma vez; o Intuitive Completo é o dia a dia. <a href="/planos" onClick={() => evento('assinar_planos_click')}>Compare as opções lado a lado</a>.</p>
+            </div>
+            <div className={a.duvida}>
               <h3>E se o preço mudar?</h3>
               <p>Avisamos por e-mail com pelo menos 30 dias de antecedência. Um período já pago nunca muda.</p>
             </div>

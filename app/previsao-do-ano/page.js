@@ -133,7 +133,7 @@ export default function PrevisaoDoAnoPage() {
             <li>O que o mês favorece e o que costuma sair errado se você não prestar atenção.</li>
           </ul>
           <p>
-            O mês atual aparece inteiro, grátis, junto com o tema dos dois seguintes. Os 12 meses completos são um complemento do Manual do seu Mapa e também vêm na assinatura Intuitive Completo.
+            O mês atual aparece inteiro, grátis, junto com o tema dos dois seguintes. Os 12 meses completos fazem parte do Intuitive Completo, e quem compra o Manual do seu Mapa ganha 30 dias dele. <Link className={s.link} href="/planos">Compare as opções</Link>.
           </p>
 
           <h2>Perguntas frequentes</h2>

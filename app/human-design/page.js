@@ -163,7 +163,7 @@ export default function HumanDesignPage() {
             Calculadoras de Human Design mostram o bodygraph e param aí. Aqui a gente já conhece seu Sol, seu Número de Vida e o que você quer destravar agora, então a leitura cruza as três coisas e termina num plano de ação pro seu objetivo.
           </p>
           <p>
-            Seu Tipo aparece grátis. O Human Design completo (Autoridade, Perfil, centros e o cruzamento com o seu mapa) é liberado junto com o Manual do seu Mapa.
+            Seu Tipo aparece grátis. O Human Design completo (Autoridade, Perfil, centros e o cruzamento com o seu mapa) faz parte do Intuitive Completo, e quem compra o Manual do seu Mapa ganha 30 dias dele. <Link className={s.link} href="/planos">Compare as opções</Link>.
           </p>
 
           <h2>Perguntas frequentes</h2>

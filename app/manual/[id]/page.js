@@ -1445,7 +1445,7 @@ export default function ManualPage() {
         {/* COMPLEMENTOS: Projeção de 12 Meses e Human Design (compra ou conteúdo) */}
         {row && (
           <div className={m.coluna} style={{ marginTop: 40 }}>
-            <Complementos row={row} id={id} checks={checks} toggleCheck={toggleCheck} />
+            <Complementos row={row} id={id} checks={checks} toggleCheck={toggleCheck} acesso={acesso} />
           </div>
         )}
 

@@ -5,6 +5,7 @@ import { gerarProjecao12Meses } from "@/lib/transitos12meses";
 import { gerarGanchoNutricaoLead } from "@/lib/nutricaoLeadTextos";
 import { PRECO_MANUAL_JANELA, PRECO_MANUAL_PADRAO } from "@/lib/preco";
 import { processarLoteAvaliacao } from "@/lib/avaliacao";
+import { processarLoteCortesia } from "@/lib/cortesiaEmail";
 
 export const runtime = "nodejs";
 
@@ -372,7 +373,12 @@ export async function GET(request) {
     const loteAvaliacao = await processarLoteAvaliacao({ supabase, resend, baseUrl })
       .catch((e) => ({ erro: String(e?.message || e) }));
 
-    return NextResponse.json({ ok: true, lote1h, lote24h, loteMesPessoal, loteLeadsSemanal, loteAvaliacao });
+    // Fim dos 30 dias de cortesia do Manual: aviso 5 dias antes e no dia
+    // (lib/cortesiaEmail.js, migração 0033; sem ela, pula).
+    const loteCortesia = await processarLoteCortesia({ supabase, resend, baseUrl })
+      .catch((e) => ({ erro: String(e?.message || e) }));
+
+    return NextResponse.json({ ok: true, lote1h, lote24h, loteMesPessoal, loteLeadsSemanal, loteAvaliacao, loteCortesia });
   } catch (error) {
     console.error("❌ Erro no cron de lembretes:", error);
     return NextResponse.json(

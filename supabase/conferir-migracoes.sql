@@ -292,7 +292,11 @@ with esperado(migracao, tipo, tabela, item) as (
   ('0031_utm_social', 'coluna', 'seu_dia_perfis', 'atribuicao'),
   -- 0032
   ('0032_comecar', 'coluna', 'social_visitas', 'sessao'),
-  ('0032_comecar', 'indice', 'social_visitas', 'social_visitas_sessao_idx')
+  ('0032_comecar', 'indice', 'social_visitas', 'social_visitas_sessao_idx'),
+  -- 0033
+  ('0033_cortesia_emails', 'coluna', 'analises', 'cortesia_d25_em'),
+  ('0033_cortesia_emails', 'coluna', 'analises', 'cortesia_d30_em'),
+  ('0033_cortesia_emails', 'indice', 'analises', 'analises_paid_at_pago_idx')
 ),
 conferido as (
   select e.*,

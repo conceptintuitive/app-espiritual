@@ -6,11 +6,9 @@ import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
 import { calcularHumanDesign, CENTRO_NOME_AMIGAVEL } from '@/lib/humanDesign';
 import { TIPO_DESCRICAO, AUTORIDADE_DESCRICAO, gerarIntegracaoHumanDesign } from '@/lib/humanDesignTextos';
-import { PRECO_BONUS_AVULSO, PRECO_BONUS_COMBO } from '@/lib/preco';
 import { offsetSalvo, buscarOffsetNascimento } from '@/lib/sky';
 import SiteNav from '@/app/components/SiteNav';
-import { useAssinatura, CtaAssinatura } from '@/app/components/assinatura';
-import { coletarAtribuicao } from '@/app/components/CapturaAtribuicao';
+import { useAssinatura, OfertaComplemento } from '@/app/components/assinatura';
 
 function getSupabaseClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -29,8 +27,6 @@ export default function HumanDesignPage() {
   const [row, setRow] = useState(null);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState(false);
-  const [processando, setProcessando] = useState(false);
-  const [combo, setCombo] = useState(false);
   const assinatura = useAssinatura(id);
 
   useEffect(() => {
@@ -48,40 +44,6 @@ export default function HumanDesignPage() {
       setLoading(false);
     });
   }, [id]);
-
-  async function handleComprar() {
-    const produtos = combo && row?.tier2_payment_status !== 'paid'
-      ? ['projecao12m', 'humandesign']
-      : ['humandesign'];
-    setProcessando(true);
-    try {
-      const response = await fetch('/api/criar-checkout-upsell-mp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ analiseId: id, produtos, redirectTo: 'humandesign', atribuicao: await coletarAtribuicao() }),
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        // Esse bônus só pode ser comprado junto com o Manual (ver
-        // app/api/criar-checkout-upsell-mp/route.js) — não deveria acontecer
-        // já que o botão só aparece pra quem tem o Manual, mas se acontecer
-        // (ex: pagamento expirou entre carregar a página e clicar), manda
-        // pra oferta do Manual em vez de só mostrar um alerta sem saída.
-        if (data?.error === 'manual_nao_pago') {
-          window.location.href = `/resultado/${id}`;
-          return;
-        }
-        throw new Error(data?.error || 'Erro ao criar checkout');
-      }
-      const checkoutUrl = data?.url || data?.sandbox_url;
-      if (checkoutUrl) { window.location.href = checkoutUrl; return; }
-      throw new Error('Erro ao criar checkout');
-    } catch (e) {
-      alert(e?.message || 'Erro ao processar pagamento. Tente novamente.');
-    } finally {
-      setProcessando(false);
-    }
-  }
 
   return (
     <div className="wrap">
@@ -221,29 +183,7 @@ export default function HumanDesignPage() {
                       🔒 Como seu Human Design conversa com seu Sol em {row.signo || 'seu Signo'} e seu Número de Vida
                     </div>
                   </div>
-                  {row.payment_status !== 'paid' ? (
-                    <>
-                      <p className="p" style={{ fontSize: 14 }}>
-                        O Human Design completo é liberado junto com o <strong>Manual do seu Mapa</strong>.
-                      </p>
-                      <Link href={`/resultado/${id}`} className="btn btn-cta">
-                        Desbloquear com o Manual do seu Mapa
-                      </Link>
-                    </>
-                  ) : (
-                    <>
-                      {row.tier2_payment_status !== 'paid' && (
-                        <label className={`combo${combo ? ' is-checked' : ''}`}>
-                          <input type="checkbox" checked={combo} onChange={(e) => setCombo(e.target.checked)} />
-                          <span>Incluir também a <strong>Previsão do Ano</strong> — os dois por <strong>R$ {PRECO_BONUS_COMBO}</strong></span>
-                        </label>
-                      )}
-                      <button className="btn btn-cta" onClick={handleComprar} disabled={processando}>
-                        {processando ? 'Abrindo…' : combo ? `Desbloquear os dois — R$ ${PRECO_BONUS_COMBO}` : `Desbloquear o Human Design — R$ ${PRECO_BONUS_AVULSO}`}
-                      </button>
-                    </>
-                  )}
-                  <CtaAssinatura analiseId={id} origem="human_design" />
+                  <OfertaComplemento analiseId={id} manualPago={row.payment_status === 'paid'} produto="O Human Design completo" origem="human_design" />
                 </div>
               )}
             </>
@@ -293,9 +233,6 @@ const globalCss = `
   .subcard.highlight { border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.05); }
   .subttl { font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 0.04em; margin-bottom: 8px; }
   .list-check { list-style: none; padding: 0; margin: 0; font-size: 14.5px; line-height: 1.7; color: var(--muted); }
-  .combo { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 16px auto 0; padding: 12px 18px; max-width: 420px; border-radius: 999px; border: 1.5px solid rgba(139,92,246,0.5); background: rgba(139,92,246,0.1); font-size: 14px; cursor: pointer; }
-  .combo.is-checked { border-color: rgba(16,185,129,0.6); background: rgba(16,185,129,0.1); }
-  .combo input { accent-color: var(--secondary); width: 16px; height: 16px; }
   .footer-links { text-align: center; margin-top: 40px; }
   .footer-links a { color: var(--muted); text-decoration: none; font-size: 14px; }
 `;

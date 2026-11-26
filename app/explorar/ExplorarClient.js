@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import SiteNav from '@/app/components/SiteNav';
-import { PRECO_MANUAL_PADRAO, PRECO_BONUS_AVULSO } from '@/lib/preco';
+import { PRECO_MANUAL_PADRAO } from '@/lib/preco';
 import { CtaMapaBloco } from '@/app/components/CtaMapa';
 
 export default function ExplorarClient() {
@@ -13,9 +13,8 @@ export default function ExplorarClient() {
   // cardState só mostra "pago" ou "não pago" depois de saber de verdade,
   // pra nunca piscar "Desbloquear" pra quem já comprou.
   const [pagoStatus, setPagoStatus] = useState(null);
-  // Mesma lógica null-enquanto-carrega pros bônus — Previsão/HD só são
-  // compráveis junto com o Manual, então a tag certa depende de pagoStatus
-  // E do status do bônus em si.
+  // Mesma lógica null-enquanto-carrega pros bônus: Previsão/HD não são mais
+  // vendidos avulsos (nov/2026); quem comprou antes vê "Já é seu".
   const [tier2Pago, setTier2Pago] = useState(null);
   const [hdPago, setHdPago] = useState(null);
   // Preço de verdade vem do servidor (depende da janela de 24h do created_at
@@ -111,16 +110,14 @@ export default function ExplorarClient() {
   const humanDesignHref = '/human-design';
   const compatCompletaHref = '/compatibilidade-completa';
 
-  // Mesma tag pros dois cards de bônus (Previsão e HD): precisa saber se o
-  // Manual foi pago (pra liberar a compra) e se aquele bônus específico já
-  // foi comprado — null enquanto carrega, pra nunca piscar "Desbloqueia com
-  // o Manual" pra quem já tem tudo.
+  // Mesma tag pros dois cards de bônus (Previsão e HD), null enquanto carrega
+  // pra nunca piscar a oferta pra quem já tem.
   function tagBonus(bonusPago) {
     if (!ultimaAnaliseId) return null;
     if (pagoStatus === null) return 'Carregando…';
     if (bonusPago) return 'Já é seu';
-    if (pagoStatus) return `R$${PRECO_BONUS_AVULSO} · complemento do seu Manual`;
-    return 'Prévia grátis · completo no Intuitive Completo';
+    if (pagoStatus) return 'Incluso no Intuitive Completo';
+    return 'Prévia grátis · 30 dias com o Manual';
   }
   const previsaoTag = tagBonus(tier2Pago);
   const humanDesignTag = tagBonus(hdPago);
