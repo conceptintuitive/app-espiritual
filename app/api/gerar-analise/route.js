@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { calcularPlanetas, calcularAscendente, calcularSignoSolar, calcularAnoPessoal, calcularNumeroAlma, calcularNumeroExpressao, calcularNumeroVida } from '@/lib/calculos';
 import { gerarPreviewIA, gerarDiagnosticoIA, gerarAmorIA, gerarArquetiposIA, gerarPlano7IA, gerarInterpretacaoTarotIA } from '@/lib/ia';
 import { buildDiagnosticoCtx, buildAmorCtx, buildArquetiposCtx, buildPlano7Ctx } from '@/lib/manualgenerator';
+import { cruzadoDaLinha } from '@/lib/manualCruzadoServidor';
 import { sortearCarta, TAROT_PROMPTS_EN } from '@/lib/tarot';
 import { sendMetaLead, sendMetaStartTrial } from '@/lib/meta';
 import { salvarAtribuicao } from '@/lib/ga4';
@@ -323,6 +324,10 @@ export async function POST(request) {
         // fbc/fbp (clique do anúncio e cookie do Pixel), só com aceite de cookies
         atribuicao: body?.atribuicao ?? null,
       });
+
+      // Outros sistemas do mapa (astrologia chinesa, anjo, Kin, Human Design) na
+      // pergunta do Diagnóstico, com o mesmo fuso e offset gravados acima.
+      rowCtx.__cruzado = cruzadoDaLinha({ ...rowCtx, fuso_iana: municipio?.tz || null, utc_offset_nascimento: utcOffset });
 
       try {
         const [previewR, diagnosticoR, amorR, arquetiposR, plano7R, tarotR] = await Promise.allSettled([

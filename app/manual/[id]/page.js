@@ -466,6 +466,29 @@ export default function ManualPage() {
       });
   }, [row, hasPaid, id]);
 
+  // "O que os seus sistemas repetem" (sem IA): astrologia chinesa, anjo e Kin
+  // pesam, então entram por import() depois que a análise carregou.
+  const [sistemasCruzados, setSistemasCruzados] = useState(null);
+  const chaveCruzado = row ? `${row.data_nascimento}|${row.hora_nascimento || ''}|${row.longitude ?? ''}|${row.fuso_iana || ''}|${row.utc_offset_nascimento ?? ''}` : '';
+  useEffect(() => {
+    if (!row?.data_nascimento || !hasPaid) return undefined;
+    let vivo = true;
+    import('@/lib/manualCruzado')
+      .then(({ dadosCruzados, secaoSistemas, fusoDaAnalise }) => {
+        const lon = row.longitude === null || row.longitude === undefined || row.longitude === '' ? null : Number(row.longitude);
+        const d = dadosCruzados({
+          dataNascimento: row.data_nascimento,
+          hora: row.hora_nascimento || null,
+          tz: fusoDaAnalise(row),
+          lon: Number.isFinite(lon) ? lon : null,
+        });
+        if (vivo && d) setSistemasCruzados(secaoSistemas(d));
+      })
+      .catch(() => {});
+    return () => { vivo = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chaveCruzado, hasPaid]);
+
   // ==============================================
   // GERAR MANUAL PREMIUM
   // ==============================================
@@ -516,6 +539,7 @@ export default function ManualPage() {
       sinteseGerada:             row.sintese_gerada              || null,
       cartaTarot:                row.carta_tarot                 || null,
       cartaTarotInterpretacao:   row.carta_tarot_interpretacao   || null,
+      sistemasCruzados,
     };
 
     try {
@@ -527,7 +551,7 @@ export default function ManualPage() {
         params
       };
     }
-  }, [row]);
+  }, [row, sistemasCruzados]);
 
   // ==============================================
   // RENDERIZAR MARKDOWN
@@ -942,6 +966,38 @@ export default function ManualPage() {
               <p className={`${m.p} ${m.pre}`}>{section.sintese}</p>
             </>
           )}
+        </>
+      );
+    }
+
+    // TIPO: SISTEMAS (o que os sistemas repetem, sem IA)
+    if (section.type === 'sistemas') {
+      return (
+        <>
+          {cabeca}
+          {section.intro && <p className={m.p}>{section.intro}</p>}
+          <span className={m.rotuloOuro}>Seus sistemas</span>
+          <ul className={m.lista}>
+            {Array.isArray(section.sistemas) && section.sistemas.map((s) => (
+              <li key={s.sistema}><strong>{s.sistema}: {s.valor}</strong> · {s.sub}{s.temas?.length ? ` → ${s.temas.join(' e ')}` : ''}</li>
+            ))}
+          </ul>
+          {Array.isArray(section.repete) && section.repete.map((r) => (
+            <div key={r.nome} className={m.bloco}>
+              <span className={m.rotuloOuro} style={{ marginTop: 0 }}>O que se repete: {r.nome}</span>
+              <p className={m.p}>{r.frase}</p>
+              <p className={m.texto} style={{ marginTop: 10 }}>{r.onde}</p>
+            </div>
+          ))}
+          {section.tensao && (
+            <div className={m.bloco}>
+              <span className={m.rotuloOuro} style={{ marginTop: 0 }}>Onde você se divide: {section.tensao.titulo}</span>
+              <p className={m.p}>{section.tensao.frase}</p>
+              <p className={m.p}>{section.tensao.conselho}</p>
+              <p className={m.texto} style={{ marginTop: 10 }}>{section.tensao.onde}</p>
+            </div>
+          )}
+          {section.fecho && <p className={m.p}>{section.fecho}</p>}
         </>
       );
     }
