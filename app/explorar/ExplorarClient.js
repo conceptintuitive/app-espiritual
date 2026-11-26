@@ -107,7 +107,7 @@ export default function ExplorarClient() {
   // de prévia + desbloqueio. Se já existe uma análise, manda direto pra lá;
   // senão, começa pelo formulário, igual o Meu Mapa.
   const previsaoHref = ultimaAnaliseId ? `/previsao-do-ano/${ultimaAnaliseId}` : '/';
-  const humanDesignHref = ultimaAnaliseId ? `/human-design/${ultimaAnaliseId}` : '/';
+  const humanDesignHref = ultimaAnaliseId ? `/human-design/${ultimaAnaliseId}` : '/human-design';
   const compatCompletaHref = ultimaAnaliseId ? `/compatibilidade-completa/${ultimaAnaliseId}` : '/';
 
   // Mesma tag pros dois cards de bônus (Previsão e HD): precisa saber se o
