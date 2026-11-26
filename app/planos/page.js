@@ -6,7 +6,7 @@
 
 import Link from 'next/link';
 import SiteNav from '@/app/components/SiteNav';
-import { PLANOS, COMPARACAO, FAQ_PLANOS } from '@/lib/planos';
+import { PLANOS, COMPARACAO, FAQ_PLANOS, O_QUE_E_O_MANUAL } from '@/lib/planos';
 import { BASE_URL } from '@/lib/seoTarot';
 import BotaoPlano, { NotaManual } from './BotaoPlano';
 import b from '@/app/blog/blog.module.css';
@@ -76,6 +76,19 @@ export default function PlanosPage() {
             </li>
           ))}
         </ul>
+
+        <section className={p.secao} aria-labelledby="o-que-e">
+          <h2 id="o-que-e" className={p.secaoTitulo}>{O_QUE_E_O_MANUAL.titulo}</h2>
+          <p className={p.oQueEResumo}>{O_QUE_E_O_MANUAL.resumo}</p>
+          <dl className={p.oQueE}>
+            {O_QUE_E_O_MANUAL.itens.map((it) => (
+              <div key={it.chave}>
+                <dt>{it.titulo}</dt>
+                <dd>{it.texto}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
 
         <section className={p.secao} aria-labelledby="comparar">
           <h2 id="comparar" className={p.secaoTitulo}>Lado a lado</h2>
