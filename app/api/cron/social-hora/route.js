@@ -1,4 +1,6 @@
-// De hora em hora: termina os Reels que ficaram renderizando/processando,
+// De hora em hora: a partir das 7h, dispara o workflow do Reels no GitHub se o
+// Reels do dia ainda não saiu (GITHUB_TOKEN_REELS; lib/githubActions.js);
+// termina os Reels que ficaram renderizando/processando,
 // responde comentários com data de nascimento (SOCIAL_RESPOSTAS=on) e, a partir
 // do disparo das 21h, posta o Story da frase do dia (SOCIAL_FRASE_DO_DIA=on).
 //   GET /api/cron/social-hora?secret=CRON_SECRET
@@ -36,7 +38,7 @@ async function rodar(request) {
     try {
       const r = await tarefasDaHora({ supabase, data });
       // Só números no log: nada de texto, data ou usuário dos comentários.
-      console.log(`⏱️ social hora ${data}: reels ${r.reels.resultado.filter((x) => x.ok).length} ok/${r.reels.erros.length} erro(s); comentários ${r.comentarios ? `${r.comentarios.respondidas} respondido(s), ${r.comentarios.erros.length} erro(s)` : 'desligado'}; frase ${r.frase ? (r.frase.ok ? 'postada' : r.frase.pulado || 'erro') : '-'}`);
+      console.log(`⏱️ social hora ${data}: reels ${r.reels.resultado.filter((x) => x.ok).length} ok/${r.reels.erros.length} erro(s); workflow ${r.disparo ? (r.disparo.disparado ? 'disparado' : r.disparo.erro ? 'erro no disparo' : r.disparo.motivo) : '-'}; comentários ${r.comentarios ? `${r.comentarios.respondidas} respondido(s), ${r.comentarios.erros.length} erro(s)` : 'desligado'}; frase ${r.frase ? (r.frase.ok ? 'postada' : r.frase.pulado || 'erro') : '-'}`);
       return r;
     } catch (err) {
       console.error('❌ social hora:', err?.message || err);

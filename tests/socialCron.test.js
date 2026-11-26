@@ -636,6 +636,47 @@ test('GitHub: o cron da hora avisa se o Reels não chegou até o meio-dia', asyn
   }
 });
 
+test('GitHub: o cron da hora dispara o workflow a partir das 7h se o Reels não saiu', async () => {
+  process.env.SOCIAL_REELS = 'on';
+  try {
+    const db = novoDb();
+    const disparos = [];
+    const fetchGithub = async (url, opts = {}) => {
+      if (url.includes('/runs?')) return new Response(JSON.stringify({ workflow_runs: [] }), { status: 200 });
+      disparos.push(url);
+      return new Response(null, { status: 204 });
+    };
+    const github = { token: 'tk', repo: 'dona/repo', ref: 'main' };
+    const cedo = await tarefasDaHora({ supabase: fakeSupabase(db), data: '2026-11-30', agora: new Date('2026-11-30T09:10:00Z'), github, fetchGithub }); // 6h10
+    assert.equal(cedo.disparo, null, 'antes das 7h não dispara');
+    const sete = await tarefasDaHora({ supabase: fakeSupabase(db), data: '2026-11-30', agora: new Date('2026-11-30T10:10:00Z'), github, fetchGithub }); // 7h10
+    assert.deepEqual(sete.disparo, { disparado: true });
+    assert.equal(disparos.length, 1);
+    assert.equal(sete.reels.erros.length, 0, 'antes do meio-dia não avisa');
+    // com o Reels do dia já registrado, não dispara mais
+    db.social_posts.push({ data: '2026-11-30', rede: 'instagram', tipo: 'reels', status: 'ok' });
+    const oito = await tarefasDaHora({ supabase: fakeSupabase(db), data: '2026-11-30', agora: new Date('2026-11-30T11:10:00Z'), github, fetchGithub });
+    assert.equal(oito.disparo, null);
+    assert.equal(disparos.length, 1);
+  } finally {
+    delete process.env.SOCIAL_REELS;
+  }
+});
+
+test('GitHub: sem token o aviso das 12h ensina a configurar; disparo com erro entra no aviso', async () => {
+  process.env.SOCIAL_REELS = 'on';
+  try {
+    const semToken = await tarefasDaHora({ supabase: fakeSupabase(novoDb()), data: '2026-11-30', agora: new Date('2026-11-30T15:30:00Z'), github: null });
+    assert.match(semToken.reels.erros[0].erro, /GITHUB_TOKEN_REELS/);
+    const quebrado = await tarefasDaHora({ supabase: fakeSupabase(novoDb()), data: '2026-11-30', agora: new Date('2026-11-30T15:30:00Z'),
+      github: { token: 'x', repo: 'a/b', ref: 'main' }, fetchGithub: async () => new Response('Bad credentials', { status: 401 }) });
+    assert.equal(quebrado.disparo.disparado, false);
+    assert.match(quebrado.reels.erros[0].erro, /disparo pelo site falhou.*401/);
+  } finally {
+    delete process.env.SOCIAL_REELS;
+  }
+});
+
 // ── Reels NARRADO (SOCIAL_REELS_NARRADO=on) ────────────────────────────────
 import { TABELA_NARRADOS, caminhoDaPrevia } from '../lib/socialServidor.js';
 import { textoNarrado, duracaoDoVideo } from '../lib/reelsRoteiro.js';

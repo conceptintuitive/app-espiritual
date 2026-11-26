@@ -15,6 +15,11 @@
 # interativo = narrado; falha no narrado = card. Na prévia, `formato` escolhe
 # qual filmar (vazio = o do dia). Com SOCIAL_FRASE_DO_DIA=on, a sexta é a
 # "Frase do dia" (a voz lê a frase da tabela fixa, o "Hoje, …" e a chamada).
+# Quem dispara de verdade é o site (nov/2026): o cron de hora em hora
+# (/api/cron/social-hora, cron-job.org) chama o workflow_dispatch a partir das
+# 7h se o Reels do dia ainda não saiu (GITHUB_TOKEN_REELS na Vercel; ver
+# lib/githubActions.js). O `schedule` abaixo ficou de reserva: o agendamento do
+# GitHub atrasava horas ou não rodava.
 name: Reels diário
 
 on:
