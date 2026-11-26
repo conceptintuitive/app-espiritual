@@ -33,7 +33,7 @@ import { TESTIMONIALS } from '@/lib/testimonials';
 import { getArquetipoPrincipal } from '@/lib/arquetipoCard';
 import BotaoCompartilharStory from '@/app/components/BotaoCompartilharStory';
 import { PRECO_MANUAL_JANELA, PRECO_MANUAL_PADRAO, PRECO_ASSINATURA_ANUAL } from '@/lib/preco';
-import { BONUS_MANUAL, brl } from '@/lib/planos';
+import { BONUS_MANUAL, O_QUE_E_O_MANUAL, brl } from '@/lib/planos';
 import { emailValido } from '@/lib/emailValidacao';
 import SiteNav from '@/app/components/SiteNav';
 import { salvarSeForMeu } from '@/lib/perfilLocal';
@@ -764,7 +764,7 @@ export default function ResultadoPage() {
         {!pago && (
           <section ref={curtaRef} className={`${r.secao} ${r.curta}`} aria-label="O Manual do seu Mapa">
             <span className={r.eyebrow}>O Manual do seu Mapa</span>
-            <p className={r.curtaTexto}>O diagnóstico inteiro, o ponto cego, o amor, o dinheiro e um plano de 7 dias: 15 seções só sobre {firstName || 'você'}.</p>
+            <p className={r.curtaTexto}>Uma leitura escrita só sobre {firstName || 'você'}, com pagamento único: o diagnóstico inteiro, o ponto cego, o amor, o dinheiro e um plano de 7 dias, em 15 seções.</p>
             <div className={r.curtaPreco}>
               <div className={r.precoLinha}>
                 {!ofertaExpirada && <span className={r.precoDe}>de R$ {PRECO_MANUAL_PADRAO},00</span>}
@@ -786,6 +786,21 @@ export default function ResultadoPage() {
             </h2>
           </div>
 
+          <div className={r.manualCorpo}>
+          {!pago && (
+            <div className={r.oQueE}>
+              <p className={r.oQueEResumo}>{O_QUE_E_O_MANUAL.resumo}</p>
+              <dl className={r.oQueELista}>
+                {O_QUE_E_O_MANUAL.itens.filter((it) => it.noResultado !== false).map((it) => (
+                  <div key={it.chave}>
+                    <dt>{it.titulo}</dt>
+                    <dd>{it.texto}</dd>
+                  </div>
+                ))}
+              </dl>
+              <span className={r.rotulo}>As 15 seções do seu Manual</span>
+            </div>
+          )}
           <ol className={r.secoes}>
             {secoes.map((s, i) => (
               <li key={s.chave} className={r.secaoManual}>
@@ -798,6 +813,7 @@ export default function ResultadoPage() {
               </li>
             ))}
           </ol>
+          </div>
 
           {pago ? (
             <div className={r.oferta}>

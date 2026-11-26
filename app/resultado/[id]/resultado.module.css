@@ -133,6 +133,13 @@
 /* O Manual do seu Mapa */
 .manual { display: flex; flex-direction: column; gap: 28px; scroll-margin-top: 80px; }
 .manual .secaoTopo { margin-bottom: 0; }
+.manualCorpo { display: flex; flex-direction: column; gap: 22px; min-width: 0; }
+.oQueE { display: flex; flex-direction: column; gap: 18px; }
+.oQueEResumo { font-family: var(--serif); font-style: italic; font-size: 21px; line-height: 1.35; color: var(--texto); }
+.oQueELista { margin: 0; display: flex; flex-direction: column; }
+.oQueELista > div { padding: 14px 0; border-top: 1px solid var(--linha); }
+.oQueELista dt { font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--ouro); }
+.oQueELista dd { margin: 6px 0 0; font-size: 16px; line-height: 1.6; color: var(--areia); }
 .secoes { list-style: none; margin: 0; padding: 0; counter-reset: s; border-bottom: 1px solid var(--linha); }
 .secaoManual { display: grid; grid-template-columns: 30px 1fr; gap: 4px 10px; padding: 16px 0; border-top: 1px solid var(--linha); }
 .secaoNum { grid-row: span 2; font-family: var(--mono); font-size: 11px; letter-spacing: .1em; color: var(--ouro); padding-top: 3px; }

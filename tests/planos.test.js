@@ -4,7 +4,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 process.env.SEU_DIA_SECRET = 'segredo-de-teste';
-const { PLANOS, COMPARACAO, FAQ_PLANOS, BONUS_MANUAL, PERDE_NO_FIM_DA_CORTESIA, anualPorMes, brl } = await import('../lib/planos.js');
+const PLANOS_MOD = await import('../lib/planos.js');
+const { PLANOS, COMPARACAO, FAQ_PLANOS, BONUS_MANUAL, PERDE_NO_FIM_DA_CORTESIA, anualPorMes, brl } = PLANOS_MOD;
 const { etapaDaCortesia, montarEmailCortesia, processarLoteCortesia, DIAS_AVISO_CORTESIA, DIAS_LIMITE_FIM_CORTESIA } = await import('../lib/cortesiaEmail.js');
 const { PRECO_MANUAL_JANELA, PRECO_MANUAL_PADRAO, PRECO_ASSINATURA_MENSAL, PRECO_ASSINATURA_ANUAL } = await import('../lib/preco.js');
 const { DIAS_CORTESIA_MANUAL } = await import('../lib/assinaturaRegras.js');
@@ -156,4 +157,17 @@ test('lote: falha no envio devolve a trava; sem a migração, pula', async () =>
   const r2 = await processarLoteCortesia({ supabase: semColuna, resend, baseUrl: 'https://x.com', agora: AGORA });
   assert.equal(r2.pulado, true);
   assert.equal(r2.motivo, 'migração 0033');
+});
+
+test('O que é o Manual: texto claro, dentro das regras da marca, sem prometer o que não existe', () => {
+  const { O_QUE_E_O_MANUAL } = PLANOS_MOD;
+  const texto = [O_QUE_E_O_MANUAL.titulo, O_QUE_E_O_MANUAL.resumo, ...O_QUE_E_O_MANUAL.itens.flatMap((i) => [i.titulo, i.texto])].join(' ');
+  assert.deepEqual(problemasDoTexto(texto), []);
+  assert.match(texto, /uma vez só/i);
+  assert.match(texto, /não é assinatura/i);
+  assert.match(texto, /15 seções/);
+  assert.ok(!/mapa completo|análise completa|diagnóstico completo/i.test(texto));
+  // No /resultado a lista das seções vem embaixo: "o que tem dentro" fica só no /planos.
+  assert.deepEqual(O_QUE_E_O_MANUAL.itens.filter((i) => i.noResultado === false).map((i) => i.chave), ['dentro']);
+  assert.equal(new Set(O_QUE_E_O_MANUAL.itens.map((i) => i.chave)).size, O_QUE_E_O_MANUAL.itens.length);
 });

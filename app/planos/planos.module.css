@@ -60,3 +60,15 @@
 @media (min-width: 960px) {
   .planos { grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: stretch; }
 }
+
+/* O que é o Manual */
+.oQueEResumo { font-family: var(--serif); font-style: italic; font-size: 21px; line-height: 1.35; color: var(--areia); margin: 0 0 18px; max-width: 680px; }
+.oQueE { margin: 0; display: grid; grid-template-columns: 1fr; }
+.oQueE > div { padding: 16px 0; border-top: 1px solid var(--linha); }
+.oQueE > div:last-child { border-bottom: 1px solid var(--linha); }
+.oQueE dt { font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--ouro); }
+.oQueE dd { margin: 6px 0 0; font-size: 16px; line-height: 1.6; color: var(--areia); max-width: 680px; }
+@media (min-width: 960px) {
+  .oQueE { grid-template-columns: 1fr 1fr; column-gap: 56px; }
+  .oQueE > div:nth-last-child(2) { border-bottom: 1px solid var(--linha); }
+}
