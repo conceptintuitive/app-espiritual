@@ -13,6 +13,7 @@ import {
   gerarFechamentoIA, gerarSinteseIA,
 } from "@/lib/ia";
 import { sendGA4Purchase, buscarAtribuicao } from "@/lib/ga4";
+import { comCruzado } from "@/lib/manualCruzadoServidor";
 import { sendTikTokPurchase } from "@/lib/tiktok";
 import { sendMetaPurchase } from "@/lib/meta";
 import { getOrigemVenda } from "@/lib/testEmails";
@@ -307,6 +308,7 @@ export async function POST(request) {
             nome, signo, numero_vida, objetivo_principal, relacao_status, trabalho_status,
             signo_lua, signo_venus, signo_marte, signo_nodo, signo_mercurio, signo_ascendente,
             ano_pessoal, numero_alma, numero_expressao,
+            data_nascimento, hora_nascimento, longitude,
             sintese_gerada, diagnostico_gerado, amor_gerado, tipo_pessoa_gerado,
             plano7_gerado, arquetipos_gerado, ponto_cego_gerado, bloqueios_gerado,
             dinheiro_gerado, rituais_gerado, objetivo_gerado, leitura_gerada,
@@ -316,6 +318,10 @@ export async function POST(request) {
           .single();
 
         if (!analiseErr && analise) {
+          // Outros sistemas do mapa nas 5 seções que cruzam (lib/manualCruzado.js).
+          const falta = !analise.diagnostico_gerado || !analise.tipo_pessoa_gerado || !analise.ponto_cego_gerado
+            || !analise.leitura_gerada || !analise.fechamento_gerado;
+          if (falta) Object.assign(analise, await comCruzado(supabase, analiseId, analise));
           // Um único Promise.all — só gera seções que ainda estão null
           const [
             sintese, diagnostico, amor, tipoPessoa, plano7, arquetipos,

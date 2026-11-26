@@ -13,6 +13,8 @@ import {
   gerarFechamentoIA, gerarSinteseIA,
 } from '@/lib/ia';
 
+import { comCruzado } from '@/lib/manualCruzadoServidor';
+
 export const runtime = 'nodejs';
 export const maxDuration = 300;
 
@@ -101,6 +103,7 @@ export async function POST(request) {
         nome, signo, numero_vida, objetivo_principal, relacao_status, trabalho_status,
         signo_lua, signo_venus, signo_marte, signo_nodo, signo_mercurio, signo_ascendente,
         ano_pessoal, numero_alma, numero_expressao, payment_status,
+        data_nascimento, hora_nascimento, longitude,
         sintese_gerada, diagnostico_gerado, amor_gerado, tipo_pessoa_gerado,
         plano7_gerado, arquetipos_gerado, ponto_cego_gerado, bloqueios_gerado,
         dinheiro_gerado, rituais_gerado, objetivo_gerado, leitura_gerada,
@@ -128,6 +131,12 @@ export async function POST(request) {
 
     const generated = [];
     const resultadosOnda1 = {};
+
+    // Os outros sistemas do mapa (astrologia chinesa, anjo, Kin, Human Design
+    // e o que eles repetem) entram na pergunta de 5 seções: Diagnóstico, Tipo
+    // de pessoa, Ponto cego, Leitura integrada e Fechamento (lib/manualCruzado.js).
+    // Só seções que ainda faltam: Manual já gerado não muda.
+    const analiseCruzada = await comCruzado(supabase, analiseId, analise);
 
     // Gera e salva uma seção; devolve o resultado (ou null em falha) pra
     // quem precisar reaproveitar (só a Onda 1 é reaproveitada, na Onda 2).
@@ -164,7 +173,7 @@ export async function POST(request) {
     if (faltandoOnda1.length > 0) {
       await Promise.all(
         faltandoOnda1.map((campo) =>
-          gerarESalvar(campo, analise).then((result) => { resultadosOnda1[campo.col] = result; })
+          gerarESalvar(campo, analiseCruzada).then((result) => { resultadosOnda1[campo.col] = result; })
         )
       );
     }
@@ -178,7 +187,7 @@ export async function POST(request) {
 
     // Onda 2 — as 12 seções restantes, em paralelo entre si
     if (faltandoOnda2.length > 0) {
-      const analiseComResumo = { ...analise, __resumoAnterior: resumoAnterior };
+      const analiseComResumo = { ...analiseCruzada, __resumoAnterior: resumoAnterior };
       await Promise.all(faltandoOnda2.map((campo) => gerarESalvar(campo, analiseComResumo)));
     }
 

@@ -8,7 +8,7 @@
 //      da IA do quiz) cortados com degradê no 3º + o gancho "o mesmo padrão
 //      em 3 lugares" (trechoDoDiagnostico / ganchoDoMapa, lib/resultadoManual.js)
 //   3. Oferta curta: 1 linha + preço + contador + "Desbloquear" (rola até 4)
-//   4. O Manual do seu Mapa (#comprar): as 14 seções com título da pessoa,
+//   4. O Manual do seu Mapa (#comprar): as 15 seções com título da pessoa,
 //      preço + contador, prova social real (lib/provaSocial.js), combo,
 //      Pix na página (PixManual.js) e cartão pelo checkout de sempre
 //   5. Seu dia de hoje (DiaResumo, motor do Seu Dia) → /seu-dia
@@ -764,7 +764,7 @@ export default function ResultadoPage() {
         {!pago && (
           <section ref={curtaRef} className={`${r.secao} ${r.curta}`} aria-label="O Manual do seu Mapa">
             <span className={r.eyebrow}>O Manual do seu Mapa</span>
-            <p className={r.curtaTexto}>O diagnóstico inteiro, o ponto cego, o amor, o dinheiro e um plano de 7 dias: 14 seções só sobre {firstName || 'você'}.</p>
+            <p className={r.curtaTexto}>O diagnóstico inteiro, o ponto cego, o amor, o dinheiro e um plano de 7 dias: 15 seções só sobre {firstName || 'você'}.</p>
             <div className={r.curtaPreco}>
               <div className={r.precoLinha}>
                 {!ofertaExpirada && <span className={r.precoDe}>de R$ {PRECO_MANUAL_PADRAO},00</span>}
@@ -782,7 +782,7 @@ export default function ResultadoPage() {
           <div className={`${r.secaoTopo} ${r.manualTopo}`}>
             <span className={r.eyebrow}>{pago ? 'Liberado' : 'O Manual do seu Mapa'}</span>
             <h2 id="manual" className={r.h2}>
-              {pago ? <>O seu Manual <em>já está liberado</em></> : <>14 seções escritas <em>só pra {firstName || 'você'}</em></>}
+              {pago ? <>O seu Manual <em>já está liberado</em></> : <>15 seções escritas <em>só pra {firstName || 'você'}</em></>}
             </h2>
           </div>
 
@@ -802,7 +802,7 @@ export default function ResultadoPage() {
           {pago ? (
             <div className={r.oferta}>
               <span className={r.liberado}>Pago · acesso liberado</span>
-              <p className={r.texto}>As 14 seções estão prontas pra você ler, quantas vezes quiser.</p>
+              <p className={r.texto}>As 15 seções estão prontas pra você ler, quantas vezes quiser.</p>
               <Link className={`${r.btn} ${r.btnLargo}`} href={`/manual/${id}`}>Abrir meu Manual</Link>
               {cortesiaAtiva && <p className={r.nota}>Com ele vêm {BONUS_MANUAL}, sem cobrança e sem renovação automática.</p>}
             </div>
@@ -818,7 +818,7 @@ export default function ResultadoPage() {
                 </p>
               )}
               <ul className={r.inclui}>
-                <li>14 seções, 30+ páginas, só sobre você</li>
+                <li>15 seções, 30+ páginas, só sobre você</li>
                 <li>3 rituais com áudio guiado</li>
                 <li>A Compatibilidade Completa com uma pessoa</li>
                 <li>O Oráculo sem limite de perguntas</li>

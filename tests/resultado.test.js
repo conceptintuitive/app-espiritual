@@ -4,13 +4,13 @@ import assert from 'node:assert/strict';
 import { secoesDoManual, rotuloContador, faqResultado } from '../lib/resultadoManual.js';
 import { salvarEmailSeuDia, consumirEmailSeuDia, CHAVE_EMAIL_SEU_DIA } from '../lib/seuDiaRepasse.js';
 
-test('secoesDoManual: 14 seções, com as frases da IA quando existem', () => {
+test('secoesDoManual: 15 seções, com as frases da IA quando existem', () => {
   const s = secoesDoManual({
     nome: 'Bianca', signo: 'Sagitário', numero: 11, anoPessoal: 3, objetivo: 'Carreira e Propósito', arquetipo: 'A Visionária',
     diagnostico: { frase: '"Você corre antes de chegar."' }, amor: { headline: 'Você ama no futuro' },
     arquetipos: { dominante: { nome: 'A Exploradora' }, emocional: { nome: 'A Sábia' }, sombra: { nome: 'A Fugitiva' } },
   });
-  assert.equal(s.length, 14);
+  assert.equal(s.length, 15);
   const por = Object.fromEntries(s.map((x) => [x.chave, x.titulo]));
   assert.equal(por.diagnostico, 'Você corre antes de chegar.');
   assert.equal(por.amor, 'Você ama no futuro');
