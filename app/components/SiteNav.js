@@ -29,16 +29,27 @@ import Link from 'next/link';
 // O <link> da Cinzel continua aqui porque algumas páginas (Kin Maia, animais
 // chineses) usam a Cinzel sem carregá-la.
 
+// Dois grupos (nov/2026): ferramentas que calculam na hora e guias que
+// explicam cada sistema (os de Previsão do Ano e Compatibilidade Completa
+// levam pro resultado de quem já tem mapa). Tudo aqui é grátis de abrir.
 export const DESCOBRIR = [
-  { href: '/ceu', label: 'Céu do nascimento', key: 'ceu', destaque: true },
-  { href: '/anjo-da-guarda', label: 'Anjo da Guarda', key: 'anjo' },
-  { href: '/kin-maia', label: 'Kin Maia', key: 'kin-maia' },
-  { href: '/astrologia-chinesa', label: 'Astrologia Chinesa', key: 'astrologia-chinesa' },
-  { href: '/signos', label: 'Signos', key: 'signos' },
-  { href: '/numerologia', label: 'Numerologia', key: 'numerologia' },
-  { href: '/compatibilidade', label: 'Compatibilidade', key: 'compatibilidade' },
-  { href: '/hexagrama-do-dia', label: 'Hexagrama do Dia', key: 'hexagrama' },
-  { href: '/blog', label: 'Blog', key: 'blog' },
+  { href: '/ceu', label: 'Céu do nascimento', key: 'ceu', destaque: true, grupo: 'calcular' },
+  { href: '/anjo-da-guarda', label: 'Anjo da Guarda', key: 'anjo', grupo: 'calcular' },
+  { href: '/kin-maia', label: 'Kin Maia', key: 'kin-maia', grupo: 'calcular' },
+  { href: '/astrologia-chinesa', label: 'Astrologia Chinesa', key: 'astrologia-chinesa', grupo: 'calcular' },
+  { href: '/compatibilidade', label: 'Compatibilidade', key: 'compatibilidade', grupo: 'calcular' },
+  { href: '/hexagrama-do-dia', label: 'Hexagrama do Dia', key: 'hexagrama', grupo: 'calcular' },
+  { href: '/signos', label: 'Signos', key: 'signos', grupo: 'guias' },
+  { href: '/numerologia', label: 'Numerologia', key: 'numerologia', grupo: 'guias' },
+  { href: '/tarot', label: 'Tarô', key: 'tarot', grupo: 'guias' },
+  { href: '/human-design', label: 'Human Design', key: 'human-design', grupo: 'guias' },
+  { href: '/previsao-do-ano', label: 'Previsão do Ano', key: 'previsao-guia', grupo: 'guias' },
+  { href: '/compatibilidade-completa', label: 'Compatibilidade Completa', key: 'compat-completa-guia', grupo: 'guias' },
+  { href: '/blog', label: 'Blog', key: 'blog', grupo: 'guias' },
+];
+export const GRUPOS_DESCOBRIR = [
+  { chave: 'calcular', rotulo: 'Grátis, na hora' },
+  { chave: 'guias', rotulo: 'Entenda cada sistema' },
 ];
 const CHAVES_DESCOBRIR = new Set([...DESCOBRIR.map((i) => i.key), 'explorar']);
 
@@ -115,13 +126,19 @@ export default function SiteNav({ active = null, sticky = true, transparente = f
             </button>
             {descobrir && (
               <div id="site-nav-dropdown" className="site-nav-dropdown">
-                <span className="site-nav-rotulo">Grátis, na hora</span>
-                {DESCOBRIR.map((i) => (
-                  <Link key={i.key} href={i.href} className={`site-nav-drop-link${active === i.key ? ' is-active' : ''}${i.destaque ? ' is-destaque' : ''}`}
-                    onClick={() => { setDescobrir(false); evento('menu_descobrir', { destino: i.key }); }}>
-                    {i.label}
-                  </Link>
-                ))}
+                <div className="site-nav-drop-colunas">
+                  {GRUPOS_DESCOBRIR.map((g) => (
+                    <div key={g.chave} className="site-nav-drop-coluna">
+                      <span className="site-nav-rotulo">{g.rotulo}</span>
+                      {DESCOBRIR.filter((i) => i.grupo === g.chave).map((i) => (
+                        <Link key={i.key} href={i.href} className={`site-nav-drop-link${active === i.key ? ' is-active' : ''}${i.destaque ? ' is-destaque' : ''}`}
+                          onClick={() => { setDescobrir(false); evento('menu_descobrir', { destino: i.key }); }}>
+                          {i.label}
+                        </Link>
+                      ))}
+                    </div>
+                  ))}
+                </div>
                 <Link href="/explorar" className="site-nav-drop-tudo" onClick={() => setDescobrir(false)}>Ver tudo ›</Link>
               </div>
             )}
@@ -154,16 +171,20 @@ export default function SiteNav({ active = null, sticky = true, transparente = f
         <div id="site-nav-painel" className="site-nav-painel">
           <Link href="/?quiz=1" className="site-nav-cta site-nav-cta-largo" onClick={fazerMapa}>Fazer meu mapa grátis</Link>
 
-          <div className="site-nav-grupo">
-            <span className="site-nav-rotulo site-nav-rotulo-verde">Descobrir — grátis</span>
-            {DESCOBRIR.map((i) => (
-              <Link key={i.key} href={i.href} className={`site-nav-painel-link${active === i.key ? ' is-active' : ''}`}
-                onClick={() => { setAberto(false); evento('menu_descobrir', { destino: i.key }); }}>
-                {i.label}
-              </Link>
-            ))}
-            <Link href="/explorar" className="site-nav-painel-tudo" onClick={() => setAberto(false)}>Ver tudo ›</Link>
-          </div>
+          {GRUPOS_DESCOBRIR.map((g, gi) => (
+            <div key={g.chave} className="site-nav-grupo">
+              <span className="site-nav-rotulo site-nav-rotulo-verde">{gi === 0 ? 'Descobrir — grátis, na hora' : g.rotulo}</span>
+              {DESCOBRIR.filter((i) => i.grupo === g.chave).map((i) => (
+                <Link key={i.key} href={i.href} className={`site-nav-painel-link${active === i.key ? ' is-active' : ''}`}
+                  onClick={() => { setAberto(false); evento('menu_descobrir', { destino: i.key }); }}>
+                  {i.label}
+                </Link>
+              ))}
+              {gi === GRUPOS_DESCOBRIR.length - 1 && (
+                <Link href="/explorar" className="site-nav-painel-tudo" onClick={() => setAberto(false)}>Ver tudo ›</Link>
+              )}
+            </div>
+          ))}
 
           <div className="site-nav-grupo">
             <span className="site-nav-rotulo">Meu Mapa</span>
@@ -213,10 +234,12 @@ export default function SiteNav({ active = null, sticky = true, transparente = f
         .site-nav-seta { font-size: 9px; margin-left: 2px; }
         .site-nav-descobrir { position: relative; }
         .site-nav-dropdown {
-          position: absolute; top: calc(100% + 14px); left: 50%; transform: translateX(-50%); min-width: 320px;
+          position: absolute; top: calc(100% + 14px); left: 50%; transform: translateX(-50%); min-width: 600px;
           display: flex; flex-direction: column; padding: 14px 18px 12px; border-radius: 16px;
           background: rgba(10, 6, 18, 0.98); border: 1px solid rgba(242, 199, 123, 0.22); box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
         }
+        .site-nav-drop-colunas { display: grid; grid-template-columns: 1fr 1fr; gap: 0 28px; }
+        .site-nav-drop-coluna { display: flex; flex-direction: column; min-width: 0; }
         .site-nav-rotulo {
           font-family: var(--nav-mono); font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: #f2c77b; padding-bottom: 6px;
         }

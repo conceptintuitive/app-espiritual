@@ -4,7 +4,7 @@
 
 import Link from 'next/link';
 import SiteNav from '@/app/components/SiteNav';
-import BotaoMeuHD, { LinhaMeuHD } from './BotaoMeuHD';
+import BotaoMeuResultado, { LinhaMeuResultado } from '@/app/components/seo/BotaoMeuResultado';
 import { TIPO_DESCRICAO } from '@/lib/humanDesignTextos';
 import { BASE_URL, jsonSeguro } from '@/lib/seoTarot';
 import b from '@/app/blog/blog.module.css';
@@ -33,6 +33,12 @@ const TIPOS = [
   { chave: 'Manifestor', pct: '~9%', frase: 'Feito pra iniciar, em rajadas.' },
   { chave: 'Reflector', pct: '~1%', frase: 'Espelho do ambiente; decide com o tempo.' },
 ];
+
+const BOTAO = { base: '/human-design', rotulo: 'Descobrir meu Human Design', produto: 'human-design' };
+const LINHA = {
+  comMapa: 'Calculado com a data, hora e local do seu mapa. Seu Tipo aparece na hora, grátis.',
+  semMapa: 'O Human Design sai do mesmo mapa: data, hora e local de nascimento. Seu Tipo aparece grátis.',
+};
 
 const PECAS = [
   { nome: 'Tipo', texto: 'Como a sua energia funciona no dia a dia. São só 5, e é a primeira coisa que todo mundo quer saber.' },
@@ -88,7 +94,7 @@ export default function HumanDesignPage() {
   return (
     <div className={b.blog}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonSeguro(jsonLd) }} />
-      <SiteNav />
+      <SiteNav active="human-design" />
 
       <article className={`${b.ctr} ${b.post}`}>
         <div className={b.coluna}>
@@ -102,8 +108,8 @@ export default function HumanDesignPage() {
               Um mapa de como a sua energia funciona e de como você toma decisões melhores, calculado a partir da data, hora e local de nascimento.
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 10, marginTop: 6 }}>
-              <BotaoMeuHD className={b.btn} origem="human-design-topo" />
-              <LinhaMeuHD className={b.rotulo} />
+              <BotaoMeuResultado {...BOTAO} className={b.btn} origem="topo" />
+              <LinhaMeuResultado {...LINHA} className={b.rotulo} />
             </div>
           </header>
         </div>
@@ -175,8 +181,8 @@ export default function HumanDesignPage() {
 
           <div className={b.ctaFim}>
             <p className={b.ctaFimTexto}>Descubra o seu Tipo, a sua Autoridade e o seu Perfil.</p>
-            <BotaoMeuHD className={b.btn} origem="human-design-fim" />
-            <LinhaMeuHD className={b.rotulo} />
+            <BotaoMeuResultado {...BOTAO} className={b.btn} origem="fim" />
+            <LinhaMeuResultado {...LINHA} className={b.rotulo} />
           </div>
         </div>
       </article>
