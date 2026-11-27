@@ -7,7 +7,7 @@
 @font-face { font-family: 'Instrument Serif'; font-style: italic; font-weight: 400; font-display: swap; src: url(/olho/fonts/instrument-serif-latin-400-italic.woff2) format('woff2'); }
 @font-face { font-family: 'Geist Mono'; font-weight: 400; font-display: swap; src: url(/olho/fonts/geist-mono-latin-400-normal.woff2) format('woff2'); }
 
-.home, .quiz {
+.home, .quiz, .quizEspera {
   --fundo: #07040d; --texto: #f3e9da; --ouro: #f2c77b; --ouro-2: #ffdca0; --apagado: #b9a9c9; --areia: #d9cbb8;
   --linha: rgba(242,199,123,.16);
   --serif: 'Instrument Serif', Georgia, serif;
@@ -32,6 +32,8 @@
   transition: background .2s, transform .2s;
 }
 .btn:hover { background: var(--ouro-2); }
+a.btn { text-decoration: none; box-sizing: border-box; }
+.home a.btn, .home a.btn:visited { color: #1a1020; }
 .btn:disabled { opacity: .6; cursor: default; }
 .btnLargo { width: 100%; }
 .btnSec {
@@ -107,6 +109,13 @@
 .nota { font-size: 13px; color: var(--apagado); }
 
 /* ── Quiz ───────────────────────────────────────────────────────────────── */
+/* Tela de espera: aparece só com CSS quando alguém toca num botão antes do
+   JavaScript carregar (o link vai pra #quiz). O quiz de verdade (z-index 1000)
+   abre por cima assim que a página fica pronta e tira o #quiz da URL. */
+.quizEspera { display: none; position: fixed; inset: 0; z-index: 999; background: rgba(7,4,13,.97);
+  flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+.quizEspera:target { display: flex; }
+.quizEsperaTexto { margin: 0; font-family: var(--mono); font-size: 11px; letter-spacing: .22em; text-transform: uppercase; color: var(--apagado); }
 .quiz { position: fixed; inset: 0; z-index: 1000; background: rgba(7,4,13,.97); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
   display: flex; align-items: flex-start; justify-content: center; padding: 72px 20px 32px; overflow-y: auto; box-sizing: border-box; }
 .fechar { position: absolute; top: 16px; right: 16px; width: 40px; height: 40px; border-radius: 50%;
