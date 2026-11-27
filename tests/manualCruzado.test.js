@@ -94,6 +94,7 @@ test('blocoCruzadoParaIA: os dados certos, a regra de citação de cada seção'
     assert.ok(!b.includes('—'), 'sem travessão (os prompts proíbem)');
     for (const r of d.sintese.repete) assert.ok(b.includes(r.nome), `${secao}: ${r.nome}`);
     if (FOCO_CRUZADO[secao].nomear === 0) assert.match(b, /Não cite nenhum desses sistemas pelo nome/);
+    else if (FOCO_CRUZADO[secao].nomear === 'citar') assert.match(b, /REGRA DE CITAÇÃO/);
     else assert.match(b, /Pode citar pelo nome no máximo/);
   }
   // Sem hora: nada de Human Design no texto (não dá pra calcular).
