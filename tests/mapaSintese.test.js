@@ -1,7 +1,7 @@
 // Testes de lib/mapaSintese.js — `npm test`.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { sistemasDaPessoa, sinteseDoMapa, TEMAS, TENSOES } from '../lib/mapaSintese.js';
+import { sistemasDaPessoa, sinteseDoMapa, destaqueDoMapa, convergenciasDoMapa, TEMAS, TENSOES } from '../lib/mapaSintese.js';
 
 test('Vitória, 21/12/1994 07:25: sistemas, temas repetidos e tensão', () => {
   const s = sistemasDaPessoa({ dataNascimento: '1994-12-21', hora: '07:25' });
@@ -75,4 +75,55 @@ test('previaDoManual: títulos com os temas da pessoa (sem IA)', async () => {
     const q = previaDoManual({ repete: [{ tema: t }], ranking: [{ tema: t }], tensao: null });
     assert.ok(q.every((x) => x.titulo && !x.titulo.includes('undefined')), t);
   }
+});
+
+// ── Destaque do /resultado ──────────────────────────────────────────────────
+const destaque = (dataNascimento, hora = null) => destaqueDoMapa(sistemasDaPessoa({ dataNascimento, hora }));
+
+test('destaque: são sempre 5 sistemas (os dois anjos contam como um)', () => {
+  assert.equal(destaque('1994-12-21', '07:25').total, 5);
+  assert.equal(destaque('1994-12-21').total, 5);
+});
+
+test('destaque: com 2 sistemas nomeia; com 3 ou mais, conta', () => {
+  const dois = destaque('1980-02-22').convergencia;
+  assert.equal(dois.tema, 'cuidar');
+  assert.equal(dois.rotulo, 'Seu signo e seu número concordam');
+  assert.equal(dois.rotuloEu, 'Meu signo e meu número concordam');
+  const tres = destaque('1980-01-03').convergencia;
+  assert.equal(tres.tema, 'liderar');
+  assert.equal(tres.rotulo, '3 dos seus 5 sistemas repetem');
+  assert.equal(tres.rotuloEu, '3 dos meus 5 sistemas repetem');
+  assert.deepEqual(tres.quem.map((q) => q.sistema), ['Signo solar', 'Número de vida', 'Anjo da guarda']);
+});
+
+test('destaque: signo + anjo da guarda (os dois do Sol) não contam como 2', () => {
+  // Só eles repetem: sem convergência, fica a tensão.
+  const so = destaque('1980-01-01');
+  assert.deepEqual(sinteseDoMapa(sistemasDaPessoa({ dataNascimento: '1980-01-01' })).repete.map((r) => r.sistemas), [['Signo solar', 'Anjo da guarda']]);
+  assert.equal(so.convergencia, null);
+  assert.ok(so.tensao);
+  // Tem outra convergência: vale a outra.
+  const outra = destaque('1980-01-10').convergencia;
+  assert.equal(outra.tema, 'conectar');
+  assert.equal(outra.rotulo, 'Seu número e seu Kin concordam');
+  // Signo + anjo da MENTE (pela hora) vale: são fontes diferentes.
+  const mente = destaque('1980-01-01', '14:10').convergencia;
+  assert.equal(mente.rotulo, 'Seu signo e seu anjo concordam');
+  assert.ok(mente.quem.some((q) => q.sistema === 'Anjo da mente'));
+});
+
+test('destaque: em 1955–2007 nunca sai vazio; a astrologia chinesa aparece pelo elemento do dia', () => {
+  for (const hora of [null, '14:10']) {
+    for (let t = Date.UTC(1955, 0, 1); t < Date.UTC(2008, 0, 1); t += 86400e3 * 9) {
+      const d = new Date(t).toISOString().slice(0, 10);
+      const x = destaque(d, hora);
+      assert.ok(x.convergencia || x.tensao, d);
+      for (const c of convergenciasDoMapa(sistemasDaPessoa({ dataNascimento: d, hora }))) {
+        assert.ok(c.familias.length >= 2 && c.fontes >= 2, d);
+      }
+    }
+  }
+  const metal = destaque('1994-12-21', '07:25').convergencia.quem.find((q) => q.sistema === 'Astrologia chinesa');
+  assert.equal(metal.valor, 'Metal Yin');
 });
