@@ -265,9 +265,107 @@ async function modeloNumero(ctx, dados) {
   texto(ctx, 'Descubra o seu · intuitiveconcept.com.br/ceu', cx, base, { esp, align: 'center' });
 }
 
+// "Síntese" (topo do /resultado): o céu no alto, o nome, o que mais de um
+// sistema repete (e quem votou) e onde a pessoa se divide. Tudo entre y=250 e
+// y=1650 (a interface do story cobre o topo e o pé). Sem data nem cidade:
+// o rodapé diz só "o céu da manhã em que eu cheguei".
+async function modeloSintese(ctx, dados) {
+  const W = LARGURA;
+  const d = dados.destaque;
+  ctx.drawImage(await canvasDoCeu(dados, W, 520 * K, { rotuloMinY: 90 * K, rotuloMaxY: 250 * K }), 0, 0);
+  const g = ctx.createLinearGradient(0, 0, 0, 540 * K);
+  g.addColorStop(0, 'rgba(7,4,13,.55)'); g.addColorStop(0.18, 'rgba(7,4,13,0)'); g.addColorStop(0.4, 'rgba(7,4,13,0)');
+  g.addColorStop(0.78, 'rgba(7,4,13,.9)'); g.addColorStop(1, COR.fundo);
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, 540 * K);
+
+  ctx.textBaseline = 'alphabetic';
+  ctx.font = `400 ${11 * K}px ${MONO}`;
+  ctx.fillStyle = COR.texto;
+  texto(ctx, 'MEU MAPA', PAD, PAD + 11 * K, { esp: 0.3 * 11 * K });
+  ctx.fillStyle = COR.ouro;
+  texto(ctx, 'INTUITIVE CONCEPT', W - PAD, PAD + 11 * K, { esp: 0.3 * 11 * K, align: 'right' });
+
+  const util = W - 2 * PAD;
+  // O bloco de texto termina perto de y=1400 seja qual for o número de linhas
+  // (2 a 5 sistemas, 1 a 3 linhas de frase), sem subir demais no céu.
+  ctx.font = `italic 400 ${22 * K}px ${SERIF}`;
+  const linhasFrase = d.frase ? Math.min(3, quebrar(ctx, d.frase, util).length) : 0;
+  const alturaTexto = (d.tema ? 124 + 30 * Math.min(5, d.quem.length) : 0) + (d.tensao ? 94 : 0) + (linhasFrase ? 14 + 28.6 * linhasFrase : 0);
+  let y = Math.max(290, Math.min(430, 700 - alturaTexto)) * K;
+  ctx.fillStyle = COR.texto;
+  caber(ctx, dados.nome, util, 92 * K, (s) => `400 ${s}px ${SERIF}`);
+  texto(ctx, dados.nome, PAD, y);
+
+  if (d.tema) {
+    y += 42 * K;
+    ctx.fillStyle = COR.ouro;
+    caber(ctx, d.rotulo.toUpperCase(), util, 10 * K, (s) => `400 ${s}px ${MONO}`);
+    texto(ctx, d.rotulo.toUpperCase(), PAD, y, { esp: 0.22 * 10 * K });
+    y += 62 * K;
+    ctx.fillStyle = COR.ouro;
+    caber(ctx, d.tema, util, 66 * K, (s) => `italic 400 ${s}px ${SERIF}`);
+    texto(ctx, d.tema, PAD, y);
+    // Quem votou: rótulo à esquerda, valor à direita, entre linhas finas.
+    y += 20 * K;
+    const alt = 30 * K;
+    linhaH(ctx, PAD, W - PAD, y);
+    for (const q of d.quem.slice(0, 5)) {
+      ctx.fillStyle = COR.apagado;
+      ctx.font = `400 ${9 * K}px ${MONO}`;
+      texto(ctx, q.sistema.toUpperCase(), PAD, y + 19 * K, { esp: 0.2 * 9 * K });
+      ctx.fillStyle = COR.texto;
+      caber(ctx, q.valor, util * 0.55, 19 * K, (s) => `400 ${s}px ${SERIF}`);
+      texto(ctx, q.valor, W - PAD, y + 21 * K, { align: 'right' });
+      y += alt;
+      linhaH(ctx, PAD, W - PAD, y);
+    }
+  }
+
+  if (d.tensao) {
+    y += 46 * K;
+    ctx.fillStyle = COR.ouro;
+    ctx.font = `400 ${10 * K}px ${MONO}`;
+    texto(ctx, 'ONDE EU ME DIVIDO', PAD, y, { esp: 0.22 * 10 * K });
+    y += 48 * K;
+    const [a, b] = d.tensao;
+    const montar = (s) => `400 ${s}px ${SERIF}`;
+    const tam = caber(ctx, `${a} × ${b}`, util, 42 * K, montar);
+    ctx.font = montar(tam);
+    ctx.fillStyle = COR.texto;
+    texto(ctx, a, PAD, y);
+    let x = PAD + ctx.measureText(`${a} `).width;
+    ctx.fillStyle = COR.ouro;
+    texto(ctx, '×', x, y);
+    x += ctx.measureText('× ').width;
+    ctx.fillStyle = COR.texto;
+    texto(ctx, b, x, y);
+  }
+
+  if (d.frase) {
+    ctx.fillStyle = COR.frase;
+    ctx.font = `italic 400 ${22 * K}px ${SERIF}`;
+    y += 14 * K;
+    for (const l of quebrar(ctx, d.frase, util).slice(0, 3)) { y += 22 * K * 1.3; texto(ctx, l, PAD, y); }
+  }
+
+  // Rodapé, acima da faixa que a interface do story cobre.
+  ctx.font = `400 ${9 * K}px ${MONO}`;
+  const esp = 0.12 * 9 * K;
+  const base = 812 * K;
+  ctx.fillStyle = COR.apagado;
+  caber(ctx, dados.fundo, util * 0.55, 9 * K, (s) => `400 ${s}px ${MONO}`);
+  texto(ctx, dados.fundo, PAD, base, { esp });
+  ctx.font = `400 ${9 * K}px ${MONO}`;
+  ctx.fillStyle = COR.ouro;
+  texto(ctx, 'Faça o seu mapa grátis', W - PAD, base - 9 * K * 1.6, { esp, align: 'right' });
+  ctx.fillStyle = COR.apagado;
+  texto(ctx, 'intuitiveconcept.com.br', W - PAD, base, { esp, align: 'right' });
+}
+
 /**
  * Desenha o card e devolve o canvas 1080×1920.
- * @param {'ceu'|'numero'} modelo
+ * @param {'ceu'|'numero'|'sintese'} modelo
  * @param {ReturnType<import('@/lib/cardStory').dadosDoCard>} dados
  */
 export async function desenharCard(modelo, dados) {
@@ -278,6 +376,7 @@ export async function desenharCard(modelo, dados) {
   ctx.fillStyle = COR.fundo;
   ctx.fillRect(0, 0, LARGURA, ALTURA);
   if (modelo === 'numero') await modeloNumero(ctx, dados);
+  else if (modelo === 'sintese') await modeloSintese(ctx, dados);
   else await modeloCeu(ctx, dados);
   return cv;
 }

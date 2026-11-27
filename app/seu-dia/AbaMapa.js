@@ -11,7 +11,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { dadosDoCard } from '@/lib/cardStory';
 import { desenharCard, canvasParaBlob } from './cardStory';
-import { sistemasDaPessoa, sinteseDoMapa, previaDoManual, TEMAS } from '@/lib/mapaSintese';
+import { sistemasDaPessoa, sinteseDoMapa, previaDoManual, nomesDosSistemas, TEMAS } from '@/lib/mapaSintese';
 import ma from './minhaArea.module.css';
 import { BotoesCadeado } from './Cadeado';
 
@@ -101,7 +101,7 @@ export default function AbaMapa({ perfil }) {
           {s.repete.length > 0 ? s.repete.map((r) => (
             <div key={r.tema} className={ma.temaGrande}>
               <h2 className={ma.temaNome}>{r.nome}</h2>
-              <span className={ma.temaQuem}>{r.sistemas.length} sistemas dizem isso: {listaHumana(r.sistemas)}</span>
+              <span className={ma.temaQuem}>{r.votos} sistemas dizem isso: {listaHumana(nomesDosSistemas(r.sistemas))}</span>
               <p className={ma.temaFrase}>{r.frase}</p>
             </div>
           )) : (
@@ -123,7 +123,7 @@ export default function AbaMapa({ perfil }) {
             <div className={ma.temaGrande}>
               <h2 className={ma.temaNome}>{s.tensao.nomeA} <span>×</span> {s.tensao.nomeB}</h2>
               <span className={ma.temaQuem}>
-                {s.tensao.nomeA}: {listaHumana(s.tensao.sistemasA)} · {s.tensao.nomeB}: {listaHumana(s.tensao.sistemasB)}
+                {s.tensao.nomeA}: {listaHumana(nomesDosSistemas(s.tensao.sistemasA))} · {s.tensao.nomeB}: {listaHumana(nomesDosSistemas(s.tensao.sistemasB))}
               </span>
               <p className={ma.temaFrase}>{temManual ? s.tensao.texto : s.tensao.frase}</p>
             </div>
