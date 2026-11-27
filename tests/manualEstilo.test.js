@@ -127,3 +127,25 @@ test('textos fixos que entram na pergunta da IA também não têm o padrão (tod
   ];
   for (const t of textos) assert.deepEqual(acharContrastes(t), [], t);
 });
+
+test('Human Design e Kin Maia nunca como milenares: regra no Manual, nas redes e no Oráculo', async () => {
+  const { REGRA_SISTEMAS_MODERNOS } = await import('../lib/manualEstilo.js');
+  assert.match(REGRA_SISTEMAS_MODERNOS, /milenar, antigo ou ancestral/);
+  // Manual: as 5 seções que recebem os outros sistemas
+  for (const nome of ['diagnostico', 'tipoPessoa', 'pontoCego', 'leitura', 'fechamento']) {
+    const { user } = await capturar(SECOES[nome]);
+    assert.ok(user.includes(REGRA_SISTEMAS_MODERNOS), nome);
+  }
+  const { GUIA_EDITORIAL } = await import('../lib/socialEditorial.js');
+  assert.ok(GUIA_EDITORIAL.includes(REGRA_SISTEMAS_MODERNOS), 'posts das redes');
+  const fonte = (await import('node:fs')).readFileSync(new URL('../lib/assistente.js', import.meta.url), 'utf8');
+  assert.match(fonte, /\$\{REGRA_SISTEMAS_MODERNOS\}/, 'Oráculo');
+});
+
+test('seção "O que os seus sistemas repetem" sem "tradições que nunca conversaram"', async () => {
+  const { dadosCruzados, secaoSistemas } = await import('../lib/manualCruzado.js');
+  const s = secaoSistemas(dadosCruzados({ dataNascimento: '1994-12-21', hora: '07:25', tz: 'America/Sao_Paulo', lon: -40.3 }));
+  const texto = JSON.stringify(s);
+  assert.doesNotMatch(texto, /nunca conversaram/);
+  assert.deepEqual(acharContrastes(texto), []);
+});
