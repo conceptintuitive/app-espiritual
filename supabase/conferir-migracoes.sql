@@ -296,7 +296,16 @@ with esperado(migracao, tipo, tabela, item) as (
   -- 0033
   ('0033_cortesia_emails', 'coluna', 'analises', 'cortesia_d25_em'),
   ('0033_cortesia_emails', 'coluna', 'analises', 'cortesia_d30_em'),
-  ('0033_cortesia_emails', 'indice', 'analises', 'analises_paid_at_pago_idx')
+  ('0033_cortesia_emails', 'indice', 'analises', 'analises_paid_at_pago_idx'),
+  -- 0034
+  ('0034_quiz_etapas', 'tabela', 'quiz_etapas', null),
+  ('0034_quiz_etapas', 'coluna', 'quiz_etapas', 'dia'),
+  ('0034_quiz_etapas', 'coluna', 'quiz_etapas', 'sessao'),
+  ('0034_quiz_etapas', 'coluna', 'quiz_etapas', 'etapa'),
+  ('0034_quiz_etapas', 'coluna', 'quiz_etapas', 'origem'),
+  ('0034_quiz_etapas', 'indice', 'quiz_etapas', 'quiz_etapas_dia_idx'),
+  ('0034_quiz_etapas', 'rls', 'quiz_etapas', null),
+  ('0034_quiz_etapas', 'view', 'quiz_etapas_resumo', null)
 ),
 conferido as (
   select e.*,

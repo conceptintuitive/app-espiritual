@@ -19,6 +19,7 @@ import { lerPerfil, salvarPerfil } from '@/lib/perfilLocal';
 import { TESTE_SEU_DIA_ATIVO } from '@/lib/testeSeuDiaChave';
 import SiteNav, { EVENTO_ABRIR_QUIZ } from '@/app/components/SiteNav';
 import { coletarAtribuicao } from '@/app/components/CapturaAtribuicao';
+import { contarEtapa } from '@/app/components/home/contarEtapa';
 import h from './home.module.css';
 
 const PreviaSeuDia = dynamic(() => import('@/app/components/home/PreviaSeuDia'), { ssr: false });
@@ -114,6 +115,8 @@ function QuizOverlay({ onClose }) {
         timestamp: new Date().toISOString(),
       });
     } catch {}
+    // Contador anônimo (todo mundo, com ou sem aceite de cookies; migração 0034)
+    contarEtapa(step);
   }, [step]);
 
   const goNext = (newStep) => {
@@ -183,6 +186,7 @@ function QuizOverlay({ onClose }) {
         // Lead do Pixel só com a análise criada e com o mesmo id do Lead da
         // Conversions API (lib/meta.js: "lead-<id>"): a Meta junta os dois.
         try { window?.fbq?.('track', 'Lead', {}, { eventID: `lead-${data.id}` }); } catch {}
+        contarEtapa(5); // concluiu (contador anônimo)
         // O /resultado troca "Receber meu dia às 7h" por "já está chegando".
         if (querSeuDia) { try { window.localStorage.setItem(`ic_sd_quiz_${data.id}`, '1'); } catch {} }
         limparCeuDados();
@@ -480,6 +484,9 @@ export default function Home() {
 
   // Com o quiz aberto, a tela de espera (:target) sai: o #quiz some da URL.
   useEffect(() => { if (quizOpen) tirarHashQuiz(); }, [quizOpen]);
+
+  // Contador anônimo: esta sessão viu a home (etapa 0 do funil do quiz).
+  useEffect(() => { contarEtapa(0); }, []);
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
