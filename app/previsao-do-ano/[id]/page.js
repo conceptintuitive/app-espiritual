@@ -1,12 +1,25 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+// Previsão do Ano no visual da Minha Área (nov/2026): o Ano Pessoal no topo
+// (com a ligação com o mapa, quando faz sentido), os 12 meses com o contexto
+// do ano, divisor na virada de ano, mês atual destacado e mês do aniversário
+// marcado. Textos e regras em lib/transitos12meses.js. Grátis: o Ano Pessoal,
+// o mês atual inteiro e o tema dos 2 seguintes; o resto com o Intuitive
+// Completo (ou quem comprou a Previsão antes).
+
+import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { createClient } from '@supabase/supabase-js';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { gerarProjecao12Meses } from '@/lib/transitos12meses';
+import { createClient } from '@supabase/supabase-js';
+import { gerarProjecao12Meses, ANO_TEMA } from '@/lib/transitos12meses';
 import SiteNav from '@/app/components/SiteNav';
+import FaixaCeu from '@/app/seu-dia/FaixaCeu';
 import { useAssinatura, OfertaComplemento } from '@/app/components/assinatura';
+import ma from '@/app/seu-dia/minhaArea.module.css';
+import s from './previsao.module.css';
+
+const LigacaoMapa = dynamic(() => import('./LigacaoMapa'), { ssr: false });
 
 function getSupabaseClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -15,43 +28,56 @@ function getSupabaseClient() {
   return createClient(url, key);
 }
 
-function pickFirstName(fullName) {
-  const text = (fullName ?? '').toString().trim();
-  return text.split(' ').filter(Boolean)[0] || 'Você';
+function primeiroNome(nome) {
+  return String(nome ?? '').trim().split(' ').filter(Boolean)[0] || 'Você';
 }
 
-function MesCard({ m, i }) {
+/** Nascimento da análise no formato do perfil (FaixaCeu e mapaSintese). */
+function dadosDaAnalise(a) {
+  if (!a?.data_nascimento) return null;
+  const temCidade = a.fuso_iana && typeof a.latitude === 'number' && typeof a.longitude === 'number';
+  const [cidadeNome, uf] = String(a.local_nascimento || '').split(',').map((x) => x.trim());
+  return {
+    dataNascimento: a.data_nascimento,
+    hora: /^\d{2}:\d{2}/.test(a.hora_nascimento || '') ? a.hora_nascimento.slice(0, 5) : null,
+    cidade: temCidade ? { ibge: a.municipio_ibge ?? null, nome: cidadeNome || '', uf: uf || '', lat: a.latitude, lon: a.longitude, tz: a.fuso_iana } : null,
+  };
+}
+
+function Mes({ m, atual }) {
   return (
-    <div className="mes-card">
-      <div className="mes-card-label">
-        {m.label} {i === 0 && <span className="mes-card-agora">📍 mês atual</span>}
+    <article className={`${s.mes} ${atual ? s.mesAtual : ''}`} aria-label={m.label}>
+      <div className={s.mesTopo}>
+        <span className={s.mesData}>{m.label}</span>
+        {atual && <span className={s.selo}>Este mês</span>}
+        {m.aniversario && <span className={s.seloAniv}>Mês do seu aniversário</span>}
       </div>
-      <div className="mes-card-title">{m.titulo} <span className="mes-card-numero">— Mês Pessoal {m.mesPessoal}</span></div>
-      <p className="p">{m.texto}</p>
-      <div className="grid2">
-        <div className="subcard highlight">
-          <div className="subttl">✅ O que favorece</div>
-          <ul className="list-check">{m.foco.map((f, fi) => <li key={fi}>✓ {f}</li>)}</ul>
+      <h3 className={s.mesTitulo}>{m.titulo}<span>Mês Pessoal {m.mesPessoal}</span></h3>
+      <p className={s.texto}>{m.texto}</p>
+      {m.contexto && <p className={s.contexto}>{m.contexto}</p>}
+      {m.retorno && <p className={s.retorno}>{m.retorno}</p>}
+      <div className={s.listas}>
+        <div className={s.lado}>
+          <span className={s.rotuloOuro}>O que favorece</span>
+          <ul className={s.lista}>{m.foco.map((f) => <li key={f}>{f}</li>)}</ul>
         </div>
-        <div className="subcard danger">
-          <div className="subttl">⚠️ Cuidado com</div>
-          <ul className="list-check">{m.atencao.map((a, ai) => <li key={ai}>✓ {a}</li>)}</ul>
+        <div className={s.lado}>
+          <span className={s.rotuloCuidado}>Cuidado com</span>
+          <ul className={`${s.lista} ${s.listaCuidado}`}>{m.atencao.map((a) => <li key={a}>{a}</li>)}</ul>
         </div>
       </div>
-    </div>
+    </article>
   );
 }
 
-// Prévia dos próximos 3 meses — só o tema de cada um (nome + rótulo), sem
-// nenhum parágrafo real. Muda todo mês (é sempre "os 3 a partir de hoje"),
-// então quem volta depois não vê o mesmo gancho repetido.
-function MesChip({ m, i }) {
+function Virada({ m }) {
+  const t = ANO_TEMA[m.anoPessoal];
   return (
-    <div className="mes-chip">
-      <div className="mes-chip-label">{m.label} {i === 0 && <span className="mes-card-agora">📍 atual</span>}</div>
-      <div className="mes-chip-tema">{m.titulo}</div>
-      <div className="mes-chip-numero">Mês Pessoal {m.mesPessoal}</div>
-    </div>
+    <section className={s.virada} aria-label={`${m.ano}, Ano Pessoal ${m.anoPessoal}`}>
+      <span className={s.viradaRotulo}>{m.ano} · Ano Pessoal {m.anoPessoal}</span>
+      {t && <h2 className={s.viradaTitulo}>{t.titulo}</h2>}
+      {t && <p className={s.viradaTexto}>{t.texto}</p>}
+    </section>
   );
 }
 
@@ -67,131 +93,83 @@ export default function PrevisaoDoAnoPage() {
     if (!supabase || !id) { setErro(true); setLoading(false); return; }
     supabase
       .from('analises')
-      .select('id,nome,data_nascimento,payment_status,tier2_payment_status,hd_payment_status')
+      .select('*')
       .eq('id', id)
       .single()
       .then(({ data, error }) => {
-        if (error || !data) { setErro(true); } else { setRow(data); }
+        if (error || !data) setErro(true); else setRow(data);
         setLoading(false);
       });
   }, [id]);
 
+  const dados = useMemo(() => dadosDaAnalise(row), [row]);
+  const projecao = useMemo(() => (row?.data_nascimento ? gerarProjecao12Meses(row.data_nascimento) : []), [row]);
+  const primeiro = projecao[0];
+  const anoAtual = primeiro ? ANO_TEMA[primeiro.anoPessoal] : null;
+  const desbloqueado = row?.tier2_payment_status === 'paid' || !!assinatura?.ativa;
+
   return (
-    <div className="wrap">
-      <style jsx global>{globalCss}</style>
-      <link
-        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Cormorant+Garamond:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet"
-      />
-      <div id="stars" className="stars" />
+    <div className={`${ma.ma} ${s.pagina}`}>
+      <SiteNav active="previsao" transparente />
+      <FaixaCeu perfil={dados} eyebrow="Previsão do Ano" titulo="Seus próximos 12 meses" />
 
-      <SiteNav active="previsao" />
-
-      <div className="container">
-        <div className="hero">
-          <div className="badge">🔮 Previsão do Ano</div>
-          <h1 className="h1">Seus próximos 12 meses, mês a mês</h1>
-          <p className="lead">
-            Ano Pessoal e Mês Pessoal calculados a partir da sua data de nascimento — o que cada
-            ciclo favorece, o que pede cuidado, e como se preparar antes de cada virada.
-          </p>
-        </div>
-
-        {loading && <div className="center muted">Carregando…</div>}
+      <main className={s.corpo}>
+        {loading && <p className={s.estado}>Carregando…</p>}
 
         {!loading && (erro || !row) && (
-          <div className="card">
-            <p className="p">Não encontramos essa análise. Comece pelo formulário principal.</p>
-            <Link href="/?quiz=1" className="btn">Fazer meu mapa grátis</Link>
+          <div className={s.estado}>
+            <p>Não encontramos essa análise. Comece pelo seu mapa grátis.</p>
+            <Link href="/?quiz=1" className={`${ma.btn} ${ma.btnLink}`}>Fazer meu mapa grátis</Link>
           </div>
         )}
 
         {!loading && row && !row.data_nascimento && (
-          <div className="card">
-            <p className="p">Essa análise ainda não tem data de nascimento salva — volte pro formulário e finalize.</p>
-          </div>
+          <p className={s.estado}>Essa análise ainda não tem data de nascimento salva. Volte pro formulário e termine o seu mapa.</p>
         )}
 
-        {!loading && row && row.data_nascimento && (() => {
-          const projecao = gerarProjecao12Meses(row.data_nascimento);
-          const desbloqueado = row.tier2_payment_status === 'paid' || !!assinatura?.ativa;
-          return (
-            <>
-              {desbloqueado ? (
-                projecao.map((m, i) => <MesCard key={`${m.ano}-${m.mes}`} m={m} i={i} />)
-              ) : (
-                <>
-                  {/* Gostinho grátis: o mês atual inteiro + o tema dos 2 seguintes */}
-                  <MesCard m={projecao[0]} i={0} />
-                  <div className="mes-chip-row">
-                    {projecao.slice(1, 3).map((m, i) => <MesChip key={`${m.ano}-${m.mes}`} m={m} i={i + 1} />)}
-                  </div>
-                  <div className="card paywall">
-                    <h2 className="h2">🔒 Descubra o que vem por aí</h2>
-                    <p className="p">
-                      {pickFirstName(row.nome)}, esse foi o seu mês atual. Desbloqueie pra ver o texto completo,
-                      o que favorece e o que pede cuidado em cada um dos próximos 12 meses.
-                    </p>
-                    <OfertaComplemento analiseId={id} manualPago={row.payment_status === 'paid'} produto="A Previsão do Ano" origem="previsao" />
-                  </div>
-                </>
-              )}
-            </>
-          );
-        })()}
+        {primeiro && (
+          <>
+            <section className={s.ano} aria-labelledby="ano-pessoal">
+              <span className={ma.eyebrow}>{primeiro.ano} · Ano Pessoal {primeiro.anoPessoal}</span>
+              {anoAtual && <h2 id="ano-pessoal" className={s.anoTitulo}>{anoAtual.titulo}</h2>}
+              {anoAtual && <p className={s.anoTexto}>{anoAtual.texto}</p>}
+              {dados && <LigacaoMapa dados={dados} anoPessoal={primeiro.anoPessoal} className={s.ligacao} />}
+            </section>
 
-        <div className="footer-links">
-          <Link href="/explorar">← Voltar pro Explorar</Link>
-        </div>
-      </div>
+            {desbloqueado ? (
+              projecao.map((m, i) => (
+                <div key={`${m.ano}-${m.mes}`}>
+                  {m.novoAno && <Virada m={m} />}
+                  <Mes m={m} atual={i === 0} />
+                </div>
+              ))
+            ) : (
+              <>
+                {/* Grátis: o mês atual inteiro + o tema dos 2 seguintes */}
+                <Mes m={primeiro} atual />
+                <div className={s.proximos}>
+                  {projecao.slice(1, 3).map((m) => (
+                    <div key={`${m.ano}-${m.mes}`} className={s.proximo}>
+                      <span className={s.mesData}>{m.label}{m.novoAno ? ` · Ano Pessoal ${m.anoPessoal}` : ''}</span>
+                      <span className={s.proximoTitulo}>{m.titulo}</span>
+                      <span className={s.proximoNumero}>Mês Pessoal {m.mesPessoal}{m.aniversario ? ' · mês do seu aniversário' : ''}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className={s.oferta}>
+                  <h2 className={s.ofertaTitulo}>O que vem nos próximos meses</h2>
+                  <p className={s.ofertaTexto}>
+                    {primeiroNome(row.nome)}, esse foi o seu mês atual. Desbloqueie pra ver o texto completo, o que favorece e o que pede cuidado em cada um dos próximos 12 meses.
+                  </p>
+                  <OfertaComplemento analiseId={id} manualPago={row.payment_status === 'paid'} produto="A Previsão do Ano" origem="previsao" />
+                </div>
+              </>
+            )}
+          </>
+        )}
+
+        <p className={s.rodape}><a href="/explorar">← Voltar pro Explorar</a></p>
+      </main>
     </div>
   );
 }
-
-const globalCss = `
-  body { margin: 0; }
-  :root {
-    --bg1: #0a0118; --bg2: #130828;
-    --primary: #ec4899; --secondary: #8b5cf6; --warning: #f59e0b;
-    --text: #faf5ff; --muted: rgba(233,213,255,0.75);
-    --border: rgba(216,180,254,0.15); --border-strong: rgba(216,180,254,0.3);
-  }
-  .wrap { min-height: 100vh; background: var(--bg1); color: var(--text); font-family: 'Cormorant Garamond', Georgia, serif; position: relative; }
-  .stars { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
-  .container { position: relative; z-index: 1; max-width: 640px; margin: 0 auto; padding: 60px 20px 80px; }
-  .hero { text-align: center; margin-bottom: 32px; }
-  .badge { display: inline-block; font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--warning); margin-bottom: 14px; }
-  .h1 { font-family: 'Cinzel', serif; font-size: 30px; font-weight: 700; margin: 0 0 14px; line-height: 1.3; }
-  .lead { font-size: 18px; color: var(--muted); line-height: 1.6; max-width: 480px; margin: 0 auto; }
-  .center { text-align: center; padding: 40px 0; }
-  .muted { color: var(--muted); }
-  .card { border-radius: 20px; border: 1px solid var(--border); padding: 26px 24px; margin-bottom: 18px; background: rgba(255,255,255,0.02); }
-  .card.paywall { border-color: rgba(245,158,11,0.35); background: rgba(245,158,11,0.05); text-align: center; }
-  .h2 { font-family: 'Cinzel', serif; font-size: 20px; margin: 0 0 10px; }
-  .p { font-size: 16px; line-height: 1.6; color: var(--text); }
-  .btn { display: inline-block; margin-top: 10px; padding: 13px 24px; border-radius: 999px; border: none; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: #fff; font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 700; text-decoration: none; cursor: pointer; }
-  .btn-cta { width: 100%; font-size: 17px; padding: 15px; }
-  .btn:disabled { opacity: 0.6; cursor: default; }
-  .mes-card { border-radius: 18px; border: 1px solid var(--border); padding: 22px 20px; margin-bottom: 16px; }
-  .mes-card-label { font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
-  .mes-card-agora { color: var(--warning); margin-left: 8px; }
-  .mes-card-title { font-family: 'Cinzel', serif; font-size: 19px; margin: 6px 0 10px; }
-  .mes-card-numero { font-size: 13px; color: var(--muted); font-family: 'Cormorant Garamond', serif; }
-  .locked-list { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
-  .locked-row { font-size: 14px; color: var(--muted); padding: 10px 14px; border-radius: 10px; border: 1px dashed var(--border-strong); background: rgba(255,255,255,0.02); }
-  .mes-chip-row { display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 18px; }
-  @media (min-width: 560px) { .mes-chip-row { grid-template-columns: repeat(3, 1fr); } }
-  .mes-chip { border-radius: 16px; border: 1px solid var(--border); padding: 16px 14px; text-align: center; background: rgba(255,255,255,0.02); }
-  .mes-chip-label { font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
-  .mes-chip-tema { font-family: 'Cinzel', serif; font-size: 17px; margin-top: 6px; }
-  .mes-chip-numero { font-size: 12px; color: var(--muted); margin-top: 4px; }
-  .grid2 { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 14px; }
-  @media (min-width: 560px) { .grid2 { grid-template-columns: 1fr 1fr; } }
-  .subcard { border-radius: 14px; padding: 14px 16px; border: 1px solid var(--border); }
-  .subcard.highlight { border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.05); }
-  .subcard.danger { border-color: rgba(236,72,153,0.3); background: rgba(236,72,153,0.05); }
-  .subttl { font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 0.04em; margin-bottom: 8px; }
-  .list-check { list-style: none; padding: 0; margin: 0; font-size: 14.5px; line-height: 1.7; color: var(--muted); }
-  .footer-links { text-align: center; margin-top: 40px; }
-  .footer-links a { color: var(--muted); text-decoration: none; font-size: 14px; }
-`;
