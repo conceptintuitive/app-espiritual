@@ -25,6 +25,13 @@ const PreviaSeuDia = dynamic(() => import('@/app/components/home/PreviaSeuDia'),
 
 const ROTULO_CTA = 'Fazer meu mapa grátis — 1 min';
 
+// Tira o #quiz da URL sem recarregar nem pular a página (some a tela de espera).
+function tirarHashQuiz() {
+  try {
+    if (window.location.hash === '#quiz') window.history.replaceState(window.history.state, '', window.location.pathname + window.location.search);
+  } catch {}
+}
+
 // ── Pergunta frequente (linha com divisor) ────────────────────────────────────
 function FaqItem({ q, a, id }) {
   const [open, setOpen] = useState(false);
@@ -445,7 +452,11 @@ function QuizOverlay({ onClose }) {
 export default function Home() {
   const [quizOpen, setQuizOpen] = useState(false);
   const openQuiz = () => setQuizOpen(true);
-  const closeQuiz = () => setQuizOpen(false);
+  const closeQuiz = () => { setQuizOpen(false); tirarHashQuiz(); };
+  // Os botões são links pra #quiz: antes do JavaScript carregar, o toque não se
+  // perde (o CSS mostra "Abrindo seu mapa…" pelo :target e o quiz abre assim
+  // que a página fica pronta); depois, o clique abre o quiz direto.
+  const abrirQuiz = (e) => { e.preventDefault(); openQuiz(); };
 
   // Vindo de "Refazer minha análise" no /resultado — abre o quiz já limpo
   useEffect(() => {
@@ -453,12 +464,22 @@ export default function Home() {
     const params = new URLSearchParams(window.location.search);
     // ?quiz=1: botão "Fazer meu mapa grátis" do menu vindo de outra página
     if (params.get('refazer') === '1' || params.get('quiz') === '1') setQuizOpen(true);
+    // Tocou num botão antes do JavaScript carregar (#quiz na URL)
+    else if (window.location.hash === '#quiz') setQuizOpen(true);
     // Veio do CTA "Abrir meu mapa" do /ceu: abre o quiz já preenchido (uma vez)
     else if (consumirAbrirQuiz()) setQuizOpen(true);
     // O mesmo botão clicado aqui na home (o menu dispara um evento em vez de navegar)
     window.addEventListener(EVENTO_ABRIR_QUIZ, openQuiz);
-    return () => window.removeEventListener(EVENTO_ABRIR_QUIZ, openQuiz);
+    const porHash = () => { if (window.location.hash === '#quiz') setQuizOpen(true); };
+    window.addEventListener('hashchange', porHash);
+    return () => {
+      window.removeEventListener(EVENTO_ABRIR_QUIZ, openQuiz);
+      window.removeEventListener('hashchange', porHash);
+    };
   }, []);
+
+  // Com o quiz aberto, a tela de espera (:target) sai: o #quiz some da URL.
+  useEffect(() => { if (quizOpen) tirarHashQuiz(); }, [quizOpen]);
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
@@ -494,6 +515,13 @@ export default function Home() {
         html, body { background: #07040d; max-width: 100%; overflow-x: hidden; }
       `}</style>
 
+      {/* Toque antes do JavaScript: o link vai pra #quiz e esta tela aparece
+          só com CSS (:target) até o quiz de verdade abrir por cima. */}
+      <div id="quiz" className={h.quizEspera} aria-hidden="true">
+        <div className={h.spinner} />
+        <p className={h.quizEsperaTexto}>Abrindo seu mapa…</p>
+      </div>
+
       {/* Quiz overlay */}
       {quizOpen && <QuizOverlay onClose={closeQuiz} />}
 
@@ -524,7 +552,7 @@ export default function Home() {
               <strong>Gratuito. Resultado na hora. Funciona mesmo sem saber sua hora de nascimento.</strong>
             </p>
             <div className={h.heroAcoes}>
-              <button type="button" className={h.btn} onClick={openQuiz}>{ROTULO_CTA}</button>
+              <a href="#quiz" className={h.btn} onClick={abrirQuiz}>{ROTULO_CTA}</a>
               <p className={h.monoLinha}>1 minuto · grátis · funciona sem a hora</p>
             </div>
           </div>
@@ -548,7 +576,7 @@ export default function Home() {
               ))}
             </ol>
             <div className={h.acao}>
-              <button type="button" className={h.btn} onClick={openQuiz}>{ROTULO_CTA}</button>
+              <a href="#quiz" className={h.btn} onClick={abrirQuiz}>{ROTULO_CTA}</a>
             </div>
           </div>
         </section>
@@ -568,7 +596,7 @@ export default function Home() {
             </div>
             {/* O caminho é mapa → Minha Área, então o botão abre o quiz. */}
             <div className={h.acao}>
-              <button type="button" className={h.btn} onClick={openQuiz}>{ROTULO_CTA}</button>
+              <a href="#quiz" className={h.btn} onClick={abrirQuiz}>{ROTULO_CTA}</a>
             </div>
           </div>
         </section>
@@ -615,7 +643,7 @@ export default function Home() {
               <em>Descubra o que está por trás.</em>
             </h2>
             <p className={h.ctaSub}>Quiz de 1 minuto. Resultado imediato. Gratuito.</p>
-            <button type="button" className={h.btn} onClick={openQuiz}>{ROTULO_CTA}</button>
+            <a href="#quiz" className={h.btn} onClick={abrirQuiz}>{ROTULO_CTA}</a>
             <p className={h.nota}>Seus dados são protegidos e usados apenas para gerar seu mapa.</p>
           </div>
         </section>

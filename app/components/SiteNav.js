@@ -88,6 +88,11 @@ export default function SiteNav({ active = null, sticky = true, transparente = f
   const meuMapaHref = ultimaAnaliseId ? `/resultado/${ultimaAnaliseId}` : '/';
   const meuMapaRotulo = ultimaAnaliseId ? 'Ver meu mapa' : 'Como funciona o mapa';
 
+  // Na home, #quiz: um toque antes do JavaScript carregar mostra a tela de
+  // espera (CSS :target) e o quiz abre quando a página fica pronta. Fora dela,
+  // /?quiz=1 (link comum, funciona sempre).
+  const hrefQuiz = pathname === '/' ? '#quiz' : '/?quiz=1';
+
   function fazerMapa(e) {
     evento('menu_fazer_mapa', { pagina: pathname });
     setAberto(false);
@@ -149,7 +154,7 @@ export default function SiteNav({ active = null, sticky = true, transparente = f
 
         <div className="site-nav-acoes">
           <Link href="/seu-dia" className={`site-nav-area${active === 'seu-dia' ? ' is-active' : ''}`}>Minha Área</Link>
-          <Link href="/?quiz=1" className="site-nav-cta" onClick={fazerMapa}>Fazer meu mapa grátis</Link>
+          <Link href={hrefQuiz} className="site-nav-cta" onClick={fazerMapa}>Fazer meu mapa grátis</Link>
           <button
             type="button"
             className="site-nav-burger"
@@ -169,7 +174,7 @@ export default function SiteNav({ active = null, sticky = true, transparente = f
 
       {aberto && (
         <div id="site-nav-painel" className="site-nav-painel">
-          <Link href="/?quiz=1" className="site-nav-cta site-nav-cta-largo" onClick={fazerMapa}>Fazer meu mapa grátis</Link>
+          <Link href={hrefQuiz} className="site-nav-cta site-nav-cta-largo" onClick={fazerMapa}>Fazer meu mapa grátis</Link>
 
           {GRUPOS_DESCOBRIR.map((g, gi) => (
             <div key={g.chave} className="site-nav-grupo">

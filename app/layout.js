@@ -6,6 +6,14 @@ import "./globals.css";
 import AvisoCookies from "@/app/components/AvisoCookies";
 import CapturaAtribuicao from "@/app/components/CapturaAtribuicao";
 
+// Os scripts de anúncio e de medição (gtag do GA4/Google Ads, Pixel da Meta,
+// Pixel do TikTok) só baixam DEPOIS que a página carregou e o navegador ficou
+// livre: no celular fraco eles disputavam CPU com a página e o botão do quiz
+// demorava a responder. Os "stubs" (gtag/fbq/ttq) continuam no começo, então
+// qualquer evento disparado antes entra na fila e sai quando o script chega.
+// Custo: quem sai da página antes de ela terminar de carregar não é contado.
+const DEPOIS_DA_PAGINA = "window.icDepois=window.icDepois||function(f){var go=function(){if(window.requestIdleCallback)window.requestIdleCallback(f,{timeout:3000});else setTimeout(f,1200)};if(document.readyState==='complete')go();else window.addEventListener('load',go,{once:true})};";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -78,13 +86,16 @@ export default function RootLayout({ children }) {
         />
 
         <script
-          async
-          src="https://www.googletagmanager.com/gtag/js?id=G-4YT1QFSD1P"
-        />
-
-        <script
   dangerouslySetInnerHTML={{
     __html: `
+      ${DEPOIS_DA_PAGINA}
+      // gtag.js (GA4 + Google Ads) só depois da página pronta; até lá, o dataLayer guarda tudo.
+      window.icDepois(function () {
+        var s = document.createElement('script');
+        s.async = true;
+        s.src = 'https://www.googletagmanager.com/gtag/js?id=G-4YT1QFSD1P';
+        document.head.appendChild(s);
+      });
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       // LGPD: tudo negado até a pessoa aceitar no aviso de cookies (AvisoCookies.js).
@@ -111,8 +122,9 @@ export default function RootLayout({ children }) {
           strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `
+              ${DEPOIS_DA_PAGINA}
               !function (w, d, t) {
-                w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie","holdConsent","revokeConsent","grantConsent"],ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.instance=function(t){for( var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e},ttq.load=function(e,n){var r="https://analytics.tiktok.com/i18n/pixel/events.js",o=n&&n.partner;ttq._i=ttq._i||{},ttq._i[e]=[],ttq._i[e]._u=r,ttq._t=ttq._t||{},ttq._t[e]=+new Date,ttq._o=ttq._o||{},ttq._o[e]=n||{};n=document.createElement("script") ;n.type="text/javascript",n.async=!0,n.src=r+"?sdkid="+e+"&lib="+t;e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(n,e)};
+                w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie","holdConsent","revokeConsent","grantConsent"],ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.instance=function(t){for( var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e},ttq.load=function(e,n){var r="https://analytics.tiktok.com/i18n/pixel/events.js",o=n&&n.partner;ttq._i=ttq._i||{},ttq._i[e]=[],ttq._i[e]._u=r,ttq._t=ttq._t||{},ttq._t[e]=+new Date,ttq._o=ttq._o||{},ttq._o[e]=n||{};w.icDepois(function(){var s=d.createElement("script");s.type="text/javascript",s.async=!0,s.src=r+"?sdkid="+e+"&lib="+t;var f=d.getElementsByTagName("script")[0];f.parentNode.insertBefore(s,f)})};
                 var icOk = false; try { icOk = localStorage.getItem('ic_consent') === 'sim'; } catch (e) {}
                 if (!icOk) ttq.holdConsent();
                 ttq.load('${TIKTOK_PIXEL_ID}');
@@ -127,13 +139,14 @@ export default function RootLayout({ children }) {
           strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `
+              ${DEPOIS_DA_PAGINA}
               !function(f,b,e,v,n,t,s)
               {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
               n.callMethod.apply(n,arguments):n.queue.push(arguments)};
               if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-              n.queue=[];t=b.createElement(e);t.async=!0;
+              n.queue=[];f.icDepois(function(){t=b.createElement(e);t.async=!0;
               t.src=v;s=b.getElementsByTagName(e)[0];
-              s.parentNode.insertBefore(t,s)}(window, document,'script',
+              s.parentNode.insertBefore(t,s)})}(window, document,'script',
               'https://connect.facebook.net/en_US/fbevents.js');
               var icOk = false; try { icOk = localStorage.getItem('ic_consent') === 'sim'; } catch (e) {}
               if (!icOk) fbq('consent', 'revoke');
