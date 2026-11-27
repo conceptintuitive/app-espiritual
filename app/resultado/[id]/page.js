@@ -52,6 +52,8 @@ const DiaHoje = dynamic(() => import('./DiaHoje'), { ssr: false });
 const ChatAssistente = dynamic(() => import('@/app/components/ChatAssistente'), { ssr: false });
 const VoceTambem = dynamic(() => import('@/app/components/VoceTambem'), { ssr: false });
 const PixManual = dynamic(() => import('./PixManual'), { ssr: false });
+// Altura reservada enquanto o bloco carrega, pra leitura não pular pra baixo.
+const SinteseMapa = dynamic(() => import('./SinteseMapa'), { ssr: false, loading: () => <div style={{ minHeight: 640 }} aria-hidden="true" /> });
 
 // ── Supabase ──────────────────────────────────────────────────────────────────
 function getSupabaseClient() {
@@ -666,6 +668,9 @@ export default function ResultadoPage() {
       </header>
 
       <main className={r.corpo}>
+
+        {/* ══ 1b. O QUE O MAPA CRUZOU — convergência + tensão (lib/mapaSintese.js) e card do story ══ */}
+        {dados && <SinteseMapa dados={dados} id={id} pago={pago} />}
 
         {/* ══ 2. LEITURA GRÁTIS — inteira, sem borrão ══ */}
         <section className={r.secao} aria-labelledby="leitura">

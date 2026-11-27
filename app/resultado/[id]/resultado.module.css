@@ -236,3 +236,26 @@
   .fimLinhas { display: grid; grid-template-columns: 1fr 1fr; column-gap: 56px; }
   .fimLinhas > .fimLinha:nth-child(2) { border-top: 0; padding-top: 0; }
 }
+
+/* ── Topo: o que o mapa cruzou (SinteseMapa.js) ─────────────────────────── */
+.sintese { display: flex; flex-direction: column; gap: 26px; border-top: 0; padding-top: 36px; }
+.sinteseGrade { display: grid; grid-template-columns: 1fr; gap: 36px; }
+.sinteseBloco { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.sinteseTema { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: 64px; line-height: .95; letter-spacing: -.01em; color: var(--ouro); margin: 2px 0 4px; }
+.sinteseQuem { list-style: none; margin: 6px 0 0; padding: 0; }
+.sinteseQuem li { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 12px 0; border-top: 1px solid var(--linha); }
+.sinteseQuem li:last-child { border-bottom: 1px solid var(--linha); }
+.sinteseValor { font-family: var(--serif); font-size: 21px; line-height: 1.15; color: var(--texto); text-align: right; }
+.sinteseTensao { font-family: var(--serif); font-weight: 400; font-size: 44px; line-height: 1; letter-spacing: -.01em; margin: 2px 0 4px; overflow-wrap: anywhere; }
+.sinteseTensao span { color: var(--ouro); font-style: italic; }
+.sinteseFrase { font-family: var(--serif); font-size: 24px; line-height: 1.25; color: var(--texto); }
+.sinteseOrigem { font-size: 14px; line-height: 1.55; color: var(--apagado); }
+.pagina .sinteseLink { align-self: flex-start; font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ouro-2); text-decoration: none; padding: 6px 0; }
+.sinteseCard { display: flex; align-items: center; gap: 18px; }
+.sinteseCard img { width: 96px; aspect-ratio: 9 / 16; object-fit: cover; border-radius: 10px; border: 1px solid var(--linha); flex-shrink: 0; }
+.sinteseCardAcoes { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+.sinteseCardAcoes .btnSec[disabled] { opacity: .6; cursor: progress; }
+@media (min-width: 960px) {
+  .sinteseGrade { grid-template-columns: 1fr 1fr; gap: 64px; }
+  .sinteseTema { font-size: 80px; }
+}
