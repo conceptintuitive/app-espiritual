@@ -543,17 +543,17 @@ export default function Home() {
           </div>
 
           <div className={`${h.ctr} ${h.heroConteudo}`}>
-            <span className={h.eyebrow}>Numerologia + Astrologia</span>
+            <span className={h.eyebrow}>5 sistemas · 1 mapa</span>
             <h1 className={h.titulo}>
-              Você tenta mudar, mas algo invisível <em>te puxa de volta</em>
+              Onde 5 sistemas <em>concordam sobre você</em>
             </h1>
             <p className={h.sub}>
-              Seu mapa revela o padrão que te trava — e o que fazer agora.{' '}
-              <strong>Gratuito. Resultado na hora. Funciona mesmo sem saber sua hora de nascimento.</strong>
+              Astrologia, numerologia, astrologia chinesa, anjo e Kin Maia, cruzados num mapa só. O{'\u00a0'}que se repete é o que mais define você.{' '}
+              <strong>Grátis, em 1 minuto.</strong>
             </p>
             <div className={h.heroAcoes}>
               <a href="#quiz" className={h.btn} onClick={abrirQuiz}>{ROTULO_CTA}</a>
-              <p className={h.monoLinha}>1 minuto · grátis · funciona sem a hora</p>
+              <p className={h.monoLinha}>Funciona sem a hora de nascimento</p>
             </div>
           </div>
         </section>
