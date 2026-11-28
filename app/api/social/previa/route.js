@@ -20,6 +20,9 @@
 // Funil das redes por formato (migração 0031, lib/utmSocialServidor.js):
 // visitas → quiz → teste grátis → assinatura (+ Manual) e o link da bio;
 // &funil=0 pula.
+// Funil do quiz por etapa (contador anônimo, migração 0034, lib/quizEtapas.js):
+// viu a home → abriu → etapas 2–4 → concluiu, por origem; &funilquiz=0 pula,
+// &diasquiz=N muda o período (padrão 14).
 // Mostra o conteúdo já gerado (social_conteudos, da IA); dia ainda não gerado
 // aparece com o texto de reserva, andando as séries a partir do banco. As
 // imagens usam as mesmas URLs assinadas que as redes vão baixar.
@@ -46,6 +49,8 @@ import { trilhaDoDia } from '@/lib/socialReels';
 import { TRILHAS_DO_REPOSITORIO, itemDoDia } from '@/lib/reelsVideo';
 import { funilSocial } from '@/lib/utmSocialServidor';
 import { CAMINHO_DA_BIO, taxa } from '@/lib/utmSocial';
+import { funilQuiz } from '@/lib/quizEtapasServidor';
+import { ETAPAS, taxa as taxaQuiz, maiorPerda } from '@/lib/quizEtapas';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -330,6 +335,30 @@ export async function GET(request) {
     }
   }
 
+  // Funil do quiz por etapa (contador anônimo, migração 0034): todo mundo, com
+  // ou sem aceite de cookies. &funilquiz=0 pula; &diasquiz=N muda o período.
+  let funilQuizHtml = '';
+  if (supabase && searchParams.get('funilquiz') !== '0') {
+    try {
+      const diasQuiz = Math.min(90, Math.max(1, Number(searchParams.get('diasquiz')) || 14));
+      const fq = await funilQuiz({ supabase, dias: diasQuiz });
+      const nomeOrigem = { instagram: 'Instagram', tiktok: 'TikTok', meta: 'Meta (anúncio)', google: 'Google', outro: 'Outra campanha', direto: 'Direto / sem campanha', total: 'Total' };
+      const celula = (n, base) => `<td>${n.toLocaleString('pt-BR')}${base != null ? ` <small>${taxaQuiz(n, base)}</small>` : ''}</td>`;
+      const linhaQ = (l) => {
+        const e = l.etapas;
+        const p = maiorPerda(e);
+        return `<tr${l.origem === 'total' ? ' class="total"' : ''}><td>${esc(nomeOrigem[l.origem] || l.origem)}</td>${celula(e[0])}${celula(e[1], e[0])}${celula(e[2], e[1])}${celula(e[3], e[2])}${celula(e[4], e[3])}${celula(e[5], e[4])}<td>${taxaQuiz(e[5], e[1])}</td><td><small>${p ? `${esc(ETAPAS[p.de].rotulo)} → ${esc(ETAPAS[p.para].rotulo)} (−${Math.round(p.perda * 100)}%)` : '–'}</small></td></tr>`;
+      };
+      const corpoQ = fq.linhas.length
+        ? `<table><thead><tr><th>Origem</th>${ETAPAS.map((x) => `<th>${esc(x.rotulo)}${x.n > 0 ? ' <small>/anterior</small>' : ''}</th>`).join('')}<th>Concluiu <small>/abriu</small></th><th>Maior perda</th></tr></thead><tbody>${fq.linhas.map(linhaQ).join('')}${linhaQ(fq.total)}</tbody></table>`
+        : '<p class="meta">Ainda sem etapas contadas no período.</p>';
+      funilQuizHtml = `<section class="dia" id="funil-quiz"><h2>Funil do quiz por etapa <small>sessões desde ${dataCurta(fq.desde)} (${diasQuiz} dias) · cada sessão conta 1x por etapa · inclui quem não aceitou cookies (o GA4 não vê essas pessoas) · origem = campanha da visita, ou a última guardada no aparelho</small></h2>
+      ${fq.erro ? `<p class="aviso">Contador do quiz: ${esc(fq.erro)}</p>` : ''}${corpoQ}</section>`;
+    } catch (err) {
+      funilQuizHtml = `<section class="dia"><h2>Funil do quiz por etapa</h2><p class="aviso">${esc(err.message)}</p></section>`;
+    }
+  }
+
   const blocos = dias.map((d) => {
     const e = energiaDoDia(d.data, d.conteudo.story);
     const c = d.conteudo;
@@ -409,6 +438,7 @@ export async function GET(request) {
 ${avisos.map((a) => `<p class="aviso">${esc(a)}</p>`).join('')}
 ${rodizio}
 ${funil}
+${funilQuizHtml}
 ${desempenho}
 ${blocoComentarios()}
 ${blocos}
